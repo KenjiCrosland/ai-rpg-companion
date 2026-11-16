@@ -1,0 +1,153 @@
+{
+  "name": "Cindercoal Cat",
+  "inline": "the cat",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 14,
+  "hp": 85,
+  "hp_formula": "9d8 + 45",
+  "pb": 2,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 20,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 1,
+    "CON": 7,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +6, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Blazing Seams",
+        "text": "At the end of each of the cat's turns, each creature in a 5-foot Emanation originating from the cat takes 5 (1d10) Fire damage.",
+        "library": true,
+        "template": "energy-aura",
+        "boundKeys": [
+          "blaze"
+        ],
+        "gmQuote": "a coal cat whose every wound makes it burn hotter",
+        "area": {
+          "shape": "Emanation",
+          "size": 5
+        },
+        "expresses": "wounds that make it burn hotter",
+        "bound": false
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the cat fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The cat regains 20 Hit Points at the start of each of its turns. If the cat takes Cold damage, this trait doesn't function on the cat's next turn. The cat dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The cat makes two Bite attacks. It can replace one attack with a use of Ember Lash."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +6, reach 10 ft. 7 (1d6 + 4) Piercing damage plus 4 (1d8) Fire damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Ember Lash",
+        "text": "*Strength Saving Throw:* DC 15, one creature within 30 feet that is Frightened of the cat. *Failure:* 14 (4d6) Fire damage. *Success:* Half damage.",
+        "library": true,
+        "seed": "exploiter"
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the cat can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Ember-Lunge and Clamp",
+        "text": "The cat moves up to half its Speed without provoking Opportunity Attacks, and it makes one Bite attack."
+      },
+      {
+        "name": "Cinder Glare",
+        "imposes": "Frightened",
+        "text": "*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+      },
+      {
+        "name": "Heave Aside",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 15, each creature within 10 feet of the cat. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "Furnace-born beneath a collapsed mine, the cindercoal cat is a living ember-seed that stalks the tunnels for flesh and fuel, wanting only to feed until its fires can no longer be tamed.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a coal-cat whose every wound makes it burn hotter",
+    "clauses": [
+      {
+        "id": "cl_fvvaz2",
+        "text": "a coal-cat whose every wound makes it burn hotter",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Fire",
+  "lint_findings": [],
+  "monsterDescription": "a coal-cat whose every wound makes it burn hotter",
+  "selectedChallengeRating": "4",
+  "monsterName": "Cindercoal Cat",
+  "caster": false
+}

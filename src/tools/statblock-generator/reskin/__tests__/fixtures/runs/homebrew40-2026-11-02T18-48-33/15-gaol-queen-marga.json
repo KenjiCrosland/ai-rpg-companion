@@ -1,0 +1,133 @@
+{
+  "name": "Gaol-Queen Marga",
+  "inline": "Marga",
+  "format": "2024",
+  "cr": 14,
+  "cr_str": "14",
+  "xp": 11500,
+  "challenge_rating": "14 (XP 11,500; PB +5)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Lawful Evil",
+  "ac": 18,
+  "hp": 221,
+  "hp_formula": "26d8 + 104",
+  "pb": 5,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 9,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 9
+  },
+  "skills": "Athletics +11, Persuasion +9",
+  "senses": "Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Shackled Thralls",
+        "text": "If Marga dies, it returns to life in 1d4 days and regains all its Hit Points unless the shackles are struck from the corpse.",
+        "library": true,
+        "template": "death-restoration",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true,
+        "expresses": null,
+        "bound": false
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from Marga, Marga and its allies have Advantage on attack rolls and saving throws, provided Marga doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "Marga makes three attacks, using Cudgel or Shackle Flail in any combination. It can replace one attack with a use of Condemning Curse."
+      },
+      {
+        "name": "Cudgel",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 33 (11d4 + 6) Bludgeoning damage.",
+        "weapon": "club",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Shackle Flail",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 33 (6d8 + 6) Bludgeoning damage.",
+        "weapon": "flail",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Condemning Curse",
+        "text": "*Dexterity Saving Throw:* DC 19, one creature within 60 feet. *Failure:* The target is cursed until the end of Marga's next turn. The first time the cursed target deals damage to any creature before then, it takes 32 (5d12) Necrotic damage. *Success:* Half damage only.",
+        "library": true,
+        "template": "curse-debt",
+        "boundKeys": [
+          "debt"
+        ],
+        "accepted_closest": true
+      }
+    ]
+  },
+  "lore": "A jailer who outlived her prison's descent into an iron gaol-tomb, she binds each new inmate's sentence to her own survival and holds court in the cellblock she now rules, wanting only to remain the one who never wears the chains.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+    "clauses": [
+      {
+        "id": "cl_y6uaua",
+        "text": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "death-restoration"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 2",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+  "selectedChallengeRating": "14",
+  "monsterName": "Gaol-Queen Marga",
+  "caster": false
+}

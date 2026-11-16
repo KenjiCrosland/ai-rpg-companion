@@ -1,0 +1,122 @@
+{
+  "name": "Gravewake Lantern",
+  "inline": "the gravewake lantern",
+  "format": "2024",
+  "cr": 3,
+  "cr_str": "3",
+  "xp": 700,
+  "challenge_rating": "3 (XP 700; PB +2)",
+  "type": "Undead",
+  "size": "Tiny",
+  "alignment": "Neutral",
+  "ac": 12,
+  "hp": 42,
+  "hp_formula": "12d4 + 12",
+  "pb": 2,
+  "speed": "5 ft., Fly 50 ft. (hover)",
+  "stats": {
+    "STR": 1,
+    "DEX": 16,
+    "CON": 13,
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": -5,
+    "DEX": 5,
+    "CON": 1,
+    "INT": 0,
+    "WIS": 0,
+    "CHA": 0
+  },
+  "skills": "Stealth +5",
+  "senses": "darkvision 60 ft.; Passive Perception 10",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The gravewake lantern can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the gravewake lantern has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Lantern",
+        "text": "*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage plus 9 (2d8) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Mourning Glow",
+        "text": "*Constitution Saving Throw*: DC 13, one creature within 5 feet. *Failure:* 24 (7d6) Necrotic damage.",
+        "authored": true,
+        "clause": "When it hits a creature with Lantern, the target must succeed on a Constitution saving throw or take {dmg} extra Necroti",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a guttering flame that weeps",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "A lantern left burning at a deathbed, it drained the mourners' final grief and rose when they departed, forever carrying their sorrow and flaring whenever another life is extinguished near it.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-1-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a lantern that mourns",
+    "clauses": [
+      {
+        "id": "cl_1a03g5g",
+        "text": "a lantern that mourns",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "mourns"
+      }
+    ],
+    "cite": "composition after Specter (CR 1) — the drain touch on the incorporeal frame",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a lantern that mourns",
+  "selectedChallengeRating": "3",
+  "monsterName": "Gravewake Lantern",
+  "caster": false
+}

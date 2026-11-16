@@ -1,0 +1,140 @@
+{
+  "name": "Siege Ram Golem",
+  "inline": "the golem",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Splintering Husk",
+        "text": "While the golem breaks or pushes through a barrier or moves through rubble, debris, or crumbling masonry, the golem has Advantage on ability checks to break or push through barriers that would block it, and it ignores Difficult Terrain made of rubble, debris, or crumbling masonry.",
+        "authored": true,
+        "clause": "The golem's lashed-timber husk constantly creaks and sheds splinters, so it has Advantage on checks to break or push thr",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "ramming through walls",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the golem has Advantage on ability checks to break or push through barriers that would block it"
+      },
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The golem can't shape-shift."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The golem has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The golem makes two Timber Shoulder attacks."
+      },
+      {
+        "name": "Timber Shoulder",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Bludgeoning damage. If the golem moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 14 (4d6) Bludgeoning damage and, if it is Large or smaller, has the Prone condition.",
+        "weldedRiders": [
+          "If the golem moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 14 (4d6) Bludgeoning damage and, if it is Large or smaller, has the Prone condition."
+        ],
+        "imposes": "Prone",
+        "boundKeys": [
+          "momentum",
+          "straight line"
+        ],
+        "riderTemplates": [
+          "charge"
+        ],
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ]
+  },
+  "lore": "Field engineers lash scrap timber into a ram-shaped husk and wake it with a binding word, so a warlord may break a gate without spending a single soldier's life.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a siege-engine golem of lashed timber that shoulders through walls",
+    "clauses": [
+      {
+        "id": "cl_q7gx4o",
+        "text": "a siege-engine golem of lashed timber",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vcmdz5",
+        "text": "shoulders through walls",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "shove",
+        "askMechanicWhy": "shoulders through"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a siege-engine golem of lashed timber that shoulders through walls",
+  "selectedChallengeRating": "8",
+  "monsterName": "Siege Ram Golem",
+  "caster": false
+}

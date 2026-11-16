@@ -1,0 +1,162 @@
+{
+  "name": "Toller of the Death-Knell",
+  "inline": "the toller",
+  "format": "2024",
+  "cr": 3,
+  "cr_str": "3",
+  "xp": 700,
+  "challenge_rating": "3 (XP 700; PB +2)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 13,
+  "hp": 38,
+  "ac_gear": "chain shirt",
+  "hp_formula": "7d8 + 7",
+  "pb": 2,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 16,
+    "DEX": 10,
+    "CON": 12,
+    "INT": 13,
+    "WIS": 16,
+    "CHA": 13
+  },
+  "saves": {
+    "STR": 3,
+    "DEX": 2,
+    "CON": 1,
+    "INT": 1,
+    "WIS": 3,
+    "CHA": 1
+  },
+  "skills": "Medicine +7, Perception +5, Religion +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Common plus one other language",
+  "initiative_bonus": 0,
+  "initiative_score": 10,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The toller makes two attacks, using Mace or Radiant Flame in any combination. It can replace one attack with a use of Creeping Dread."
+      },
+      {
+        "name": "Mace",
+        "text": "*Melee Attack Roll:* +5, reach 5 ft. 6 (1d6 + 3) Bludgeoning damage plus 5 (2d4) Radiant damage.",
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "weapon": "mace",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Creeping Dread",
+        "text": "*Wisdom Saving Throw:* DC 13, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of the toller's next turn. If the target was already Frightened by this ability, it also takes 6 (1d12) Necrotic damage.",
+        "library": true,
+        "template": "escalating-dread",
+        "imposes": "Frightened",
+        "boundKeys": [],
+        "gmQuote": "a chapel bell ringer's ghost that tolls for the dying",
+        "duration": "source_end"
+      },
+      {
+        "name": "Radiant Flame",
+        "text": "*Ranged Attack Roll:* +5, range 60 ft. 11 (2d10) Radiant damage.",
+        "print": true,
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Spellcasting",
+        "text": "The toller casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Light*, *Thaumaturgy*\n- **1/Day Each:** *Spirit Guardians*",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Divine Aid (3/Day)",
+        "text": "The toller casts *Bless*, *Dispel Magic*, *Healing Word*, or *Lesser Restoration*, using the same spellcasting ability as Spellcasting.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Resonant Body",
+        "text": "A creature that hits the toller with a melee attack while within 5 feet of it takes 5 (1d10) Thunder damage and has the Deafened condition until the end of its next turn.",
+        "library": true,
+        "imposes": "Deafened",
+        "template": "resonant-body",
+        "bound": true,
+        "boundKeys": [
+          "toll",
+          "bell"
+        ],
+        "clause": "tolls for the dying",
+        "clauseId": "cl_1svw2ov"
+      }
+    ]
+  },
+  "lore": "A bell-ringer who died mid-toll on a plague-night, still counting the dead he could not save, now tolls for each living soul whose hour has come.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Priest",
+      "relation": null,
+      "class": "cleric",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-2",
+    "archetype": "lurker",
+    "class_kit": {
+      "key": "cleric",
+      "clause": "bell-ringer",
+      "landed": 0,
+      "yielded": 0,
+      "stood_down": "already_answered"
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a chapel bell-ringer's ghost that tolls for the dying",
+    "clauses": [
+      {
+        "id": "cl_gvvyt8",
+        "text": "a chapel bell-ringer's ghost",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1svw2ov",
+        "text": "tolls for the dying",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "tolls for the dying"
+      }
+    ],
+    "cite": "composition after Doppelganger (CR 3) — the first-round-advantage opener",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a chapel bell-ringer's ghost that tolls for the dying",
+  "selectedChallengeRating": "3",
+  "monsterName": "Toller of the Death-Knell",
+  "caster": false
+}

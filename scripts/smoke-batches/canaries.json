@@ -1,0 +1,114 @@
+[
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "PRINT, plain: a bare print Name composes the whole sheet, seats stand down",
+    "mode": "exact"
+  },
+  {
+    "name": "",
+    "description": "big ogre with a club, cr 5",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "PRINT HEAD + the GM's own clause: print's rows ride along, the club is a named weapon, and the CR comes from the words",
+    "mode": "band"
+  },
+  {
+    "name": "Kobold",
+    "description": "Can turn invisible once per day",
+    "cr": "1/4",
+    "rules": "2024",
+    "canary": "THE DICE-SOLVER FLOOR: the lowest CR the engine prices, plus a claimed seed",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a kenku thief who speaks only in stolen voices",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "SPECIES KIT: the kenku's own rows and its speech line (print writes 'understands … but can't speak')",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a templar priest with a mace and no magic at all",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "CLASS KIT + a lacks clause: the cleric's rows, and 'no magic at all' must remove the casting",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a court wizard who is never where you struck and steps away",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "CASTER: the caster donor, a spell list, and one stat keying both the attack and the DC",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "an adult storm dragon whose breath is a rolling wall of thunder",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "DRAGON BODY + the legendary tier: a complete kit, a breath nova, and the legendary budget",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries and drips gilded acid",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "OOZE BODY: the type's own immunities and condition list, no blind fallback",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "SWARM BODY: print's swarm shape (one attack, not a Multiattack) and its resistances",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "THE WEAPON TABLE: a thrown weapon's own range and a shortsword's own type, and print may not swap a weapon the GM typed",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "an eyeless hunter that tracks prey by scent alone",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "POLARITY: an adjective lack lands on the senses line, and the ability the GM asked for survives it",
+    "mode": "band"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "riding a worg",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "2014 + the mounted style: a print Name, a seat verb, and the 2014 conversion",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a death knight who leads a cavalry of the damned and burns the living",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "2014 AT THE LEGENDARY TIER + leader: the 2014 damage line, legendary actions, and a leader's own rows",
+    "mode": "band"
+  },
+  {
+    "name": "the thing in the well",
+    "description": "",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "NEVER-FAIL: no information at all — the library stands in and a legal sheet still ships",
+    "mode": "band"
+  }
+]

@@ -1,0 +1,178 @@
+{
+  "name": "Seedbed Matron",
+  "inline": "the matron",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Plant",
+  "size": "Large",
+  "alignment": "Neutral Evil",
+  "ac": 18,
+  "hp": 199,
+  "hp_formula": "21d10 + 84",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 18,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 8,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 8
+  },
+  "skills": "Athletics +10, Persuasion +8",
+  "senses": "blindsight 60 ft. (blind beyond this radius), tremorsense 60 ft.; Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Husked Inheritance",
+        "text": "When a creature dies within 10 feet of the matron, the matron's spores sink into the corpse and hollow it, raising it as a puppet that obeys the matron's will; the puppet remains animate until the end of the matron's next turn, then collapses into inert husk. The matron cannot do this to a creature that has already been husked.",
+        "authored": true,
+        "clause": "takes over the bodies of the things she kills",
+        "clauseId": "cl_shlr3d"
+      },
+      {
+        "name": "Seed-Spore Cloud",
+        "text": "*Constitution Saving Throw*: DC 18, any creature that starts its turn in a 10-foot Emanation originating from the matron. *Failure:* The target has the Poisoned condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "noxious-aura",
+        "imposes": "Poisoned",
+        "boundKeys": [
+          "spores"
+        ],
+        "duration": "target_start",
+        "area": {
+          "shape": "Emanation",
+          "size": 10
+        },
+        "expresses": "a cloud of choking seed-spores",
+        "bound": true
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the matron, the matron and its allies have Advantage on attack rolls and saving throws, provided the matron doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The matron makes three attacks, using Root-Filament or Husk Lash in any combination."
+      },
+      {
+        "name": "Root-Filament",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Bludgeoning damage plus 11 (2d10) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Husk Lash",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Slashing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Choking Sporebank (2/Day)",
+        "gate": "2/Day",
+        "text": "The matron fills a 15-foot-radius Sphere centered on a point it can see within 60 feet. The area is Lightly Obscured and Difficult Terrain until the start of the matron's next turn.",
+        "library": true,
+        "seed": "zone-seed",
+        "boundKeys": [
+          "spores"
+        ]
+      }
+    ]
+  },
+  "lore": "A fruiting fungus that grew a mind in the hollow of a battlefield, she means to plant herself in a corpse-rich place and turn every living thing around her into soil for that day.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "sends them at you",
+        "where": "description",
+        "text": "Husked puppets lurch toward the nearest living thing with the matron's borrowed purpose."
+      },
+      {
+        "clause": "sends them at you",
+        "where": "description",
+        "text": "Husked puppets lurch toward the nearest living thing with the matron's borrowed purpose."
+      }
+    ],
+    "userConcept": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "clauses": [
+      {
+        "id": "cl_1x5f05m",
+        "text": "a spore-mother",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "a spore mother"
+      },
+      {
+        "id": "cl_shlr3d",
+        "text": "takes over the bodies of the things she kills",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "a spore mother"
+      },
+      {
+        "id": "cl_1rip7y9",
+        "text": "sends them at you",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "a spore mother"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the value floor",
+    "answered_in_prose": [
+      "sends them at you"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+  "selectedChallengeRating": "12",
+  "monsterName": "Seedbed Matron",
+  "caster": false
+}

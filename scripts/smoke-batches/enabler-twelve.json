@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a bog-troll that strikes far harder once its prey is pinned in the mud", "cr": "7", "rules": "2024", "canary": "TARGET · payoff needs Grappled; holds should be true" },
+  { "name": "", "description": "a quarry-beast that crushes anything already knocked flat", "cr": "6", "rules": "2024", "canary": "TARGET · payoff needs Prone" },
+  { "name": "", "description": "a cave-horror that feeds only on the helpless, and pins them first with its tendrils", "cr": "9", "rules": "2024", "canary": "TARGET · payoff + its own enabler — rider should NOT fire" },
+  { "name": "", "description": "a gallows-spirit that drains those too frightened to run", "cr": "8", "rules": "2024", "canary": "TARGET · payoff needs Frightened — print rides it once, expect no rider" },
+  { "name": "", "description": "an iron widow that tightens on a held victim until the bones give", "cr": "10", "rules": "2024", "canary": "TARGET · payoff needs Grappled on a MADE body" },
+  { "name": "", "description": "a reef-drake whose thunder flattens a rank and then breaks it", "cr": "7", "rules": "2024", "canary": "TARGET · the Anvilcloud shape — payoff + an area knockdown" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2014", "canary": "CONTROL · no payoff — expect zero riders" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2014", "canary": "CONTROL · print twist, no payoff" },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "5", "rules": "2024", "canary": "CONTROL · incorporeal — must never gain a grip" },
+  { "name": "", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024", "canary": "CONTROL · weapon-only melee, no payoff" },
+  { "name": "Ancient Gold Dragon", "description": "", "cr": "24", "rules": "2014", "canary": "CONTROL · exact print path — must be untouched" },
+  { "name": "", "description": "a scaffold-spider that fights from the ceiling and never comes down", "cr": "7", "rules": "2024", "canary": "CONTROL · no payoff" }
+]

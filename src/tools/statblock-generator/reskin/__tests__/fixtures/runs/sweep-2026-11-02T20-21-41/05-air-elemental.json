@@ -1,0 +1,151 @@
+{
+  "name": "Air Elemental",
+  "inline": "the elemental",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Elemental",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 90,
+  "hp_formula": "12d10 + 24",
+  "pb": 3,
+  "speed": "10 ft., Fly 90 ft. (hover)",
+  "stats": {
+    "STR": 14,
+    "DEX": 20,
+    "CON": 14,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": 5,
+    "CON": 5,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -2
+  },
+  "skills": "Athletics +5, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Primordial (Auran)",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The elemental makes two Thunderous Slam attacks. It can replace one attack with a use of Terrifying Wail."
+      },
+      {
+        "name": "Thunderous Slam",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 14 (2d8 + 5) Thunder damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Terrifying Wail",
+        "text": "*Wisdom Saving Throw:* DC 13, each creature of the elemental's choice in a 30-foot Emanation originating from the elemental that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's terror for 24 hours.",
+        "library": true,
+        "template": "terror-pulse",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "shriek",
+          "scream",
+          "wail"
+        ],
+        "gmQuote": "carries stolen voices",
+        "duration": "target_end"
+      },
+      {
+        "name": "Whirlwind (Recharge 4-6)",
+        "text": "*Strength Saving Throw*: DC 13, one Medium or smaller creature in the elemental's space. *Failure:*  24 (4d10 + 2) Thunder damage, and the target is pushed up to 20 feet straight away from the elemental and has the Prone condition. *Success:*  Half damage only.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Howling Gale",
+        "text": "At the start of each of its turns, until it sheds its stolen voices, each creature of the elemental's choice that starts its turn within the howling gale is Deafened and cannot take Reactions.",
+        "authored": true,
+        "clause": "The elemental is a whirling storm-body: at the start of each of its turns it chooses whether to shed its stolen voices, ",
+        "imposes": "Deafened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "stolen voices crying out",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "until it sheds its stolen voices"
+      },
+      {
+        "name": "Air Form",
+        "text": "The elemental can enter a creature's space and stop there. It can move through a space as narrow as 1 inch without expending extra movement to do so.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Born from a ruin where a great storm swallowed a village's last cries, this elemental drifts the world seeking new voices to steal, forever hungry for the sound of the living.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Air Elemental",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Air Elemental — that carries stolen voices",
+    "clauses": [
+      {
+        "id": "cl_cfuoud",
+        "text": "Air Elemental —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_h2gb03",
+        "text": "carries stolen voices",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "stolen voices"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison, Thunder; Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious",
+  "resistances": "Bludgeoning, Lightning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "that carries stolen voices",
+  "selectedChallengeRating": "5",
+  "monsterName": "Air Elemental",
+  "caster": false
+}

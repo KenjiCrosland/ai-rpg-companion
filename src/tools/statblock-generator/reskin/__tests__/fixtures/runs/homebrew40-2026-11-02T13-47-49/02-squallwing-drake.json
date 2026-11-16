@@ -1,0 +1,119 @@
+{
+  "name": "Squallwing Drake",
+  "inline": "the drake",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Dragon",
+  "size": "Medium",
+  "alignment": "Chaotic Neutral",
+  "ac": 18,
+  "hp": 110,
+  "hp_formula": "17d8 + 34",
+  "pb": 3,
+  "speed": "30 ft., Fly 60 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 12,
+    "CHA": 14
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 4,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 4,
+    "CHA": 2
+  },
+  "skills": "Perception +4, Stealth +4",
+  "senses": "blindsight 30 ft., darkvision 120 ft.; Passive Perception 14",
+  "languages": "Draconic, Auran",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drake makes two Claw attacks. It can replace one attack with a use of Thunder Line."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 11 (2d6 + 4) Slashing damage plus 7 (2d6) Thunder damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Thunder Breath (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 15, each creature in a 15-foot Cone. *Failure:* 42 (12d6) Thunder damage. *Success:* Half damage."
+      },
+      {
+        "name": "Thunder Line",
+        "text": "*Strength Saving Throw*: DC 15, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 18 (4d8) Thunder damage, and the target is pushed up to 10 feet straight away from the drake, and the target has the Prone condition. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "The drake looses a rolling wall of thunder that sweeps low across the ground in a line; each creature that fails the sav",
+        "imposes": "Prone",
+        "imposesMovement": true,
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "rolling wall of thunder breath",
+        "boundKeys": [],
+        "expressedQuote": "the target is pushed up to 10 feet straight away from the drake"
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "Hatched in the roiling thunderheads of a storm-wracked peak, this young drake rides the squall-line down from its eyrie to prove its growing power by flattening anything that dares stand in the open.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "dragon-2",
+    "archetype": "dragon",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a young storm drake whose breath is a rolling wall of thunder",
+    "clauses": [
+      {
+        "id": "cl_v640f4",
+        "text": "a young storm drake whose breath is a rolling wall of thunder",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "breath is a rolling wall of thunder"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten wyrmlings (CR 1-4) — bite, breath, wings",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "dragon",
+  "archetype_source": "user",
+  "immunities": "Thunder",
+  "lint_findings": [],
+  "monsterDescription": "a young storm drake whose breath is a rolling wall of thunder",
+  "selectedChallengeRating": "7",
+  "monsterName": "Squallwing Drake",
+  "caster": false
+}

@@ -1,0 +1,172 @@
+{
+  "name": "Toll-Bell Wraith",
+  "inline": "the toll-bell wraith",
+  "format": "2024",
+  "cr": 15,
+  "cr_str": "15",
+  "xp": 13000,
+  "challenge_rating": "15 (XP 13,000; PB +5)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 204,
+  "hp_formula": "24d8 + 96",
+  "pb": 5,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 22,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 11,
+    "CON": 4,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +11",
+  "senses": "darkvision 120 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Bell-Slumber",
+        "text": "If the toll-bell wraith's grave-bell is not intact, the toll-bell wraith can doff its slumber: while its grave-bell lies silent, the toll-bell wraith is not subject to the sleep condition and cannot be put to sleep by magic or by the bell.",
+        "authored": true,
+        "clause": "twice for sleep",
+        "clauseId": "cl_1dx8wjs"
+      },
+      {
+        "name": "Grave-Bell Toll",
+        "text": "The toll-bell wraith keeps its grave-bell within 30 feet of itself. That object has AC 17, HP 25, and Resistance to all damage. While it is intact, the toll-bell wraith regains 20 Hit Points at the start of each of its turns.",
+        "library": true,
+        "template": "relic-object",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "tolls once for fear twice for sleep and three times for the grave",
+        "expresses": "tolling the bell one, two, three times",
+        "bound": false
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The toll-bell wraith can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the toll-bell wraith has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The toll-bell wraith makes two attacks. It can replace one attack with a use of Grave Toll."
+      },
+      {
+        "name": "Cold-Handed Strike",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 51 (10d8 + 6) Necrotic damage.",
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Grave Toll",
+        "text": "*Constitution Saving Throw:* DC 19, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "library": true,
+        "template": "sensory-strike",
+        "imposes": "Blinded",
+        "boundKeys": [
+          "toll",
+          "bell",
+          "blind",
+          "ring"
+        ],
+        "gmQuote": "a bell wraith that tolls once for fear twice for sleep and three times for the",
+        "duration": "target_end",
+        "widened": true,
+        "clause": "a bell-wraith",
+        "clauseId": "cl_ehq2ma"
+      }
+    ]
+  },
+  "lore": "A bell-wraith is what remains of a sacristan or watchman who died tolling an alarm no one answered, and it now tolls its own dead count over any breathing thing it finds in the dark.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+    "clauses": [
+      {
+        "id": "cl_ehq2ma",
+        "text": "a bell-wraith",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "three times for the grave"
+      },
+      {
+        "id": "cl_117drvi",
+        "text": "tolls once for fear",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "three times for the grave"
+      },
+      {
+        "id": "cl_1dx8wjs",
+        "text": "twice for sleep",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "three times for the grave"
+      },
+      {
+        "id": "cl_1iftueb",
+        "text": "three times for the grave",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "three times for the grave"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+  "selectedChallengeRating": "15",
+  "monsterName": "Toll-Bell Wraith",
+  "caster": false
+}

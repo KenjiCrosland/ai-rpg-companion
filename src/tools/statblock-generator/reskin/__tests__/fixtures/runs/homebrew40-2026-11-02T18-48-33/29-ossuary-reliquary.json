@@ -1,0 +1,174 @@
+{
+  "name": "Ossuary Reliquary",
+  "inline": "the reliquary",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Lawful Neutral",
+  "ac": 19,
+  "hp": 247,
+  "hp_formula": "26d10 + 104",
+  "pb": 5,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 18,
+    "INT": 7,
+    "WIS": 10,
+    "CHA": 3
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": -1,
+    "CON": 9,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -4
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Withering Grave-Light",
+        "text": "At the end of each of the reliquary's turns, each creature in a 5-foot Emanation originating from the reliquary takes 13 (3d8) Radiant damage.",
+        "library": true,
+        "template": "energy-aura",
+        "boundKeys": [
+          "aura"
+        ],
+        "gmQuote": "what is loyal and withers what is not",
+        "area": {
+          "shape": "Emanation",
+          "size": 5
+        },
+        "expresses": "healing the loyal, withering the faithless",
+        "bound": false
+      },
+      {
+        "name": "Ward Bond",
+        "rules": true,
+        "text": "The reliquary is magically bound to a ward of its choosing, and it can have only one ward at a time. While the reliquary is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the reliquary."
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The reliquary regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point. If the reliquary takes Necrotic damage, this trait doesn't function at the start of the reliquary's next turn."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The reliquary makes two Relic Maul attacks."
+      },
+      {
+        "name": "Relic Maul",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 19 (4d6 + 5) Bludgeoning damage plus 13 (3d8) Radiant damage.",
+        "weapon": "maul",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Warding Aegis (2/Day)",
+        "gate": "2/Day",
+        "text": "The reliquary targets itself or one creature it can see within 60 feet. The target gains 33 (6d10) Temporary Hit Points, and its AC increases by 2 until the end of the reliquary's next turn."
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Saint's Vigor (2/Day)",
+        "gate": "2/Day",
+        "text": "The reliquary touches a creature within 5 feet of itself and restores 33 (6d10) Hit Points to it.",
+        "library": true,
+        "template": "lay-on-hands",
+        "boundKeys": [
+          "heal",
+          "heals",
+          "healing",
+          "mends"
+        ],
+        "accepted_closest": true,
+        "clause": "heals what is loyal",
+        "clauseId": "cl_1c0o5g2"
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Interpose",
+        "text": "*Trigger:* A creature within 5 feet of the reliquary that it guards is hit by an attack roll. *Response:* The attack hits the reliquary instead, and the reliquary has Resistance to the attack's damage.",
+        "library": true,
+        "template": "interpose",
+        "bound": true,
+        "boundKeys": []
+      }
+    ]
+  },
+  "lore": "Forged from the gilded bones and iron casing of a martyred saint, the reliquary endures as a tomb-bound guardian that cannot rest until the last pilgrim it was sworn to protect has passed beyond the world.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-7-warden",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a saint's reliquary that heals what is loyal and withers what is not",
+    "clauses": [
+      {
+        "id": "cl_1n499vm",
+        "text": "a saint's reliquary",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1c0o5g2",
+        "text": "heals what is loyal",
+        "kind": "mechanical",
+        "askShape": "buff_ally",
+        "askMechanic": "mend",
+        "askMechanicWhy": "heals what is loyal"
+      },
+      {
+        "id": "cl_167fz3t",
+        "text": "withers what is not",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "withers what is not"
+      }
+    ],
+    "cite": "composition after Shield Guardian (CR 7) — Bound transfer, Regeneration, the measured 0.65 damage discount",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 3,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a saint's reliquary that heals what is loyal and withers what is not",
+  "selectedChallengeRating": "13",
+  "monsterName": "Ossuary Reliquary",
+  "caster": false
+}

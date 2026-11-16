@@ -16,6 +16,8 @@ import {
   validateNamingResponse,
 } from '../format-2024/generate.mjs';
 import { validateRouteResponse } from '../reskin/route.mjs';
+import { validateIdentityResponse } from '../format-2024/generate.mjs';
+import { validatePathResponse } from '../reskin/path.mjs';
 
 // ROUTE-CALL MOCKS (two calls since 2026-09-21): the route reply names a
 // shelf line and QUOTES the concept (chooseLine verifies the quote against
@@ -140,6 +142,10 @@ function mockLLM({ resolvedArchetype = 'lurker' } = {}) {
     if (validate === validateRouteResponse) {
       return Promise.resolve(JSON.stringify(routeReply(prompt, resolvedArchetype)));
     }
+    if (validate === validatePathResponse) {
+      // THE PATH CALL (Five Pipelines brief, step 2): runs beside the route call, in shadow
+      return Promise.resolve(JSON.stringify({ assembly: 'homebrew', assembly_receipt: null, print_body: null, relation: null, species: null, class: null }));
+    }
     if (validate === validateArchetypeResponse) {
       return Promise.resolve(JSON.stringify({ archetype: resolvedArchetype }));
     }
@@ -253,24 +259,33 @@ describe('StatblockGenerator 2024 flow', () => {
 
       // resolve (user role passes as GIVEN — owner call 2026-08-04) +
       // skeleton flavor + naming pass (audit CR-gated below eligibility here)
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // synthesis + route + flavor + naming — a blank roll's path is decided by code, no path call
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('user');
       wrapper.unmount();
     });
 
-    test('auto + concept: resolve call first, then generation', async () => {
+    // A THIN CONCEPT IS EXPANDED BEFORE IT IS ROUTED (owner, 2026-11-03). "Gloom
+    // Stalker" is two significant words, which is all the router used to get — and on
+    // "Pumpkin King" that produced brute 6 times of 6 and the Clay Golem composition
+    // filling five of six rows. So at three significant words or fewer, and when the
+    // name is not a print creature, the identity call runs FIRST and the route call
+    // reads its expansion: the blank roll's order, and the SAME TWO CALLS reversed, so
+    // the count below is unchanged at five. The brass-bull test further down covers a
+    // concept too long to be thin and still asserts route-first.
+    test('auto + a THIN concept: the identity call expands it, then routing reads the expansion', async () => {
       mockLLM({ resolvedArchetype: 'lurker' });
       const wrapper = mountGenerator();
       await wrapper.find('input#monsterName').setValue('Gloom Stalker');
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
-      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateRouteResponse); // the route call runs first
-      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateArchetypeResponse);
-      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateFlavorResponse);
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(5); // identity (expansion) + route + path + flavor + naming — no extra call
+      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateIdentityResponse); // the expansion runs first
+      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateRouteResponse); // then the route, on the expanded text
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validatePathResponse); // the path call rides beside it
+      expect(aiClient.generateGptResponse.mock.calls[3][1]).toBe(validateFlavorResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');
@@ -681,6 +696,20 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     wrapper.unmount();
   });
 
+  // THE CRITIC'S A3 (owner, 2026-10-18): with a Name in the Name box and a description
+  // in the textarea, the Name is a closed fact — the call's `provided_name` is not
+  // consulted. "Purple Worm" + "that swallowed a war-band's armoury" shipped as Gutforge.
+  test('a Name beside a description is the name, whatever the call says about it', async () => {
+    resolveWith({ archetype: 'brute' }); // no provided_name at all — the call "did not see a name"
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Purple Worm');
+    await wrapper.find('textarea').setValue("that swallowed a war-band's armoury");
+    await setCR(wrapper, '15');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBe('Purple Worm');
+    wrapper.unmount();
+  });
+
   test('a short provided_name inside a longer input is still honoured, article stripped', async () => {
     resolveWith({ archetype: 'brute', provided_name: 'the Brazen Bull' });
     const wrapper = mountGenerator();
@@ -728,9 +757,10 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     const calls = aiClient.generateGptResponse.mock.calls;
     expect(calls[0][1]).toBe(validateRouteResponse);
     expect(calls[0][0]).toMatch(/THE SHELF/);
-    expect(calls[1][1]).toBe(validateArchetypeResponse);
-    expect(calls[1][0]).toMatch(/CHASSIS: this creature has been routed onto the "brute-charger"/);
-    expect(calls[1][0]).toMatch(/Creature type: Construct/);
+    expect(calls[1][1]).toBe(validatePathResponse); // the path call, beside the route (shadow)
+    expect(calls[2][1]).toBe(validateArchetypeResponse);
+    expect(calls[2][0]).toMatch(/CHASSIS: this creature has been routed onto the "brute-charger"/);
+    expect(calls[2][0]).toMatch(/Creature type: Construct/);
     expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'charger', resolvedType: 'Construct', mechanics: [] });
     wrapper.unmount();
   });

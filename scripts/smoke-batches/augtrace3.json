@@ -1,0 +1,5 @@
+[
+  { "name": "", "description": "a cliff-stalker that climbs sheer rock and squeezes into crevices", "cr": "7", "rules": "2024", "canary": "TRACE" },
+  { "name": "", "description": "a dune-burrower that swims through loose sand and feels every footstep above it", "cr": "10", "rules": "2024", "canary": "TRACE" },
+  { "name": "", "description": "a cellar-spider at home in its own webs, which it reads like a map", "cr": "6", "rules": "2024", "canary": "TRACE" }
+]

@@ -33,7 +33,21 @@ const GEN_TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 240_000);
 
 const args = process.argv.slice(2);
 const headed = args.includes('--headed');
-const onlyIdx = args.includes('--only') ? Number(args[args.indexOf('--only') + 1]) : null;
+// `--only` TAKES ONE INDEX, AND SAYS SO WHEN IT DOES NOT (2026-11-14). `--only 4,11,12`
+// used to become NaN and silently run the whole batch — a reviewer lost a run to it,
+// having asked for three blocks and been handed twelve. A flag that quietly does the
+// opposite of what it was given is worse than one that refuses.
+const onlyIdx = (() => {
+  if (!args.includes('--only')) return null;
+  const raw = args[args.indexOf('--only') + 1];
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) {
+    console.error(`--only takes ONE 1-based index; got "${raw ?? '(nothing)'}".`);
+    if (String(raw ?? '').includes(',')) console.error('A comma list is not supported — run the batch once, or pass a single index per run.');
+    process.exit(2);
+  }
+  return n;
+})();
 const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx)) ?? 'batch';
 let goldenFailures = 0;
 
@@ -44,6 +58,9 @@ if (!fs.existsSync(batchPath)) {
 }
 let entries = JSON.parse(fs.readFileSync(batchPath, 'utf8'));
 if (onlyIdx) entries = [entries[onlyIdx - 1]];
+// the union of every flag key this batch sets, cleared before each entry (see below). Read
+// from the WHOLE file, not the --only slice, so a single-entry run starts just as clean.
+const flagKeys = new Set(JSON.parse(fs.readFileSync(batchPath, 'utf8')).flatMap((e) => Object.keys(e?.flags ?? {})));
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const outDir = path.resolve('smoke-out', `${batchName}-${stamp}`);
@@ -64,13 +81,18 @@ const run = async () => {
   // [reskin] line through console.log, and warnings (resolve failures) through
   // console.warn
   let lines = [];
+  let genFailed = null; // a THROWN generation never saves — without this the run waited out the full timeout on it (the gmAsked ReferenceError read as six "timeouts", 2026-10-18)
+  // A PAGE ERROR CARRIES THE STACK. The console text of a caught-and-logged
+  // failure usually does not, and a stochastic throw cannot be found without one.
+  page.on('pageerror', (err) => { lines.push(`[pageerror] ${err?.stack ?? err?.message ?? err}`); });
   page.on('console', (msg) => {
     const t = msg.text();
+    if (/Statblock generation failed/.test(t)) genFailed = t.slice(0, 900); // 160 truncated away the STACK, which is the only thing that locates a stochastic throw (2026-10-22)
     // every warning/error is captured (minus browser noise) — a "Statblock
     // generation failed: TypeError: Failed to fetch" was dropped by the old
     // allowlist and a dead run looked like a resolve hiccup (2026-09-20)
     const noise = /font-src|Content Security Policy|runtime\.lastError|Receiving end does not exist/.test(t);
-    if (!noise && (/\[concept\]|\[reskin\]|\[route\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
+    if (!noise && (/\[concept\]|\[reskin\]|\[route\]|\[path\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
       lines.push(`${msg.type() === 'warning' || msg.type() === 'error' ? '!! ' : ''}${t}`);
     }
   });
@@ -85,14 +107,16 @@ const run = async () => {
   const results = [];
   for (const [i, entry] of entries.entries()) {
     const n = String(i + 1).padStart(2, '0');
-    const label = entry.name ?? entry.concept;
+    const label = entry.name || entry.concept || entry.description || '(blank)';
     process.stdout.write(`[${n}/${entries.length}] CR ${entry.cr} — ${String(label).slice(0, 56)}… `);
     lines = [];
     const t0 = Date.now();
 
     // Google-Fonts <link>s keep `load` pending in headless — domcontentloaded
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#monsterName', { timeout: 30_000 });
+    // the page may not come up after a stalled block (the features run died on the entry
+    // after a 411 s stall, "waiting for locator('#monsterName')", 2026-10-19): one retry
+    const open = async () => { await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForSelector('#monsterName', { timeout: 30_000 }); };
+    try { await open(); } catch { lines.push('[harness] the page did not come up — retrying once'); await page.waitForTimeout(5_000); await open(); }
     const before = await savedCount(page);
     // identity, not name: five runs of one concept can all be named "Brass
     // Bull", and a name-set diff then reports the INPUT as the new monster
@@ -116,13 +140,27 @@ const run = async () => {
     // arbitrary localStorage flags — lets a batch exercise the KILL SWITCHES
     // (statblock-reskin-{pilot,brute,caster,lurker,defender,bodies,2014}='0'),
     // which are the production rollback plan and were never smoked
-    if (entry.flags) {
-      await page.evaluate((f) => { for (const [k, v] of Object.entries(f)) localStorage.setItem(k, v); }, entry.flags);
+    // EVERY FLAG THE BATCH USES IS CLEARED BEFORE EACH ENTRY (2026-11-14). This used to SET
+    // only, so a flag carried over into every later entry: probe B's first run had all eight
+    // sheets injected because each baseline inherited the previous entry's element, and the
+    // run was void. Clearing the union of every entry's flag keys makes that impossible
+    // rather than something a batch author has to remember.
+    if (flagKeys.size) {
+      await page.evaluate((keys) => { for (const k of keys) localStorage.removeItem(k); }, [...flagKeys]);
+      if (entry.flags) await page.evaluate((f) => { for (const [k, v] of Object.entries(f)) localStorage.setItem(k, v); }, entry.flags);
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#monsterName', { timeout: 30_000 });
     }
-    await page.fill('#monsterName', entry.name ?? entry.concept);
-    if (entry.name && entry.concept) await page.fill('textarea', entry.concept);
+    // FORM-SHAPED entries (2026-10-01): `name` goes to the name field even when empty,
+    // `description` to the textarea; the older concept-only shape still types the
+    // concept into the name field (and into the textarea when a name is given too)
+    if ('description' in entry || 'name' in entry) {
+      await page.fill('#monsterName', String(entry.name ?? ''));
+      if (entry.description) await page.fill('textarea', String(entry.description));
+      if (!('description' in entry) && entry.name && entry.concept) await page.fill('textarea', entry.concept);
+    } else {
+      await page.fill('#monsterName', entry.concept ?? '');
+    }
 
     // ParSelect renders a native <select>; pick the one that actually offers
     // this value (CR vs Combat role) rather than guessing at order
@@ -136,8 +174,9 @@ const run = async () => {
     await page.click('.generate-button');
 
     let status = 'ok';
+    genFailed = null;
     try {
-      await page.waitForFunction(
+      const saved = page.waitForFunction(
         (want) => {
           const m = JSON.parse(localStorage.getItem('monsters') || '{}');
           return Object.values(m).filter(Array.isArray).flat().length >= want;
@@ -145,8 +184,14 @@ const run = async () => {
         before + 1,
         { timeout: GEN_TIMEOUT_MS },
       );
-    } catch {
-      status = 'TIMED OUT / no save';
+      const thrown = new Promise((_, rej) => { const iv = setInterval(() => { if (genFailed) { clearInterval(iv); rej(new Error(genFailed)); } }, 500); saved.then(() => clearInterval(iv), () => clearInterval(iv)); }); // handled on both branches — a bare .finally() re-raised the timeout as an unhandled rejection and killed the run (forty, 2026-10-18)
+      await Promise.race([saved, thrown]);
+    } catch (e) {
+      status = genFailed ? `GENERATION THREW — ${genFailed}` : 'TIMED OUT / no save';
+      // WHAT THE PAGE WAS DOING when the clock ran out — a timeout with no trace at all
+      // is the harness or the page, not the engine (the scree block, forty 2026-10-18)
+      const diag = await page.evaluate(() => ({ ready: document.readyState, generating: !!document.querySelector('.generate-button[disabled]'), url: location.href })).catch((e3) => ({ error: String(e3?.message ?? e3).slice(0, 120) }));
+      lines.push(`[harness] at timeout: ${JSON.stringify(diag)}`);
     }
 
     // ENRICHMENT runs after the save and is not awaited by the app — moving
@@ -210,7 +255,13 @@ const run = async () => {
       const m = JSON.parse(localStorage.getItem('monsters') || '{}');
       const all = Object.values(m).filter(Array.isArray).flat();
       const seen = new Set(known);
-      return all.find((x) => !seen.has(JSON.stringify(x))) ?? null;   // no new block => null, never the previous one
+      // THE LAST fresh entry, not the first (2026-10-25). A run that re-serializes an
+      // OLDER same-name entry — the 2014/2024 other_edition write does — makes that
+      // old sheet "fresh" too, and it sits EARLIER in the array, so .find returned
+      // run #1's block for run #2 (tally6: traces differed, blocks byte-identical;
+      // horseman4: a 2014 block hashed identical to a 2024 one). New saves append.
+      const fresh = all.filter((x) => !seen.has(JSON.stringify(x)));
+      return fresh.length ? fresh[fresh.length - 1] : null;   // no new block => null, never the previous one
     }, namesBefore);
 
     // GOLDENS (critic, v2 blind read 2026-09-21: "freeze the v1 winners — if a
@@ -233,13 +284,56 @@ const run = async () => {
       lines.push(`[golden] ${verdict} — route ${routeGot ?? 'none'} (want ${(entry.expect.route ?? ['any']).join('|')}); templates ${tmplGot.join(',') || 'none'} (want ${(entry.expect.template ?? ['any']).join('|')})`);
       console.log(`  [golden] ${verdict}`);
     }
+    // RE-ROLL ONE ENTRY (step 9b, 2026-10-14): the per-entry re-roll is a UI
+    // path — the card's own button — so nothing but this harness can show a
+    // critic what a re-rolled row looks like beside the block it came from.
+    // Batch entry: "reroll": { "section": "Traits", "match": "Hold Breath" }
+    // (2024 cards only; the classic card is a different component).
+    let rerolled = null;
+    if (entry.reroll && monster && (entry.rules ?? '2024') === '2024') {
+      const want = entry.reroll;
+      try {
+        const sec = want.section ?? 'Actions';
+        const list = (monster.sections ?? {})[sec] ?? [];
+        const idx = want.match ? list.findIndex((e) => new RegExp(want.match, 'i').test(String(e?.name ?? ''))) : Number(want.index ?? 0);
+        if (idx < 0) throw new Error(`no ${sec} row matching /${want.match}/`);
+        const before = { name: list[idx].name, text: list[idx].text };
+        const sel = `[data-testid="reroll-${sec}-${idx}"]`;
+        await page.locator('[data-testid="edit-statblock"]').click({ timeout: 15_000 });
+        await page.locator(sel).click({ timeout: 15_000 });
+        // the button is disabled while the call is in flight and re-enabled
+        // after: wait for it to go, then to come back
+        await page.waitForFunction((s) => { const b = document.querySelector(s); return !!b && b.disabled; }, sel, { timeout: 15_000 }).catch(() => {});
+        await page.waitForFunction((s) => { const b = document.querySelector(s); return !!b && !b.disabled; }, sel, { timeout: GEN_TIMEOUT_MS, polling: 500 });
+        await page.locator('[data-testid="save-edit"]').click({ timeout: 15_000 });
+        const after = await page.evaluate(({ s, i, nm }) => {
+          const m = JSON.parse(localStorage.getItem('monsters') || '{}');
+          const mine = Object.values(m).filter(Array.isArray).flat().find((x) => x?.name === nm);
+          const e = mine?.sections?.[s]?.[i] ?? null;
+          return e ? { name: e.name, text: e.text, template: e.template ?? null, boundKeys: e.boundKeys ?? null } : null;
+        }, { s: sec, i: idx, nm: monster.name });
+        rerolled = { sec, before, after };
+        lines.push(`[harness] re-rolled ${sec}/"${before.name}" -> "${after?.name ?? '(unchanged)'}"${after?.template ? ` [catalog: ${after.template}]` : ' [the call\'s own text]'}`);
+      } catch (e2) {
+        rerolled = { error: String(e2?.message ?? e2).slice(0, 160) };
+        lines.push(`!! [harness] re-roll failed: ${rerolled.error}`);
+      }
+    }
     const secs = ((Date.now() - t0) / 1000).toFixed(0);
     console.log(`${status === 'ok' ? '✓' : '✗ ' + status} ${secs}s`);
+    // A TIMEOUT THAT LOGGED NOTHING never reached the engine: the page did not start
+    // generating. That is a harness-side miss, so the entry gets ONE more turn at the
+    // end of the batch (the iterator visits what is appended) — a real engine stall
+    // leaves [concept]/[reskin] lines and is not retried.
+    if (/^TIMED OUT/.test(status) && !lines.some((l) => /\[(?:concept|reskin|route)\]/.test(l)) && !entry._retryOf) {
+      entries.push({ ...entry, _retryOf: n });
+      lines.push(`[harness] no trace captured — re-queued once as a harness miss`);
+    }
 
     const md = [
-      `## ${n}. ${monster?.name ?? label} — CR ${entry.cr}${status === 'ok' ? '' : `  [${status}]`}`,
+      `## ${n}. ${monster?.name ?? label} — CR ${entry.cr}${status === 'ok' ? '' : `  [${status}]`}${entry._retryOf ? `  (retry of ${entry._retryOf})` : ''}`,
       '',
-      `**Input:** \`${entry.name ? `name: ${entry.name} | ` : ''}${entry.concept}\``,
+      `**Input:** \`${entry.name ? `name: ${entry.name} | ` : ''}${entry.concept ?? entry.description ?? ''}${entry.role ? ` | role: ${entry.role}` : ''}\``,
       `**Donor:** ${(lines.find((l) => l.includes('[reskin] donor:')) ?? '—').replace(/.*donor: /, '')}`,
       // toLegacyModel drops `generation`, so on a 2014 block the signature
       // survives only on the cached 2024 printing
@@ -247,6 +341,13 @@ const run = async () => {
       '',
       '### Block', '```', card, '```', '',
       ...(converted ? ['### Converted', '```', converted, '```', ''] : []),
+      ...(rerolled ? (rerolled.error
+        ? ['### Re-roll', '```', `(re-roll did not complete: ${rerolled.error})`, '```', '']
+        : ['### Re-roll — one entry, replaced', '```',
+          `${rerolled.sec} / BEFORE  ${rerolled.before.name}: ${rerolled.before.text}`,
+          `${rerolled.sec} / AFTER   ${rerolled.after?.name ?? '—'}: ${rerolled.after?.text ?? '—'}`,
+          `provenance: ${rerolled.after?.template ? `catalog template "${rerolled.after.template}"${rerolled.after.boundKeys?.length ? `, binds ${rerolled.after.boundKeys.join(', ')}` : ''}` : 'none — the call wrote the text itself'}`,
+          '```', ''] ) : []),
       '### Trace', '```', lines.join('\n') || '(no trace captured)', '```', '',
     ].join('\n');
 

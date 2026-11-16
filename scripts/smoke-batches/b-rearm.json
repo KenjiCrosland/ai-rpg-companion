@@ -1,0 +1,6 @@
+[
+  { "name": "", "description": "a goliath berserker who loses control when wounded", "cr": "8", "rules": "2024", "canary": "B: the greataxe takes the Gladiator's Shield Bash with it (print pairs no shield with a heavy melee weapon)" },
+  { "name": "Ser Aldous", "description": "a templar with a mace who shields the weak", "cr": "4", "rules": "2024", "canary": "B: one melee row, the GM's mace — print's longsword yields" },
+  { "name": "Vashka the Red", "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.", "cr": "6", "rules": "2024", "canary": "B: the longbow rolls DEX, not STR · A1: no Guarded Stance" },
+  { "name": "Dame Oriel", "description": "a knight who holds the line with a shield and a longsword", "cr": "5", "rules": "2024", "canary": "B control: a one-handed class weapon keeps the shield row; the round stays inside the card" }
+]

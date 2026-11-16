@@ -1,0 +1,210 @@
+{
+  "engine": "canaries-2026-10-13T14-14-20",
+  "blocks": {
+    "1": {
+      "name": "Owlbear",
+      "cr": 3,
+      "ac": 13,
+      "hp": 59,
+      "attacks": [
+        {
+          "name": "Rend",
+          "bonus": 7,
+          "avg": 14
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "brute-2",
+      "untranslated": null
+    },
+    "2": {
+      "name": "Headless Horseman",
+      "cr": 4,
+      "ac": 16,
+      "hp": 78,
+      "attacks": [
+        {
+          "name": "Saber",
+          "bonus": 6,
+          "avg": 7
+        }
+      ],
+      "dcs": [
+        14
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3-mounted",
+      "untranslated": null
+    },
+    "3": {
+      "name": "Wolf",
+      "cr": 5,
+      "ac": 16,
+      "hp": 88,
+      "attacks": [
+        {
+          "name": "Bite",
+          "bonus": 6,
+          "avg": 17
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "skirmisher-3",
+      "untranslated": null
+    },
+    "4": {
+      "name": "Steingolem",
+      "cr": 10,
+      "ac": 18,
+      "hp": 220,
+      "attacks": [
+        {
+          "name": "Slam",
+          "bonus": 10,
+          "avg": 15
+        },
+        {
+          "name": "Force Bolt",
+          "bonus": 9,
+          "avg": 22
+        }
+      ],
+      "dcs": [
+        17
+      ],
+      "multiattack": 2,
+      "donor": "brute-9",
+      "untranslated": 0
+    },
+    "5": {
+      "name": "Kobold",
+      "cr": 0.25,
+      "ac": 14,
+      "hp": 7,
+      "attacks": [
+        {
+          "name": "Dagger",
+          "bonus": 4,
+          "avg": 6
+        },
+        {
+          "name": "Sling",
+          "bonus": 4,
+          "avg": 6
+        }
+      ],
+      "dcs": [],
+      "multiattack": 0,
+      "donor": "skirmisher-1",
+      "untranslated": null
+    },
+    "6": {
+      "name": "Goblin Boss",
+      "cr": 1,
+      "ac": 17,
+      "hp": 21,
+      "attacks": [
+        {
+          "name": "Scimitar",
+          "bonus": 4,
+          "avg": 6
+        },
+        {
+          "name": "Shortbow",
+          "bonus": 4,
+          "avg": 6
+        }
+      ],
+      "dcs": [
+        12
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3-mounted",
+      "untranslated": null
+    },
+    "7": {
+      "name": "Bridge Toll Troll",
+      "cr": 5,
+      "ac": 15,
+      "hp": 94,
+      "attacks": [
+        {
+          "name": "Rend",
+          "bonus": 7,
+          "avg": 18
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "defender-5",
+      "untranslated": null
+    },
+    "8": {
+      "name": "Old Hammerfist",
+      "cr": 5,
+      "ac": 14,
+      "hp": 102,
+      "attacks": [
+        {
+          "name": "Club",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Slam",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Thrown Boulder",
+          "bonus": 7,
+          "avg": 17
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "brute-5",
+      "untranslated": null
+    },
+    "9": {
+      "name": "Vampire Spawn",
+      "cr": 5,
+      "ac": 16,
+      "hp": 90,
+      "attacks": [
+        {
+          "name": "Claw",
+          "bonus": 6,
+          "avg": 8
+        }
+      ],
+      "dcs": [
+        14
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3",
+      "untranslated": null
+    },
+    "10": {
+      "name": "Well Drowned",
+      "cr": 5,
+      "ac": 20,
+      "hp": 90,
+      "attacks": [
+        {
+          "name": "Barbed Coil",
+          "bonus": 6,
+          "avg": 17
+        }
+      ],
+      "dcs": [
+        14
+      ],
+      "multiattack": 2,
+      "donor": "lurker-5-trap",
+      "untranslated": null
+    }
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "name": "Crust-Burrow Worm",
+  "inline": "the crust-burrow worm",
+  "format": "2024",
+  "cr": 24,
+  "cr_str": "24",
+  "xp": 62000,
+  "challenge_rating": "24 (XP 62,000; PB +7)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Unaligned",
+  "ac": 20,
+  "hp": 542,
+  "hp_formula": "31d20 + 217",
+  "pb": 7,
+  "speed": "40 ft., Burrow 30 ft.",
+  "stats": {
+    "STR": 28,
+    "DEX": 8,
+    "CON": 24,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 16,
+    "DEX": -1,
+    "CON": 14,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +16, Perception +7",
+  "senses": "tremorsense 120 ft.; Passive Perception 17",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Earth Glide",
+        "text": "The crust-burrow worm can burrow through nonmagical, unworked earth and stone. While doing so, the crust-burrow worm doesn't disturb the material it moves through.",
+        "library": true,
+        "template": "earth-glide",
+        "boundKeys": [
+          "beneath the",
+          "earth",
+          "stone"
+        ],
+        "freeRow": true,
+        "expresses": "bursting from the ground to seize prey",
+        "bound": false,
+        "expressedQuote": "can burrow through nonmagical, unworked earth and stone"
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the crust-burrow worm fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The crust-burrow worm makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +16, reach 15 ft. 45 (8d8 + 9) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 24). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Hurled Burst (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Dexterity Saving Throw:* DC 24, each creature in a 15-foot-radius Sphere centered on a point within 60 feet. *Failure:* 99 (18d10) Piercing damage. *Success:* Half damage.",
+        "library": true,
+        "seed": "thrown-burst-seed"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Swallow",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The crust-burrow worm swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the crust-burrow worm, and takes 21 (6d6) Acid damage at the start of each of the crust-burrow worm's turns. The crust-burrow worm can have only one creature swallowed at a time. If the crust-burrow worm takes 40 damage or more in a single turn from the swallowed creature, the crust-burrow worm must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the crust-burrow worm. If the crust-burrow worm dies, a swallowed creature exits the body Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the crust-burrow worm can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Erupt",
+        "text": "The crust-burrow worm moves up to half its Speed without provoking Opportunity Attacks, and it makes one Bite attack."
+      },
+      {
+        "name": "Drag Down",
+        "text": "The crust-burrow worm moves up to half its Speed without provoking Opportunity Attacks, carrying each creature it is grappling along with it."
+      },
+      {
+        "name": "Burrow Stomp",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 24, each creature within 10 feet of the crust-burrow worm. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "It wakes where the world's crust splits, hunting by the tremor of footsteps for the warmth of a full belly in the dark.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-grappler",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a worm",
+    "clauses": [
+      {
+        "id": "cl_1ah53si",
+        "text": "a worm",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Kraken (CR 23) — the swallow engine at the legendary tier",
+    "free_rows": 1,
+    "free_row_templates": [
+      "earth-glide"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "gap_vetoed": "0 of 0",
+    "gap_missing_unstated": 1,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a worm",
+  "selectedChallengeRating": "24",
+  "monsterName": "Crust-Burrow Worm",
+  "caster": false
+}

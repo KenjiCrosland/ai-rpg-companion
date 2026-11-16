@@ -1,0 +1,10 @@
+[
+ { "name": "", "description": "a storm that gathers over three rounds and then breaks", "cr": "11", "rules": "2024", "canary": "KNOWN · tally landed here; the nova should now be its payoff" },
+ { "name": "", "description": "a bell-ghost whose toll builds to one shattering peal", "cr": "6", "rules": "2024", "canary": "KNOWN · tally + wind-up on one sheet; now the marks should feed the peal" },
+ { "name": "", "description": "a clockwork knight that winds tighter every round until it strikes", "cr": "8", "rules": "2024", "canary": "KNOWN · the warden" },
+ { "name": "", "description": "a volcano-heart that swells and bursts", "cr": "12", "rules": "2024", "canary": "FUSE + NOVA · high CR" },
+ { "name": "", "description": "a siege-mortar construct that must brace before each shot", "cr": "10", "rules": "2024", "canary": "FUSE · ranged nova" },
+ { "name": "", "description": "a hedge-knight with a spear and shield", "cr": "4", "rules": "2024", "canary": "MUNDANE CONTROL · no tally, no nova rewrite" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · untouched" },
+ { "name": "", "description": "a cathedral-vault ooze that digests reliquaries", "cr": "9", "rules": "2024", "canary": "unrelated · a tally on a sheet with no nova must DECLINE, traced" }
+]

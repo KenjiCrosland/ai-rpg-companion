@@ -1,0 +1,141 @@
+{
+  "name": "Ramwrought Siegework",
+  "inline": "the siegework",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Siege Advance",
+        "text": "While the siegework is moving toward a creature it has damaged within the last 24 hours, the siegework's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement.",
+        "library": true,
+        "template": "relentless-pursuit",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "shoulders through walls",
+        "expresses": "shouldering through walls",
+        "bound": false
+      },
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The siegework can't shape-shift."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The siegework has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The siegework makes two Splintering Fist attacks. It can replace one attack with a use of Ramming Shoulder."
+      },
+      {
+        "name": "Splintering Fist",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Ramming Shoulder",
+        "text": "*Strength Saving Throw:* DC 16, each creature in a 30-foot Cone. *Failure:* The target is pushed up to 15 feet away from the siegework and has the Prone condition.",
+        "library": true,
+        "template": "push-prone",
+        "imposes": "Prone",
+        "boundKeys": [
+          "shove",
+          "knock"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "a siege engine golem of lashed timber that shoulders through walls"
+      }
+    ]
+  },
+  "lore": "Built by a siege master to walk through the walls other armies stop at, it still hunts the next standing wall.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a siege-engine golem of lashed timber that shoulders through walls",
+    "clauses": [
+      {
+        "id": "cl_q7gx4o",
+        "text": "a siege-engine golem of lashed timber",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vcmdz5",
+        "text": "shoulders through walls",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "charge",
+        "askMechanicWhy": "shoulders through walls"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 2",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a siege-engine golem of lashed timber that shoulders through walls",
+  "selectedChallengeRating": "8",
+  "monsterName": "Ramwrought Siegework",
+  "caster": false
+}

@@ -1,0 +1,267 @@
+{
+  "name": "Bog Hound",
+  "inline": "the bog hound",
+  "type_and_alignment": "Medium beast, unaligned",
+  "armor_class": "11 (natural armor)",
+  "hit_points": "22 (3d8 + 9)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 12 (+1), DEX 8 (-1), CON 16 (+3), INT 4 (-3), WIS 10 (+0), CHA 4 (-3)",
+  "saving_throws": "STR +3",
+  "skills": "Athletics +3, Perception +2",
+  "senses": "darkvision 30 ft., passive Perception 12",
+  "languages": "None",
+  "challenge_rating": "1 (200 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Mire Lurk",
+      "description": "While the bog hound is in swamp terrain or wading water, the bog hound has advantage on Dexterity (Stealth) checks made there, and a creature that has not seen it move has disadvantage on Perception checks to spot it there."
+    },
+    {
+      "name": "Whelm (Bonus Action)",
+      "description": "The bog hound whelms one Medium or smaller creature it is grappling. While whelmed, the target is blinded and restrained, has Total Cover against attacks and other effects outside the bog hound, and takes 3 (1d6) bludgeoning damage at the start of each of the bog hound's turns. The bog hound can have only one creature whelmed at a time. If the bog hound takes 5 damage or more in a single turn from the whelmed creature, the bog hound must release the target at the end of that turn, and the target exits prone in an unoccupied space within 5 feet of the bog hound. If the bog hound dies, a whelmed creature pulls free prone by using 5 feet of movement.",
+      "imposes": [
+        "Blinded",
+        "Restrained"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The bog hound makes two Bite attacks."
+    },
+    {
+      "name": "Bite",
+      "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage. If the target is a Large or smaller creature, it is grappled (escape DC 11). While grappled, the target is restrained.",
+      "imposes": [
+        "Grappled",
+        "Restrained"
+      ]
+    },
+    {
+      "name": "Muck Burst (Recharge 5-6)",
+      "description": "Each creature in a 15-foot-radius sphere centered on a point within 60 feet must make a DC 13 Dexterity saving throw, taking 9 (2d8) piercing damage on a failed save, or half as much damage on a successful one."
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mud-caked bog hound that drags fishermen under",
+    "clauses": [
+      {
+        "id": "cl_q9h7bu",
+        "text": "a mud-caked bog hound",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1noqc7c",
+        "text": "drags fishermen under",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "drags fishermen under",
+        "askShape": "condition",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "drags fishermen under"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "answered_by_existing": [
+      "drags fishermen under -> Whelm"
+    ],
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Bog Hound",
+    "inline": "the bog hound",
+    "format": "2024",
+    "cr": 1,
+    "cr_str": "1",
+    "xp": 200,
+    "challenge_rating": "1 (XP 200; PB +2)",
+    "type": "Beast",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "ac": 11,
+    "hp": 22,
+    "hp_formula": "3d8 + 9",
+    "pb": 2,
+    "speed": "30 ft., Swim 30 ft.",
+    "stats": {
+      "STR": 12,
+      "DEX": 8,
+      "CON": 16,
+      "INT": 4,
+      "WIS": 10,
+      "CHA": 4
+    },
+    "saves": {
+      "STR": 3,
+      "DEX": -1,
+      "CON": 3,
+      "INT": -3,
+      "WIS": 0,
+      "CHA": -3
+    },
+    "skills": "Athletics +3, Perception +2",
+    "senses": "darkvision 30 ft.; Passive Perception 12",
+    "languages": "None",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The bog hound makes two Bite attacks."
+        },
+        {
+          "name": "Bite",
+          "imposes": [
+            "Grappled",
+            "Restrained"
+          ],
+          "text": "*Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Muck Burst (Recharge 5-6)",
+          "gate": "Recharge 5-6",
+          "text": "*Dexterity Saving Throw:* DC 13, each creature in a 15-foot-radius Sphere centered on a point within 60 feet. *Failure:* 9 (2d8) Piercing damage. *Success:* Half damage.",
+          "library": true,
+          "seed": "thrown-burst-seed"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Whelm",
+          "rules": true,
+          "engulf_engine": true,
+          "imposes": [
+            "Blinded",
+            "Restrained"
+          ],
+          "text": "The bog hound whelms one Medium or smaller creature it is grappling. While whelmed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the bog hound, and takes 3 (1d6) Bludgeoning damage at the start of each of the bog hound's turns. The bog hound can have only one creature whelmed at a time. If the bog hound takes 5 damage or more in a single turn from the whelmed creature, the bog hound must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the bog hound. If the bog hound dies, a whelmed creature pulls free Prone by using 5 feet of movement.",
+          "boundKeys": [
+            "whelm",
+            "swallow",
+            "swallows",
+            "engulf",
+            "engulfs",
+            "devour",
+            "devours",
+            "gulp",
+            "smother",
+            "entomb",
+            "cocoon"
+          ],
+          "clause": "drags fishermen under",
+          "answersAlso": [
+            "drags fishermen under"
+          ],
+          "clauseId": "cl_1noqc7c"
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Mire Lurk",
+          "text": "While the bog hound is in swamp terrain or wading water, the bog hound has Advantage on Dexterity (Stealth) checks made there, and a creature that has not seen it move has Disadvantage on Perception checks to spot it there.",
+          "authored": true,
+          "clause": "The bog hound lies nearly submerged in mud and muck. It has Advantage on Dexterity (Stealth) checks made while in swamp ",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": null,
+          "bound": false,
+          "boundKeys": []
+        }
+      ]
+    },
+    "lore": "A drowned fisherman's starving hound, swallowed by the bog and spat back out as a mud-caked thing that still hunts the river's edge for the catch its master never brought home.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-5-grappler",
+      "archetype": "brute",
+      "holds": true,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a mud-caked bog hound that drags fishermen under",
+      "clauses": [
+        {
+          "id": "cl_q9h7bu",
+          "text": "a mud-caked bog hound",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_1noqc7c",
+          "text": "drags fishermen under",
+          "kind": "mechanical",
+          "askWhen": "on_hit",
+          "askWhenWhy": "drags fishermen under",
+          "askShape": "condition",
+          "askMechanic": "grapple",
+          "askMechanicWhy": "drags fishermen under"
+        }
+      ],
+      "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 1,
+      "seed_rows": 1,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the call named no template for the pick",
+      "answered_by_existing": [
+        "drags fishermen under -> Whelm"
+      ],
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a mud-caked bog hound that drags fishermen under",
+  "selectedChallengeRating": "1",
+  "monsterName": "Bog Hound",
+  "caster": false
+}

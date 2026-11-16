@@ -34,20 +34,20 @@
           <p class="sb24-line sb24-line--split">
             <!-- {{ ' ' }} defeats Vue's whitespace condensing between the
                  label element and the value (same trick as the entries). -->
-            <span><strong>AC</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.ac }}</template>
+            <span><strong>{{ L.ac }}</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.ac }}</template>
               <input v-else v-model.number="edited.ac" type="number"
                 class="sb24-edit__input sb24-edit__input--num" data-testid="edit-ac" aria-label="Armor Class" />
             </span>
-            <span><strong>Initiative</strong> {{ signed(displayInitiativeBonus) }} ({{ 10 + displayInitiativeBonus }})</span>
+            <span><strong>{{ L.initiative }}</strong> {{ signed(displayInitiativeBonus) }} ({{ 10 + displayInitiativeBonus }})</span>
           </p>
-          <p class="sb24-line"><strong>HP</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.hp }}<template v-if="monster.hp_formula"> ({{ monster.hp_formula }})</template></template>
+          <p class="sb24-line"><strong>{{ L.hp }}</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.hp }}<template v-if="monster.hp_formula"> ({{ monster.hp_formula }})</template></template>
             <template v-else>
               <input v-model.number="edited.hp" type="number"
                 class="sb24-edit__input sb24-edit__input--num" aria-label="Hit Points" />
               (<input v-model="edited.hp_formula" class="sb24-edit__input sb24-edit__input--short" aria-label="HP formula" />)
             </template>
           </p>
-          <p class="sb24-line" v-if="isEditing || monster.speed"><strong>Speed</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.speed }}</template>
+          <p class="sb24-line" v-if="isEditing || monster.speed"><strong>{{ L.speed }}</strong>{{ ' ' }}<template v-if="!isEditing">{{ monster.speed }}</template>
             <input v-else v-model="edited.speed" class="sb24-edit__input sb24-edit__input--line" aria-label="Speed" />
           </p>
         </div>
@@ -59,10 +59,10 @@
         <div class="sb24-abilities">
           <div class="sb24-ability-col" v-for="(col, i) in abilityColumns" :key="i">
             <div class="sb24-ability-cell sb24-ability-head">
-              <span></span><span></span><span>MOD</span><span>SAVE</span>
+              <span></span><span></span><span>{{ L.mod }}</span><span>{{ L.save }}</span>
             </div>
             <div class="sb24-ability-cell" v-for="stat in col" :key="stat">
-              <span class="sb24-ability-abbr">{{ stat }}</span>
+              <span class="sb24-ability-abbr">{{ L.abilities[stat] ?? stat }}</span>
               <span v-if="!isEditing" class="sb24-ability-score">{{ monster.stats[stat] }}</span>
               <input v-else v-model.number="edited.stats[stat]" type="number"
                 class="sb24-edit__input sb24-edit__input--score" :data-testid="`edit-${stat}`" :aria-label="stat" />
@@ -77,7 +77,7 @@
             <p class="sb24-line" v-for="[label, value] in detailLines" :key="label">
               <strong>{{ label }}</strong> {{ value }}
             </p>
-            <p class="sb24-line"><strong>CR</strong> {{ crText }}</p>
+            <p class="sb24-line"><strong>{{ L.cr }}</strong> {{ crText }}</p>
           </template>
           <template v-else>
             <!-- All detail lines show while editing so absent ones can be
@@ -86,7 +86,7 @@
               <strong>{{ label }}</strong>
               <input v-model="edited[field]" class="sb24-edit__input sb24-edit__input--line" :aria-label="label" />
             </p>
-            <p class="sb24-line"><strong>CR</strong> {{ crText }}
+            <p class="sb24-line"><strong>{{ L.cr }}</strong> {{ crText }}
               <span class="sb24-edit__note">CR, PB, and initiative are engine-owned; use Regenerate to change them.</span>
             </p>
           </template>
@@ -104,28 +104,26 @@
                  a column (break-after: avoid is not honored cross-browser in
                  multicol). Remaining entries flow freely. -->
             <div class="sb24-section-head">
-              <h3 class="sb24-section-title">{{ section.name }}</h3>
+              <h3 class="sb24-section-title">{{ L.sections[section.name] ?? section.name }}</h3>
               <p
                 v-if="section.name === 'Legendary Actions' && monster.legendary_uses"
                 class="sb24-entry"
               >
-                <em>Legendary Action Uses: {{ monster.legendary_uses }}. Immediately after another
-                creature's turn, it can expend a use to take one of the following actions. It regains
-                all expended uses at the start of each of its turns.</em>
+                <em>{{ L.legendaryUses.replace('{n}', String(monster.legendary_uses)) }}</em>
               </p>
               <!-- The explicit {{ ' ' }} defeats Vue's whitespace condensing,
                    which otherwise glues the name to the text ("Amphibious.The…") -->
               <p v-if="section.entries[0]" class="sb24-entry">
-                <strong><em>{{ section.entries[0].name }}.</em></strong>{{ ' ' }}<span v-html="formatText(section.entries[0].text)"></span>
+                <strong><em>{{ nameWithStop(section.entries[0].name) }}</em></strong>{{ ' ' }}<span v-html="formatText(section.entries[0].text)"></span>
               </p>
             </div>
             <p v-for="entry in section.entries.slice(1)" :key="entry.name" class="sb24-entry">
-              <strong><em>{{ entry.name }}.</em></strong>{{ ' ' }}<span v-html="formatText(entry.text)"></span>
+              <strong><em>{{ nameWithStop(entry.name) }}</em></strong>{{ ' ' }}<span v-html="formatText(entry.text)"></span>
             </p>
           </template>
           <template v-else>
             <div class="sb24-edit__section-head">
-              <h3 class="sb24-section-title">{{ section.name }}</h3>
+              <h3 class="sb24-section-title">{{ L.sections[section.name] ?? section.name }}</h3>
               <button v-if="SECTION_REROLL_KIND[section.name] && edited.sections[section.name].length"
                 class="sb24-edit__btn" :disabled="rerollingSections.has(section.name)"
                 @click="rerollSectionAt(section.name)" :data-testid="`reroll-section-${section.name}`">
@@ -204,10 +202,16 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
 import Statblock2024Skeleton from './skeletons/Statblock2024Skeleton.vue';
 import { logger } from '@/util/logger.mjs';
+import { labelsFor } from './statblock-labels.mjs';
 import { generateGptResponse, isDegradedMode } from '@/util/ai-client.mjs';
-import { rerollEntry, rerollSection, buildContext } from '@/tools/statblock-generator/format-2024/generate.mjs';
+import { rerollEntry, rerollSection, buildContext, chassisRoleOf } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { lintStatblock } from '@/tools/statblock-generator/format-2024/lint.mjs';
 
+// A ROW NAME THAT ENDS IN ITS OWN PUNCTUATION TAKES NO FULL STOP (forty #4, #33).
+// The card hard-coded `{{ name }}.` and shipped "Who Swings?." — `render.mjs` has
+// carried the guard since it was written, so the markdown was right and the card
+// was wrong. One definition per surface; this is the card's.
+const nameWithStop = (n) => { const s = String(n ?? '').trim(); return /[.!?]$/.test(s) ? s : `${s}.`; };
 const props = defineProps({
   monster: { type: Object, default: null },
   columns: { type: String, default: 'two_columns' },
@@ -217,6 +221,8 @@ const props = defineProps({
   readonly: { type: Boolean, default: false },
   premium: { type: Boolean, default: false },
 });
+// the card's fixed labels follow the block's output language (interim i18n, 2026-10-01)
+const L = computed(() => labelsFor(props.monster?.language));
 
 const emit = defineEmits([
   'update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete',
@@ -258,14 +264,14 @@ const detailLines = computed(() =>
   // (assembly leaves the field unset; live: a block shipped with no
   // Languages line at all). 2014's em-dash is toLegacyModel's business.
   DETAIL_FIELDS.filter(([field]) => props.monster[field] || field === 'languages')
-    .map(([field, label]) => [label, props.monster[field] || 'None'])
+    .map(([field, label]) => [L.value[field] ?? label, props.monster[field] || L.value.none])
 );
 
 const crText = computed(() => {
   const m = props.monster;
   const cr = m.cr_str ?? String(m.cr);
   const xp = (m.xp ?? 0).toLocaleString('en-US');
-  return `${cr} (XP ${xp}; PB ${signed(m.pb ?? 2)})`;
+  return `${cr} (${L.value.xp} ${xp}; ${L.value.pb} ${signed(m.pb ?? 2)})`;
 });
 
 const orderedSections = computed(() =>
@@ -357,7 +363,9 @@ const bandHints = computed(() => {
   const m = edited.value;
   if (!isEditing.value || !m || m.cr == null) return [];
   try {
-    const { chassis } = buildContext(m.cr, m.archetype ?? 'balanced');
+    // the band hints compare the sheet to its BODY's card, not to the role label
+    // the user picked (2026-11-13)
+    const { chassis } = buildContext(m.cr, chassisRoleOf(m) ?? 'balanced');
     return lintStatblock(m, { chassis, edition: '2024' })
       .findings.filter((f) => f.severity === 'correctable').map((f) => f.message);
   } catch {
@@ -386,7 +394,9 @@ async function rerollEntryAt(section, index) {
       { kind: REROLL_KIND[section], current: edited.value.sections[section][index], degraded: isDegradedMode() },
       (p, v) => generateGptResponse(p, v, 3),
     );
-    edited.value.sections[section][index] = { name: result.name, text: result.description };
+    // a re-rolled row keeps its provenance when the catalog held it (step 9b):
+    // the template it came from and the words of the concept it binds
+    edited.value.sections[section][index] = { name: result.name, text: result.description, ...(result.template ? { template: result.template, boundKeys: result.boundKeys ?? [] } : {}) };
   } catch (e) {
     logger.error('Error re-rolling entry:', e);
     alert('Failed to re-roll this entry. Please try again.');

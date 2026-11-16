@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "SPINE 13 · print head + addition, legendary tier 2014"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "SPINE 15 · print head + addition: the swallow engine"
+  },
+  {
+    "name": "Vashka the Red",
+    "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "USE CASE · Name field + description, the commonest GM path"
+  }
+]

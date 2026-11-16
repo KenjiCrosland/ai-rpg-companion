@@ -1,0 +1,22 @@
+[
+  { "name": "", "description": "a bog troll that crushes the drowned against the stones", "cr": "6", "rules": "2024",
+    "canary": "CUE true: 'crushes' really is containment — the grappler override must STILL fire (55 of 497 measured)", "mode": "band" },
+  { "name": "", "description": "a glass ox that charges down the chapel gate", "cr": "5", "rules": "2024",
+    "canary": "CUE true: 'charges' is a charge — the charger override must STILL fire (44 of 497)", "mode": "band" },
+  { "name": "", "description": "a gate sergeant who guards the only bridge into the city", "cr": "4", "rules": "2024",
+    "canary": "CUE true: 'guards' is holding a line — the defender override must STILL fire (35 of 497)", "mode": "band" },
+  { "name": "", "description": "a battle-chaplain who blesses the faithful before the charge", "cr": "6", "rules": "2024",
+    "canary": "CUE true: 'blesses' is a warpriest mechanic (15 of 497), and 'charge' here is the ALLIES' charge, not its own", "mode": "band" },
+  { "name": "", "description": "a sand-lurker that surfaces beneath a traveller and drags them under", "cr": "7", "rules": "2024",
+    "canary": "CUE true: 'surfaces beneath' is a lurker (15 of 497)", "mode": "band" },
+  { "name": "", "description": "a giant crab that rules the tidepool shallows", "cr": "3", "rules": "2024",
+    "canary": "CUE true, BODY class: 'crab' is a body fact, not a meaning judgment — the grappler override must STILL fire", "mode": "band" },
+  { "name": "", "description": "a tollkeeper who charges a fee for every wagon and kills those who refuse", "cr": "5", "rules": "2024",
+    "canary": "CUE false: 'charges a fee' is money, not a charge — the charger override must be REFUSED", "mode": "band" },
+  { "name": "", "description": "a knight in a winged helmet who never leaves the bridge", "cr": "6", "rules": "2024",
+    "canary": "CUE false: a winged HELMET is worn, not flown — the winged override must be REFUSED", "mode": "band" },
+  { "name": "", "description": "a merchant prince who crushes his rivals in the courts of law", "cr": "4", "rules": "2024",
+    "canary": "CUE false: 'crushes rivals' in court is not containment — the grappler override must be REFUSED", "mode": "band" },
+  { "name": "", "description": "a half-dragon duellist who fights with two curved blades", "cr": "7", "rules": "2024",
+    "canary": "CUE false, existing deny: a half-dragon is its base body — the dragon line must be REFUSED", "mode": "band" }
+]

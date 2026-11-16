@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "CANARY — the payoff sheet. The finisher clause should appear and the save must not be Strength." },
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — name-only, the owner's 'boring' sheet. Unchanged expectations." },
+  { "name": "", "description": "a headless horseman who rides down the fleeing and takes their heads", "cr": "8", "rules": "2024", "canary": "CANARY — two clauses, both must land." },
+  { "name": "", "description": "a thing of living tar whose skin clings to whatever strikes it", "cr": "6", "rules": "2024", "canary": "FEATURE — a body-reaction idea if ever there was one. Which gate fires, if any?" },
+  { "name": "", "description": "a bramble-walker that leaves thorns in the ground behind it", "cr": "7", "rules": "2024", "canary": "FEATURE — a zone idea on the TRAIT seat, the one eligible combination." },
+  { "name": "", "description": "a censer-golem that fills the air around it with choking smoke", "cr": "9", "rules": "2024", "canary": "FEATURE — zone/condition, the richest payload set (4 candidates)." },
+  { "name": "", "description": "a mirror-thing that turns a blow back on whoever lands it", "cr": "8", "rules": "2024", "canary": "FEATURE — body-reaction/damage. Does it reach the menu and win?" },
+  { "name": "", "description": "a frost-husk whose nearness simply makes men weaker", "cr": "10", "rules": "2024", "canary": "FEATURE — an aura whose effect is likely 'defense' or 'resource', which the zone grammar has NO payload for. The new trace should say so by name." },
+  { "name": "", "description": "a sump-thing that drags the ground into mud wherever it walks", "cr": "5", "rules": "2024", "canary": "FEATURE — zone/movement, 2 candidates." },
+  { "name": "", "description": "a cinder-saint whose touch blesses its allies and burns its enemies", "cr": "12", "rules": "2024", "canary": "FEATURE — likely an ACTION-seat zone or heal idea, which no grammar composes. Expect 'composes a trait and this is the action seat'." }
+]

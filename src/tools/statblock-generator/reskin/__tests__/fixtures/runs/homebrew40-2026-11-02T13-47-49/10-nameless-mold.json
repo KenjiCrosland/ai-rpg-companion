@@ -1,0 +1,135 @@
+{
+  "name": "Nameless Mold",
+  "inline": "the mold",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Construct",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 180,
+  "hp_formula": "24d8 + 72",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 9,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +9, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Seismic Sense",
+        "text": "While a creature is touching the ground within 60 feet of the mold, the mold knows that creature's exact location and cannot be Blinded or otherwise prevented from sensing it by darkness or invisibility.",
+        "authored": true,
+        "clause": "The mold has no eyes and no name, yet it perceives the world through vibration and pressure. It can sense the exact loca",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "walking through barriers",
+        "bound": false,
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_9esf7m"
+      },
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The mold can't shape-shift."
+      },
+      {
+        "name": "Siege Monster",
+        "rules": true,
+        "text": "The mold deals double damage to objects and structures."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The mold makes two Fist attacks."
+      },
+      {
+        "name": "Fist",
+        "text": "*Melee Attack Roll:* +9, reach 10 ft. 26 (6d6 + 5) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Crushing Advance (Recharge 5-6)",
+        "text": "*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 60 (11d10) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage only.",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone"
+      }
+    ]
+  },
+  "lore": "Left to walk when its purpose-script decayed, the brass shape first cast by a nameless artificer's master-mold seeks nothing but the next thing in its path to break.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a brass automaton with no mouth, no eyes and no name",
+    "clauses": [
+      {
+        "id": "cl_13hfhno",
+        "text": "a brass automaton with no mouth",
+        "kind": "mechanical",
+        "polarity": "lacks",
+        "takes": "speech",
+        "lackQuote": "no mouth"
+      },
+      {
+        "id": "cl_9esf7m",
+        "text": "no eyes and no name",
+        "kind": "descriptive"
+      }
+    ],
+    "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a brass automaton with no mouth, no eyes and no name",
+  "selectedChallengeRating": "10",
+  "monsterName": "Nameless Mold",
+  "caster": false
+}

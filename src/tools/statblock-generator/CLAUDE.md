@@ -6,7 +6,55 @@ Tool-specific documentation for the D&D 5e Monster Statblock Generator.
 
 The Statblock Generator creates complete D&D 5e monster statblocks using a two-part AI generation process. It supports both free and premium versions, with the premium version offering additional customization options.
 
+## Evidence: commit every round's sheets, and keep only the latest
+
+A standing order from the owner (2026-11-15). The reviewer can only read what is pushed.
+
+**Commit every sheet a round generates, in one blocks file in `scripts/smoke-evidence/`.**
+All of them — the ones that failed, the odd ones, the ones that turned out not to be
+evidence. Mark each as it is: green, flagged, no evidence, or threw with its error. Never
+hold sheets back waiting for a review.
+
+**`scripts/smoke-evidence/` holds only five kinds of file:**
+
+1. the latest round's blocks file
+2. milestones
+3. reference data and tool outputs (everything that is not markdown)
+4. handoff reports
+5. anything a file outside the folder names
+
+**When a new blocks file lands, delete the previous round's** unless it is a milestone. Git
+history keeps it.
+
+**A `CHECK-*` file goes when its blocks file goes**, in the same deletion commit, unless
+something outside the folder names it (owner's ruling, 2026-11-16). The checker's output is
+the reading of one run's sheets; once those sheets are out of the folder it has nothing left
+to describe.
+
+**A milestone is named, never assumed.** The owner or the reviewer names it in a handoff — a
+release forty run as a gate, a sheet the owner judged good, sheets a parked item still rests
+on.
+
+**Deletions go in their own commit**, separate from code, so a code review is not buried
+under them.
+
+**Before deleting a file, check nothing names it:**
+
+```bash
+git grep <filename> -- ':!scripts/smoke-evidence'
+```
+
+Check the **stem without its extension** too. A plan that writes
+`critic-files.mjs … REVIEW-sweep-2026-10-21T22-17-49` names a file an extension-matching grep
+misses — that exact case was caught on the 2026-11-15 cleanup by a second pass on stems. If
+anything names it, keep it or change what names it.
+
+**`reskin/__tests__/fixtures/runs/` is not evidence and is never part of a cleanup.** Tests
+read it, and seven of its eight run folders are named in spec files.
+
 ## Architecture
+
+**The current engine is the reskin pipeline.** Read [docs/reskin-architecture.md](/docs/reskin-architecture.md) first (as of 2026-10-01); the July handoff linked below is history.
 
 **Both editions are engine-first** behind a 2024/2014 rules toggle (default
 2024, persisted to `localStorage['statblock-format']`; a loaded monster's own
@@ -76,6 +124,19 @@ touching anything under `chassis/` or `format-2024/`.
   names survive only when load-bearing (referenced by another entry, or
   Multiattack/Spellcasting), where a model rename is deterministically
   stamped back instead of retried.
+  **The re-roll is CATALOG-FIRST** (step 9b, 2026-10-13): one call, two
+  possible answers — a template id from the shelf `templatesFor` allows for
+  this saved sheet (the engine renders print's frame, fills every number from
+  the sheet, stamps `monster.inline`, prices the row with `valueCheck`, and
+  records `template`/`boundKeys` on it), or `"template": "none"` plus the
+  text, which still goes through the pseudo-block lint and one retry. The
+  call sees the whole creature: `generation.userConcept`, the header, the
+  inline, and every sibling entry's rules text, with the GM's own rows
+  marked. Skeletons, lint and catalog all use the SHEET's derived save DC and
+  attack bonus (the card's only when the sheet is more than 2 off, i.e.
+  hand-edited). Legendary Actions have no shelf and keep the old prompt; the
+  whole-section re-roll gets the creature in view but not the catalog.
+  Evidence: `scripts/smoke-evidence/REROLL-case-2026-10-13.md`.
 - **Edition switching (cache-and-swap)**: `ParTabToggle` tabs on the card's
   top edge (`data-testid="edition-switch"`) flip the selected monster
   between its 2014/2024 printings — burgundy document tabs, not lapis

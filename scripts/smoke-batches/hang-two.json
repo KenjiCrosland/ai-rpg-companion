@@ -1,0 +1,4 @@
+[
+  { "name": "", "description": "a coal-cat whose every wound makes it burn hotter", "cr": "4", "rules": "2024", "canary": "HANG: 529s and 920s on two runs" },
+  { "name": "", "description": "a sand-shrike that is only dangerous on the turn after it goes still", "cr": "6", "rules": "2024", "canary": "HANG: 916s and 970s on two runs" }
+]

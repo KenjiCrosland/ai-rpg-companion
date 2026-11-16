@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "skeleton with a greatsword", "cr": "2", "rules": "2024", "canary": "PRINT + WEAPON: the Skeleton's body, the GM's Greatsword (2d6 Slashing) — not print's Shortsword", "mode": "band" },
+  { "name": "", "description": "a skeleton who was a gladiator in a former life", "cr": "4", "rules": "2024", "canary": "PRINT + CLASS/FORMER LIFE: Skeleton body, gladiator kit rows; size stays Medium", "mode": "band" },
+  { "name": "", "description": "an ogre with a greataxe", "cr": "3", "rules": "2024", "canary": "PRINT + WEAPON: Ogre body, Greataxe (1d12) not print's Greatclub", "mode": "band" },
+  { "name": "", "description": "a goblin who was a wizard's apprentice", "cr": "1", "rules": "2024", "canary": "PRINT + CLASS: Goblin body, a wizard's casting", "mode": "band" },
+  { "name": "", "description": "a troll that breathes fire", "cr": "6", "rules": "2024", "canary": "PRINT + MECHANIC: Troll body, a breath nova", "mode": "band" },
+  { "name": "", "description": "a skeleton archer", "cr": "1", "rules": "2024", "canary": "PRINT + ROLE WORD: Skeleton body with a bow (print's Skeleton has a Shortbow already — must keep ranged)", "mode": "band" },
+  { "name": "", "description": "a wolf with two heads", "cr": "2", "rules": "2024", "canary": "PRINT + BODY ADDITION: Wolf body, two Bites or a second head's row", "mode": "band" },
+  { "name": "", "description": "a zombie that explodes when it dies", "cr": "2", "rules": "2024", "canary": "PRINT + MECHANIC: Zombie body, a death burst", "mode": "band" }
+]

@@ -1,0 +1,154 @@
+{
+  "name": "Plague Satchel",
+  "inline": "the satchel",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Construct",
+  "size": "Small",
+  "alignment": "Neutral Evil",
+  "ac": 15,
+  "hp": 93,
+  "hp_formula": "17d6 + 34",
+  "pb": 3,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 18,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 7,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +4, Stealth +10",
+  "senses": "blindsight 30 ft. (blind beyond this radius); Passive Perception 14",
+  "languages": "Common",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The satchel makes two Buckle attacks. It can replace one attack with a use of Buckle Burst."
+      },
+      {
+        "name": "Buckle",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage plus 7 (2d6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Buckle Burst",
+        "text": "*Constitution Saving Throw:* DC 15, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of the satchel's next turn.",
+        "library": true,
+        "imposes": "Blinded",
+        "seed": "sensory-strike",
+        "duration": "source_end"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the satchel takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Learned to Walk",
+        "text": "The satchel can move on its own across the ground on its buckle-legs, walking and standing as a creature does rather than needing to be carried.",
+        "authored": true,
+        "clause": "has learned to walk",
+        "clauseId": "cl_ii79fv"
+      },
+      {
+        "name": "Spider Climb",
+        "text": "The satchel can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+        "library": true,
+        "template": "spider-climb",
+        "boundKeys": [
+          "climb",
+          "climbs",
+          "climbing",
+          "ceiling",
+          "ceilings",
+          "walls",
+          "wall",
+          "clings",
+          "sheer"
+        ],
+        "freeRow": true,
+        "expresses": "plague-doctor's leather satchel",
+        "bound": false,
+        "expressedQuote": "The satchel can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      }
+    ]
+  },
+  "lore": "A doctor's satchel left on a plague-cart during the last great sickness, it absorbed the dying breath of its owner and now walks the roads, hungry for the lungs of the living.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a plague-doctor's bag that has learned to walk",
+    "clauses": [
+      {
+        "id": "cl_bfm2y7",
+        "text": "a plague-doctor's bag",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_ii79fv",
+        "text": "has learned to walk",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "has learned to walk",
+        "askOften": "at_will",
+        "askOftenWhy": "has learned to walk",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "walk"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "spider-climb"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a plague-doctor's bag that has learned to walk",
+  "selectedChallengeRating": "6",
+  "monsterName": "Plague Satchel",
+  "caster": false
+}

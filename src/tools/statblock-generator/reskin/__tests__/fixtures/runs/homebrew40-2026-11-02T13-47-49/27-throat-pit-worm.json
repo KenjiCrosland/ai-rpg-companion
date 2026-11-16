@@ -1,0 +1,170 @@
+{
+  "name": "Throat-Pit Worm",
+  "inline": "the worm",
+  "format": "2024",
+  "cr": 24,
+  "cr_str": "24",
+  "xp": 62000,
+  "challenge_rating": "24 (XP 62,000; PB +7)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Unaligned",
+  "ac": 20,
+  "hp": 542,
+  "hp_formula": "31d20 + 217",
+  "pb": 7,
+  "speed": "40 ft., Burrow 30 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 28,
+    "DEX": 8,
+    "CON": 24,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 16,
+    "DEX": -1,
+    "CON": 14,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +16, Perception +7",
+  "senses": "blindsight 60 ft., tremorsense 120 ft. (blind beyond this radius); Passive Perception 17",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the worm fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The worm makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +16, reach 15 ft. 45 (8d8 + 9) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 24). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Breach and Crush (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Dexterity Saving Throw*: DC 24, each creature in a 30-foot Emanation originating from the worm. *Failure:* 99 (18d10) Bludgeoning damage. *Success:* Half damage.",
+        "library": true,
+        "template": "ground-burst",
+        "boundKeys": [
+          "erupt",
+          "erupts"
+        ],
+        "area": {
+          "shape": "Emanation",
+          "size": 30
+        },
+        "freeRow": true,
+        "expresses": "bursting up from beneath the ground",
+        "decoration": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Swallow",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The worm swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the worm, and takes 21 (6d6) Acid damage at the start of each of the worm's turns. The worm can have only one creature swallowed at a time. If the worm takes 40 damage or more in a single turn from the swallowed creature, the worm must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the worm. If the worm dies, a swallowed creature exits the body Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the worm can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Breach and Bite",
+        "text": "The worm moves up to half its Speed without provoking Opportunity Attacks, and it makes one Bite attack."
+      },
+      {
+        "name": "Drag Below",
+        "text": "The worm moves up to half its Speed without provoking Opportunity Attacks, carrying each creature it is grappling along with it."
+      },
+      {
+        "name": "Coil Crush",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 24, each creature within 10 feet of the worm. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "The old world's gut made flesh, a blind annelid that tunnels beneath a land it slowly empties, wanting only to feel the shape of something living against the inside of its throat.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-grappler",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a worm",
+    "clauses": [
+      {
+        "id": "cl_1ah53si",
+        "text": "a worm",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Kraken (CR 23) — the swallow engine at the legendary tier",
+    "free_rows": 1,
+    "free_row_templates": [
+      "ground-burst"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a worm",
+  "selectedChallengeRating": "24",
+  "monsterName": "Throat-Pit Worm",
+  "caster": false
+}

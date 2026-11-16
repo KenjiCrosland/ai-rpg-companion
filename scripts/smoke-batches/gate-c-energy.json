@@ -1,0 +1,77 @@
+[
+ {
+  "canary": "FLOOR — exact Winter Wolf: print's Cold immunity and Cold Breath stand, Bite stays Piercing",
+  "description": "winter wolf",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR — a dragon twist: the existing dragon pipe is unchanged",
+  "description": "a red dragon with a brass-plated hide",
+  "cr": "10",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR / NEGATIVE — a Humanoid with an energy word: energy still WITHHELD (the :2408 guard), no immunity line",
+  "description": "a fire-eating carnival strongman",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "THE CASE — frost-rimed dire wolf: Cold IMMUNITY (print: 6 of 6), Bite stays Piercing, the frost row deals Cold damage",
+  "name": "Dire Wolf",
+  "description": "with a frost-rimed hide",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "THE CASE again — second roll",
+  "name": "Dire Wolf",
+  "description": "with a frost-rimed hide",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "fire beast: Fire immunity, a fire row with Fire damage",
+  "description": "a hell-boar wreathed in flame",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "lightning beast: Lightning immunity",
+  "description": "a storm-maned lion crackling with lightning",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "fire beast with a breath: the nova carries Fire damage, not a condition alone",
+  "description": "an ash-choked bear that breathes embers",
+  "cr": "4",
+  "rules": "2024"
+ },
+ {
+  "canary": "cold monstrosity: Cold immunity",
+  "description": "a frost spider whose webs are ice",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "energy on undead: Acid immunity on a non-humanoid undead body",
+  "description": "a brine-soaked ghoul that drips acid",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "NEGATIVE BOUNDARY — venom is not an energy theme: print's Giant Scorpion/Spider carry NO Poison immunity; this must not gain one",
+  "description": "a venomous cave scorpion the size of a horse",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "2014 printing of the case: same outcome in 2014 idiom",
+  "name": "Dire Wolf",
+  "description": "with a frost-rimed hide",
+  "cr": "1",
+  "rules": "2014"
+ }
+]

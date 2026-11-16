@@ -1,0 +1,24 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. Every row is print's; the naming rule must not touch one of them." },
+  { "name": "", "description": "a duelist who punishes every miss with a counterthrust", "cr": "7", "rules": "2024",
+    "canary": "CANARY — routes to riposte, one of the three templates converged on 2026-10-27. Must still ship as \"Riposte\", invented name or not." },
+  { "name": "", "description": "a giant spider utterly at home in its own webs", "cr": "4", "rules": "2024",
+    "canary": "CANARY — spider-climb and web-walker are PRINT names. Must still converge to \"Spider Climb\", not to a bespoke label." },
+
+  { "name": "", "description": "a drowned cathedral choir whose hymn pulls sailors off the deck", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — luring-presence is invented (it collided x2 on the 10-29 forty). The call's own name should survive and name the hymn." },
+  { "name": "", "description": "a siege-engine golem of lashed timber that shoulders through walls", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — sundering-shove is invented (x3 on the forty). \"Siege Shoulder\" was erased last run; it should stand now." },
+  { "name": "", "description": "a bell-ringer's ghost whose tolling cracks the bones of anyone who strikes it", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — resonant-body is invented (x3). The toll should name the row." },
+  { "name": "", "description": "a hydra whose severed stumps gout scalding steam instead of regrowing", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — bloodied-burst is invented (x2). \"Smoking Stumps\" was erased on the forty." },
+  { "name": "", "description": "an archlich enthroned on a sun of bone whose glare sears the eyes", "cr": "18", "rules": "2024",
+    "canary": "FEATURE — dazzling-burst is invented (x3). \"Bone Sun Brand\" was erased on the forty." },
+
+  { "name": "", "description": "a cliff-stalker that climbs sheer rock and squeezes into crevices no wider than a fist", "cr": "5", "rules": "2024",
+    "canary": "FEATURE — spider-climb is PRINT-named, but the squeeze augmentation should fire; an augmented row is not the stock mechanic and keeps its own name (owner, 2026-10-29)." },
+  { "name": "", "description": "a sentinel of black iron that will not leave the ward it guards", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — the Black Iron Vigil's case. A bespoke name promising a mechanic the text lacks (\"Warded Charge\") must converge instead of shipping a name-mechanic FAIL." }
+]

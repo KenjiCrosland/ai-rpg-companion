@@ -1,0 +1,118 @@
+{
+  "name": "Bramble-Thrall Owlbear",
+  "inline": "the owlbear",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 13,
+  "hp": 82,
+  "hp_formula": "11d10 + 22",
+  "pb": 2,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 15,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 2,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +6, Perception +1",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Beak",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) Piercing damage plus 11 (2d10) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Living Bramble Lash (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 14, one creature within 15 feet. *Failure:* 27 (6d8) Poison damage, and the target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "The owlbear lashes out with a length of living bramble, forcing a creature it can see to make a Dexterity saving throw. ",
+        "gate": "Recharge 5-6",
+        "imposes": "Restrained",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "thorns that lash and tangle prey",
+        "boundKeys": [],
+        "expressedQuote": "the target has the Restrained condition until the end of its next turn"
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "An owlbear cub that bedded down in a barrow-thicket of vampiric bramble woke grown through with thorns, and now it patrols that thicket's edges, dragging kills back to feed the roots that command it.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-2",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a thing like an owlbear but grown through with brambles",
+    "clauses": [
+      {
+        "id": "cl_78i4e5",
+        "text": "a thing like an owlbear",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_kfwbim",
+        "text": "grown through with brambles",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "grown through with brambles",
+        "askOften": "at_will",
+        "askOftenWhy": "grown through with brambles",
+        "askShape": "attack",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "grown through with brambles"
+      }
+    ],
+    "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a thing like an owlbear but grown through with brambles",
+  "selectedChallengeRating": "4",
+  "monsterName": "Bramble-Thrall Owlbear",
+  "caster": false
+}

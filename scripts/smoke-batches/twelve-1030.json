@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "FIX 1 - the known-bad: a decoration welded a rest-long contagion onto print's Bite (2 a turn) on a concept asking for frost"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "FIX 1 - the other known-bad: the same clause on print's Rend, 3 a turn plus Pounce, legendary 2014"
+  },
+  {
+    "name": "",
+    "description": "a plague-bearer whose bite spreads a wasting sickness that will not heal",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FIX 1 CONTROL - the GM asked for the disease, so the rider must RIDE; if this comes back clean the guard over-blocked"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "carved as a weeping saint",
+    "cr": "10",
+    "rules": "2024",
+    "canary": "FIX 2 - Weapon Lodge host 1, AND the Weeping Saint fixture at 0 of 3"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "FIX 2 - Weapon Lodge host 2 (the armoury swallow)"
+  },
+  {
+    "name": "",
+    "description": "a stone giant exile who speaks only Giant and understands no Common",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "FIX 2 - Weapon Lodge host 3: 59 per Stone Club hit at CR 9 vs print's 35"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "DICE - greataxe two-handed + javelin; the critic read greataxe on d8s"
+  },
+  {
+    "name": "",
+    "description": "a skeleton with a greatsword",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "DICE - greatsword; the critic read reach 10 ft with 4d8"
+  },
+  {
+    "name": "",
+    "description": "a temple warden who fights with a maul",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "DICE CONTROL - the maul was already CORRECT, so this must not change; my check repeating the critic's rule was the thing that was wrong"
+  },
+  {
+    "name": "",
+    "description": "a reed-cloister adept who flings darts and strikes unarmed",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "DICE - the Dart at 2d8 and the monk's Unarmed Strike: both were print_name_only, exempted for a reason that was false"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "FLOOR - the Vampire lost print's Regeneration; no print row changes without a clause"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "FLOOR - print-exact Owlbear: nothing here may move"
+  }
+]

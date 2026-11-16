@@ -1,0 +1,255 @@
+{
+  "name": "Bog Hound",
+  "inline": "the bog hound",
+  "type_and_alignment": "Medium beast, unaligned",
+  "armor_class": "11 (natural armor)",
+  "hit_points": "22 (3d8 + 9)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 12 (+1), DEX 8 (-1), CON 16 (+3), INT 4 (-3), WIS 10 (+0), CHA 4 (-3)",
+  "saving_throws": "STR +3",
+  "skills": "Athletics +3, Perception +2",
+  "senses": "darkvision 30 ft., passive Perception 12",
+  "languages": "None",
+  "challenge_rating": "1 (200 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Drownfall",
+      "description": "While the bog hound has a creature grappled and moves into water or mire deep enough to submerge that creature, the bog hound drags the grappled creature down with it, leaving the creature submerged and unable to breathe; the creature is forced to hold its breath and risks drowning until it escapes the grapple."
+    },
+    {
+      "name": "Smother (Bonus Action)",
+      "description": "The bog hound smothers one Medium or smaller creature it is grappling. While smothered, the target is blinded and restrained, has Total Cover against attacks and other effects outside the bog hound, and takes 3 (1d6) bludgeoning damage at the start of each of the bog hound's turns. The bog hound can have only one creature smothered at a time. If the bog hound takes 5 damage or more in a single turn from the smothered creature, the bog hound must release the target at the end of that turn, and the target exits prone in an unoccupied space within 5 feet of the bog hound. If the bog hound dies, a smothered creature pulls free prone by using 5 feet of movement.",
+      "imposes": [
+        "Blinded",
+        "Restrained"
+      ]
+    },
+    {
+      "name": "Predatory Focus (2/Day) (Bonus Action)",
+      "description": "The bog hound has advantage on the next attack roll it makes before the end of its turn."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The bog hound makes two Bite attacks."
+    },
+    {
+      "name": "Bite",
+      "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage. If the target is a Large or smaller creature, it is grappled (escape DC 11). While grappled, the target is restrained.",
+      "imposes": [
+        "Grappled",
+        "Restrained"
+      ]
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mud-caked bog hound that drags fishermen under",
+    "clauses": [
+      {
+        "id": "cl_q9h7bu",
+        "text": "a mud-caked bog hound",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1noqc7c",
+        "text": "drags fishermen under",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "drags fishermen under"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Bog Hound",
+    "inline": "the bog hound",
+    "format": "2024",
+    "cr": 1,
+    "cr_str": "1",
+    "xp": 200,
+    "challenge_rating": "1 (XP 200; PB +2)",
+    "type": "Beast",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "ac": 11,
+    "hp": 22,
+    "hp_formula": "3d8 + 9",
+    "pb": 2,
+    "speed": "30 ft., Swim 30 ft.",
+    "stats": {
+      "STR": 12,
+      "DEX": 8,
+      "CON": 16,
+      "INT": 4,
+      "WIS": 10,
+      "CHA": 4
+    },
+    "saves": {
+      "STR": 3,
+      "DEX": -1,
+      "CON": 3,
+      "INT": -3,
+      "WIS": 0,
+      "CHA": -3
+    },
+    "skills": "Athletics +3, Perception +2",
+    "senses": "darkvision 30 ft.; Passive Perception 12",
+    "languages": "None",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The bog hound makes two Bite attacks."
+        },
+        {
+          "name": "Bite",
+          "imposes": [
+            "Grappled",
+            "Restrained"
+          ],
+          "text": "*Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.",
+          "weapon": null,
+          "attacksPerRound": 2
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Smother",
+          "rules": true,
+          "engulf_engine": true,
+          "imposes": [
+            "Blinded",
+            "Restrained"
+          ],
+          "text": "The bog hound smothers one Medium or smaller creature it is grappling. While smothered, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the bog hound, and takes 3 (1d6) Bludgeoning damage at the start of each of the bog hound's turns. The bog hound can have only one creature smothered at a time. If the bog hound takes 5 damage or more in a single turn from the smothered creature, the bog hound must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the bog hound. If the bog hound dies, a smothered creature pulls free Prone by using 5 feet of movement.",
+          "boundKeys": [
+            "smother",
+            "swallow",
+            "swallows",
+            "engulf",
+            "engulfs",
+            "devour",
+            "devours",
+            "gulp",
+            "entomb",
+            "cocoon",
+            "whelm"
+          ]
+        },
+        {
+          "name": "Predatory Focus (2/Day)",
+          "gate": "2/Day",
+          "text": "The bog hound has Advantage on the next attack roll it makes before the end of its turn.",
+          "library": true,
+          "template": "focus",
+          "boundKeys": [],
+          "accepted_closest": true,
+          "gmQuote": "a mud caked bog hound that drags fishermen under"
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Drownfall",
+          "text": "While the bog hound has a creature Grappled and moves into water or mire deep enough to submerge that creature, the bog hound drags the Grappled creature down with it, leaving the creature submerged and unable to breathe; the creature is forced to hold its breath and risks drowning until it escapes the grapple.",
+          "authored": true,
+          "clause": "The bog hound swims through mud and shallows as though they were open air and can hold its breath for as long as it like",
+          "requiresCondition": "Grappled",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "jaw-locked dragging of prey beneath the water",
+          "bound": false,
+          "boundKeys": [],
+          "expressedQuote": "drags the Grappled creature down with it, leaving the creature submerged and unable to breathe"
+        }
+      ]
+    },
+    "lore": "Born from the drowned silt of fishing shallows where corpses and riverbed muck settle together, a bog hound is a beast of appetite that thinks only of the next meal it can pull beneath the surface.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-5-grappler",
+      "archetype": "brute",
+      "holds": true,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a mud-caked bog hound that drags fishermen under",
+      "clauses": [
+        {
+          "id": "cl_q9h7bu",
+          "text": "a mud-caked bog hound",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_1noqc7c",
+          "text": "drags fishermen under",
+          "kind": "mechanical",
+          "askShape": "attack",
+          "askMechanic": "grapple",
+          "askMechanicWhy": "drags fishermen under"
+        }
+      ],
+      "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "gap_vetoed": "0 of 1",
+      "gap_missing_unstated": 0,
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a mud-caked bog hound that drags fishermen under",
+  "selectedChallengeRating": "1",
+  "monsterName": "Bog Hound",
+  "caster": false
+}

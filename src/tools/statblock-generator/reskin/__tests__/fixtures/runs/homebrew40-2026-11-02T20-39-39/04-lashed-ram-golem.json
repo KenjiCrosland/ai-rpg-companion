@@ -1,0 +1,138 @@
+{
+  "name": "Lashed Ram Golem",
+  "inline": "the ram golem",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Thunder Absorption",
+        "rules": true,
+        "text": "Whenever the ram golem is subjected to Thunder damage, it takes no damage and instead regains a number of Hit Points equal to the Thunder damage dealt."
+      },
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The ram golem can't shape-shift."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The ram golem has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The ram golem makes two Ram attacks."
+      },
+      {
+        "name": "Ram",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) Bludgeoning damage plus 11 (2d10) Thunder damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Thunderclap Retort",
+        "text": "One creature within 5 feet that hit the ram golem with an attack roll since the end of the ram golem's last turn takes 11 (2d10) Thunder damage.",
+        "library": true,
+        "seed": "own-turn-punisher",
+        "boundKeys": [
+          "lash"
+        ],
+        "clause": "a siege-engine golem of lashed timber",
+        "clauseId": "cl_q7gx4o"
+      }
+    ]
+  },
+  "lore": "A field-expedient siege golem lashed from felled trunks, scrap iron, and the bones of its fallen builders, it knows only one direction: through.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a siege-engine golem of lashed timber that shoulders through walls",
+    "clauses": [
+      {
+        "id": "cl_q7gx4o",
+        "text": "a siege-engine golem of lashed timber",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "charge",
+        "askMechanicWhy": "shoulders through walls"
+      },
+      {
+        "id": "cl_vcmdz5",
+        "text": "shoulders through walls",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "charge",
+        "askMechanicWhy": "shoulders through walls"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison, Thunder; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a siege-engine golem of lashed timber that shoulders through walls",
+  "selectedChallengeRating": "8",
+  "monsterName": "Lashed Ram Golem",
+  "caster": false
+}

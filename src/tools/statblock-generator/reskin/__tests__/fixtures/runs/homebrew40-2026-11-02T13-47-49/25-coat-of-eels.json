@@ -1,0 +1,148 @@
+{
+  "name": "Coat of Eels",
+  "inline": "the coat of eels",
+  "format": "2024",
+  "cr": 1,
+  "cr_str": "1",
+  "xp": 200,
+  "challenge_rating": "1 (XP 200; PB +2)",
+  "type": "Beast",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 13,
+  "hp": 30,
+  "hp_formula": "4d8 + 12",
+  "pb": 2,
+  "speed": "30 ft., Swim 30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 14,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +4, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The coat of eels makes two Eels attacks. It can replace one attack with a use of Knot the Sleeve."
+      },
+      {
+        "name": "Eels",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +4, reach 5 ft. 6 (1d8 + 2) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 12). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Knot the Sleeve",
+        "text": "*Strength Saving Throw*: DC 13, one creature within 15 feet. *Failure:* The target is pulled up to 10 feet straight toward the coat, and the target has the Grappled condition (escape DC 12).",
+        "authored": true,
+        "clause": "a knot of eels in a man's coat",
+        "imposes": "Grappled",
+        "imposesMovement": true,
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "boundKeys": [],
+        "clauseId": "cl_2zlkiy"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Smother",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The coat of eels smothers one Medium or smaller creature it is grappling. While smothered, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the coat of eels, and takes 3 (1d6) Lightning damage at the start of each of the coat of eels's turns. The coat of eels can have only one creature smothered at a time. If the coat of eels takes 5 damage or more in a single turn from the smothered creature, the coat of eels must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the coat of eels. If the coat of eels dies, a smothered creature pulls free Prone by using 5 feet of movement.",
+        "boundKeys": [
+          "smother",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ]
+  },
+  "lore": "Sewn by a drowned tailor who tried to cheat the sea of a debt, the coat still walks the shore road looking for a body to fill its empty collar.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a knot of eels in a man's coat",
+    "clauses": [
+      {
+        "id": "cl_2zlkiy",
+        "text": "a knot of eels in a man's coat",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "a knot of eels in a man's coat",
+        "askOften": "at_will",
+        "askOftenWhy": "a knot of eels in a man's coat",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "a knot of eels"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Lightning",
+  "lint_findings": [],
+  "monsterDescription": "a knot of eels in a man's coat",
+  "selectedChallengeRating": "1",
+  "monsterName": "Coat of Eels",
+  "caster": false
+}

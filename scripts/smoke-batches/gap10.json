@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a trench leviathan whose song drowns fleets and drags the drowned down with it", "cr": "16", "rules": "2024", "canary": "GAP: a compound ask — the gap line must name a mechanic or a VARIANT, never nothing" },
+  { "name": "", "description": "a shadow-choir that spawns more of itself as it is cut down", "cr": "13", "rules": "2024", "canary": "GAP: escalation the catalog lacks" },
+  { "name": "", "description": "a bog hound that drags fishermen under and holds them there", "cr": "3", "rules": "2024", "canary": "GAP: grapple-and-crush" },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "6", "rules": "2024", "canary": "GAP: entombment" },
+  { "name": "", "description": "a reef warden that slips aside from any blast and answers with a lash", "cr": "7", "rules": "2024", "canary": "GAP: evade-and-counter" },
+  { "name": "", "description": "a storm drake whose breath is a rolling wall of thunder that shoves what it strikes", "cr": "10", "rules": "2024", "canary": "GAP: area damage plus shove" },
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "CONTROL: life-drain should now ANSWER this instead of becoming a gap" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a known twist" },
+  { "name": "", "description": "a lamplighter's widow who still walks her round, trailing cold", "cr": "3", "rules": "2024", "canary": "CONTROL: a passive aura" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CONTROL: the package-seven twist" }
+]

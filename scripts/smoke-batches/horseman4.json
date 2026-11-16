@@ -1,0 +1,10 @@
+[
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024",
+   "canary": "THE OWNER'S CASE · is there a memorable ability, or charger+trait again?" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024",
+   "canary": "SAME INPUT TWICE · how much does the signature vary run to run?" },
+ { "name": "Headless Horseman", "description": "a rider who carries his own head under one arm and hurls it", "cr": "11", "rules": "2024",
+   "canary": "THE HEAD AS AN OBJECT · relic-object's case" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2014",
+   "canary": "2014 · the other printing" }
+]

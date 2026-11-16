@@ -1,0 +1,139 @@
+{
+  "name": "Bellbound Warden",
+  "inline": "the warden",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 135,
+  "hp_formula": "18d8 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 15,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 2,
+    "CON": 6,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 2
+  },
+  "skills": "Athletics +7, Perception +4",
+  "senses": "Passive Perception 14",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The warden makes two Maul attacks. It can replace one attack with a use of Concussive Toll."
+      },
+      {
+        "name": "Maul",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 28 (7d6 + 4) Bludgeoning damage.",
+        "part": true,
+        "weapon": "maul",
+        "authored": true,
+        "clause": "fights with a maul",
+        "clauseId": "cl_cl5rzb",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Concussive Toll",
+        "text": "*Strength Saving Throw:* DC 14, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the warden and has the Prone condition.",
+        "library": true,
+        "template": "push-prone",
+        "imposes": "Prone",
+        "boundKeys": [
+          "knock",
+          "push"
+        ],
+        "accepted_closest": true,
+        "freeRow": true,
+        "expresses": "the iron maul's concussive swing",
+        "expressedQuote": "The target is pushed up to 15 feet away from the warden and has the Prone condition."
+      },
+      {
+        "name": "Shield Bash",
+        "text": "*Strength Saving Throw*: DC 14, one creature within 5 feet that the warden can see. *Failure:*  24 (7d6) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition. *Success:* Half damage only.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Great Weapon Master",
+        "text": "When the warden hits a creature with its Maul, the attack deals an extra 3 damage.",
+        "feature": "Great Weapon Master",
+        "clause": "fights with a maul",
+        "clauseId": "cl_cl5rzb"
+      }
+    ]
+  },
+  "lore": "Forged from the scrap of shattered temple bells and the breastplates of dead acolytes, this oathbound sentinel exists only to hold its threshold and hear the sanctum fall silent again.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Gladiator",
+      "relation": null,
+      "class": "fighter",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a temple warden who fights with a maul",
+    "clauses": [
+      {
+        "id": "cl_18dgj4p",
+        "text": "a temple warden",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_cl5rzb",
+        "text": "fights with a maul",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 1,
+    "free_row_templates": [
+      "push-prone"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a temple warden who fights with a maul",
+  "selectedChallengeRating": "7",
+  "monsterName": "Bellbound Warden",
+  "caster": false
+}

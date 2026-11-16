@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "an oathsworn crusader who smites the unclean and mends her own wounds", "cr": "8", "rules": "2024",
+    "canary": "ELOWEN, holds 4+5: a smiting crusader reaches the divine line — NOT brute-regenerator with INT 6 and troll Regeneration", "mode": "band" },
+  { "name": "", "description": "a battle-chaplain who blesses the faithful before the charge", "cr": "6", "rules": "2024",
+    "canary": "CHAPLAIN: 'blesses' reaches the warpriest line — and the staff no longer derives from DEX", "mode": "band" },
+  { "name": "", "description": "a blue dragonborn knight", "cr": "7", "rules": "2024",
+    "canary": "PIN 5 control: a knight is no battle-priest — the call must refuse worked magic", "mode": "band" },
+  { "name": "", "description": "a satyr piper who dances travellers into the hills", "cr": "5", "rules": "2024",
+    "canary": "PIN 3 control: fey music is the body's own art, not casting — must fall OUT of the caster family", "mode": "band" },
+  { "name": "", "description": "a satyr sorcerer who casts charms and hexes", "cr": "6", "rules": "2024",
+    "canary": "PIN 4 control: an outright magic word still keeps the caster line", "mode": "band" },
+  { "name": "", "description": "a veteran soldier with a longsword who bashes with a buckler", "cr": "6", "rules": "2024",
+    "canary": "REGRESSION: a plain warrior stays martial", "mode": "band" }
+]

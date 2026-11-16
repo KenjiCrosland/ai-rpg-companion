@@ -1,0 +1,117 @@
+[
+  {
+    "name": "Meshrin",
+    "description": "Large lizard folk, 30 feet of movement,  Wields a greatsword, long tail for swipe attacks, is trained in fighting styles, has razor sharp claws, and large teeth for a vicious bite.",
+    "cr": "8",
+    "role": "auto",
+    "rules": "2014",
+    "shape": "meshrin-verbatim",
+    "clauses": [
+      "Large",
+      "lizard folk",
+      "speed 30",
+      "greatsword",
+      "tail swipe",
+      "fighting styles",
+      "claws",
+      "bite"
+    ]
+  },
+  {
+    "name": "",
+    "description": "A huge iron golem shaped like a bull. It charges and gores, its hooves shake the ground when it stomps, it breathes scalding steam from its nostrils, and it is immune to anything but adamantine weapons.",
+    "cr": "12",
+    "rules": "2024",
+    "shape": "paragraph",
+    "clauses": [
+      "Huge",
+      "iron golem (construct)",
+      "bull shape",
+      "charge + gore",
+      "stomp (ground shake)",
+      "steam breath",
+      "adamantine-only immunity (user)"
+    ]
+  },
+  {
+    "name": "Grandmother Ash",
+    "description": "An old hag who lives in the burned forest. She can turn into a cloud of ash and choke anyone who breathes her in. She hates fire and takes extra damage from it. Her nails are long and black and carry rot. She keeps three crows that warn her of intruders.",
+    "cr": "7",
+    "rules": "2014",
+    "shape": "paragraph",
+    "clauses": [
+      "hag (print)",
+      "ash cloud form",
+      "choke on inhale (save, damage/condition)",
+      "fire vulnerability (user)",
+      "rot nails (claw, necrotic/disease)",
+      "three crows (minions/alert trait)"
+    ]
+  },
+  {
+    "cr": "1",
+    "concept": "a mud-caked bog hound that drags fishermen under",
+    "rules": "2024"
+  },
+  {
+    "cr": "20",
+    "concept": "a glacier wyrm that swallows ships whole and freezes the sea",
+    "rules": "2024"
+  },
+  {
+    "cr": "13",
+    "concept": "a storm-herder who commands a stampede of thunder-elk",
+    "rules": "2024"
+  },
+  {
+    "cr": "1",
+    "concept": "a goblin warrior",
+    "rules": "2024"
+  },
+  {
+    "cr": "24",
+    "concept": "a kraken",
+    "rules": "2014"
+  },
+  {
+    "cr": "8",
+    "concept": "a plague-seer who curses the firstborn of every house",
+    "rules": "2024"
+  },
+  {
+    "name": "Sir Reginald Pemberton-Hughes",
+    "description": "a knight who is deathly afraid of chickens and will flee from any bird",
+    "cr": "5",
+    "rules": "2014",
+    "shape": "named-individual",
+    "clauses": [
+      "knight (armor, sword)",
+      "fear of birds (trait)",
+      "flees (reaction/condition)"
+    ]
+  },
+  {
+    "name": "",
+    "description": "knife ball",
+    "cr": "2",
+    "rules": "2014",
+    "shape": "short",
+    "clauses": [
+      "knives (slashing/piercing)",
+      "ball body"
+    ]
+  },
+  {
+    "name": "",
+    "description": "a giant snapping turtle with AC 22 that bites for 50 damage",
+    "cr": "9",
+    "rules": "2024",
+    "shape": "user-number",
+    "clauses": [
+      "giant snapping turtle",
+      "AC 22 (user)",
+      "bite 50 (user)",
+      "shell/withdraw"
+    ]
+  }
+]

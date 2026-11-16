@@ -1,0 +1,73 @@
+[
+ {
+  "name": "Owlbear",
+  "description": "",
+  "cr": "3",
+  "rules": "2024",
+  "mode": "exact",
+  "canary": "CANARY — print-exact floor; attempts no seats, so the idea prompt must not touch it."
+ },
+ {
+  "name": "",
+  "description": "a kenku thief who speaks only in stolen voices",
+  "cr": "3",
+  "rules": "2024",
+  "canary": "CANARY — species kit; its seats landed before and must still land."
+ },
+ {
+  "name": "",
+  "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified",
+  "cr": "17",
+  "rules": "2024",
+  "canary": "CANARY — landed 2 of 2 shapes last run (payoff rider + fear aura). Must not regress."
+ },
+ {
+  "name": "",
+  "description": "a siege-engine golem of lashed timber that shoulders through walls",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "a young storm drake whose breath is a rolling wall of thunder",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "a troll that knits its wounds shut and keeps coming",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "an archon wrapped in a humming shroud of biting flies",
+  "cr": "13",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "a fever-spirit whose touch burns worse each night it returns",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "a storm that gathers over three rounds and then breaks",
+  "cr": "11",
+  "rules": "2024",
+  "canary": "FEATURE — this concept lost BOTH seats before the register change; its idea was prose no template held."
+ },
+ {
+  "name": "",
+  "description": "a hedge-knight with a spear and shield",
+  "cr": "4",
+  "rules": "2024",
+  "canary": "FEATURE — lost BOTH seats before the register change; its idea was prose no template held."
+ }
+]

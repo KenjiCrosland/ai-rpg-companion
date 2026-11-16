@@ -1,0 +1,53 @@
+[
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2024", "canary": "CANARY — homebrew in the standing forty; had an unplaced clause and landed 0. Direct before/after." },
+  { "name": "", "description": "a young storm drake whose breath is a rolling wall of thunder", "cr": "7", "rules": "2024", "canary": "CANARY — homebrew, already has a nova; the call kept asking for a second one." },
+  { "name": "", "description": "a troll that knits its wounds shut and keeps coming", "cr": "5", "rules": "2024", "canary": "CANARY — homebrew that LANDED 2 receipted rows. Must not regress." },
+  { "name": "", "description": "a siege-engine golem of lashed timber that shoulders through walls", "cr": "8", "rules": "2024", "canary": "CANARY — homebrew, breach-family ask, unplaced clause." },
+
+  { "name": "", "description": "a lantern that mourns", "cr": "3", "rules": "2024", "canary": "STRESS: no mechanical verb at all. Pure fiction, two words. Does the idea call invent something runnable?" },
+  { "name": "", "description": "the sound of a door closing in an empty house", "cr": "6", "rules": "2024", "canary": "STRESS: not a creature. An abstraction with no body. Never-fail must hold." },
+  { "name": "", "description": "grief", "cr": "11", "rules": "2024", "canary": "STRESS: one abstract word at a high CR. The thinnest legal input." },
+  { "name": "", "description": "a hunger that wears the shape of a staircase", "cr": "9", "rules": "2024", "canary": "STRESS: surreal, bodiless. Which chassis does the body call pick?" },
+
+  { "name": "", "description": "a cairn-wight that cannot be harmed by steel and fears only running water", "cr": "6", "rules": "2024", "canary": "STRESS: two LACKS and no positive mechanic. Lacks land on the header, so what fills the seats?" },
+  { "name": "", "description": "a brass automaton with no mouth, no eyes and no name", "cr": "10", "rules": "2024", "canary": "STRESS: three negations. Polarity handling, and the senses line." },
+
+  { "name": "", "description": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the water clean", "cr": "13", "rules": "2024", "canary": "STRESS: FOUR mechanical clauses. Clause overload — how many get placed and how many go unplaced?" },
+  { "name": "", "description": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going", "cr": "8", "rules": "2024", "canary": "STRESS: three verbs that are one mechanic. Should compose, not fragment." },
+  { "name": "", "description": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave", "cr": "15", "rules": "2024", "canary": "STRESS: an escalating three-stage mechanic — print has no such shape. Invention or decoration?" },
+
+  { "name": "", "description": "a spore-mother who takes over the bodies of the things she kills and sends them at you", "cr": "12", "rules": "2024", "canary": "STRESS: summoning/minion fiction, which print prices very differently." },
+  { "name": "", "description": "a gaol-queen whose prisoners fight for her while she watches from behind them", "cr": "14", "rules": "2024", "canary": "STRESS: a leader whose allies are the mechanic. Leader archetype on the homebrew path." },
+  { "name": "", "description": "a shepherd of drowned horses who never fights alone", "cr": "9", "rules": "2024", "canary": "STRESS: allies implied but unnamed; a leader with no ally rows available." },
+
+  { "name": "", "description": "a glass monk who turns every blow back on whoever struck it", "cr": "10", "rules": "2024", "canary": "STRESS: a pure reaction concept. Print has only 3 Reactions rows in the corpus." },
+  { "name": "", "description": "a tithe-collector that takes something every time it is wounded", "cr": "7", "rules": "2024", "canary": "STRESS: on_being_hit trigger, which is print's RAREST trait (3 of 324)." },
+  { "name": "", "description": "a sand-shrike that is only dangerous on the turn after it goes still", "cr": "6", "rules": "2024", "canary": "STRESS: a self-imposed setup condition — the wind-up shape, on a sheet with no nova yet." },
+
+  { "name": "", "description": "a chalk-hound that walks through walls and drags you back out through them", "cr": "8", "rules": "2024", "canary": "STRESS: breach + forced movement combined. Two families in one ask." },
+  { "name": "", "description": "a mire-thing that is impossible to see until it is close enough to touch you", "cr": "5", "rules": "2024", "canary": "STRESS: a stealth/ambush concept with no attack verb." },
+  { "name": "", "description": "a scaffold-spider that fights from the ceiling and never comes down", "cr": "7", "rules": "2024", "canary": "STRESS: a positional concept. Climb exists as a template; does it get picked or decorated?" },
+
+  { "name": "", "description": "a coal-cat whose every wound makes it burn hotter", "cr": "4", "rules": "2024", "canary": "STRESS: a Bloodied-scaling concept at LOW CR, where the claim gate is tightest." },
+  { "name": "", "description": "a rot-fly swarm that strips a corpse in a minute", "cr": "2", "rules": "2024", "canary": "STRESS: a swarm body at low CR — print's swarm shape is one attack, no Multiattack." },
+  { "name": "", "description": "a knot of eels in a man's coat", "cr": "1", "rules": "2024", "canary": "STRESS: CR 1, the dice-solver floor, with a body that is arguably a swarm." },
+  { "name": "", "description": "something enormous and patient under the ice", "cr": "20", "rules": "2024", "canary": "STRESS: CR 20 with an almost contentless concept. Legendary budget with nothing to express." },
+  { "name": "", "description": "a worm", "cr": "24", "rules": "2024", "canary": "STRESS: the highest CR with the thinnest concept. Does it fill a legendary sheet at all?" },
+
+  { "name": "", "description": "a kiln-priest whose prayers are spoken in fire", "cr": "11", "rules": "2024", "canary": "STRESS: a caster concept with no class word — must route to the caster family without a class kit." },
+  { "name": "", "description": "a saint's reliquary that heals what is loyal and withers what is not", "cr": "13", "rules": "2024", "canary": "STRESS: two OPPOSITE effects keyed on allegiance." },
+  { "name": "", "description": "a tax-ghost that makes you drop what you are carrying", "cr": "5", "rules": "2024", "canary": "STRESS: disarm — a mechanic with a template but an odd fiction." },
+
+  { "name": "", "description": "a thing like an owlbear but grown through with brambles", "cr": "4", "rules": "2024", "canary": "STRESS: a RESEMBLES relation — homebrew WITH a print_body attached. The path's unusual arm." },
+  { "name": "", "description": "a plague-doctor's bag that has learned to walk", "cr": "6", "rules": "2024", "canary": "STRESS: an object that is a creature. Construct/ooze routing." },
+  { "name": "", "description": "two brothers who share one body and argue about who swings", "cr": "9", "rules": "2024", "canary": "STRESS: a two-minds concept — action economy fiction print expresses as Multiattack." },
+
+  { "name": "", "description": "a duellist who only ever makes one attack, and it always lands", "cr": "12", "rules": "2024", "canary": "STRESS: a concept that CONTRADICTS the chassis (one attack vs Multiattack) and asks for auto-hit, which the rules do not do." },
+  { "name": "", "description": "a creature that poisons everything it touches, including itself", "cr": "7", "rules": "2024", "canary": "STRESS: self-harm as a mechanic; and the Poisoned pairing rule just landed." },
+  { "name": "", "description": "a frost-thing whose cold makes you too frightened to run", "cr": "10", "rules": "2024", "canary": "STRESS: Cold + Frightened — the pairing gate must move the fear, not delete it." },
+
+  { "name": "", "description": "a bone-choir that sings the dying into its ranks", "cr": "16", "rules": "2014", "canary": "STRESS: 2014 conversion on the homebrew path at high CR." },
+  { "name": "", "description": "a reeve of the drowned marsh who never loses a trail", "cr": "8", "rules": "2014", "canary": "STRESS: 2014 + a tracker concept (faultless-tracker exists; is it receipted or decoration?)." },
+  { "name": "", "description": "a hangman's rope that remembers every neck", "cr": "5", "rules": "2014", "canary": "STRESS: 2014, an object-creature, memory as fiction with no mechanic." },
+  { "name": "", "description": "a carnival barker who talks you into standing still", "cr": "6", "rules": "2014", "canary": "STRESS: 2014 + a Charmed/social mechanic with no combat verb." }
+]

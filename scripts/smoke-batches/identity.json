@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a mushroom-choked hound whose spores make you see your dead", "cr": "6", "rules": "2024",
+    "canary": "IDENTITY: must NOT be print's Hell Hound — a Plant/Beast, no fire immunity, no Fire Breath, no Infernal", "mode": "band" },
+  { "name": "", "description": "a canal-lock elemental that opens and drowns a street", "cr": "11", "rules": "2024",
+    "canary": "IDENTITY: an elemental that DROWNS is not the Air Elemental — no Fly 90, no Air Form, no Auran", "mode": "band" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024",
+    "canary": "REGRESSION: a bare print NAME is exempt — the Owlbear IS the Owlbear and keeps print's rows", "mode": "exact" },
+  { "name": "", "description": "big ogre with a club, cr 5", "cr": "5", "rules": "2024",
+    "canary": "REGRESSION: a print HEAD borrow still lands print's rows when the type agrees", "mode": "band" },
+  { "name": "", "description": "a kenku thief who speaks only in stolen voices", "cr": "3", "rules": "2024",
+    "canary": "REGRESSION: species outranks the alias still works beside the new type guard", "mode": "band" },
+  { "name": "", "description": "a reliquary thief who swallows what she steals", "cr": "6", "rules": "2024",
+    "canary": "DEAD ROWS: a swallow chain needs a grapple source — three dependent rows on one sheet last run", "mode": "band" }
+]

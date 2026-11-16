@@ -1,0 +1,171 @@
+{
+  "name": "Lane Thresher",
+  "inline": "the thresher",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Beast",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 10,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": 0,
+    "CON": 6,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": 0,
+  "initiative_score": 10,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The thresher makes two Gore attacks."
+      },
+      {
+        "name": "Gore",
+        "imposes": "Prone",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 19 (4d6 + 5) Piercing damage. If the target is a Large or smaller creature and the thresher moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Dusting Trample (Recharge 5-6)",
+        "text": "*Constitution Saving Throw*: DC 16, each creature in a 30-foot Cone. *Failure:* 49 (14d6) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage only.",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Trample",
+        "rules": true,
+        "text": "*Dexterity Saving Throw*: DC 16, one creature within 5 feet that has the Prone condition. *Failure:* 13 (3d8) Bludgeoning damage. *Success:* Half damage."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Unbroken Charge",
+        "text": "When its movement is interrupted or reduced by Difficult Terrain, a Prone creature's space, or a creature falling Prone in its path, the thresher doesn't stop; it continues its move along the same line and can still make its Gore attacks, and if it drops a creature Prone during this move it can move through that creature's space without slowing.",
+        "authored": true,
+        "clause": "keeps going",
+        "imposes": "Prone",
+        "clauseId": "cl_13e7a3s",
+        "shed_blocked": [
+          "Prone"
+        ]
+      },
+      {
+        "name": "Shearing Skull",
+        "text": "The thresher ignores Difficult Terrain, and it can move through the space of any Prone creature of its size or smaller without that space counting as Difficult Terrain.",
+        "authored": true,
+        "clause": "The thresher's flat, blade-edged skull is the tool of its whole life: it is not slowed by Difficult Terrain, and it can ",
+        "requiresCondition": "Prone",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "keeps running through the fallen and comes back around",
+        "bound": false,
+        "boundKeys": [],
+        "answersAlso": [
+          "keeps going"
+        ],
+        "expressedQuote": "it can move through the space of any Prone creature of its size or smaller without that space counting as Difficult Terrain"
+      }
+    ]
+  },
+  "lore": "A hog-sized plains beast of dense bone and hide, it evolved to cross open ground at speed through herds too thick to go around, and it now reads any crowd as a herd that has not yet been parted.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-charger",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+    "clauses": [
+      {
+        "id": "cl_1v849ay",
+        "text": "a thresher-beast",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      },
+      {
+        "id": "cl_1ugpb35",
+        "text": "charges in a straight line",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      },
+      {
+        "id": "cl_183uwud",
+        "text": "knocks everything flat",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      },
+      {
+        "id": "cl_13e7a3s",
+        "text": "keeps going",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      }
+    ],
+    "cite": "composition after Gorgon (CR 5) — charge plus a breath-shaped nova",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "keeps going -> Shearing Skull"
+    ],
+    "shed_blocked": [
+      "Unbroken Charge:Prone"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+  "selectedChallengeRating": "8",
+  "monsterName": "Lane Thresher",
+  "caster": false
+}

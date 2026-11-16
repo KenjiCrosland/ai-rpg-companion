@@ -1,0 +1,148 @@
+{
+  "name": "Rising Stair",
+  "inline": "the rising stair",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Aberration",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 4,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 16,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": 3,
+    "CON": 7,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +5, Stealth +7",
+  "senses": "tremorsense 60 ft.; Passive Perception 15",
+  "languages": "Common",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Shifting Treads",
+        "text": "*Dexterity Saving Throw*: DC 15, any creature that starts its turn in a 10-foot Emanation originating from the rising stair. *Failure:* The target has the Prone condition. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "composed:zone:condition:poisoned",
+        "imposes": "Prone",
+        "boundKeys": [],
+        "freeRow": true,
+        "duration": "target_start",
+        "expresses": "rearranging flights of steps to guide and trap prey",
+        "bound": false,
+        "expressedQuote": "any creature that starts its turn in a 10-foot Emanation originating from the rising stair. *Failure:* The target has the Prone condition."
+      },
+      {
+        "name": "Slipping Steps",
+        "text": "The rising stair ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The rising stair makes three Void Tread attacks. It can replace one attack with a Landing Maw attack."
+      },
+      {
+        "name": "Void Tread",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage plus 7 (2d6) Psychic damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Landing Maw (Beast or Hybrid Form Only)",
+        "imposes": "Poisoned",
+        "gate": "Beast or Hybrid Form Only",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 22 (4d8 + 4) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 15. *Failure:* The target has the Poisoned condition until the end of its next turn.",
+        "weapon": null,
+        "attacksPerRound": 1
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Shape-Shift",
+        "rules": true,
+        "text": "The rising stair shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      },
+      {
+        "name": "Fleet Agility",
+        "text": "The rising stair takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "It was born in the seam between two floors of a ruined tower, where a hunger learned that people climb willingly, and now it wears a staircase to make a meal of hope.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-8-shifter",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "a hunger",
+        "where": "description",
+        "text": "The rising stair has Advantage on its next Landing Maw attack roll, and a Humanoid it hits must succeed on a Constitution saving throw or have the Poisoned condition until the end of its next turn."
+      }
+    ],
+    "userConcept": "a hunger that wears the shape of a staircase",
+    "clauses": [
+      {
+        "id": "cl_1d63l1u",
+        "text": "a hunger",
+        "kind": "mechanical"
+      },
+      {
+        "id": "cl_19seyzv",
+        "text": "wears the shape of a staircase",
+        "kind": "mechanical"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "composed:zone:condition:poisoned"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "answered_in_prose": [
+      "a hunger"
+    ],
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a hunger that wears the shape of a staircase",
+  "selectedChallengeRating": "9",
+  "monsterName": "Rising Stair",
+  "caster": false
+}

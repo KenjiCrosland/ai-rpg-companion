@@ -1,0 +1,37 @@
+[
+  {
+    "name": "",
+    "description": "a winged temple warden wreathed in fire that fights with a spear",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "THE CASE: the Dayvault Warden shipped a Spear dealing 19 (4d6+5) FIRE. Spear must be Piercing"
+  },
+  {
+    "name": "",
+    "description": "a cinder knight who carries a flaming spear and a burning shield",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "THE EDGE CASE the owner named: an explicit FIRE SPEAR. Still Piercing - 'even then probably not'"
+  },
+  {
+    "name": "",
+    "description": "a paladin of the dawn whose greatsword burns with holy light",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "PRINT'S SHAPE: the Knight's Greatsword is Slashing PLUS Radiant. Physical main, energy rider"
+  },
+  {
+    "name": "",
+    "description": "a living bonfire with no body but flame",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "MUST NOT BREAK: a body that IS energy has no weapon, so its melee stays Fire"
+  },
+  {
+    "name": "Hobgoblin Captain",
+    "description": "",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "FLOOR: print's own Greatsword is Slashing plus Poison - must stay exactly that"
+  }
+]

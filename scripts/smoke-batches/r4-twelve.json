@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a dire wolf with a frost-rimed hide", "cr": "3", "rules": "2024", "canary": "R4: the frost-rimed hide is the step-1 block's named trait idea — the seat should AUTHOR a trait rather than accept a nearest it refused" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2014", "canary": "R4: the named save-with-movement idea; and the authored row must PRINT for 2014, not be translated" },
+  { "name": "Stone Golem", "description": "carved as a weeping saint", "cr": "10", "rules": "2024", "canary": "R4: a print body — the authored row must clear the print-body receipt gate and print's trait ceiling honestly" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2014", "canary": "R4: the named reaction-or-save idea on a print body with a LACKS clause (no regrowth)" },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "5", "rules": "2014", "canary": "R4: homebrew body, both seats died at closest accepted on the 11-02 sweep" },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2014", "canary": "R4: a weapon-named sheet — an authored row must not take the handaxe's slot or cite a row the sheet lacks" },
+  { "name": "", "description": "a marsh witch who curses trespassers, cr 7", "cr": "auto", "rules": "2024", "canary": "R4: CR from the GM's own words; the authored row must price against the derived CR" },
+  { "name": "", "description": "a leviathan of the trench whose song drowns fleets", "cr": "24", "rules": "2024", "canary": "R4: CR 24 — the authored row must obey the single-target ceiling and the nova cap" },
+  { "name": "", "description": "a duellist who only ever makes one attack, and it always lands", "cr": "12", "rules": "2024", "canary": "R4: the critic's surprise case — the concept's own sentence was absent from the page" },
+  { "name": "", "description": "a tax-ghost that makes you drop what you are carrying", "cr": "5", "rules": "2024", "canary": "R4: a disarm the catalog could not hold; both seats refused for no_fit" },
+  { "name": "", "description": "a knot of eels in a man's coat", "cr": "1", "rules": "2024", "canary": "R4: CR 1 — the value floor and the card-size free-row budget are tightest here" },
+  { "name": "", "description": "a lizardfolk ninja", "cr": "5", "rules": "2024", "canary": "R4: species+class — the SIGNATURE was closest accepted 4 rolls of 8; the kit rows must survive beside an authored one" }
+]

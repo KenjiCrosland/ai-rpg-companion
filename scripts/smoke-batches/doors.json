@@ -1,0 +1,18 @@
+[
+  { "name": "", "description": "a hobgoblin sniper who picks off torch-bearers from the ridge", "cr": "5", "rules": "2024",
+    "canary": "SHOOTS pin: a sniper reaches the archer line", "mode": "band" },
+  { "name": "", "description": "a bandit lieutenant with a crossbow who never leaves the treeline", "cr": "4", "rules": "2014",
+    "canary": "SHOOTS, critic's case: a crossbow bandit reaches the archer line in 2014 too", "mode": "band" },
+  { "name": "", "description": "a lighthouse hermit-mage whose lantern beam brands whoever it touches", "cr": "6", "rules": "2024",
+    "canary": "SHOOTS pin control: a beam is not a bow — the archer line must be refused", "mode": "band" },
+  { "name": "", "description": "a hermit who talks to crows", "cr": "3", "rules": "2024",
+    "canary": "SWARM pin control: commanding animals is not BEING a mass — the swarm body must be refused", "mode": "band" },
+  { "name": "", "description": "a tomb-beetle swarm that strips a corpse in a minute", "cr": "5", "rules": "2024",
+    "canary": "SWARM: a real mass of many keeps the swarm body", "mode": "band" },
+  { "name": "", "description": "a tortoise-knight who withdraws into his shell when pressed", "cr": "5", "rules": "2024",
+    "canary": "HOLDS pin control: a shell holds nobody — the grappler engine must be refused", "mode": "band" },
+  { "name": "", "description": "an archivist golem that files intruders between its plates", "cr": "9", "rules": "2024",
+    "canary": "HOLDS, critic's case: a real containment engine keeps its grappler line (it was dropped last run)", "mode": "band" },
+  { "name": "", "description": "a bog troll that crushes the drowned against the stones", "cr": "6", "rules": "2024",
+    "canary": "HOLDS, my own wrong expectation: crushing is impact — NO Grappled rider with nothing to grab", "mode": "band" }
+]

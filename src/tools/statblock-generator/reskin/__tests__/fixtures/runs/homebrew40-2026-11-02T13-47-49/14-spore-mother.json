@@ -1,0 +1,154 @@
+{
+  "name": "Spore-Mother",
+  "inline": "the spore-mother",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Plant",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 18,
+  "hp": 199,
+  "hp_formula": "21d10 + 84",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 18,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 8,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 8
+  },
+  "skills": "Athletics +10, Persuasion +8",
+  "senses": "blindsight 30 ft.; Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Anchored Dead",
+        "text": "When a creature dies within 10 feet of the spore-mother, The corpse is threaded and rises as a spore-puppet that acts on the spore-mother's turn, moving toward the nearest living creature and clawing at it; the spore-mother can command up to such puppets at once, and each collapses when she is destroyed.",
+        "authored": true,
+        "clause": "Every corpse that falls near the spore-mother is already threaded: when a creature dies within reach of her mycelium, pa",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "seizing and reanimating the bodies of the slain",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "When a creature dies within 10 feet of the spore-mother, The corpse is threaded and rises as a spore-puppet that acts on the spore-mother's turn, moving toward the nearest living creature and clawing at it"
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the spore-mother, the spore-mother and its allies have Advantage on attack rolls and saving throws, provided the spore-mother doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The spore-mother makes three Spore Lash attacks. It can replace one attack with a use of Corpse Puppet.",
+        "clause": "sends them at you",
+        "answersAlso": [
+          "sends them at you"
+        ],
+        "clauseId": "cl_1rip7y9"
+      },
+      {
+        "name": "Spore Lash",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Corpse Puppet",
+        "text": "*Strength Saving Throw:* DC 18, each creature in a 30-foot Cone. *Failure:* The target is pulled up to 15 feet straight toward the spore-mother, and its Speed is 0 until the start of the spore-mother's next turn.",
+        "library": true,
+        "template": "obstacle-pull",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "takes over the bodies of the things she kills and sends them at you",
+        "widened": true
+      }
+    ]
+  },
+  "lore": "The last fruiting body of a forest that died screaming, it walks only because its old host is fertilizer for the next one.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "clauses": [
+      {
+        "id": "cl_1x5f05m",
+        "text": "a spore-mother",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_shlr3d",
+        "text": "takes over the bodies of the things she kills",
+        "kind": "mechanical",
+        "askMechanic": "charm",
+        "askMechanicWhy": "takes over the bodies"
+      },
+      {
+        "id": "cl_1rip7y9",
+        "text": "sends them at you",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "sends them",
+        "askMechanic": "command",
+        "askMechanicWhy": "sends them at you"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "sends them at you -> Multiattack"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [
+    "duplicate-entry: Actions/Sporeburst: identical text to \"Mycelial Touch\" — two names, one ability; rewrite this entry into something distinct"
+  ],
+  "monsterDescription": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+  "selectedChallengeRating": "12",
+  "monsterName": "Spore-Mother",
+  "caster": false
+}

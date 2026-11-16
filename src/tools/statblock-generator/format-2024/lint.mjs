@@ -32,6 +32,7 @@
  *   model's fields.
  */
 import { pbFor } from '../chassis/chassis.mjs';
+import { imposedConditions } from '../reskin/author.mjs';
 import srdMonsters from '@/data/srd52-monsters.json';
 
 const HP_BAND = [0.75, 1.35];
@@ -139,6 +140,159 @@ function editDistance(a, b) {
 
 /** "Monstrosity" → "Monstrosities", "Undead"/"Fey" invariant, else +s.
  *  Accepts singular or (possibly mangled) plural input. */
+/**
+ * A save outcome with no payload — "Failure:" and then nothing, or straight into
+ * the next label. Exported because the pass that STRIPS a condition clause must
+ * be able to ask, before it commits the edit, whether the strip would empty the
+ * row; a second copy of this test is how the Brass Tyrant's Seismic Strike
+ * shipped as "…each creature within 10 feet of the tyrant. *Failure:*".
+ */
+/**
+ * Conditions a row may not impose open-endedly, and the shapes that bound one.
+ * Lives here because BOTH sides need the same answer: the checker reports a 2014
+ * conversion that dropped a duration, and `validateConversionResponse` has to
+ * refuse that conversion before it ships. A second copy is how the Lich's
+ * Paralyzing Touch kept arriving as "or be paralyzed." with no end — the checker
+ * knew the rule and the gate never asked.
+ */
+export const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Restrained', 'Incapacitated', 'Frightened', 'Poisoned'];
+// A BREAKABLE OBJECT IS A BOUND, AND IT IS PRINT'S OWN (2026-11-08). The sweep's Vampire
+// shipped "has the Restrained condition until the brambles is destroyed (AC 15; HP 20;
+// Vulnerability to Fire damage...)" and this gate failed it for recording no duration.
+// That is print's phrasing verbatim, three times: the Ettercap's Web Strand and the Giant
+// Spider's Web both read "until the web is destroyed (AC 10; HP 5; ...)", and the Erinyes'
+// Entangling Rope "until the rope is destroyed". An escape the party can attack is a
+// better bound than a clock, and it is the one print reaches for on a snare.
+// `is|are` both, because the object may be plural ("the brambles are destroyed").
+export const CONDITION_BOUNDED = /until the \w+(?: \w+)? (?:is|are) destroyed|until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|cured|dispelled|this effect ends)|repeats? the (?:saving throw|save)|ending the effect|while .{0,40}(?:remains|is) within|escape DC/i;
+// PRINT'S PRICE FOR A FREE AURA. Every at-will Emanation control row past 10
+// feet buys the target out on a success — Pit Fiend/Fear Aura (20 ft),
+// Cloaker/Moan (60 ft), Harpy/Luring Song (300 ft), 3 of 3. It is how print can
+// hand out a 300-foot Charm at CR 1: the area is uncapped and the CONSEQUENCE is
+// not. Our own `phobia` and `contagion` frames already write this clause, so the
+// grammar is shared rather than print-only.
+/**
+ * THE SWARM'S BLOODIED SPLIT — one attack at two rates, never their sum.
+ *
+ * print's seven swarms write "10 (4d4) damage, or 5 (2d4) damage if the swarm is
+ * Bloodied": a single hit priced twice, so any consumer summing a row's dice must
+ * strip the second rate first. Two live copies existed and they disagreed, which
+ * cost two false readings a fortnight apart — "135 damage" on 2026-10-30, and a
+ * CR 13 swarm read as 79 (a FAIL) where the true hit was 53 (a soft) on
+ * 2026-11-01. The second was the TWO-COMPONENT form the engine now writes once a
+ * rider rides the bite: "…32 Bludgeoning plus 21 Necrotic, or 16 Bludgeoning plus
+ * 10 Necrotic if…". The old pattern allowed one component before "if" and so
+ * matched nothing, stripping nothing.
+ *
+ * Matches both stages deliberately: `{damage_type}` while the row still carries
+ * its tokens (scale.mjs writes the split there) and a plain type word once it is
+ * rendered (the checker reads it there).
+ */
+const _RATE = String.raw`\d+ \(\d+d\d+(?:\s*[+-]\s*\d+)?\)(?: (?:\{damage_type(?:_2)?\}|\w+))? damage`;
+// print writes the alternate rate TWO ways, and the engine a third:
+//   A  ", or 45 (9d8 + 5) Necrotic damage if the swarm is Bloodied"      (trailing, comma)
+//   B  "—or 6 (1d4 + 4) Piercing damage if the swarm is Bloodied—"       (interposed, em-dash;
+//      Swarm of Venomous Snakes, whose "plus 10 (3d6) Poison" follows the clause, so a
+//      trailing-only pattern read its 18-point hit as 24)
+//   C  ", or 27 (5d8) {damage_type} damage plus 18 (4d8) {damage_type_2} damage if … Bloodied"
+//      (two components, which the engine writes once a rider rides the bite)
+const BLOODIED_SPLIT_SRC = String.raw`[,—–]\s*or ${_RATE}(?: plus ${_RATE})* if [^.—–]{0,40}Bloodied[—–]?`;
+/**
+ * A FUNCTION, NOT A SHARED /g REGEX. A global regex carries `lastIndex` between
+ * calls, so one consumer's `.test()` silently moves another's starting point —
+ * the fault recorded in generate.mjs as "/g + .test() WAS LOSING MATCHES"
+ * (2026-10-30). Each call gets a fresh pattern.
+ */
+export const stripBloodiedSplit = (text) => String(text ?? '').replace(new RegExp(BLOODIED_SPLIT_SRC, 'g'), '');
+export const hasBloodiedSplit = (text) => new RegExp(BLOODIED_SPLIT_SRC).test(String(text ?? ''));
+
+// THE EDITION'S OWN VOCABULARY, IN ONE TABLE (roadmap R3.2, 2026-11-01). These
+// are closed facts about how the two printings word the same rule — not a reading
+// of anyone's meaning. The checker's `vocab-2024-in-2014` gate had the list
+// inline and the 2014 renderer did not have it at all, so the renderer could ship
+// a term the gate then failed. One table, both readers: they cannot disagree.
+//
+// Why this is needed now: R3.2 stops sending a row we wrote from a form to the
+// conversion call (the call is what dropped Krennik's "immune for 24 hours"), and
+// the model had been silently fixing these four terms on the way past. Making the
+// printing deterministic made that invisible repair visible.
+export const EDITION_TERMS_2024_TO_2014 = [
+  ['Advantage', 'advantage'],
+  ['Disadvantage', 'disadvantage'],
+  ['At Will:', 'At will:'],
+  ['/Day Each', '/day each'],
+];
+
+export const IMMUNITY_ON_SUCCESS = /immune to (?:this|the) [^.]{0,60}?for (?:the next )?24 hours/i;
+
+export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;
+
+// A SAVE A GM CANNOT ROLL (owner's ruling, 2026-11-13). Both halves are grammar, not
+// meaning: one asks whether an ability is named beside a DC, the other whether any
+// outcome clause follows a save at all.
+//
+// An ability is "named" either before the DC, as 2024 writes it
+// ("*Dexterity Saving Throw*: DC 17, …"), or after it, as 2014 prose does
+// ("must succeed on a DC 15 Dexterity saving throw"). Print uses both.
+const SAVE_STAT_NEAR = /(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+[Ss]aving\s+[Tt]hrow|[Ss]aving\s+[Tt]hrow[^.]{0,30}(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)/;
+
+// Any form print uses to say what the save does. `First Failure` / `Second Failure`
+// (the two-stage petrification and paralysis rows) appear WITHOUT their colons in the
+// corpus, so this must not require one.
+const SAVE_OUTCOME_ANY = /Failure|Success|fail(?:s|ed|ure)?\b|succe(?:ed|eds|ssful)\b/i;
+
+// The pre-2024 aside: "(DC 14 Wisdom save negates)". The ability IS named, so the DC is
+// not anonymous — it is simply not written as the skeleton. Print uses this nowhere.
+const SAVE_SHORTHAND = /DC \d+ (?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) save\b/;
+
+/**
+ * Is this row's save one a GM cannot roll? Returns the reason, or null.
+ *
+ * Classify each DC once: a save DC, or not this rule's business. A row may MENTION a
+ * saving throw that lives on another row - the Gelatinous Cube's Ooze Cube says a
+ * creature entering its space "has Disadvantage on the saving throw" (that is
+ * Engulf's) and carries a Strength (Athletics) CHECK DC of its own. Asking "is there a
+ * save word and a DC somewhere in this text" flagged it; asking "is THIS DC a save DC"
+ * does not.
+ *
+ * Exported because the kit-rider weld asks the same question of a rider before
+ * attaching it. Measured at zero findings across all 329 print monsters.
+ */
+export function saveIsUnrollable(text) {
+  const raw = String(text ?? '').replace(/\*/g, '').trim();
+  if (!raw) return null;
+  let labelledSaves = 0; let unnamedDC = null;
+  for (const m of raw.matchAll(/DC \d+/g)) {
+    const before = raw.slice(Math.max(0, m.index - 70), m.index);
+    const after = raw.slice(m.index, m.index + 70);
+    if (/spell save |escape |\bcheck\b/i.test(`${before} ${after}`)) continue; // print's own: a spell save DC, an escape DC, an ability check
+    // WHICH SKELETON IS THIS? 2024 labels the save and then gives the DC
+    // ("*Dexterity Saving Throw*: DC 17, ..."); 2014 prose puts the DC first and the
+    // ability after it ("a DC 11 Dexterity saving throw to avoid ...").
+    if (SAVE_STAT_NEAR.test(before)) { labelledSaves += 1; continue; }
+    if (SAVE_STAT_NEAR.test(after)) continue; // 2014 prose: named, and its outcome is judged below
+    unnamedDC ??= m[0];
+  }
+  // A SAVE NAMED IN SHORTHAND IS STILL MALFORMED, FOR A DIFFERENT REASON. "(DC 14
+  // Wisdom save negates)" tells a GM exactly what to roll, so reporting it as "names no
+  // saving throw" misleads whoever reads the run — caught on Grizzelda's Peddler's
+  // Seeming by the item 2 review. What is actually wrong is that the save is a
+  // parenthetical aside rather than the skeleton every other row uses, and print never
+  // writes one: 0 occurrences across both corpora. Same verdict, honest reason.
+  if (unnamedDC && SAVE_SHORTHAND.test(raw)) {
+    return `the save is an aside ("${(/\(?DC \d+ (?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) save[^).]*\)?/.exec(raw) ?? [unnamedDC])[0]}") instead of the "*<Ability> Saving Throw*: DC n, <target>. *Failure:* …" skeleton`;
+  }
+  if (unnamedDC) return `"${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`;
+  // THE OUTCOME ARM JUDGES THE LABELLED SKELETON ONLY. 2014 states its outcome inline
+  // and in many shapes - "to avoid the rust monster's touch", "or be knocked prone",
+  // "taking 13 damage on a failed save" - and enumerating those would be the word list
+  // this engine does not write. The labelled form has exactly one place for the
+  // outcome, so its absence there is structural. (Caught by the item 2 review: this
+  // arm flagged the Rust Monster's Antennae, whose outcome is perfectly well stated.)
+  if (labelledSaves && !SAVE_OUTCOME_ANY.test(raw)) return 'the save has no outcome - nothing says what happens on a failure or a success';
+  return null;
+}
+
 export function pluralizeCreatureType(word) {
   const base = word.trim().replace(/ies$/i, 'y').replace(/(?<!s)s$/i, '');
   const cased = base[0].toUpperCase() + base.slice(1).toLowerCase();
@@ -448,12 +602,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     const seen = new Map();
     for (const e of dupList ?? []) {
       const key = (e.text ?? '').trim().toLowerCase();
+      if (key && seen.has(key) && e.part && seen.get(key)?.part) continue; // two body parts the user named with the same numbers are two rows (Greatsword and Razor Sharp Claws, step 7)
       if (key && seen.has(key)) {
         push('duplicate-entry', 'reject',
-          `${dupSection}/${e.name}: identical text to "${seen.get(key)}" — two names, one ability; rewrite this entry into something distinct`,
+          `${dupSection}/${e.name}: identical text to "${seen.get(key)?.name ?? seen.get(key)}" — two names, one ability; rewrite this entry into something distinct`,
           undefined, { section: dupSection, entry: e.name });
       } else if (key) {
-        seen.set(key, e.name);
+        seen.set(key, e);
       }
     }
   }
@@ -512,6 +667,90 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     leaksIn('Creature name', monster.name);
     for (const { section, entry } of entriesOf(monster)) {
       leaksIn(`${section} entry name`, entry.name);
+    }
+  }
+
+  // RULE TEXT THAT DIDN'T FINISH ASSEMBLING (the forty of 2026-10-27; critic:
+  // "three of the nine fixes are a new failure class — truncated or garbled rule
+  // text shipped on the sheet … None is a judgment call; a lint catches all
+  // three"). Three different seams, one symptom: a row a GM cannot run.
+  //
+  //   Carrion Archon — "The archon can command a number of Swarms at once equal."
+  //   Brass Tyrant   — "…each creature within 10 feet of the tyrant. Failure:"
+  //   Leviathan      — "While the leviathan can see the leviathan within 30 feet
+  //                     of itself … must move away from the leviathan."
+  //
+  // These are REJECTS, not correctables: the missing half cannot be invented by
+  // string surgery, and shipping half a rule is worse than shipping no row —
+  // "rules text is never free" is the standing rule for exactly this.
+  for (const { section, entry } of entriesOf(monster)) {
+    const raw = String(entry?.text ?? '').replace(/\*/g, '').trim();
+    if (!raw) continue;
+    const loc = { section, entry: entry.name };
+    // a save outcome with no payload: "Failure:" or "Success:" and then nothing
+    // (or straight into the next label)
+    if (EMPTY_SAVE_OUTCOME.test(raw)) {
+      push('unfinished-text', 'reject', `${section}/${entry.name}: a save outcome has no effect after it — "${raw.slice(-60)}"`, undefined, loc);
+    }
+    // a sentence that stops on a word that cannot end one. "equal." is the
+    // archon's; the rest are the same shape of truncation.
+    if (/\b(?:equal|equal to|than|toward|towards|within|from|of|to|the|an?|and|or|by|for|with|into|plus|up)\.?$/i.test(raw)) {
+      push('unfinished-text', 'reject', `${section}/${entry.name}: the text ends mid-sentence on "${raw.split(/\s+/).slice(-2).join(' ')}"`, undefined, loc);
+    }
+    // A SAVE A GM CANNOT ROLL (owner's ruling, 2026-11-13). The same family: rules
+    // text that did not finish assembling. Structural only — it reads the grammar of
+    // rendered text and never what the row means. Two shapes:
+    //
+    //   (a) a DC with no ability named beside it. The corpus itself shipped this —
+    //       the Stone Giant's Deflect Missile arrived from the SRD markdown with its
+    //       save label stripped: "...redirect some of the attack's force. DC 17, one
+    //       creature the giant can see within 60 feet. 11 (1d10 + 6) Force damage."
+    //       Nothing caught it; it reached a card.
+    //   (b) a save that names a DC and then stops, with no outcome in any form —
+    //       "the target is subjected to the following effect. Constitution Saving
+    //       Throw: DC 14." and nothing after it. Three of three monks shipped that
+    //       on the GM forty, and the audit filed it as published text.
+    //
+    // Print writes four things that are NOT this, and each is excluded: a spell save
+    // DC, an escape DC, an ability-CHECK DC, and the two-stage "First Failure /
+    // Second Failure" form. Measured at 0 findings over all 329 print monsters.
+    //
+    // ITS OWN RULE NAME, DELIBERATELY. `unfinished-text` findings DELETE the row
+    // ("half a rule is worse than no row", reskin/generate.mjs). That is right when
+    // the broken save IS the row, and wrong when it rides a complete attack: the
+    // monk's Unarmed Strike carries a real Melee Attack Roll and 16 (3d8+3)
+    // Bludgeoning before the stripped rider, and deleting it leaves a monk with no
+    // melee attack at all - worse than the dangling frame. Shipped as `save-unrollable`
+    // at `audit`, so it reports on the CHECK file and the review page without
+    // destroying a row. Whether the dangling FRAME should then be surgically removed
+    // (as `orphan-repeat-save` already does for a stray repeat-the-save sentence) is
+    // the owner's call, not this rule's.
+    // ONE DEFINITION, EVERY READER. `saveIsUnrollable` is the whole grammar, and the
+    // kit-rider weld calls the same function before it attaches a rider to a host
+    // attack - a guard where the row is BUILT, rather than surgery on finished text
+    // (owner's ruling, 2026-11-13).
+    const unrollable = saveIsUnrollable(raw);
+    if (unrollable) {
+      push('save-unrollable', 'audit', `${section}/${entry.name}: ${unrollable}`, undefined, loc);
+    }
+    // A ROW THAT WAITS ON A HOLD THE SHEET NEVER MAKES (owner's ruling, 2026-11-14). Probe B's
+    // clockwork spider shipped "while it is not grappling or restraining a creature" on a sheet
+    // whose only restraining row had been evicted by the free-row budget. The tie-break in
+    // `settleSheetBudgets` removes that case; the CLASS remains — any row conditioned on the
+    // creature holding something when nothing on the card holds anything.
+    //
+    // REPORTS, NEVER REWRITES, exactly as the owner ruled for a dangling save: at `audit` it
+    // reaches the CHECK file and the review page and destroys no row.
+    //
+    // The sheet half is DECLARED — `imposedConditions` is the same reader the weld and
+    // `advantageReachable` use. The row half reads the row's own sentence, which the owner
+    // asked for here by name; it is the narrowest pattern that covers the shipped case.
+    if (/\b(?:while|if|when|unless)\b[^.]*\bit is (?:not )?(?:grappling|restraining)\b/i.test(raw)
+      || /\b(?:a|the|its|this) (?:creature|target) (?:it is )?(?:currently )?(?:grappling|restraining)\b/i.test(raw)) {
+      const holds = new Set(Object.values(monster.sections ?? {}).flat().filter(Boolean).flatMap((o) => imposedConditions(o)));
+      if (!holds.has('Grappled') && !holds.has('Restrained')) {
+        push('holds-nothing', 'audit', `${section}/${entry.name}: the row turns on this creature grappling or restraining, and nothing on the sheet imposes Grappled or Restrained`, undefined, loc);
+      }
     }
   }
 
@@ -663,11 +902,24 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // carries the name (a legendary "Scatter" may use the ACTION Scatter).
     {
       const allEntries = entriesOf(monster);
-      const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack']);
+      const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack', 'reaction', 'bonus action', 'action', 'legendary action']); // "use its Reaction to…" is the leader's print idiom, not a row reference (high-cr batch 2026-10-02)
       const ownBase = entry.name.split(' (')[0].toLowerCase();
       for (const m of entry.text.matchAll(/\buses? (?:its |the )?([A-Z][\w' -]+?)(?:\s+(?:action|reaction))?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
+        // A CITED ROW MAY BE NAMED WITH ITS KIND (critic's release ruling + our §3, 2026-11-09).
+        // A GM writes "it can immediately use its Umbral Step bonus action" — the row is "Umbral
+        // Step", it sits under Bonus Actions, and nobody reading the card is confused. Both of
+        // these readers matched the captured phrase literally, so the trailing kind word made the
+        // citation dangle: #20 Thin-Seam Prowler FAILed twice on one row for a sheet that is
+        // correct. One of the three citation shapes measured this week (3 of 7 fortys carry one);
+        // the other two — a row that genuinely is not there, and a trigger naming an event or
+        // precondition nothing produces — still refuse, and must.
+        // `bonus` alone is in the list because THIS capture's own optional group eats the word
+        // "action" and leaves it: "use its Umbral Step bonus action to…" captures "Umbral Step
+        // bonus". The possessive strip above already removes "Molten Crown's AC bonus", so a
+        // trailing bare "bonus" here is always the kind word and never part of a row's name.
+        const STRIP_KIND = /\s+(?:bonus\s+action|legendary\s+action|reaction|action|attack|trait|feature|bonus|twice|once|three\s+times|stat\s+block)$/i;
         for (const refRaw of m[1].split(/\s+or\s+/)) {
-          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/'s\b.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase(); // possessive strip: "Molten Crown's AC bonus" refs Molten Crown (FP 2026-09-01)
+          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/'s\b.*$/, '').replace(STRIP_KIND, '').replace(STRIP_KIND, '').toLowerCase(); // twice: "its Umbral Step bonus action" sheds "action" then "bonus" // possessive strip: "Molten Crown's AC bonus" refs Molten Crown (FP 2026-09-01)
           if (!ref || OK_REFS.has(ref) || /stat block/i.test(refRaw)) continue;
           const resolvedElsewhere = allEntries.some((x) => x.entry !== entry && x.entry.name.split(' (')[0].toLowerCase() === ref);
           // Self-mentions are official (reuse-restriction prose inside the
@@ -1148,8 +1400,10 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       // business, not entry-reference resolution's.
       if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
       for (const part of ref[1].split(/ or /)) {
-        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
-        if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack)$/i.test(name)) continue;
+        // the same normalisation as `dangling-use-ref` above: a cited row may carry its kind
+        const KIND = /\s+(?:bonus\s+action|legendary\s+action|reaction|action|attack|trait|feature|bonus|twice|once|three\s+times)$/i; // bare `bonus` for the same reason as STRIP_KIND above
+        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(KIND, '').replace(KIND, '').trim();
+        if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack|Reaction|Bonus Action|Legendary Action|Action)$/i.test(name)) continue; // "use its Reaction to…" is the leader's print idiom (checker 2026-10-02)
         if (!entryNames.some((n) => n === name || n.startsWith(name))) {
           push('undefined-attack-ref', 'reject', `${where} references a use of "${name}", which is not defined anywhere in the statblock — rewrite the reference to name a real entry`, undefined, loc);
         }
@@ -1306,12 +1560,10 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         .filter((t) => ALL_TYPES.includes(t));
       if (dealt.length) {
         for (const ty of TYPE_WORDS) {
-          if (new RegExp(`\\b${ty}\\b`, 'i').test(entry.name) && !dealt.includes(ty)) {
-            // if the name already carries the dealt type, DROP the wrong word
-            // rather than doubling it ("Lance of Radiant Radiant", blind read 2026-09-21)
-            const fixed = new RegExp(`\\b${dealt[0]}\\b`, 'i').test(entry.name)
-              ? entry.name.replace(new RegExp(`\\s*\\b${ty}\\b`, 'i'), '').replace(/\s+(?:of|the)\s*$/i, '').trim()
-              : entry.name.replace(new RegExp(`\\b${ty}\\b`, 'i'), dealt[0]);
+          if (new RegExp(`(?:^|\\s)${ty}(?:\\s|$)`, 'i').test(entry.name) && !dealt.includes(ty)) { // a word inside a hyphenated compound is a name, not a type claim ("Thunder-Elk Stampede" — the critic's second species read)
+            // A NAME IS NEVER A TYPE FIELD: the wrong word leaves; the dealt type is never written in ("Bludgeoning-Elk Stampede", "Bludgeoning Touch", "Reaper Bludgeon" — the critic's second species read)
+            const fixed = entry.name.replace(new RegExp(`\\s*(?:^|\\s)${ty}(?=\\s|$)`, 'i'), ' ').replace(/\s+(?:of|the)\s*$/i, '').replace(/^\s*(?:of|the)\s+/i, '').replace(/\s{2,}/g, ' ').trim();
+            if (!/[A-Za-z]/.test(fixed) || fixed === entry.name) break; // nothing honest to rename to: the mismatch stands unrenamed
             push('entry-name-type-mismatch', 'correctable',
               `${where}: the name says ${ty} but the entry deals ${dealt.join('/')} — a type-named ability must deal its named type (0/329 officials mismatch). Renamed to "${fixed}"`,
               fixed, loc);
@@ -1415,6 +1667,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // poisoned condition" — live 2014 finding, "Glimborg"), which the
     // original capitalized two-branch regex sailed past.
     if (section === 'Traits'
+      && !/\b(?:adamantine|silvered)\b/i.test(entry.text) // a qualifier the header lines cannot carry ("immune to damage from non-adamantine weapons" — the Iron Bull, step 6) is a mechanic, not a restatement; "nonmagical" IS a header idiom (the Bone Shroud pin)
       && (/^The [\w' -]+ (?:has|is) (?:resistance|resistant|immunity|immune)[^.]*(?:damage|conditions?)\.$/i.test(entry.text.trim())
         || /^The [\w' -]+(?:'s [\w' -]+)? is [^.]*grants? (?:it|the [\w' -]+) (?:resistance|immunity)[^.]*\.$/i.test(entry.text.trim()))) {
       push('defense-restated', 'reject', `${where}: this trait only restates the Resistances/Immunities lines — the lines already carry it; replace it with a real mechanic or drop it`, undefined, loc);

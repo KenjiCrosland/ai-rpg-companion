@@ -477,17 +477,26 @@ describe('edition conversion (⇄ footer action)', () => {
     expect(converted.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
   });
 
-  test('validateConversionResponse enforces section shape and entry names', () => {
+  test('validateConversionResponse enforces section shape; a drifted entry name is tolerated (rows match by position, the English name is kept)', () => {
     const model = fromLegacyModel(legacyOf());
     const good = response2024(model);
     expect(validateConversionResponse(JSON.stringify(good), model)).toBe(true);
     const renamed = JSON.parse(JSON.stringify(good));
     renamed.Actions[1].name = 'Umbra Claw';
-    expect(validateConversionResponse(JSON.stringify(renamed), model)).toBe(false);
+    expect(validateConversionResponse(JSON.stringify(renamed), model)).toBe(true); // a renamed row no longer fails three tries and a "try again" toast (release smoke 2026-10-02)
     const short = JSON.parse(JSON.stringify(good));
     short.Actions.pop();
     expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);
     expect(validateConversionResponse(JSON.stringify({}), model)).toBe(false);
+  });
+  test('an EMPTY section is not sent, so its absence from the answer is not a reason to fail the conversion (five of five failed 2014 conversions carried one, 2026-10-18)', () => {
+    const model = fromLegacyModel(legacyOf());
+    model.sections.Reactions = [];
+    const good = response2024(model);
+    delete good.Reactions;
+    expect(validateConversionResponse(JSON.stringify(good), model)).toBe(true);
+    const short = JSON.parse(JSON.stringify(good)); short.Actions.pop();
+    expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);
   });
 });
 
@@ -1287,8 +1296,12 @@ describe('type essences (anti-reskinning, owner call 2026-07-28)', () => {
 
   test('synthesized concepts carry the essence too', () => {
     const traits = { intelligence: 'scheming (INT 14-16)', disposition: 'a patient killer that strikes from extreme range', creature_type: 'Fiend', naming: 'a folk name: what frightened villagers would whisper — an <adjective> <noun> pair built from plain words that describe its body or behavior (store it WITHOUT a leading "the"; prose adds the article)' };
+    // the type essence is guidance ABOUT the creature, so it rides the prompt
+    // now rather than the GM's words (split 2026-10-17) — still pinned, here
+    const { buildSynthesisGuidance } = require('../format-2024/concept-seeds.mjs');
     const out = buildSynthesizedConcept(traits, 'A tar-black huntsman that watches from chimney smoke.');
-    expect(out).toContain('Fiend: a being of the lower planes');
+    expect(out).toContain('A tar-black huntsman');
+    expect(buildSynthesisGuidance(traits)).toContain('Fiend: a being of the lower planes');
   });
 });
 
@@ -1564,5 +1577,32 @@ describe('the 2014 gate polish (smoke 2026-09-14)', () => {
   test('the 2024 Uses row never doubles the classic legendary boilerplate', () => {
     const legacy = toLegacyModel(m());
     expect(legacy.legendary_actions.map((e) => e.name)).toEqual(['Frozen Talon']);
+  });
+});
+
+// THE REPEAT OFFENDERS (the critic's fifth read, 2026-10-13: "third or fourth
+// time flagged, still open"). Each of these had been reported across several
+// reads and each is a one-rule fix in the layer that owns it.
+describe('the three the critic flagged three times (2026-10-13)', () => {
+  test('a 2014 Multiattack never forces a launcher shot beside a melee swing', () => {
+    const { multiattack2014 } = require('../format-2024/generate.mjs');
+    // Sir Reginald read "one with Greatsword and one with Heavy Crossbow" — a crossbow shot every turn
+    expect(multiattack2014('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow in any combination.'))
+      .toBe('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow.');
+    expect(multiattack2014('The guard makes two attacks, using Spear or Shortbow in any combination.'))
+      .toMatch(/using Spear or Shortbow\.$/);
+    // print's own enumerated form stands where one body can use them all in a turn (the Chimera)
+    expect(multiattack2014('The chimera makes two attacks, using Bite or Horns in any combination.'))
+      .toBe('The chimera makes two attacks: one with its Bite and one with its Horns.');
+    expect(multiattack2014('The ogre makes two attacks, using Greatclub in any combination.'))
+      .toBe('The ogre makes two Greatclub attacks.');
+  });
+
+  test('the speed-discord lint reads the whole sentence, so a bounded Speed 0 is not a permanent one', () => {
+    const { permanentSpeedZero: permanent } = require('../reskin/generate.mjs');
+    // Shell Defense states its duration FIRST; the old lookahead read only 40 characters forward
+    expect(permanent("The tortle withdraws into its shell. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can't increase.")).toHaveLength(0);
+    expect(permanent('The target has the Restrained condition and its Speed is 0 until the grapple ends.')).toHaveLength(0);
+    expect(permanent('The statue is rooted in place. Its Speed is 0 and it cannot move.')).toHaveLength(1);
   });
 });

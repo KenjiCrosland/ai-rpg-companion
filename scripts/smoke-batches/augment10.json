@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no templated trait, nothing to augment." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a mundane fighter with no weakness and no element; no augmentation should appear." },
+  { "name": "", "description": "a duelist who punishes every miss with a counterthrust", "cr": "7", "rules": "2024",
+    "canary": "CANARY — routes to riposte, which declares NO augmentation. Must stay bare." },
+
+  { "name": "", "description": "a bog troll that scents blood and heals from any wound unless it is burned", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — print's own case. blood-frenzy or regeneration + weakness_shutoff on Fire." },
+  { "name": "", "description": "a barrow-wight that preys on the wounded but recoils from holy light", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — weakness_shutoff on Radiant; the weakness is the concept's own." },
+  { "name": "", "description": "a furnace-wraith wreathed in heat that guts out when doused with cold", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — energy-aura + weakness_shutoff on Cold." },
+  { "name": "", "description": "a giant hunting spider utterly at home in its own webs", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — web-walker or spider-climb + terrain_boon on webs." },
+  { "name": "", "description": "a dune-burrower that swims through loose sand as easily as water", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — earth-glide + terrain_boon on sand." },
+  { "name": "", "description": "a dread-crowned lich whose terror falters in direct sunlight", "cr": "14", "rules": "2024",
+    "canary": "FEATURE — fear-aura + weakness_shutoff; sunlight is NOT a damage type, so it must resolve to Radiant or decline." },
+  { "name": "", "description": "a cliff-stalker that climbs sheer rock and hunts the already-bleeding", "cr": "7", "rules": "2024",
+    "canary": "FEATURE — two augmentable traits on one sheet; at most one augmentation each." }
+]

@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "CANARY — the owner's own concept. The payoff must still ship, its save must not be Strength, and its sentence should now open with the call's own clause." },
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — name-only. Must be unaffected: no payoff on this sheet." },
+  { "name": "", "description": "a headless horseman who rides down the fleeing and takes their heads", "cr": "8", "rules": "2024", "canary": "CANARY — the standing two-clause test, unaffected by a slot on one template." },
+  { "name": "", "description": "a scree-pit thing that buries what it catches and crushes what it holds", "cr": "8", "rules": "2024", "canary": "FEATURE — the critic's best-of-sweep sheet: grapple then crush. Its payoff should now read in its own voice." },
+  { "name": "", "description": "a bog-widow that webs a victim then drains the held", "cr": "7", "rules": "2024", "canary": "FEATURE — a Restrained payoff. A different finisher from the hammer's." },
+  { "name": "", "description": "a gaol-keeper who beats the shackled", "cr": "6", "rules": "2024", "canary": "FEATURE — a plainly human payoff; the finisher should read like a person, not a monster." },
+  { "name": "", "description": "a mire-serpent that coils and then crushes", "cr": "11", "rules": "2024", "canary": "FEATURE — 'tightens the coils' is the obvious finisher here. Does the call reach it?" },
+  { "name": "", "description": "a frost-wight that freezes a foe then shatters them", "cr": "9", "rules": "2024", "canary": "FEATURE — a shatter finisher at a CR band where the frame adds a minor condition." },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "6", "rules": "2024", "canary": "FEATURE — the standing sentinel concept. If no payoff lands, that is fine; nothing should regress." },
+  { "name": "", "description": "a sump-dredger that hauls a victim under and holds them down", "cr": "10", "rules": "2024", "canary": "FEATURE — grapple into drown; the finisher and the advantage clause may both be in play." }
+]

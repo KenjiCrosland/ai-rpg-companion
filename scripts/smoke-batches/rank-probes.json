@@ -1,0 +1,251 @@
+{
+ "what": "Prompts and a hand answer key for probe D: can the identity call rank the six abilities? (Fable 5.2, 2026-11-14.) \"expect.high\" must not come back low and \"expect.low\" must not come back high; \"expect.attacksOn\" lists the abilities it is fair for the attacks to key on. \"model\" is the printed creature to tell the call about in arm 2; null means the creature resembles nothing. Judged on the modal answer across rolls.",
+ "prompts": [
+  {
+   "id": "rank-clockwork-spider",
+   "name": "",
+   "concept": "clockwork spider",
+   "cr": "2",
+   "edition": "2024",
+   "model": "Giant Spider",
+   "expect": {
+    "high": [
+     "DEX"
+    ],
+    "low": [
+     "INT",
+     "CHA"
+    ],
+    "attacksOn": [
+     "DEX",
+     "STR"
+    ]
+   },
+   "note": "a nimble machine with no mind to speak of"
+  },
+  {
+   "id": "rank-medusa-sculptor",
+   "name": "",
+   "concept": "medusa sculptor",
+   "cr": "6",
+   "edition": "2024",
+   "model": "Medusa",
+   "expect": {
+    "high": [
+     "DEX",
+     "CHA"
+    ],
+    "low": [],
+    "attacksOn": [
+     "DEX"
+    ]
+   },
+   "note": "the Medusa is quick and commanding, not strong"
+  },
+  {
+   "id": "rank-vampire-pirate",
+   "name": "",
+   "concept": "vampire pirate",
+   "cr": "8",
+   "edition": "2024",
+   "model": "Vampire",
+   "expect": {
+    "high": [
+     "CHA",
+     "INT"
+    ],
+    "low": [],
+    "attacksOn": [
+     "STR",
+     "DEX"
+    ]
+   },
+   "note": "a cunning, magnetic captain; INT 4 was the complaint"
+  },
+  {
+   "id": "rank-mother-ash",
+   "name": "Mother Ash",
+   "concept": "hag midwife",
+   "cr": "9",
+   "edition": "2024",
+   "model": "Green Hag",
+   "expect": {
+    "high": [
+     "WIS",
+     "STR"
+    ],
+    "low": [],
+    "attacksOn": [
+     "STR",
+     "WIS",
+     "CHA"
+    ]
+   },
+   "note": "a hag is strong and shrewd"
+  },
+  {
+   "id": "rank-mummy-librarian",
+   "name": "",
+   "concept": "mummy librarian",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Mummy",
+   "expect": {
+    "high": [
+     "STR"
+    ],
+    "low": [
+     "DEX"
+    ],
+    "attacksOn": [
+     "STR"
+    ]
+   },
+   "note": "WORDS BEAT THE MODEL: a librarian is not dim. INT must not be low, though the printed Mummy has INT 6"
+  },
+  {
+   "id": "rank-ghoul-gravedigger",
+   "name": "",
+   "concept": "ghoul gravedigger",
+   "cr": "5",
+   "edition": "2024",
+   "model": "Ghoul",
+   "expect": {
+    "high": [
+     "DEX"
+    ],
+    "low": [
+     "INT"
+    ],
+    "attacksOn": [
+     "DEX",
+     "STR"
+    ]
+   },
+   "note": "a quick, feral eater of the dead"
+  },
+  {
+   "id": "rank-bellringer-ghost",
+   "name": "",
+   "concept": "a chapel bell-ringer's ghost that tolls for the dying",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ghost",
+   "expect": {
+    "high": [
+     "CHA"
+    ],
+    "low": [
+     "STR"
+    ],
+    "attacksOn": [
+     "CHA",
+     "DEX",
+     "WIS"
+    ]
+   },
+   "note": "a spirit: presence, no muscle"
+  },
+  {
+   "id": "rank-ogre-blacksmith-control",
+   "name": "",
+   "concept": "ogre blacksmith",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ogre",
+   "expect": {
+    "high": [
+     "STR"
+    ],
+    "low": [
+     "INT"
+    ],
+    "attacksOn": [
+     "STR"
+    ]
+   },
+   "note": "big, strong and dim; a smith may be less dim than an ogre, but not bright"
+  },
+  {
+   "id": "rank-carnival-barker",
+   "name": "",
+   "concept": "a carnival barker who talks you into standing still",
+   "cr": "6",
+   "edition": "2014",
+   "model": null,
+   "expect": {
+    "high": [
+     "CHA"
+    ],
+    "low": [],
+    "attacksOn": [
+     "CHA",
+     "DEX"
+    ]
+   },
+   "note": "RESEMBLES NOTHING. The saved homebrew sheet for this prompt shipped CHA 8"
+  },
+  {
+   "id": "rank-sellsword",
+   "name": "",
+   "concept": "a sellsword who hurls a handaxe and closes with a shortsword",
+   "cr": "5",
+   "edition": "2014",
+   "model": null,
+   "expect": {
+    "high": [
+     "STR",
+     "DEX"
+    ],
+    "low": [],
+    "attacksOn": [
+     "STR",
+     "DEX"
+    ]
+   },
+   "note": "RESEMBLES NOTHING. A trained fighter of ordinary wits; INT and CHA are neither high nor low"
+  },
+  {
+   "id": "rank-eels-in-a-coat",
+   "name": "",
+   "concept": "a knot of eels in a man's coat",
+   "cr": "1",
+   "edition": "2024",
+   "model": null,
+   "expect": {
+    "high": [
+     "DEX"
+    ],
+    "low": [
+     "INT"
+    ],
+    "attacksOn": [
+     "DEX",
+     "STR"
+    ]
+   },
+   "note": "RESEMBLES NOTHING. A mass of animals passing as a man"
+  },
+  {
+   "id": "rank-thing-in-the-well",
+   "name": "",
+   "concept": "the thing in the well",
+   "cr": "5",
+   "edition": "2024",
+   "model": null,
+   "expect": {
+    "high": [],
+    "low": [],
+    "attacksOn": [
+     "STR",
+     "DEX",
+     "CON",
+     "INT",
+     "WIS",
+     "CHA"
+    ]
+   },
+   "note": "RESEMBLES NOTHING, AND SAYS ALMOST NOTHING. No ability is keyed; this prompt tests whether the rank is at least the SAME on every roll"
+  }
+ ]
+}

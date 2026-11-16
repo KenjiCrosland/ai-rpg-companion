@@ -1,0 +1,193 @@
+{
+  "name": "Goblin Boss",
+  "inline": "the boss",
+  "type_and_alignment": "Small humanoid, chaotic neutral",
+  "armor_class": "17 (chain shirt, shield)",
+  "hit_points": "21 (6d6)",
+  "speed": "30 ft.",
+  "attributes": "STR 10 (+0), DEX 15 (+2), CON 10 (+0), INT 10 (+0), WIS 8 (-1), CHA 10 (+0)",
+  "saving_throws": "DEX +4",
+  "skills": "Stealth +6",
+  "senses": "darkvision 60 ft., passive Perception 9",
+  "languages": "Common, Goblin",
+  "challenge_rating": "1 (200 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Nimble Escape (Bonus Action)",
+      "description": "The boss takes the Disengage or Hide action."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The boss makes two attacks, using Scimitar or Shortbow."
+    },
+    {
+      "name": "Scimitar",
+      "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage plus 2 (1d4) slashing damage if the attack roll had advantage."
+    },
+    {
+      "name": "Shortbow",
+      "description": "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "exact",
+      "print_body": "Goblin Boss",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "skirmisher-1",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "Goblin Boss",
+    "clauses": [
+      {
+        "id": "cl_gs7aqe",
+        "text": "Goblin Boss",
+        "kind": "mechanical",
+        "askShape": "buff_ally",
+        "askMechanic": "command",
+        "askMechanicWhy": "goblin boss",
+        "head": true
+      }
+    ],
+    "cite": "composition after Goblin Warrior / Spy (CR 1/4-1)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "dropped"
+  },
+  "other_edition": {
+    "name": "Goblin Boss",
+    "inline": "the boss",
+    "format": "2024",
+    "cr": 1,
+    "cr_str": "1",
+    "xp": 200,
+    "challenge_rating": "1 (XP 200; PB +2)",
+    "type": "Humanoid",
+    "size": "Small",
+    "alignment": "Chaotic Neutral",
+    "ac": 17,
+    "hp": 21,
+    "ac_gear": "chain shirt, shield",
+    "hp_formula": "6d6",
+    "pb": 2,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 10,
+      "DEX": 15,
+      "CON": 10,
+      "INT": 10,
+      "WIS": 8,
+      "CHA": 10
+    },
+    "saves": {
+      "STR": 0,
+      "DEX": 4,
+      "CON": 0,
+      "INT": 0,
+      "WIS": -1,
+      "CHA": 0
+    },
+    "skills": "Stealth +6",
+    "senses": "darkvision 60 ft.; Passive Perception 9",
+    "languages": "Common, Goblin",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Traits": [],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The boss makes two attacks, using Scimitar or Shortbow in any combination."
+        },
+        {
+          "name": "Scimitar",
+          "text": "*Melee Attack Roll:* +4, reach 5 ft. 5 (1d6 + 2) Slashing damage plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+          "weapon": "scimitar",
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Shortbow",
+          "text": "*Ranged Attack Roll:* +4, range 80/320 ft. 5 (1d6 + 2) Piercing damage.",
+          "weapon": "shortbow",
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Nimble Escape",
+          "text": "The boss takes the Disengage or Hide action.",
+          "rules": true,
+          "print": true
+        }
+      ]
+    },
+    "lore": "A goblin that outlived enough of its own kind to start giving orders, the boss keeps its warren fed by aiming the tribe at someone else's door.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "exact",
+        "print_body": "Goblin Boss",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "code"
+      },
+      "donor": "skirmisher-1",
+      "archetype": "skirmisher",
+      "holds": false,
+      "creatureOnly": true,
+      "unplaced": [],
+      "userConcept": "Goblin Boss",
+      "clauses": [
+        {
+          "id": "cl_gs7aqe",
+          "text": "Goblin Boss",
+          "kind": "mechanical",
+          "askShape": "buff_ally",
+          "askMechanic": "command",
+          "askMechanicWhy": "goblin boss",
+          "head": true
+        }
+      ],
+      "cite": "composition after Goblin Warrior / Spy (CR 1/4-1)",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "signature": "dropped"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "",
+  "selectedChallengeRating": "1",
+  "monsterName": "Goblin Boss",
+  "caster": false
+}

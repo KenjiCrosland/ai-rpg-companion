@@ -1,0 +1,6 @@
+[
+  { "name": "Knife Ball", "description": "", "cr": "5", "rules": "2024", "canary": "The owner: 'still has the double gated blade burst'. The wind-up keeps BOTH its delay and its Recharge, and its 22 damage is still 0.65x of a 34 round despite the NOVA_CAP refit — the cap is not binding here, so something else prices it." },
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "The owner: 'Crushing Slam looks like an attack but has a save DC which is weird'. A melee row named Slam that resolves as a Strength save." },
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "The owner: 'looks solid but boring' — three rows, no traits at all. The thin-sheet problem on the name-only path." },
+  { "name": "Gutter King", "description": "", "cr": "5", "rules": "2024", "canary": "The owner: 'a solid low level leader' — the control. Whatever this path does right, it did here." }
+]

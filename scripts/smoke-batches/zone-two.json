@@ -1,0 +1,4 @@
+[
+  { "name": "", "description": "a fen-burn hydra that vents a wall of scalding smoke it must concentrate to hold", "cr": 7, "rules": "2024", "canary": "PREDICATE SLOT: the zone row reads 'Each creature in the area <predicate>.' — never '...up to 10 minutes. has Disadvantage'" },
+  { "name": "", "description": "a marsh-lantern wraith that fills the air with a choking haze it must concentrate to hold", "cr": 6, "rules": "2024", "canary": "PREDICATE SLOT, second shape: same join, different concept" }
+]

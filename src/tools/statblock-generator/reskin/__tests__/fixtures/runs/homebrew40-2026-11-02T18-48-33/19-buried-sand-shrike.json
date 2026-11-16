@@ -1,0 +1,137 @@
+{
+  "name": "Buried Sand-Shrike",
+  "inline": "the sand-shrike",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 97,
+  "hp_formula": "13d10 + 26",
+  "pb": 3,
+  "speed": "30 ft., Burrow 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 18,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 7,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +4, Stealth +10",
+  "senses": "tremorsense 60 ft.; Passive Perception 14",
+  "languages": "Common",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sand-shrike makes two Raptorial Limb attacks."
+      },
+      {
+        "name": "Raptorial Limb",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Slashing damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Erupting Ambush (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "If the sand-shrike is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC 15, that creature. *Failure:* 42 (12d6) Bludgeoning damage, and the target has the Prone condition. The sand-shrike then makes one Raptorial Limb attack against the target. *Success:* Half damage only.",
+        "library": true,
+        "imposes": "Prone",
+        "seed": "burrow-ambush",
+        "minorClause": ", and the target has the Prone condition",
+        "boundKeys": [
+          "sand"
+        ]
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the sand-shrike takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Coiled Patience",
+        "text": "If the sand-shrike has not moved since the end of its last turn, its next Raptorial Limb attack that hits deals an additional 11 (2d10) Slashing damage.",
+        "authored": true,
+        "clause": "If the sand-shrike has not moved since the end of its last turn, its next Raptorial Limb attack that hits deals an addit",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "the stillness before the strike",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "If the sand-shrike has not moved since the end of its last turn"
+      }
+    ]
+  },
+  "lore": "Sand-shrikes are desert brood-hunters that lay egg clusters in buried caravans and wait, motionless as stone, for the tremor of footsteps they can feel through their plating.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sand-shrike that is only dangerous on the turn after it goes still",
+    "clauses": [
+      {
+        "id": "cl_b7rr9s",
+        "text": "a sand-shrike",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1xlmvqg",
+        "text": "is only dangerous on the turn after it goes still",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "is only dangerous on the turn after it goes still"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a sand-shrike that is only dangerous on the turn after it goes still",
+  "selectedChallengeRating": "6",
+  "monsterName": "Buried Sand-Shrike",
+  "caster": false
+}

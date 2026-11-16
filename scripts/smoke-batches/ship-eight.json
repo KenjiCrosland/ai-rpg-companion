@@ -1,0 +1,122 @@
+[
+ {
+  "canary": "SHIP GATE \u2014 owner's go-to block",
+  "name": "Headless Horseman",
+  "description": "",
+  "cr": "11",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 owner's go-to block",
+  "name": "Pumpkin King",
+  "description": "",
+  "cr": "10",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 owner's go-to block",
+  "name": "Knife Ball",
+  "description": "",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 a caster on a people's body \u2014 the path that crashed until 2445c91",
+  "name": "",
+  "description": "goblin wizard",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 ruling C: a kobold is a kobold first",
+  "name": "",
+  "description": "kobold sorcerer",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 the mind tiers",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 ruling 2: a thinking creature is not a Beast",
+  "name": "",
+  "description": "a silver-tongued toad the size of a pony",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "SHIP GATE \u2014 rulings A and B",
+  "name": "",
+  "description": "a giant river pike",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ }
+]

@@ -1,0 +1,26 @@
+[
+ {
+  "name": "",
+  "description": "an orc warchief with a greataxe",
+  "cr": "5",
+  "rules": "2014",
+  "mode": "band",
+  "feature": "orc: darkvision 120, a bonus-action dash in the Nimble Escape idiom; the greataxe part + GWM"
+ },
+ {
+  "name": "",
+  "description": "a tortle hermit who withdraws into his shell",
+  "cr": "3",
+  "rules": "2024",
+  "mode": "band",
+  "feature": "tortle: Hold Breath (1 hour), Shell Defense from the shell-withdraw shape"
+ },
+ {
+  "name": "",
+  "description": "a kenku mimic who copies voices and steals",
+  "cr": "2",
+  "rules": "2024",
+  "mode": "band",
+  "feature": "kenku: Mimicry lifted from the Green Hag"
+ }
+]

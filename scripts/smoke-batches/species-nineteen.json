@@ -1,0 +1,21 @@
+[
+  { "name": "", "description": "a lizardfolk hunter who stalks the marsh with a spear", "cr": "2", "rules": "2024", "species": "lizardfolk", "mech": "SRD lift + edit (Hold Breath 15 min), Swim 30, flavor under the cap" },
+  { "name": "", "description": "an orc warchief with a greataxe", "cr": "5", "rules": "2014", "species": "orc", "mech": "lift edited to a Dash, darkvision 120, a part + GWM, 2014" },
+  { "name": "", "description": "a tortle hermit who withdraws into his shell", "cr": "3", "rules": "2024", "species": "tortle", "mech": "Hold Breath 1 hour, Shell Defense, the AC 17 floor, the grappler refusal" },
+  { "name": "", "description": "a blue dragonborn knight", "cr": "6", "rules": "2024", "species": "dragonborn", "mech": "resistance by colour word, darkvision, a print alias body" },
+  { "name": "", "description": "a troglodyte raider who reeks", "cr": "1", "rules": "2014", "species": "troglodyte", "mech": "two lifts (Stench at the sheet's DC, Sunlight Sensitivity), 2014" },
+  { "name": "", "description": "a tiefling duelist who hates fire and takes extra damage from it", "cr": "4", "rules": "2024", "species": "tiefling", "mech": "the GM's vulnerability outranks the species resistance" },
+  { "name": "", "description": "a kenku mimic who copies voices and steals", "cr": "2", "rules": "2024", "species": "kenku", "mech": "Mimicry lifted; a species word outranks the Mimic alias" },
+  { "name": "", "description": "a triton tide-caller who guards the reef with a trident", "cr": "5", "rules": "2024", "species": "triton", "mech": "Amphibious lift, Swim 30, darkvision; a trident part" },
+  { "name": "", "description": "a grung poison-dancer who leaps between the branches", "cr": "3", "rules": "2014", "species": "grung", "mech": "Amphibious lift, Climb 25, 2014" },
+  { "name": "", "description": "a serpentfolk blood-priest who prays to a serpent god", "cr": "7", "rules": "2024", "species": "serpentfolk", "mech": "Magic Resistance lift, darkvision, a caster line with a magic key" },
+  { "name": "", "description": "a satyr piper who dances travellers into the hills", "cr": "4", "rules": "2024", "species": "satyr", "mech": "Magic Resistance lift on a Fey type" },
+  { "name": "", "description": "an aarakocra windscout with a javelin", "cr": "2", "rules": "2024", "species": "aarakocra", "mech": "Flyby lift, Fly 50, a thrown javelin part" },
+  { "name": "", "description": "an owlin night-watcher who hunts in silence", "cr": "3", "rules": "2014", "species": "owlin", "mech": "Flyby lift, Fly 30, darkvision 120, 2014" },
+  { "name": "", "description": "a harengon courier who bounds over the hedgerows", "cr": "1", "rules": "2024", "species": "harengon", "mech": "Standing Leap lift with edits" },
+  { "name": "", "description": "an aasimar lightbringer with a mace", "cr": "6", "rules": "2024", "species": "aasimar", "mech": "two resistances (Necrotic, Radiant), darkvision, a mace part" },
+  { "name": "", "description": "a tabaxi cat burglar who climbs the temple wall", "cr": "4", "rules": "2014", "species": "tabaxi", "mech": "lift edited to a Dash, Climb 30, darkvision, 2014" },
+  { "name": "", "description": "a goliath stone-herder who wrestles avalanches", "cr": "8", "rules": "2024", "species": "goliath", "mech": "flavour only (a mountain stride) — the cap decides" },
+  { "name": "", "description": "a centaur outrider with a longbow", "cr": "5", "rules": "2024", "species": "centaur", "mech": "Charge lift on a Fey type, a bow part" },
+  { "name": "", "description": "a minotaur labyrinth-keeper with a greataxe", "cr": "9", "rules": "2014", "species": "minotaur", "mech": "Charge lift, darkvision, a Monstrosity type, 2014" }
+]

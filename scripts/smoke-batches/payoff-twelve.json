@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a bog troll that pins prey in the mud and crushes anything already pinned", "cr": "5", "rules": "2024", "canary": "LOW BAND · grapple source + escalate intent; reward should be a MILD condition the hold does not already give" },
+  { "name": "", "description": "a cellar spider that webs intruders and savages whatever is already stuck", "cr": "4", "rules": "2014", "canary": "LOW BAND · snare source, 2014 printing" },
+  { "name": "", "description": "a fen hag whose touch sickens and whose claws tear at the sickened", "cr": "3", "rules": "2024", "canary": "LOW BAND · Poisoned source; reward must differ from Poisoned" },
+  { "name": "", "description": "a quarry beast that drags victims down and batters anything it has hold of", "cr": "8", "rules": "2014", "canary": "MID · grapple + escalate; ordering should prefer the payoff over exploiter/bloodied-fury" },
+  { "name": "", "description": "a reef drake that snares with its tongue and finishes the snared", "cr": "9", "rules": "2024", "canary": "MID · snare source at the band boundary" },
+  { "name": "", "description": "a gallows keeper that binds the condemned and breaks the bound", "cr": "7", "rules": "2024", "canary": "MID · 'bound' should read as a hold, not a curse" },
+  { "name": "", "description": "a pit warden whose coils hold fast and whose claws punish anything held", "cr": "16", "rules": "2024", "canary": "HIGH · Restrained source; the ladder should reach PARALYZED, not a mild rider" },
+  { "name": "", "description": "an iron condemner that shackles the guilty and executes the shackled", "cr": "13", "rules": "2014", "canary": "HIGH · 2014 printing; expect a severe rung and a gated one-attack swap" },
+  { "name": "", "description": "a mind-flenser that leaves victims reeling and grinds down anyone already reeling", "cr": "14", "rules": "2024", "canary": "HIGH · 'reeling' invites EXHAUSTION — print writes it at CR 11 and 17" },
+  { "name": "", "description": "a dread chancellor that terrifies a court and tears into the terrified", "cr": "17", "rules": "2024", "canary": "HIGH · Frightened source; 'already afraid' is the owner's psychic-damage case" },
+  { "name": "", "description": "a sunken gaoler that chains prisoners to the floor and marks one for its pack", "cr": "11", "rules": "2014", "canary": "HIGH · 'marks one' invites the MARK shape — must be one target, end of next turn" },
+  { "name": "", "description": "a bone tyrant whose grasp locks limbs and whose second blow shatters the locked", "cr": "20", "rules": "2024", "canary": "TOP BAND · severe rung at the ceiling; damage must stay under print's single-target line" }
+]

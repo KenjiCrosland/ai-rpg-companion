@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. None of today's four fixes may touch it." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — plain weapon sheet, no relic, no third imposition, no conversion. Must be untouched." },
+  { "name": "", "description": "a tyrant of burning brass who rules a city of forges", "cr": "17", "rules": "2024",
+    "canary": "CANARY — shipped the empty `Failure:` on Seismic Strike. The row must now either say what it does or leave." },
+
+  { "name": "", "description": "a lich who hides its soul in a thorn garden it tends", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — the relic anchor, and deliberately a thing that is NOT Tiny. The frame must not call a garden Tiny." },
+  { "name": "", "description": "a knight whose life is bound to the banner his squire carries", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — a banner: large, carried. Same anchor, same test." },
+  { "name": "", "description": "a saint's reliquary that mends itself while its finger-bone is unbroken", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — an anchor that IS small. Must still read correctly without the size word." },
+  { "name": "", "description": "a bog-troll that grapples, drags under, and pins what it holds", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — three rows reaching for one condition: the no-third-imposition pass fires here. A row left with nothing must LEAVE, not ship a bare Failure." },
+  { "name": "", "description": "a barrow-lich whose touch locks the living in place", "cr": "16", "rules": "2014",
+    "canary": "FEATURE — 2014 + a Paralyzed row. The conversion must keep the duration or retry." },
+  { "name": "", "description": "a cairn-warden that freezes trespassers where they stand", "cr": "12", "rules": "2014",
+    "canary": "FEATURE — a second 2014 bounded condition, different wording." },
+  { "name": "", "description": "a scythe-horror that pins prey with two arms and carves with the others", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — the requires/imposes case. Its pin trait describes an existing grapple; `record completed` must not overwrite the call's `requires`." }
+]

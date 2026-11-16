@@ -1,0 +1,6 @@
+[
+  { "name": "Purple Worm", "description": "that swallowed a war-band's armoury", "cr": "15", "rules": "2024", "canary": "A3: the Name box is the fact — ships named Purple Worm" },
+  { "name": "Air Elemental", "description": "that carries stolen voices", "cr": "5", "rules": "2024", "canary": "A3: ships named Air Elemental" },
+  { "name": "Vashka the Red", "description": "A hobgoblin warlord in lacquered plate who never breaks ranks.", "cr": "6", "rules": "2024", "canary": "A3 CONTROL: a proper name beside a description stands verbatim" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "A3 CONTROL: Name only, no description — the one-box path is unchanged" }
+]

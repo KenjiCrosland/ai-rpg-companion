@@ -1,0 +1,154 @@
+{
+  "name": "Faithless Templar",
+  "inline": "the templar",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 112,
+  "ac_gear": "studded leather, shield",
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 15,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 2,
+    "CON": 6,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 2
+  },
+  "skills": "Athletics +10, Performance +5",
+  "senses": "Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Aura of Authority",
+        "text": "While in a 10-foot Emanation originating from the templar, the templar and its allies have Advantage on attack rolls and saving throws, provided the templar doesn't have the Incapacitated condition.",
+        "kit": "paladin",
+        "clause": "templar",
+        "free": true,
+        "clauseId": "cl_1yjcdus"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The templar makes three Mace attacks. It can replace one attack with a use of Shield Bash."
+      },
+      {
+        "name": "Mace",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 17 (3d8 + 4) Bludgeoning damage, and the target has Disadvantage on its next attack roll before the start of the templar's next turn.",
+        "part": true,
+        "weapon": "mace",
+        "authored": true,
+        "clause": "a templar priest with a mace",
+        "feature": "Sap",
+        "clauseId": "cl_1yjcdus",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Shield Slam",
+        "text": "*Strength Saving Throw:* DC 15, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the templar and has the Prone condition.",
+        "library": true,
+        "template": "push-prone",
+        "imposes": "Prone",
+        "boundKeys": [
+          "slam",
+          "push"
+        ],
+        "freeRow": true,
+        "expresses": "the mace and shield-wall discipline",
+        "expressedQuote": "The target is pushed up to 15 feet away from the templar and has the Prone condition."
+      },
+      {
+        "name": "Shield Bash",
+        "text": "*Strength Saving Throw*: DC 15, one creature within 5 feet that the templar can see. *Failure:*  9 (2d4 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "The Order raises its templars without prayer or miracle — only drills, walled courtyards, and the mace, which is why faithless bishops fear the ones they send.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Gladiator",
+      "relation": null,
+      "class": "paladin",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-5",
+    "archetype": "defender",
+    "class_kit": {
+      "key": "paladin",
+      "clause": "templar",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a templar priest with a mace and no magic at all",
+    "clauses": [
+      {
+        "id": "cl_1yjcdus",
+        "text": "a templar priest with a mace",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "a templar priest with a mace",
+        "askOften": "at_will",
+        "askOftenWhy": "a templar priest with a mace",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_175w5qe",
+        "text": "no magic at all",
+        "kind": "mechanical",
+        "polarity": "lacks",
+        "takes": "spellcasting",
+        "lackQuote": "no magic at all"
+      }
+    ],
+    "cite": "composition after Guard Captain (CR 4) — the hybrid javelin twin, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "push-prone"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a templar priest with a mace and no magic at all",
+  "selectedChallengeRating": "6",
+  "monsterName": "Faithless Templar",
+  "caster": false
+}

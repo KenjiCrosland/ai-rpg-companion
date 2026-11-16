@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. Attempts no seats, so the ladder must never reach it." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024",
+    "canary": "CANARY — a DAMAGE sheet. The dice rungs own its rows; nothing should widen. Also carries the payoff rider and fear aura landed earlier today." },
+  { "name": "", "description": "a troll that knits its wounds shut and keeps coming", "cr": "5", "rules": "2024",
+    "canary": "CANARY — landed 2 receipted rows in the homebrew forty with no floor drop. Must be untouched." },
+
+  { "name": "", "description": "a barrow-guard that shoves grave-robbers back off the mound", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — a shove concept, the exact push-prone case (Barrow Shove, EV 1.9 vs floor 7.3). Should widen to a 30-foot Cone, print's Repulsion Breath." },
+  { "name": "", "description": "a reef-hook that hauls swimmers off their feet and holds them", "cr": "12", "rules": "2024",
+    "canary": "FEATURE — a pull concept, the obstacle-pull case. Widen and clear the floor." },
+  { "name": "", "description": "a chapel-lamp whose glare leaves you unable to see", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — the sensory-strike case (Blinded). THIS IS THE ONE I FLAGGED: print gates its Blinded cones 3 of 3. Judge whether an at-will 30-foot Blinded cone reads hot at CR 13." },
+  { "name": "", "description": "a tar-wraith that drags at the legs of everything near it", "cr": "20", "rules": "2024",
+    "canary": "FEATURE — the slow-bolt case (Speed halved, no Reactions) at the top CR band. The other gating question." },
+  { "name": "", "description": "a dune-shrike that knocks riders from the saddle", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — a shove BELOW CR 5, so it must take the 15-foot Cone, not the 30." },
+  { "name": "", "description": "a bell-keeper that marks one thief and burns them wherever they run", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — a BRAND concept (delayed-brand). It deals damage, so it must NOT widen — a mark is inherently one target." },
+  { "name": "", "description": "a moor-hag that frightens trespassers off her water", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — a Frightened concept. Tests the fear-pairing gate and the widening rung together; print gates Frightened cones." }
+]

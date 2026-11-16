@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Vashka the Red",
+    "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FORTYFIX2: USE CASE \u00b7 Name field + description, the commonest GM path"
+  },
+  {
+    "name": "Brother Halric",
+    "description": "",
+    "cr": "3",
+    "rules": "2014",
+    "canary": "FORTYFIX2: USE CASE \u00b7 a person's Name alone, no print match: the library stands in"
+  }
+]

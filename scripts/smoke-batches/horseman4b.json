@@ -1,0 +1,6 @@
+[
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "live refusal hunt A" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "live refusal hunt B" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "live refusal hunt C" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "live refusal hunt D" }
+]

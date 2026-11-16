@@ -1,0 +1,22 @@
+[
+ { "name": "", "description": "a headless horseman who rides down the living and takes their heads", "cr": "11", "rules": "2024",
+   "canary": "THE CASE · the owner's own concept; a decapitating blow is the point" },
+ { "name": "", "description": "a mummy whose touch rots a body past any raising", "cr": "9", "rules": "2024",
+   "canary": "PRINT'S OWN · Rotting Fist is the cite; this must not duplicate print's row" },
+ { "name": "", "description": "a gibbering thing that absorbs whatever it kills", "cr": "7", "rules": "2024",
+   "canary": "ABSORB · the Gibbering Mouther shape" },
+ { "name": "", "description": "a soul-eater that leaves nothing for the clerics to call back", "cr": "13", "rules": "2024",
+   "canary": "EXPLICIT ASK · the GM names the no-revival effect outright" },
+ { "name": "", "description": "a bog hound that drags fishermen under", "cr": "2", "rules": "2024",
+   "canary": "LOW CR · prices at 0, so it must be legal at CR 2" },
+ { "name": "", "description": "a terror that kills by fright alone, leaving the body untouched", "cr": "8", "rules": "2024",
+   "canary": "BODY GATE · the needs_body question should REFUSE this one" },
+ { "name": "", "description": "a sellsword with a shortsword and no supernatural gifts", "cr": "5", "rules": "2024",
+   "canary": "NO ASK · a mundane human; an unasked-for no-revival trait would be invention" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024",
+   "canary": "EXACT · print only; this template must not appear" },
+ { "name": "", "description": "a headless horseman who rides down the living and takes their heads", "cr": "11", "rules": "2014",
+   "canary": "2014 FORMAT · the same concept on the other printing" },
+ { "name": "", "description": "a grave-warden construct that grinds the dead to powder", "cr": "10", "rules": "2024",
+   "canary": "CONSTRUCT · a body that destroys bodies; no undead assumption" }
+]

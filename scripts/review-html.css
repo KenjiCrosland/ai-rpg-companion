@@ -1,0 +1,84 @@
+/* A DEV READING SURFACE, not the parchment design system (plan, 2026-11-09): plain, print-like,
+   high legibility, and nothing that competes with the block for attention. */
+:root{--ink:#1a1a1a;--dim:#6b6b6b;--rule:#d8d4cc;--bg:#f7f6f3;--card:#fff;
+--bad:#a11;--soft:#a60;--good:#176;--tag:#eee9e0;--tagink:#5a5244;--hi:#fff6cc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.loading{padding:2rem;color:var(--dim)}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--rule);padding:.6rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+header.top h1{font-size:15px;margin:0;font-weight:600}
+header.top .tally{color:var(--dim);font-variant-numeric:tabular-nums}
+button{font:inherit;padding:.25rem .6rem;border:1px solid var(--rule);background:var(--card);border-radius:4px;cursor:pointer}
+button:hover{background:var(--tag)}
+button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.wrap{display:grid;grid-template-columns:230px 1fr;gap:0;align-items:start}
+nav.index{position:sticky;top:46px;max-height:calc(100vh - 46px);overflow:auto;padding:.5rem;border-right:1px solid var(--rule)}
+nav.index a{display:block;padding:.3rem .4rem;text-decoration:none;color:var(--ink);border-radius:4px;font-size:13px}
+nav.index a:hover,nav.index a.cur{background:var(--tag)}
+nav.index .chips{color:var(--dim);font-size:11px}
+main{padding:1rem;min-width:0}
+.sheet{background:var(--card);border:1px solid var(--rule);border-radius:6px;margin-bottom:1.2rem;overflow:hidden}
+.sheet.done{opacity:.72}
+/* THE EDITION IS THE FIRST THING A REVIEWER NEEDS (owner, 2026-11-10): a 2014 block puts its bonus
+   actions in the trait list as prose and writes "Melee Weapon Attack: +3 to hit", and both were read
+   as format errors when the edition sat at the end of a dim grey line. A badge beside the name and a
+   stripe down the card, so the convention is set before the first row is read. */
+.ed{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:600;padding:.05rem .4rem;border-radius:3px;letter-spacing:.02em;vertical-align:middle}
+.ed-2014{background:#efe3c8;color:#5b4310;border:1px solid #d9c48f}
+.ed-2024{background:#e3ecf7;color:#1d3a6b;border:1px solid #b9cbe6}
+.sheet.ed2014{border-left:4px solid #c9a95b}
+.sheet.ed2014>.hd{background:#fbf7ee}
+.sec-note{color:var(--dim);font-size:11px;font-style:italic;margin:.6rem 0 .1rem}
+.sheet>.hd{padding:.6rem .9rem;border-bottom:1px solid var(--rule);display:flex;gap:.8rem;align-items:baseline;flex-wrap:wrap}
+.sheet>.hd h2{font-size:15px;margin:0}
+.typed{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--tag);padding:.1rem .4rem;border-radius:3px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:1rem;padding:.9rem}
+@media(max-width:1100px){.cols{grid-template-columns:1fr}.wrap{grid-template-columns:1fr}nav.index{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--rule)}}
+/* the block, in print's shape */
+.block{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:14px}
+.block .nm{font-size:19px;font-weight:600;font-variant:small-caps;letter-spacing:.02em}
+.block .sub{font-style:italic;color:var(--dim);margin-bottom:.4rem}
+.block hr{border:0;border-top:2px solid var(--ink);margin:.4rem 0}
+.block .line{margin:.15rem 0}
+.block .line b{font-variant:small-caps;letter-spacing:.02em}
+table.abil{width:100%;border-collapse:collapse;margin:.4rem 0;font-size:13px}
+table.abil th,table.abil td{border:1px solid var(--rule);padding:.15rem .35rem;text-align:center}
+table.abil th{background:var(--tag);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.sec{margin-top:.7rem}
+.sec>h3{font-size:14px;font-variant:small-caps;letter-spacing:.03em;border-bottom:1px solid var(--ink);margin:0 0 .3rem;padding-bottom:.1rem}
+.row{margin:.4rem 0;padding:.2rem .3rem;border-radius:4px}
+.row:hover{background:#fafaf7}
+.row.flagged{background:var(--hi);box-shadow:inset 3px 0 0 var(--soft)}
+.row .rn{font-weight:600;font-style:italic;cursor:pointer}
+.row .rn:hover{text-decoration:underline}
+.tags{display:inline-flex;gap:.25rem;flex-wrap:wrap;margin-left:.3rem;vertical-align:1px}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;background:var(--tag);color:var(--tagink);padding:0 .3rem;border-radius:3px;cursor:help;white-space:nowrap}
+.tag.gm{background:#dfeee4;color:#15502c}
+.tag.free{background:#fdecd6;color:#7a4b06}
+.tag.print{background:#e1e8f5;color:#1d3a6b}
+.note{display:block;width:100%;margin-top:.25rem;font:12px/1.4 inherit;padding:.2rem .3rem;border:1px dashed var(--soft);border-radius:3px}
+/* panels */
+.panel{border:1px solid var(--rule);border-radius:5px;margin-bottom:.6rem}
+.panel>summary{padding:.35rem .6rem;cursor:pointer;font-weight:600;font-size:13px;background:#fbfaf8}
+.panel>div{padding:.5rem .6rem;border-top:1px solid var(--rule)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.1rem .5rem;font-size:13px;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0}
+.bad{color:var(--bad);font-weight:600}.softc{color:var(--soft);font-weight:600}.good{color:var(--good)}
+.dpr table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.dpr th,.dpr td{border-bottom:1px solid var(--rule);padding:.2rem .3rem;text-align:right}
+.dpr th:first-child,.dpr td:first-child{text-align:left}
+.dpr .tot{font-weight:600;border-top:2px solid var(--ink)}
+input[type=range]{width:100%}
+.swap{font-size:12px;margin:.3rem 0}
+ul.find{margin:.2rem 0;padding-left:1.1rem;font-size:12px}
+ul.find li{margin:.15rem 0}
+code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--tag);padding:0 .2rem;border-radius:2px}
+.trace{max-height:300px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.45}
+.trace div{padding:.05rem .2rem;white-space:pre-wrap;word-break:break-word}
+.trace div.dec{background:var(--hi)}
+.verdict{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;padding:.5rem .9rem;border-top:1px solid var(--rule);background:#fbfaf8}
+.verdict input[type=text]{flex:1;min-width:180px;font:inherit;padding:.25rem .4rem;border:1px solid var(--rule);border-radius:4px}
+.v-Keeper.on{background:#176;border-color:#176}.v-Runs.on{background:#357;border-color:#357}
+.v-Tweak.on{background:#a60;border-color:#a60}.v-Fix.on{background:#a11;border-color:#a11}
+.warn{background:#fdecd6;color:#7a4b06;padding:.4rem .6rem;border-radius:4px;margin:.4rem 0;font-size:12px}

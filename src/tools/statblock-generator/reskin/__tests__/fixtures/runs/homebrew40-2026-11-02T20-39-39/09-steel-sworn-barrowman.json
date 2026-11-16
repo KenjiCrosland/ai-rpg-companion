@@ -1,0 +1,142 @@
+{
+  "name": "Steel-Sworn Barrowman",
+  "inline": "the barrowman",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 112,
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +7, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Dread of Water",
+        "text": "While the barrowman can see running water within 30 feet of itself, it has Disadvantage on attack rolls and ability checks, and it must use its movement on each of its turns to move away from running water by the safest available route unless there is nowhere farther to go.",
+        "library": true,
+        "template": "phobia",
+        "boundKeys": [
+          "fears"
+        ],
+        "gmQuote": "fears only running water",
+        "bound": true,
+        "clause": "fears only running water",
+        "clauseId": "cl_uc5nun"
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The barrowman regains 10 Hit Points at the start of each of its turns. If the barrowman takes Radiant damage, this trait doesn't function on the barrowman's next turn. The barrowman dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The barrowman makes three Stony Fist attacks. It can replace one attack with a use of Cairn-Hurl."
+      },
+      {
+        "name": "Stony Fist",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 8 (1d8 + 4) Bludgeoning damage plus 6 (1d12) Cold damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Cairn-Hurl",
+        "text": "*Strength Saving Throw*: DC 14, one creature within 60 feet. *Failure:* The target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "The barrowman hurls a fistful of the cairn's own grave-stones at a creature it can see, forcing a Dexterity saving throw",
+        "imposes": "Restrained",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "boundKeys": []
+      }
+    ]
+  },
+  "lore": "Bound into a cairn of river-stones and denied the burial it craves, the barrowman waits in stone silence for a living voice to answer its beckoning and complete the rite that would let it rest.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "clauses": [
+      {
+        "id": "cl_16zhisc",
+        "text": "a cairn-wight",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1x23thr",
+        "text": "cannot be harmed by steel",
+        "kind": "mechanical",
+        "polarity": "lacks",
+        "takes": "other",
+        "lackQuote": "cannot be harmed by steel"
+      },
+      {
+        "id": "cl_uc5nun",
+        "text": "fears only running water",
+        "kind": "descriptive"
+      }
+    ],
+    "cite": "composition after Troll (CR 5) — three claws and the off-switch",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "resistances": "Cold",
+  "lint_findings": [],
+  "monsterDescription": "a cairn-wight that cannot be harmed by steel and fears only running water",
+  "selectedChallengeRating": "6",
+  "monsterName": "Steel-Sworn Barrowman",
+  "caster": false
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "",
+    "description": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 1 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 1 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 1 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 2 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 2 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 2 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 3 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 3 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 3 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 4 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 4 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  },
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "SUBJECT-FLIP roll 4 — the closest-accepted subject gate (critic §3): the clause's doer vs the row's doer"
+  }
+]

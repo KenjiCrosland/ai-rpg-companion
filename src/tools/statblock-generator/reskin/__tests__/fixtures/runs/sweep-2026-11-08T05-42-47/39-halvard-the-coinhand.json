@@ -1,0 +1,264 @@
+{
+  "name": "Halvard the Coinhand",
+  "inline": "Halvard",
+  "type_and_alignment": "Medium humanoid, neutral",
+  "armor_class": "16 (studded leather, shield)",
+  "hit_points": "112 (15d8 + 45)",
+  "speed": "30 ft.",
+  "attributes": "STR 18 (+4), DEX 15 (+2), CON 16 (+3), INT 10 (+0), WIS 12 (+1), CHA 15 (+2)",
+  "saving_throws": "DEX +5, WIS +4",
+  "skills": "Athletics +10, Performance +5",
+  "senses": "passive Perception 11",
+  "languages": "Common",
+  "challenge_rating": "5 (1,800 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Riposte (Reaction)",
+      "description": "When a creature within 5 feet of Halvard misses it with a melee attack roll, Halvard makes one Handaxe attack against that creature."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "Halvard makes three Handaxe attacks. It can replace one attack with a use of Shortsword."
+    },
+    {
+      "name": "Handaxe",
+      "description": "Melee or Ranged Weapon Attack: +7 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 11 (2d6 + 4) slashing damage. Until the end of Halvard's next turn, Halvard has advantage on attack rolls against the target, and the target can't take the Hide action."
+    },
+    {
+      "name": "Shortsword",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 4) piercing damage. Immediately after the attack, a handaxe returns to Halvard's grasp, and Halvard has advantage on its next attack roll against the target before the end of its next turn."
+    },
+    {
+      "name": "Shield Bash",
+      "description": "One creature within 5 feet that Halvard can see must make a DC 15 Strength saving throw, taking 9 (2d4 + 4) bludgeoning damage on a failed save. On a failed save, if the target is a Medium or smaller creature, it is knocked prone."
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Gladiator",
+      "relation": null,
+      "class": "fighter",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-8-hurler",
+    "archetype": "skirmisher",
+    "class_kit": {
+      "key": "fighter",
+      "clause": "sellsword",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "clauses": [
+      {
+        "id": "cl_16u4r8s",
+        "text": "a sellsword",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1um30z0",
+        "text": "hurls a handaxe",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "hurls a handaxe",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_ki02c5",
+        "text": "closes with a shortsword",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "closes with a shortsword",
+        "askShape": "attack"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Halvard the Coinhand",
+    "inline": "Halvard",
+    "format": "2024",
+    "cr": 5,
+    "cr_str": "5",
+    "xp": 1800,
+    "challenge_rating": "5 (XP 1,800; PB +3)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral",
+    "ac": 16,
+    "hp": 112,
+    "ac_gear": "studded leather, shield",
+    "hp_formula": "15d8 + 45",
+    "pb": 3,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 15,
+      "CON": 16,
+      "INT": 10,
+      "WIS": 12,
+      "CHA": 15
+    },
+    "saves": {
+      "STR": 4,
+      "DEX": 5,
+      "CON": 3,
+      "INT": 0,
+      "WIS": 4,
+      "CHA": 2
+    },
+    "skills": "Athletics +10, Performance +5",
+    "senses": "Passive Perception 11",
+    "languages": "Common",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Traits": [],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "Halvard makes three Handaxe attacks. It can replace one attack with a use of Shortsword."
+        },
+        {
+          "name": "Handaxe",
+          "text": "*Melee or Ranged Attack Roll:* +7, reach 5 ft. or range 20/60 ft. 11 (2d6 + 4) Slashing damage. Until the end of Halvard's next turn, Halvard has Advantage on attack rolls against the target, and the target can't take the Hide action.",
+          "part": true,
+          "weapon": "handaxe",
+          "authored": true,
+          "clause": "hurls a handaxe",
+          "feature": "Vex",
+          "weldedRiders": [
+            "Until the end of Halvard's next turn, Halvard has Advantage on attack rolls against the target, and the target can't take the Hide action."
+          ],
+          "boundKeys": [
+            "marks"
+          ],
+          "riderTemplates": [
+            "bolt-mark"
+          ],
+          "clauseId": "cl_1um30z0",
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Shortsword",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 7 (1d6 + 4) Piercing damage. *Hit or Miss:* Immediately after the attack, a handaxe returns to Halvard's grasp, and Halvard has Advantage on its next attack roll against the target before the end of its next turn.",
+          "part": true,
+          "weapon": "shortsword",
+          "authored": true,
+          "clause": "closes with a shortsword",
+          "feature": "Vex",
+          "clauseId": "cl_ki02c5",
+          "attacksPerRound": 1
+        },
+        {
+          "name": "Shield Bash",
+          "text": "*Strength Saving Throw*: DC 15, one creature within 5 feet that Halvard can see. *Failure:*  9 (2d4 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.",
+          "rules": true,
+          "print": true
+        }
+      ],
+      "Bonus Actions": [],
+      "Reactions": [
+        {
+          "name": "Riposte",
+          "text": "*Trigger:* A creature within 5 feet of Halvard misses it with a melee attack roll. *Response:* Halvard makes one Handaxe attack against that creature.",
+          "kit": "fighter",
+          "clause": "sellsword",
+          "free": true,
+          "template": "riposte",
+          "clauseId": "cl_16u4r8s"
+        }
+      ]
+    },
+    "lore": "A veteran of a hundred forgotten border skirmishes, Halvard trades blade-work for coin and has learned that the sellsword who lives to spend his pay is worth more than the hero who does not.",
+    "inline_kind": "person",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "class_npc",
+        "print_body": "Gladiator",
+        "relation": null,
+        "class": "fighter",
+        "species": null,
+        "by": "call"
+      },
+      "donor": "skirmisher-8-hurler",
+      "archetype": "skirmisher",
+      "class_kit": {
+        "key": "fighter",
+        "clause": "sellsword",
+        "landed": 1,
+        "yielded": 0,
+        "stood_down": null
+      },
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a sellsword who hurls a handaxe and closes with a shortsword",
+      "clauses": [
+        {
+          "id": "cl_16u4r8s",
+          "text": "a sellsword",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_1um30z0",
+          "text": "hurls a handaxe",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "hurls a handaxe",
+          "askShape": "attack"
+        },
+        {
+          "id": "cl_ki02c5",
+          "text": "closes with a shortsword",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "closes with a shortsword",
+          "askShape": "attack"
+        }
+      ],
+      "invented": true,
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "gap_vetoed": "0 of 1",
+      "gap_missing_unstated": 0,
+      "signature": "library"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a sellsword who hurls a handaxe and closes with a shortsword",
+  "selectedChallengeRating": "5",
+  "monsterName": "Halvard the Coinhand",
+  "caster": false
+}

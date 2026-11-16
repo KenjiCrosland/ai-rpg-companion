@@ -1,0 +1,20 @@
+[
+ {
+  "name": "Meshrin",
+  "description": "Large lizard folk, 30 feet of movement,  Wields a greatsword, long tail for swipe attacks, is trained in fighting styles, has razor sharp claws, and large teeth for a vicious bite.",
+  "cr": "8",
+  "role": "auto",
+  "rules": "2014",
+  "shape": "meshrin-verbatim",
+  "clauses": [
+   "Large",
+   "lizard folk",
+   "speed 30",
+   "greatsword",
+   "tail swipe",
+   "fighting styles",
+   "claws",
+   "bite"
+  ]
+ }
+]

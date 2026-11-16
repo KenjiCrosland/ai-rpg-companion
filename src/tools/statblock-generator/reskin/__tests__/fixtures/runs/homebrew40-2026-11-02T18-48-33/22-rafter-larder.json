@@ -1,0 +1,172 @@
+{
+  "name": "Rafter Larder",
+  "inline": "the larder",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral Evil",
+  "ac": 16,
+  "hp": 119,
+  "hp_formula": "14d10 + 42",
+  "pb": 3,
+  "speed": "40 ft., Climb 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 18,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 14,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 7,
+    "CON": 3,
+    "INT": 0,
+    "WIS": 5,
+    "CHA": 0
+  },
+  "skills": "Perception +5, Stealth +7",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Loft-Bound",
+        "text": "While the larder is not touching the ground, the larder cannot be made to descend from its span or perch and ignores effects that would bring it to the ground; it remains aloft unless it chooses otherwise.",
+        "authored": true,
+        "clause": "never comes down",
+        "clauseId": "cl_i9k37r"
+      },
+      {
+        "name": "Span-Anchored",
+        "text": "While it is climbing or clinging to a ceiling, trestle or wooden span, the larder cannot be has the Prone condition or forcibly moved, and it can hang from the span with no hands free while making its attacks.",
+        "authored": true,
+        "clause": "The larder binds itself to the beams with silk-wrapped trestle legs. While it is climbing or clinging to a ceiling, tres",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "bound": false,
+        "boundKeys": [],
+        "imposes": "Prone"
+      },
+      {
+        "name": "Ceiling Skitter",
+        "text": "The larder ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The larder makes three attacks, using Trestle Leg or Bolt-Studded Plank in any combination. It can replace one attack with a use of Haul Line."
+      },
+      {
+        "name": "Trestle Leg",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 6 (1d12) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Bolt-Studded Plank",
+        "text": "*Ranged Attack Roll:* +7, range 80/320 ft. 13 (2d8 + 4) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Stone Drop (Recharge 5-6)",
+        "imposes": "Prone",
+        "text": "The larder hurls a cargo-stone boulder at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 14, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 42 (12d6) Bludgeoning damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.",
+        "gate": "Recharge 5-6"
+      },
+      {
+        "name": "Haul Line",
+        "text": "*Strength Saving Throw:* DC 14, each creature in a 30-foot Cone. *Failure:* The target is pulled up to 15 feet straight toward the larder, and its Speed is 0 until the start of the larder's next turn.",
+        "library": true,
+        "template": "obstacle-pull",
+        "boundKeys": [
+          "pull",
+          "reel",
+          "drag",
+          "haul"
+        ],
+        "gmQuote": "a scaffold spider that fights from the ceiling and never comes down",
+        "widened": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Fleet Agility",
+        "text": "The larder takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "A scaffold-spider grows inside abandoned siege towers and mill-cranes, fusing its chitin to the beams it was born among, and it wants nothing but to hang its larder from the joists above the door everyone must use.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-8-hurler",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a scaffold-spider that fights from the ceiling and never comes down",
+    "clauses": [
+      {
+        "id": "cl_qp4sm5",
+        "text": "a scaffold-spider",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_bvtrqt",
+        "text": "fights from the ceiling",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "fights from the ceiling"
+      },
+      {
+        "id": "cl_i9k37r",
+        "text": "never comes down",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "never comes down"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [
+    "garbled-condition-grammar: Traits/Span-Anchored: \"be has the\" is fused grammar — normalized to \"have the\""
+  ],
+  "monsterDescription": "a scaffold-spider that fights from the ceiling and never comes down",
+  "selectedChallengeRating": "7",
+  "monsterName": "Rafter Larder",
+  "caster": false
+}

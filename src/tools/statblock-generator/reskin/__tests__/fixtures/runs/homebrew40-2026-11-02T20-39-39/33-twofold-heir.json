@@ -1,0 +1,136 @@
+{
+  "name": "Twofold Heir",
+  "inline": "the heir",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 161,
+  "hp_formula": "19d10 + 57",
+  "pb": 4,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 8,
+    "WIS": 10,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -1,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The heir makes two Swollen Arm attacks. It can replace one attack with a use of Quarrelsome Grip."
+      },
+      {
+        "name": "Swollen Arm",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 31 (6d8 + 4) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Quarrelsome Grip",
+        "text": "*Strength Saving Throw*: DC 15, one creature within 10 feet. *Failure:* The target has the Grappled condition (escape DC 16).",
+        "authored": true,
+        "clause": "argue about who swings",
+        "imposes": "Grappled",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "boundKeys": [],
+        "clauseId": "cl_137bf0k"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Two Wills, One Hide",
+        "text": "At the start of the heir's turn while it has the Grappled or Prone condition, the heir ends the Grappled and Prone conditions on itself as the brothers' competing wills yank the shared hide back to its feet.",
+        "authored": true,
+        "clause": "The heir cannot be Grappled or knocked Prone by any creature smaller than it, and if it is Grappled or Prone at the star",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "two brothers sharing one hide-bound body",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "as the brothers' competing wills yank the shared hide back to its feet"
+      }
+    ]
+  },
+  "lore": "Fused seam-to-seam by an old bargain, two quarreling heirs walk the wilds seeking a fight decisive enough to settle which of them is truly the elder.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "two brothers who share one body and argue about who swings",
+    "clauses": [
+      {
+        "id": "cl_h6h6vb",
+        "text": "two brothers",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1uz8r3x",
+        "text": "share one body",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_137bf0k",
+        "text": "argue about who swings",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "swings",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 2,
+    "free_row_templates": [
+      "unknown",
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 2,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "two brothers who share one body and argue about who swings",
+  "selectedChallengeRating": "9",
+  "monsterName": "Twofold Heir",
+  "caster": false
+}

@@ -1,0 +1,12 @@
+[
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — the owner's exact sheet. Bell Slam promised Advantage against a Grappled target with nothing grappling. Either the clause is gone or something now grapples." },
+  { "name": "", "description": "a headless horseman who rides down the fleeing and takes their heads", "cr": "8", "rules": "2024", "canary": "CANARY — the standing two-clause test. Both halves must still land; nothing about this change should touch it." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "CANARY — the payoff sheet. payoffReachable and advantageReachable are siblings now; the payoff must still ship and its save must not be Strength." },
+  { "name": "", "description": "a bog hound that drags what it bites into the mire", "cr": "3", "rules": "2024", "canary": "FEATURE — a grappler donor whose grapple row should SURVIVE, so the Advantage clause is legitimate and must be kept." },
+  { "name": "", "description": "a gullet-worm that swallows what it seizes", "cr": "8", "rules": "2024", "canary": "FEATURE — grapple into swallow. The clause should stand: the sheet imposes Grappled." },
+  { "name": "", "description": "a bell-ghost whose toll deafens and whose reach finds the deafened", "cr": "6", "rules": "2024", "canary": "FEATURE — the GM typed the pairing. Deafened imposed by one row, exploited by another: the engine should let both stand." },
+  { "name": "", "description": "a lamp-eyed stalker that strikes from the dark", "cr": "5", "rules": "2024", "canary": "FEATURE — a lurker with no grapple anywhere. If a grappler donor is drawn, the clause must leave." },
+  { "name": "", "description": "a tide-hag who charms sailors and drowns the charmed", "cr": "9", "rules": "2024", "canary": "FEATURE — a Charmed pairing rather than Grappled; the rule must read the declared condition, not one word list." },
+  { "name": "", "description": "a slab-golem that pins a foe underfoot and grinds", "cr": "11", "rules": "2026-10", "canary": "FEATURE — pin then grind. Both the Advantage clause and a payoff may be in play on one sheet." },
+  { "name": "", "description": "a carrion ape that beats the fallen", "cr": "4", "rules": "2024", "canary": "FEATURE — Prone-keyed pairing. Does anything impose Prone, and does the clause match what does?" }
+]

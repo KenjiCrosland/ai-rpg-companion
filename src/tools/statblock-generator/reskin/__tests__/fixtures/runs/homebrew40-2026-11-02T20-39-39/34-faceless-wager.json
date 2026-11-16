@@ -1,0 +1,162 @@
+{
+  "name": "Faceless Wager",
+  "inline": "the wager",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 170,
+  "hp_formula": "20d8 + 80",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 22,
+    "CON": 18,
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 10,
+    "CON": 4,
+    "INT": 5,
+    "WIS": 2,
+    "CHA": 0
+  },
+  "skills": "Perception +6, Stealth +14",
+  "senses": "Passive Perception 16",
+  "languages": "Common",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The wager makes three attacks, using Rapier or Mark in any combination. It can replace one attack with a use of Leaden Pall."
+      },
+      {
+        "name": "Rapier",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Piercing damage.",
+        "weapon": "rapier",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Mark",
+        "text": "*Ranged Attack Roll:* +10, range 80/320 ft. 24 (4d8 + 6) Psychic damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Leaden Pall",
+        "text": "*Constitution Saving Throw:* DC 18, each creature in a 30-foot Cone. *Failure:* The target's Speed is halved and it can't take Reactions until the end of the wager's next turn.",
+        "library": true,
+        "template": "slow-bolt",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "a duellist who only ever makes one attack and it always lands",
+        "widened": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the wager takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Gloom Surety",
+        "text": "While in Dim Light or Darkness and hidden, when the wager makes a Mark attack against a creature that cannot see it, the attack hits without needing to beat the target's AC.",
+        "authored": true,
+        "clause": "The wager's shadow-stuffed body makes it unseen in the dark—while in Dim Light or Darkness, it can Hide even when it has",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "one unavoidable perfect strike",
+        "bound": false,
+        "boundKeys": [],
+        "answersAlso": [
+          "it always lands"
+        ],
+        "expressedQuote": "the attack hits without needing to beat the target's AC"
+      }
+    ]
+  },
+  "lore": "A champion duellist who wagered his face, name, and every loss to a shadow-court patron, and now stalks the roads demanding single-stroke satisfaction from any blade it deems worthy.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "a duellist",
+        "where": "description",
+        "text": "The wager fights like a duellist: clean lines, a rapier's reach, each mark placed as though the bout were already won."
+      }
+    ],
+    "userConcept": "a duellist who only ever makes one attack, and it always lands",
+    "clauses": [
+      {
+        "id": "cl_12uzek5",
+        "text": "a duellist",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1p3b1vv",
+        "text": "only ever makes one attack",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_155hqwc",
+        "text": "it always lands",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_in_prose": [
+      "a duellist"
+    ],
+    "answered_by_existing": [
+      "it always lands -> Gloom Surety"
+    ],
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a duellist who only ever makes one attack, and it always lands",
+  "selectedChallengeRating": "12",
+  "monsterName": "Faceless Wager",
+  "caster": false
+}

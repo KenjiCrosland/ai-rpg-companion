@@ -1,0 +1,56 @@
+[
+  {
+    "canary": "menu caster CR 2 — 2 at-will / 1 daily, a damage spell priced as nova (Shatter / Scorching Ray)",
+    "description": "a hedge witch who curses livestock",
+    "cr": "2",
+    "rules": "2024",
+    "role": "caster"
+  },
+  {
+    "canary": "class NPC on the Priest at CR 7 — topped up from the CR 2 list",
+    "name": "Sister Maudra",
+    "description": "cleric of the drowned god",
+    "cr": "7",
+    "rules": "2014",
+    "role": "controller"
+  },
+  {
+    "canary": "class NPC on the Priest at CR 9 — Mother Ash had 2/1",
+    "name": "Mother Ash",
+    "description": "hag midwife",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "canary": "item 9 still holds — CR 3 wizard does NOT get the Mage's Fireball",
+    "description": "goblin wizard",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "canary": "a 3/Day bonus-action spell never migrates to at-will (Misty Step)",
+    "name": "Nib Wickwhistle",
+    "description": "goblin wizard",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "canary": "CONTROL print caster at own CR — Mage byte-identical",
+    "description": "mage",
+    "cr": "6",
+    "rules": "2024"
+  },
+  {
+    "canary": "CONTROL print caster high — Lich list unchanged, Power Word Kill present",
+    "description": "lich",
+    "cr": "21",
+    "rules": "2024"
+  },
+  {
+    "canary": "the nova read sees a daily damage spell — Mage reads nova 28-36",
+    "description": "a battle-mage who leads from the front",
+    "cr": "6",
+    "rules": "2024",
+    "role": "caster"
+  }
+]

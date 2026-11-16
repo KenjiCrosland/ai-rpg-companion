@@ -1,0 +1,5 @@
+[
+  { "name": "", "description": "a quarry-pit thing of living scree that leaves whoever touches it mud-slick and weighed down", "cr": "8", "rules": "2024", "canary": "COMPOSE body-reaction: a non-damage consequence (Speed halved or a condition) — no template has one, so the form should be filled rather than a nearest match shipped" },
+  { "name": "", "description": "a lashed-timber siege hulk whose hide splinters and blinds whoever breaks a binding", "cr": "8", "rules": "2014", "canary": "COMPOSE body-reaction in the 2014 printing: the trait must render in the flat abilities list with 2014 grammar (\"is blinded\", not \"has the Blinded condition\")" },
+  { "name": "", "description": "a bramble-wight that catches the limb of anyone who strikes it", "cr": "5", "rules": "2024", "canary": "COMPOSE body-reaction: the grapple trigger; must NOT ship the banned push-away consequence" }
+]

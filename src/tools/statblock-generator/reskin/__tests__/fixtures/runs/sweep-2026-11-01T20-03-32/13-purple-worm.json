@@ -1,0 +1,160 @@
+{
+  "name": "Purple Worm",
+  "inline": "the worm",
+  "format": "2024",
+  "cr": 15,
+  "cr_str": "15",
+  "xp": 13000,
+  "challenge_rating": "15 (XP 13,000; PB +5)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Unaligned",
+  "ac": 18,
+  "hp": 247,
+  "hp_formula": "15d20 + 90",
+  "pb": 5,
+  "speed": "50 ft., Burrow 50 ft.",
+  "stats": {
+    "STR": 28,
+    "DEX": 7,
+    "CON": 22,
+    "INT": 1,
+    "WIS": 8,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 14,
+    "DEX": -2,
+    "CON": 11,
+    "INT": -5,
+    "WIS": -1,
+    "CHA": -3
+  },
+  "skills": "Athletics +14, Perception +4",
+  "senses": "tremorsense 60 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": -2,
+  "initiative_score": 8,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The worm makes one Bite attack and one Tail Stinger attack. It can replace one attack with a use of Swallow."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 22 (3d8 + 9) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 22), and it has the Restrained condition until the grapple ends.",
+        "weapon": null,
+        "print": true,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Tail Stinger",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 16 (2d6 + 9) Piercing damage plus 35 (10d6) Poison damage.",
+        "weapon": null,
+        "print": true,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Swallow",
+        "text": "*Dexterity Saving Throw*: DC 21, one Large or smaller creature within 10 feet that the worm hit with a melee attack this turn. *Failure:* The target is swallowed. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the worm, and takes 21 (6d6) Acid damage at the start of each of the worm's turns. If the worm takes 40 damage or more on a single turn from a creature inside it, it must succeed on a DC 21 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the worm and has the Prone condition. If the worm dies, a swallowed creature is no longer Restrained and can escape from the corpse using 15 feet of movement, exiting with the Prone condition.",
+        "library": true,
+        "template": "swallow",
+        "imposes": [
+          "Prone",
+          "Blinded",
+          "Restrained"
+        ],
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "swallowed"
+        ],
+        "clause": "swallowed a war-band's armoury",
+        "clauseId": "cl_bn8lu2"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Gut-Forged Shrapnel",
+        "text": "The first time the worm is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC 21, each creature in a 30-foot Emanation originating from the worm. *Failure:* 42 (12d6) Acid damage, and the target has the Prone condition. *Success:* Half damage only.",
+        "library": true,
+        "template": "bloodied-burst",
+        "boundKeys": [
+          "bloodied"
+        ],
+        "accepted_closest": true,
+        "area": {
+          "shape": "Emanation",
+          "size": 30
+        },
+        "freeRow": true,
+        "expresses": null,
+        "decoration": true,
+        "bound": false,
+        "imposes": "Prone"
+      },
+      {
+        "name": "Tunneler",
+        "text": "The worm can burrow through solid rock at half its Burrow Speed and leaves a 10-foot-diameter tunnel in its wake.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "A Purple Worm that devoured a slaughtered war-band and its armoury, its gut still digesting the steel as it roams old battlefields hunting more iron to feast on.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Purple Worm",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-13",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Purple Worm — that swallowed a war-band's armoury",
+    "clauses": [
+      {
+        "id": "cl_1xqwy7f",
+        "text": "Purple Worm —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_bn8lu2",
+        "text": "swallowed a war-band's armoury",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "swallow",
+        "askMechanicWhy": "swallowed a war band's armoury"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "bloodied-burst"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "that swallowed a war-band's armoury",
+  "selectedChallengeRating": "15",
+  "monsterName": "Purple Worm",
+  "caster": false
+}

@@ -1,0 +1,153 @@
+{
+  "name": "Trench Leviathan",
+  "inline": "the leviathan",
+  "format": "2024",
+  "cr": 24,
+  "cr_str": "24",
+  "xp": 62000,
+  "challenge_rating": "24 (XP 62,000; PB +7)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Neutral",
+  "ac": 21,
+  "hp": 507,
+  "hp_formula": "29d20 + 203",
+  "pb": 7,
+  "speed": "40 ft., Fly 90 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 25,
+    "DEX": 28,
+    "CON": 24,
+    "INT": 14,
+    "WIS": 18,
+    "CHA": 16
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 16,
+    "CON": 7,
+    "INT": 2,
+    "WIS": 11,
+    "CHA": 3
+  },
+  "skills": "Perception +11, Stealth +16",
+  "senses": "blindsight 120 ft., darkvision 120 ft.; Passive Perception 21",
+  "languages": "Common",
+  "initiative_bonus": 9,
+  "initiative_score": 19,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Amphibious",
+        "text": "The leviathan can breathe air and water.",
+        "print": true
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the leviathan fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Coil Slip",
+        "text": "The leviathan doesn't provoke Opportunity Attacks when it flies out of an enemy's reach."
+      },
+      {
+        "name": "Trench Slither",
+        "text": "When a creature the leviathan can see ends its turn within 5 feet of it, the leviathan can move up to 15 feet without provoking Opportunity Attacks."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The leviathan makes three Coil attacks. It can replace one attack with a use of Trench Song."
+      },
+      {
+        "name": "Coil",
+        "imposes": "Prone",
+        "text": "*Melee Attack Roll:* +16, reach 15 ft. 18 (2d8 + 9) Bludgeoning damage plus 13 (3d8) Thunder damage. If the leviathan flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) Bludgeoning damage and, if it is Huge or smaller, has the Prone condition.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Crushing Dive (Recharge 5-6)",
+        "imposes": "Prone",
+        "text": "The leviathan flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Dexterity Saving Throw*: DC 24. *Failure:* 78 (12d12) Thunder damage, and the target has the Prone condition. *Success:* Half damage.",
+        "gate": "Recharge 5-6"
+      },
+      {
+        "name": "Trench Song",
+        "text": "*Constitution Saving Throw:* DC 24, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "library": true,
+        "template": "sensory-strike",
+        "imposes": "Blinded",
+        "boundKeys": [
+          "deafen"
+        ],
+        "duration": "target_end",
+        "widened": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Aerial Agility",
+        "text": "The leviathan takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the leviathan can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Drag Under",
+        "text": "The leviathan moves up to half its Speed without provoking Opportunity Attacks, and it makes one Coil attack."
+      }
+    ]
+  },
+  "lore": "A lightless-trench leviathan that learned the shape of surface noise and sings to thin the world above its roof of ships, pulling the loud and large down into the cold dark where its song is the only sound left.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-18-winged",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a leviathan of the trench whose song drowns fleets",
+    "clauses": [
+      {
+        "id": "cl_1h1f3n8",
+        "text": "a leviathan of the trench whose song drowns fleets",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "song drowns fleets"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a leviathan of the trench whose song drowns fleets",
+  "selectedChallengeRating": "24",
+  "monsterName": "Trench Leviathan",
+  "caster": false
+}

@@ -2,6 +2,7 @@
 // 2026-09-04): generified golden seeds, engine-priced, drawn only when
 // the wildcard dies, never the same monotony the fallback was.
 import { LIBRARY_SEEDS, drawLibraryRow } from '../library.mjs';
+import { IMMUNITY_ON_SUCCESS } from '../../format-2024/lint.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
 describe('the fallback library (2026-09-13)', () => {
@@ -10,7 +11,15 @@ describe('the fallback library (2026-09-13)', () => {
   test('every seed is vet-legal by construction: no reactions, no negation, no immunity grants, no 2014 save grammar', () => {
     for (const seed of LIBRARY_SEEDS) {
       expect(seed.section).not.toBe('Reactions'); // the Credit Due cut — Parry retirement pin
-      expect(seed.text).not.toMatch(/attack misses instead|[Ii]mmun(?:e|ity)|[Rr]esistan/);
+      // THE PIN GUARDS THE CREATURE SIDE, not the target's (narrowed 2026-10-29).
+      // What it exists to stop is a seed handing the CREATURE a damage immunity
+      // or resistance, which inflates its defensive CR for free. Print's own
+      // at-will control Emanations all buy the TARGET out on a success — "immune
+      // to this harpy's Luring Song for 24 hours" — which only weakens the row,
+      // and is now required of our Emanation seeds by `control-aoe-ungated`. So
+      // that one clause is excised before the check, by the same shared pattern
+      // the gate uses, and everything else still fails.
+      expect(String(seed.text).replace(IMMUNITY_ON_SUCCESS, '')).not.toMatch(/attack misses instead|[Ii]mmun(?:e|ity)|[Rr]esistan/);
       expect(seed.text).not.toMatch(/must (?:make|succeed on) a DC/); // 2024 skeleton only
       expect(seed.text).not.toMatch(/\breaction\b/i);
       // every number is a token or engine-derived — no authored DCs
@@ -129,7 +138,7 @@ describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
       expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `d${i}`, shapeKey: 'push-prone', imposed: ['Prone'] }).seed).not.toBe('push-prone');
     }
     expect(drawLibraryRow(sc8, { archetype: 'lurker', name: 'd-free', shapeKey: 'push-prone', imposed: [] }).seed).toBe('push-prone');
-    // the summon respects its CR floor
+    // the summon is RETIRED (no group templates, owner 2026-09-28): never drawn at any CR
     const sc1 = scaleDonor(pickDonor(1, null, 'lurker'), 1, { mechanics: [] });
     for (let i = 0; i < 40; i += 1) {
       expect(drawLibraryRow(sc1, { archetype: 'lurker', name: `p${i}`, cr: 1 }).seed).not.toBe('summon-lite');
@@ -139,5 +148,16 @@ describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
     for (let i = 0; i < 40; i += 1) {
       expect(drawLibraryRow(nova, { archetype: 'brute', name: `p${i}`, cr: 16 }).seed).not.toBe('wind-up');
     }
+  });
+});
+
+describe('form-ten seeds (2026-10-01)', () => {
+  test('"can turn invisible once per day" has a card: the Vanish seed, a bonus action casting Invisibility on itself (the Imp\'s shape)', () => {
+    const seed = LIBRARY_SEEDS.find((s) => s.key === 'self-invisibility');
+    expect(seed).toBeTruthy();
+    expect(seed.section).toBe('Bonus Actions');
+    expect(seed.keys).toEqual(expect.arrayContaining(['invisible', 'invisibility', 'vanish']));
+    expect(seed.text).toMatch(/casts \*Invisibility\* on itself/);
+    expect(seed.name).toMatch(/1\/Day/);
   });
 });

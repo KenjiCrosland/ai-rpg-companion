@@ -1,0 +1,225 @@
+{
+  "name": "Owlbear",
+  "inline": "the owlbear",
+  "type_and_alignment": "Large monstrosity, unaligned",
+  "armor_class": "13 (natural armor)",
+  "hit_points": "59 (7d10 + 21)",
+  "speed": "40 ft., climb 30 ft.",
+  "attributes": "STR 20 (+5), DEX 12 (+1), CON 17 (+3), INT 3 (-4), WIS 12 (+1), CHA 7 (-2)",
+  "saving_throws": "STR +7",
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft., passive Perception 15",
+  "languages": "None",
+  "challenge_rating": "3 (700 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Spider Climb",
+      "description": "The owlbear can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The owlbear makes two Rend attacks. It can replace one attack with a use of Pouncing Slam."
+    },
+    {
+      "name": "Rend",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage."
+    },
+    {
+      "name": "Pouncing Slam",
+      "description": "The owlbear spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. Each creature in the destination space must make a DC 15 Dexterity saving throw, taking 22 (5d8) bludgeoning damage on a failed save, or half as much damage on a successful one. On a failed save, the target is knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Owlbear",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-2",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "Owlbear — that has learned to climb",
+    "clauses": [
+      {
+        "id": "cl_2grwuk",
+        "text": "Owlbear —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_54jrqr",
+        "text": "has learned to climb",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "learned to climb"
+      }
+    ],
+    "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Owlbear",
+    "inline": "the owlbear",
+    "format": "2024",
+    "cr": 3,
+    "cr_str": "3",
+    "xp": 700,
+    "challenge_rating": "3 (XP 700; PB +2)",
+    "type": "Monstrosity",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "ac": 13,
+    "hp": 59,
+    "hp_formula": "7d10 + 21",
+    "pb": 2,
+    "speed": "40 ft., Climb 30 ft.",
+    "stats": {
+      "STR": 20,
+      "DEX": 12,
+      "CON": 17,
+      "INT": 3,
+      "WIS": 12,
+      "CHA": 7
+    },
+    "saves": {
+      "STR": 7,
+      "DEX": 1,
+      "CON": 3,
+      "INT": -4,
+      "WIS": 1,
+      "CHA": -2
+    },
+    "skills": "Perception +5",
+    "senses": "darkvision 60 ft.; Passive Perception 15",
+    "languages": "None",
+    "initiative_bonus": 1,
+    "initiative_score": 11,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The owlbear makes two Rend attacks. It can replace one attack with a use of Pouncing Slam.",
+          "print": true
+        },
+        {
+          "name": "Rend",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.",
+          "weapon": null,
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Pouncing Slam",
+          "text": "The owlbear spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC 15, each creature in the destination space. *Failure:* 22 (5d8) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.",
+          "library": true,
+          "template": "leap",
+          "imposes": "Prone",
+          "boundKeys": [
+            "drop",
+            "drops on",
+            "from above"
+          ],
+          "accepted_closest": true,
+          "minorClause": ", and the target has the Prone condition"
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Spider Climb",
+          "text": "The owlbear can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+          "library": true,
+          "template": "spider-climb",
+          "boundKeys": [
+            "climb",
+            "climbs",
+            "climbing",
+            "cling",
+            "sheer"
+          ],
+          "gmQuote": "owlbear that has learned to climb",
+          "expresses": "hooked climbing claws that reach vertical terrain",
+          "bound": true,
+          "clause": "has learned to climb",
+          "clauseId": "cl_54jrqr"
+        }
+      ]
+    },
+    "lore": "Descended from cliffside rookery owlbears, these brutes haul their bulk up sheer stone after prey and guard vertical territories no ordinary predator can reach.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "twist",
+        "print_body": "Owlbear",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "code"
+      },
+      "donor": "brute-2",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": true,
+      "unplaced": [],
+      "userConcept": "Owlbear — that has learned to climb",
+      "clauses": [
+        {
+          "id": "cl_2grwuk",
+          "text": "Owlbear —",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_54jrqr",
+          "text": "has learned to climb",
+          "kind": "mechanical",
+          "askShape": "movement",
+          "askMechanic": "climb",
+          "askMechanicWhy": "learned to climb"
+        }
+      ],
+      "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 2,
+      "seed_rows": 0,
+      "gap_vetoed": "0 of 1",
+      "gap_missing_unstated": 0,
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "that has learned to climb",
+  "selectedChallengeRating": "3",
+  "monsterName": "Owlbear",
+  "caster": false
+}

@@ -1,0 +1,6 @@
+[
+ { "name": "", "description": "a glacier's heart that grows more dangerous the longer the fight goes", "cr": "15", "rules": "2024", "canary": "ask" },
+ { "name": "", "description": "a wounded bear-god whose every injury makes it angrier", "cr": "9", "rules": "2024", "canary": "ask" },
+ { "name": "", "description": "a forge-golem that runs hotter with every blow it lands", "cr": "8", "rules": "2024", "canary": "ask" },
+ { "name": "", "description": "a storm that gathers over three rounds and then breaks", "cr": "11", "rules": "2024", "canary": "ask" }
+]

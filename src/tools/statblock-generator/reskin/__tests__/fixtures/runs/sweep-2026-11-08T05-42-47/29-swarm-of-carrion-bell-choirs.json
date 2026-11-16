@@ -1,0 +1,145 @@
+{
+  "name": "Swarm of Carrion Bell Choirs",
+  "inline": "the swarm",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Swarm of Tiny Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 178,
+  "hp_formula": "21d8 + 84",
+  "pb": 5,
+  "speed": "30 ft., Fly 30 ft. (hover)",
+  "stats": {
+    "STR": 8,
+    "DEX": 20,
+    "CON": 18,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 2
+  },
+  "saves": {
+    "STR": -1,
+    "DEX": 5,
+    "CON": 4,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -4
+  },
+  "skills": "",
+  "senses": "darkvision 60 ft.; Passive Perception 10",
+  "languages": "None",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Fear Aura",
+        "text": "The swarm emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 17, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "fear-aura",
+        "imposes": "Frightened",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true,
+        "duration": "target_end",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        },
+        "expresses": null,
+        "bound": false
+      },
+      {
+        "name": "Swarm",
+        "rules": true,
+        "text": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The swarm makes two Bells attacks."
+      },
+      {
+        "name": "Bells",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 27 (5d8 + 5) Bludgeoning damage plus 18 (4d8) Thunder damage, or 13 (3d8) Bludgeoning damage plus 9 (2d8) Thunder damage if the swarm is Bloodied.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Last-Warmth Knell (Recharge 5-6)",
+        "text": "*Constitution Saving Throw*: DC 17, each creature in a 15-foot Emanation. *Failure:* 65 (10d12) Necrotic damage. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "The swarm rings a single, sustained knell that only the dying can hear, drawing the last warmth from their bodies. Each ",
+        "gate": "Recharge 5-6",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "settling over the dying",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "Hung in a mass grave by a forgotten plague-cart parish, the bells were taken by the dead and now seek the dying, for only a final toll can complete what they are.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "swarm-9",
+    "archetype": "swarm",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a swarm of funeral bells that ring themselves over the dying",
+    "clauses": [
+      {
+        "id": "cl_1p80gjp",
+        "text": "a swarm of funeral bells",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1qi383g",
+        "text": "ring themselves over the dying",
+        "kind": "descriptive"
+      }
+    ],
+    "body": "swarm",
+    "invented": true,
+    "free_rows": 2,
+    "free_row_templates": [
+      "unknown",
+      "fear-aura"
+    ],
+    "decoration_rows": 2,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "swarm",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a swarm of funeral bells that ring themselves over the dying",
+  "selectedChallengeRating": "13",
+  "monsterName": "Swarm of Carrion Bell Choirs",
+  "caster": false
+}

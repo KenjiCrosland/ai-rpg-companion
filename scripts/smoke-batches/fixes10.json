@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no authored rows, no renames." },
+  { "name": "Pit Fiend", "description": "who collects the oaths of dying knights", "cr": "20", "rules": "2024",
+    "canary": "CANARY — its print Fiery Mace is reach 10 on a Large body and MUST stay 10." },
+  { "name": "", "description": "a stone giant exile who speaks only Giant", "cr": "9", "rules": "2024",
+    "canary": "CANARY — a Huge wielder's club keeps its long reach." },
+
+  { "name": "", "description": "a skeleton with a greatsword", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — the reach case: a Medium wielder's greatsword must read 5 ft." },
+  { "name": "Vashka the Red", "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — the numberless-bonus case; Shield Wall must state a number or not ship." },
+  { "name": "", "description": "a cathedral-vault ooze that digests reliquaries", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — shipped relentless-pursuit as 'Reliquary Lurch'; must now read its template name." },
+  { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024",
+    "canary": "FEATURE — shipped terrain-walk as 'Killing Wake'; the name must match the mechanic." },
+  { "name": "", "description": "a stone giant exile who speaks only Giant and understands no Common", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — shipped terror-pulse as 'Giant's Tongue'; must converge." },
+  { "name": "", "description": "lizardfolk monk", "cr": "5", "rules": "2024",
+    "canary": "FEATURE — a species kit DECLARES 'Marsh Stride' for terrain-walk; it must survive convergence." },
+  { "name": "", "description": "a paladin of the broken oath who smites the unclean", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — a class kit declares 'Divine Smite' for the coating template; it must survive." }
+]

@@ -1,0 +1,6 @@
+[
+  { "canary": "ANSWERING STRIKE — a brute whose body answers a blow: a reaction, Trigger on a HIT, Response one melee attack. NOT a bonus action, nothing to remember", "description": "a hulking bog troll that lashes back at anyone who strikes it", "cr": "5", "rules": "2024", "role": "brute" },
+  { "canary": "ANSWERING STRIKE — the owner's own case, re-rolled: the marsh swallower, whose bonus-action punisher was retired", "description": "a marsh swallower, a giant frog that swallows prey whole and snaps at whoever hits it", "cr": "3", "rules": "2024" },
+  { "canary": "RIPOSTE control — a skilled duelist answers a MISS with a blade; the two punishers must never share a sheet", "name": "Vess Ardaine", "description": "a rapier duelist who punishes anyone who misses her", "cr": "5", "rules": "2024", "role": "skirmisher" },
+  { "canary": "HEATED BODY control — print's trait-shaped version of the same fiction; Answering Strike must not ride beside it", "description": "a magma-crusted brute whose searing hide burns anyone who touches it", "cr": "6", "rules": "2024", "role": "brute" }
+]

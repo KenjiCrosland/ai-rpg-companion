@@ -1,0 +1,92 @@
+[
+ {
+  "canary": "a class on a people's body \u2014 the ship gate's own sheet 04",
+  "name": "",
+  "description": "goblin wizard",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "the same body one CR band down \u2014 fix 1: the lent list must fit CR 1",
+  "name": "",
+  "description": "goblin wizard",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "fix 3: the call names the body and drops the class",
+  "name": "",
+  "description": "kobold sorcerer",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "fix 2: the class weapon replaces print's, and print's rider goes with it",
+  "name": "",
+  "description": "goblin assassin",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "CONTROL \u2014 a class on a people's body that was already green",
+  "name": "",
+  "description": "hobgoblin priest",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ },
+ {
+  "canary": "CONTROL \u2014 the whole printed name still wins: no class filled",
+  "name": "",
+  "description": "kobold warrior",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates; is the creature typed; no broken text or numbers"
+ }
+]

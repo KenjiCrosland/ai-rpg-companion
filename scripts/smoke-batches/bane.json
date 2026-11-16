@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a troll that grows back unless the blade was silvered", "cr": "6", "rules": "2024",
+    "canary": "BANE as a call field: Regeneration must key SILVER, not print's Acid or Fire — the GM's own word, with a receipt", "mode": "band" },
+  { "name": "", "description": "a wax abbot that reknits itself unless it is burned", "cr": "7", "rules": "2024",
+    "canary": "BANE control: 'burned' reads Fire — the material body's own weakness still agrees", "mode": "band" },
+  { "name": "", "description": "a grave-knit revenant that pulls itself together only under holy light", "cr": "8", "rules": "2024",
+    "canary": "BANE, 'only' frame: holy light reads Radiant — the old frame's case must still work", "mode": "band" },
+  { "name": "", "description": "a bog troll that crushes the drowned against the stones", "cr": "6", "rules": "2024",
+    "canary": "REGRESSION: no weakness clause, so no bane is asked and print's default key stands", "mode": "band" },
+  { "name": "", "description": "a druid of the standing stones who calls the briars", "cr": "6", "rules": "2024",
+    "canary": "HOLD 3: print's Druid casts (rulesRows), so the caster family must STAND — not a DEX skirmisher", "mode": "band" }
+]

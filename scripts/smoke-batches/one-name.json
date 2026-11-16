@@ -1,0 +1,47 @@
+[
+ {
+  "canary": "fix F \u2014 the Bugbear Warrior shipped two rows named Unarmed Strike",
+  "name": "",
+  "description": "bugbear monk",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "no two rows share a name; the Multiattack names only rows that exist"
+ },
+ {
+  "canary": "fix F \u2014 the Bugbear shipped a Longsword with the Grab's grapple and one without",
+  "name": "",
+  "description": "bugbear fighter",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "no two rows share a name; the Multiattack names only rows that exist"
+ },
+ {
+  "canary": "fix F \u2014 the Guard Captain already carries a Longsword; its Javelin was renamed to a second",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "no two rows share a name; the Multiattack names only rows that exist"
+ }
+]

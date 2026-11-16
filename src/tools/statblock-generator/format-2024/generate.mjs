@@ -12,8 +12,12 @@
  * injected ((prompt, validate) => Promise<string>) so the pipeline is testable
  * without the AI client; the component passes generateGptResponse.
  */
-import { hintsBlock, HINT_VERDICTS_FIELD } from '../reskin/lexicon.mjs';
+import { hintsBlock, HINT_VERDICTS_FIELD, readPhrases } from '../reskin/lexicon.mjs';
+import { templatesFor, renderTemplate, rankByVerb, valueCheck, templateMenuLines, parseFit } from '../reskin/templates.mjs';
 import { LINES } from '../reskin/route.mjs';
+import { canWear, canShield } from '../reskin/classes.mjs';
+import { IMMUNITY_ON_SUCCESS, EDITION_TERMS_2024_TO_2014 } from './lint.mjs'; // one definition: Krennik's own 24-hour immunity clause, read by the lint already
+import { imposedCondition } from '../reskin/author.mjs'; // one definition: the condition a finished row imposes // 4a: armour proficiency is a closed fact from the rules
 import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
@@ -23,8 +27,9 @@ import textureBanks from '@/data/texture-banks.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { HIT_DIE_BY_SIZE, hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
-import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
+import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP, MUST_BE_BOUNDED, CONDITION_BOUNDED } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
+import { languageCodeFor, labelsFor } from '@/components/statblock-labels.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
 import { buildNamingBrief, rollNamingConvention } from '../skeleton/name-registers.mjs';
 
@@ -382,6 +387,20 @@ ${table}
  * lore, material, themes, names — so the words and the block agree from the
  * start. It no longer asks for archetype, style, body, or mechanics.
  */
+// THE CREATURE'S MIND, AS TIERS (item 4, owner's ruling 2026-11-15). The identity call ranks
+// INT, WIS and CHA and `applyMindTiers` in the reskin engine turns a tier into a score on a
+// homebrew sheet. The wording is mind probe 2's arm t verbatim, because the evidence is for
+// that wording: across 18 prompts it fixed 9 of 9 mental scores the donor card gets wrong and
+// was wrong on 4 of 310 rolls. `unsaid` was tried as a fifth answer and dropped — it was used
+// on 7% of scores in both buckets and told nothing apart.
+const MIND_TIER_NOTE = `
+THE CREATURE'S MIND. Rank its Intelligence, Wisdom and Charisma for THIS creature as the GM's
+words imply — how clever it is, how perceptive and wilful, how forceful or magnetic. Write one
+of the four words for each and never a number: the engine sets every score itself and will not
+read one from you. Rank the creature, not the chassis; the chassis is how it fights, not what
+it is. A tier is relative to other creatures of this challenge rating.
+`;
+
 export function buildIdentityPrompt(concept, description = '', { cr = null, archetype = null, energy = null, damageMix = null, line = null, resolvedType = null } = {}) {
   const hints = hintsBlock(`${concept} ${description}`);
   const chassis = line ? LINES.find((l) => l.id === line) : null;
@@ -390,7 +409,7 @@ export function buildIdentityPrompt(concept, description = '', { cr = null, arch
     : 'Sketch this D&D monster concept\'s combat identity.'}
 
 Concept: ${concept}
-${description ? `Details: ${description}\n` : ''}${chassis ? `CHASSIS: this creature has been routed onto the "${chassis.id}" template — ${chassis.blurb} (${chassis.exemplars}). The identity IS that chassis embodied: describe its combat loop in this creature's flesh, because every downstream ability is built on that template.\n` : ''}${resolvedType ? `Creature type: ${resolvedType} — decided from the concept's substance. Your identity must EXPRESS it; echo it in "creature_type".\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${seedFunnelBrief(resolvedType, archetype, damageMix === 'physical' ? null : energy)}${damageMix === 'physical' ? '' : energy ? energyBrief(energy) : energyInferenceBrief()}${damageMix ? damageMixBrief(damageMix, energy) : mixInferenceBrief()}
+${description ? `Details: ${description}\n` : ''}${chassis ? `CHASSIS: this creature has been routed onto the "${chassis.id}" template — ${chassis.blurb} (${chassis.exemplars}). THE CHASSIS IS HOW IT FIGHTS, NOT WHAT IT IS. That template name was picked by a router reading keywords, and it can be wrong about the creature's body: a berserker who "flies into a rage" may be routed onto a WINGED line, and it still has no wings. So "themes", "creature_type" and "mind" describe the CREATURE, read from the user's own words only — never from the template's name, blurb or exemplars. Where the two disagree about what the creature IS, the user's words win, and you should mark the template's cue rejected in "hint_verdicts". The identity IS that chassis embodied: describe its combat loop in this creature's flesh, because every downstream ability is built on that template.\n` : ''}${resolvedType ? `Creature type: ${resolvedType} — decided from the concept's substance. Your identity must EXPRESS it; echo it in "creature_type".\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${seedFunnelBrief(resolvedType, archetype, damageMix === 'physical' ? null : energy)}${damageMix === 'physical' ? '' : energy ? energyBrief(energy) : energyInferenceBrief()}${damageMix ? damageMixBrief(damageMix, energy) : mixInferenceBrief()}
 The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler. The creature's anatomy and attacks belong to what IT IS — never to what it hunts, fights, or is depicted alongside (a matador-themed monster fights like the matador, not like the bull). Every downstream choice spends words where the identity points.
 
 ${resolvedType ? '' : `Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
@@ -401,7 +420,7 @@ Also decide whether the input NAMED the creature ("provided_name"). What you wer
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — the story a GM would read aloud. Grounded in the concept's substance, never generic doom-prose.
 
-Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. AN IDIOM IS NOT A CAPABILITY. English hides physical words inside figures of speech, and a theme read off the figure gives the creature a body it does not have: a berserker who "flies into a rage" does not fly and is NOT aerial — it is bestial; a limb that "grows back" is healing, not verdant; a knight "cut off" from his order is isolated, not dismembered; "iron-willed" is resolve, not forged; "drinks in the dark" is not aquatic. Ask what the creature IS and DOES, never what the words inside the figure would mean on their own. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient. MIND HONESTY: if your own identity or signature elements have the creature taunting, mocking, performing, dueling, or toying with prey through intent and timing, mind is "sapient" — bestial creatures do not taunt.
@@ -409,12 +428,13 @@ Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends 
 
 Also give the engine its ASSEMBLY METADATA — structural signals the builder honors directly, unlike the prose:
 - "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
+- "type_source": "user" if the user's own words NAME the creature type ("an undead knight", "a fey trickster", "a dire wolf but undead"), otherwise "inferred".
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 - "signature_elements": the concept's 1-3 DEFINING elements, ranked most-defining first — short concrete phrases naming what makes THIS concept itself, the things a fan would riot to find missing (for a phoenix: "death and rebirth in fire"; "the burning plumage"). EXTRACT from the concept and its tradition, never invent; a generic concept gets one element or an empty list. Tag each with its KIND: "behavior" (something it DOES — a hunt, a grab, a ritual), "body" (what it is made of), "object" (a thing it carries or wields), "aura" (an atmosphere or presence). A behavioral element is usually the most defining — what it does outranks what it looks like. These persist across regenerations — they are the creature's contract.
 
-${hints}Return ONLY JSON, no markdown: {"identity": "<2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "provided_name": "<the proper name the input gave, copied exactly - omit entirely if the input only describes>", ${damageMix !== 'physical' && !energy ? '"energy": "<Fire|Cold|Lightning|Acid|Poison|Necrotic|Radiant|Thunder|Force|Psychic|none — the energy the concept itself implies>", ' : ''}${!damageMix ? '"damage_mix": "<both|physical|energy — how the body the concept describes actually hurts>", ' : ''}"signature_elements": [{"element": "<short phrase>", "kind": "<behavior|body|object|aura>"}]${hints ? `, ${HINT_VERDICTS_FIELD}` : ''}}`;
+${MIND_TIER_NOTE}${hints}Return ONLY JSON, no markdown: {"mind_tiers": {"INT": "<feeble|ordinary|capable|formidable>", "WIS": "<feeble|ordinary|capable|formidable>", "CHA": "<feeble|ordinary|capable|formidable>"}, "identity": "<2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "type_source": "<user|inferred>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "provided_name": "<the proper name the input gave, copied exactly - omit entirely if the input only describes>", ${damageMix !== 'physical' && !energy ? '"energy": "<Fire|Cold|Lightning|Acid|Poison|Necrotic|Radiant|Thunder|Force|Psychic|none — the energy the concept itself implies>", ' : ''}${!damageMix ? '"damage_mix": "<both|physical|energy — how the body the concept describes actually hurts>", ' : ''}"signature_elements": [{"element": "<short phrase>", "kind": "<behavior|body|object|aura>"}]${hints ? `, ${HINT_VERDICTS_FIELD}` : ''}}`;
 }
 
 export function validateIdentityResponse(jsonString) {
@@ -462,7 +482,7 @@ Also write ONE sentence of world-lore ("lore"): where this creature comes from a
 
 ${seedFunnelBrief(seed.creature_type, archetype, damageMix === 'physical' ? null : energy)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}${buildNamingBrief(naming, { type: seed.creature_type })}
 
-Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. AN IDIOM IS NOT A CAPABILITY. English hides physical words inside figures of speech, and a theme read off the figure gives the creature a body it does not have: a berserker who "flies into a rage" does not fly and is NOT aerial — it is bestial; a limb that "grows back" is healing, not verdant; a knight "cut off" from his order is isolated, not dismembered; "iron-willed" is resolve, not forged; "drinks in the dark" is not aquatic. Ask what the creature IS and DOES, never what the words inside the figure would mean on their own. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
@@ -470,12 +490,13 @@ Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends 
 
 Also give the engine its ASSEMBLY METADATA — structural signals the builder honors directly, unlike the prose:
 - "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
+- "type_source": "user" if the user's own words NAME the creature type ("an undead knight", "a fey trickster", "a dire wolf but undead"), otherwise "inferred".
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 - "signature_elements": the concept's 2-3 defining elements, each {"element": "<short phrase from your own synthesis>", "kind": "<behavior|body|object|aura>"} — the engine seats the top behavior in the signature action and the top body/object/aura in the signature trait, so these phrases decide what the creature's custom abilities BUILD.
 
-${hints}Return ONLY JSON, no markdown: {"synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "signature_elements": [{"element": "<short phrase>", "kind": "<behavior|body|object|aura>"}]${hints ? `, ${HINT_VERDICTS_FIELD}` : ''}}`;
+${MIND_TIER_NOTE}${hints}Return ONLY JSON, no markdown: {"mind_tiers": {"INT": "<feeble|ordinary|capable|formidable>", "WIS": "<feeble|ordinary|capable|formidable>", "CHA": "<feeble|ordinary|capable|formidable>"}, "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "type_source": "<user|inferred>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "signature_elements": [{"element": "<short phrase>", "kind": "<behavior|body|object|aura>"}]${hints ? `, ${HINT_VERDICTS_FIELD}` : ''}}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -1092,16 +1113,42 @@ export function normalizeNonmagicalClause(value) {
   const rest = [...tokens.slice(0, start), ...tokens.slice(clauseIdx + 1)];
   const clauseStr = (clauseTypes.length > 1
     ? `${clauseTypes.slice(0, -1).join(', ')}, and ${clauseTypes[clauseTypes.length - 1]}`
-    : clauseTypes[0]) + ' from nonmagical attacks';
+    : clauseTypes[0]) + ' from nonmagical attacks' + (/adamantine/i.test(tokens[clauseIdx]) ? " that aren't adamantine" : ''); // the Iron Golem's line (step 8)
   return rest.length ? `${rest.join(', ')}; ${clauseStr}` : clauseStr;
 }
+
+// 2014 GATES A CONDITION THE WAY ITS OWN BOOK DOES (owner's design, 2026-10-21).
+// 2024 lets a condition ride a hit unqualified; 2014 almost always gates it, and
+// WHICH gate depends on the condition. Measured across the SRD 5.1 corpus:
+//
+//   bodily    poisoned, paralyzed, unconscious, petrified -> a SAVING THROW,
+//             23 of 24 rows (96%). Something happening inside the target.
+//   restraint grappled, restrained -> an ESCAPE DC, 25 of 30 and 19 of 27.
+//             An ongoing hold you keep trying to break, never a save.
+//   knockdown prone -> a SAVING THROW, 14 of 19 (74%), and an escape DC in
+//             none of them. The five exceptions are heavy tramplers (the
+//             Elephant's Stomp, the Elk's Hooves) and are not detected.
+//
+// Our own 2014 printings measured 33% on bodily and 18% on prone against the
+// book's 96% and 74%, so an ungated "the target is paralyzed" was shipping on a
+// 2014 sheet — materially stronger than anything in that book. Restraints
+// already matched at 88%, because the engine computes escape DCs deliberately.
+//
+// This is a CLOSED TABLE keyed on the condition the row records, not a reading of
+// its prose. It runs in code, not in the conversion call, because that call is
+// forbidden from changing mechanics ("rewrite ONLY the wording") and this is a
+// mechanical difference between the editions by design.
+const SAVE_ON_HIT_2014 = { poisoned: 'Constitution', paralyzed: 'Constitution', unconscious: 'Constitution', petrified: 'Constitution', prone: 'Strength' };
+// 2014 says "or be knocked prone", never "or be prone"
+const SAVE_PHRASE_2014 = { prone: 'knocked prone' };
+const NEVER_SAVED_2014 = new Set(['grappled', 'restrained', 'incapacitated']); // the escape-DC family
 
 export function toLegacyModel(m) {
   // the classic card renders INLINE MARKDOWN now (owner 2026-09-14) —
   // italics survive the gate; only the bullets and the 2024 Multiattack
   // idiom scrub
-  const plain = (t) => String(t ?? '').replace(/^- /gm, '').replace(/ in any combination\b/, '');
-  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) }));
+  const plain = (t) => String(t ?? '').replace(/^[ \t]*-[ \t]*$\n?/gm, '') /* a bullet marker with nothing on it printed a stray "-" line in the 2014 spell block (critic's blockers audit 2026-10-03) */.replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
+  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text), ...(e.imposes ? { imposes: e.imposes } : {}) })); // a row's `flavor` field is a holding slot for the pipeline, never printed inside a row (owner 2026-10-04: it routes to Languages or the description)
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
   // vocabulary, NOT by the semicolon — the LLM doesn't always emit the
@@ -1122,6 +1169,45 @@ export function toLegacyModel(m) {
     .map((s) => `${s} ${signed(m.saves[s])}`)
     .join(', ');
 
+  // apply the 2014 gate to every row that imposes a condition on a hit
+  const gate2014 = (list) => {
+    const mods = Object.fromEntries(Object.entries(m.stats ?? {}).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
+    const best = Math.max(0, ...Object.values(mods));
+    const dc = 8 + Number(m.pb ?? 2) + best;
+    return (list ?? []).map((e) => {
+      // ONE DEFINITION, EVERY READER: the row's record when it has one, else a
+      // parse of our own canonical output. Measured reach before this: the gate
+      // fired on 0 of 6 bodily rows and 1 of 13 prone rows, because most carry
+      // no record — a working feature limited by a data gap, not by its rule.
+      const cond = String(imposedCondition(e) ?? '').toLowerCase();
+      if (!cond || NEVER_SAVED_2014.has(cond)) return e;
+      const stat = SAVE_ON_HIT_2014[cond];
+      if (!stat) return e;
+      const t = String(e.description ?? '');
+      if (!/to hit|Attack Roll/i.test(t)) return e;          // only a row the hit delivers
+      if (/saving throw/i.test(t) || /escape DC/i.test(t)) return e; // already gated
+      // THE GATE RUNS AFTER THE CONVERSION CALL, so the clause may already be in
+      // 2014 wording: "has the Prone condition" becomes "is knocked prone"
+      // before this sees it. Matching only the 2024 form meant the gate fired on
+      // nothing in the live path (the Bronze-Road Bull's Slam, 2026-10-21) —
+      // `toLegacyModel` is reached through convertEdition, not before it.
+      // Both idioms, and prone's "knocked" variant.
+      const alt = cond === 'prone' ? '(?:knocked )?prone' : cond;
+      // THE DURATION IS NOT PART OF WHAT THE GATE REPLACES (2026-10-28). `[^.]*`
+      // matched the rest of the sentence — "until the start of the barrow-lich's
+      // next turn" — and the replacement did not put it back, so every 2014 sheet
+      // where a hit delivered a bounded condition shipped it with NO END. A
+      // Barrow Warden's Paralyzing Touch read "or be paralyzed" full stop: a
+      // permanently paralysed character. It is deterministic, which is why it
+      // survived three guards on the model's answer and reproduced on every run.
+      // The tail is captured and re-emitted; a row with nothing after the
+      // condition is unaffected.
+      const clause = new RegExp(`,?\\s*and\\s+(?:the target|it)\\s+(?:has the ${cond} condition|is ${alt})([^.]*)\\.?`, 'i');
+      const gated = t.replace(clause, (_m, tail) => `, and the target must succeed on a DC ${dc} ${stat} saving throw or be ${SAVE_PHRASE_2014[cond] ?? cond}${String(tail ?? '').trimEnd()}.`);
+      if (gated === t) return e; // the clause did not match: leave it rather than mangle it
+      return { ...e, description: gated.replace(/\s{2,}/g, ' ').replace(/\.\./g, '.') };
+    });
+  };
   const abilities = [
     ...entryList('Traits'),
     // Guard: a model-emitted name that ALREADY carries the suffix must not
@@ -1141,20 +1227,37 @@ export function toLegacyModel(m) {
   );
   const legacy = {
     name: m.name,
+    ...(m.inline ? { inline: m.inline } : {}), // the rows' short form, for the legendary header
     type_and_alignment: `${m.size} ${typeLower}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
     armor_class: (() => {
       // 2014 prints the armor source (critic 2026-09-14: "19 (splint,
       // shield)"). Humanoid-shaped wearers solve a real kit; everything
       // else over its Dex line is natural armor.
       if (m.ac_note) return `${m.ac} (${m.ac_note})`;
+      if (m.ac_gear) return `${m.ac} (${m.ac_gear})`; // print's Gear line named the armor (the Goblin Boss is chain shirt and shield, not the kit table's "splint" — canaries 2026-10-12)
       const dex = modOf(m.stats.DEX);
+      // 4a, NEVER A LABEL THE CLASS CANNOT WEAR (critic, 2026-10-20). The kit
+      // loop below tries armour heaviest-first until the number matches, and
+      // knew nothing about proficiency: it printed splint on a BARD, a chain
+      // shirt on a MONK and chain mail on a barbarian. The class rides on the
+      // block from the path decision, and the proficiency table is a closed fact
+      // from the rules. A monk or a mage wears none at all, so their AC is their
+      // own ability scores and the label is the bare number.
+      const npcClass = String(m.generation?.pipeline?.class ?? '').toLowerCase() || null;
       if (/humanoid/i.test(m.type)) {
         const KITS = [['plate', 18, 0], ['splint', 17, 0], ['chain mail', 16, 0], ['half plate', 15, 2], ['breastplate', 14, 2], ['scale mail', 14, 2], ['chain shirt', 13, 2], ['studded leather', 12, 99], ['leather', 11, 99]];
-        for (const withShield of [false, true]) {
+        const twoHanded = Object.values(m.sections ?? {}).flat().some((e) => /\b(?:greatsword|greataxe|maul|pike|halberd|glaive|longbow|shortbow|heavy crossbow|light crossbow)\b/i.test(String(e.name ?? ''))); // no shield hand beside a two-handed weapon (Meshrin's "splint, shield" beside a greatsword — the critic's species read)
+        const shieldOk = !npcClass || canShield(npcClass);
+        for (const withShield of (twoHanded || !shieldOk ? [false] : [false, true])) {
           for (const [kit, base, cap] of KITS) {
+            if (npcClass && !canWear(npcClass, kit)) continue; // 4a: proficiency, not just arithmetic
             if (base + Math.min(dex, cap) + (withShield ? 2 : 0) === m.ac) return `${m.ac} (${kit}${withShield ? ', shield' : ''})`;
           }
         }
+        // 4a: no LEGAL kit reaches this number. Owner's call, recorded: print the
+        // number alone rather than invent a label the class cannot wear or
+        // silently move the AC — the number is the sheet's, the label is a gloss.
+        if (npcClass) return String(m.ac);
       }
       if (m.ac > 10 + dex) return `${m.ac} (natural armor)`;
       return String(m.ac);
@@ -1170,7 +1273,7 @@ export function toLegacyModel(m) {
     challenge_rating: `${m.cr_str} (${(m.xp ?? 0).toLocaleString('en-US')} XP)`,
     proficiency_bonus: `+${m.pb}`,
     abilities,
-    actions: entryList('Actions'),
+    actions: gate2014(entryList('Actions')),
     // Engine metadata (same keys the 2024 path stamps, minus format '2024'
     // so displayFormat routes to the legacy Statblock.vue display).
     format: '2014',
@@ -1182,12 +1285,18 @@ export function toLegacyModel(m) {
   if (res.damage) legacy.damage_resistances = normalizeNonmagicalClause(res.damage).toLowerCase();
   if (imm.damage) legacy.damage_immunities = normalizeNonmagicalClause(imm.damage).toLowerCase();
   if (imm.conditions) legacy.condition_immunities = imm.conditions.toLowerCase();
+  if (m.vulnerabilities) legacy.damage_vulnerabilities = String(m.vulnerabilities).toLowerCase(); // a typed vulnerability reaches the 2014 sheet (the hag's Fire, step 6)
   const legendary = entryList('Legendary Actions')
     // the 2024 Uses row duplicates the classic card's own boilerplate
     // paragraph (double header, live 2026-09-14)
     .filter((e) => !/^Legendary Action Uses/i.test(e.name))
     .map((e) => ({ ...e, name: normalizeLegendaryCost(e.name) }));
   if (legendary.length) legacy.legendary_actions = legendary;
+  { // the 2014 label follows the stat, whatever the conversion model wrote (fidelity pipeline step 4 forty: a Dex rope labelled Spell)
+    const castName = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(m.sections ?? {}))?.[1];
+    const castStat = castName ? { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' }[castName] : null;
+    for (const list of [legacy.actions, legacy.legendary_actions, legacy.reactions, legacy.abilities]) if (Array.isArray(list)) relabel2014Attacks(list, m.stats, Number(m.pb ?? 0), castStat);
+  }
   return legacy;
 }
 
@@ -1272,6 +1381,7 @@ export function fromLegacyModel(legacy) {
   if (legacy.archetype_source) model.archetype_source = legacy.archetype_source;
   if (legacy.skills && legacy.skills !== 'None') model.skills = legacy.skills;
   if (legacy.damage_resistances) model.resistances = capDefense(legacy.damage_resistances);
+  if (legacy.damage_vulnerabilities) model.vulnerabilities = capDefense(legacy.damage_vulnerabilities);
   if (immunities) model.immunities = immunities;
   if (legacy.languages && legacy.languages !== '—') model.languages = legacy.languages;
   if ((sections['Legendary Actions'] ?? []).length) model.legendary_uses = 3;
@@ -1283,6 +1393,7 @@ const CONVERSION_RULES = {
 - "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." becomes "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." (Ranged attacks likewise, keeping the range.)
 - "*<Ability> Saving Throw*: DC n, <targets>. *Failure:* <damage>. *Success:* Half damage only." becomes "<targets> must make a DC n <Ability> saving throw, taking <damage> on a failed save, or half as much damage on a successful one." Condition-only saves become "must succeed on a DC n <Ability> saving throw or <be/become condition>".
 - Reactions: "*Trigger:* <event>. *Response:* <effect>." becomes "When <event>, <the creature does the effect>."
+- "Advantage"/"Disadvantage" become lowercase "advantage"/"disadvantage" in prose ("if the attack roll had Advantage" becomes "if the attack had advantage"). Spell-list labels: "At Will:" becomes "At will:", "1/Day Each:" becomes "1/day each:", "3/Day Each:" becomes "3/day each:". These four words were the 2024 vocabulary most often left standing (sweep 2026-10-18).
 - Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition" — write "is stunned". Never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
 - 2024-only vocabulary must be translated: "Bloodied" becomes "has half of its hit points or fewer"; "each creature in a 5-foot Emanation originating from it" becomes "each creature within 5 feet of it"; an "N-foot-radius Emanation" becomes an "N-foot-radius sphere". Area shapes go lowercase: "15-foot cone", "the cone".
 - Spellcasting stays an ACTION in the MotM 2022 form (the Multiattack replacement clause requires it): "The <creature> casts one of the following spells, requiring no material components and using <Ability> as the spellcasting ability (spell save DC n):" — spell names lowercase italic (*bestow curse*), frequency labels "At will:" and "1/day each:", and "(level 5 version)" becomes "(cast at 5th level)". Never the 2014-core innate-trait wording.
@@ -1304,15 +1415,74 @@ const CONVERSION_RULES = {
 - Keep the entry's SETUP sentence first (what the creature creates or does), then the save skeleton — never open with the skeleton and append the setup after the Success clause.`,
 };
 
+// DID THE CONVERSION KEEP THE BOUND? One definition, used by the validator that
+// RETRIES the call and by the row mapping that decides what to ship, so the two
+// cannot drift (the private-copy lesson). True when there was nothing to keep:
+// the source names no condition that must be bounded, or the source left it bare
+// too.
+// NOTHING MAY BE LOST IN TRANSLATION, NOT ONLY A DURATION (roadmap R3.2,
+// 2026-11-01). `boundKeptInConversion` catches one dropped clause: an unbounded
+// condition. Krennik's Fear Aura lost a DIFFERENT one — "the target is immune to
+// this creature's aura for 24 hours" — so a CR 4 sheet frightened everything
+// within 20 feet every round, forever. The duration was intact, so the existing
+// gate passed it.
+//
+// WHAT THIS MAY COUNT IS NARROW ON PURPOSE. The first cut counted "save
+// branches", and 18 of 122 form rows on the saved runs tripped it — every one a
+// FALSE POSITIVE, because 2014 compresses both branches into one sentence
+// ("taking 11 (2d10) piercing damage on a failed save, or half as much on a
+// successful one") and writes a condition-only save as a negative ("must succeed
+// on a DC 14 Constitution saving throw or be blinded"). A guard with that false
+// positive rate is worse than the bug: it keeps the 2024 text, so a 2014 sheet
+// ships 2024 idiom. So this counts only what is unambiguous in BOTH idioms —
+// the 24-hour immunity clause (Krennik's own, read by the lint's existing
+// `IMMUNITY_ON_SUCCESS`, not a private copy), the damage expressions, and the
+// escape DCs.
+const countIn = (t) => {
+  const s = String(t ?? '');
+  return {
+    immunity: IMMUNITY_ON_SUCCESS.test(s) ? 1 : 0,
+    dice: [...s.matchAll(/\d+ \(\d+d\d+(?: ?[+-] ?\d+)?\)/g)].length,
+    escapes: [...s.matchAll(/escape DC \d+/gi)].length,
+  };
+};
+export function structureKeptInConversion(srcText, outText) {
+  const a = countIn(srcText); const b = countIn(outText);
+  return b.immunity >= a.immunity && b.dice >= a.dice && b.escapes >= a.escapes;
+}
+
+export function boundKeptInConversion(srcText, outText) {
+  const src = String(srcText ?? '');
+  if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) return true;
+  if (!CONDITION_BOUNDED.test(src)) return true;
+  return CONDITION_BOUNDED.test(String(outText ?? ''));
+}
+
 export function validateConversionResponse(jsonString, model) {
   const parsed = tryParse(jsonString);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
   for (const [section, entries] of Object.entries(model.sections ?? {})) {
+    // AN EMPTY SECTION IS NOT SENT, SO IT CANNOT COME BACK (2026-10-18): the prompt
+    // filters `es.length` out of the payload, and this gate then demanded the key
+    // anyway — every block carrying an emptied section (a chassis Reaction that
+    // left for print's kit, Traits: []) failed all three tries and shipped a 2014
+    // sheet in 2024 phrasing. The translation validator already skips them.
+    if (!entries.length) continue;
     const out = parsed[section];
     if (!Array.isArray(out) || out.length !== entries.length) return false;
-    if (!entries.every((e, i) =>
-      out[i] && out[i].name === e.name
-      && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
+    // rows match by POSITION; a drifted name ("Notched Saber" -> "Notched Saber Strike") is not a reason to reject the whole conversion — the English name is kept at splice (the duelist failed three tries and the user saw "try again", release smoke 2026-10-02)
+    if (!entries.every((e, i) => out[i] && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
+    // A DURATION MAY NOT BE LOST IN TRANSLATION. The conversion rewrites phrasing,
+    // never content — so a condition the source BOUNDS must still be bounded in
+    // the answer. Print's 2024 Lich reads "the Paralyzed condition until the start
+    // of the lich's next turn"; the conversion kept returning "or be paralyzed."
+    // with no end, which imposes it indefinitely and is unplayable. The checker
+    // has reported exactly this (`conversion-dropped-duration`, measured 1 fire /
+    // 0 false positives) while the gate that could RETRY the call never asked.
+    // Same test, imported from lint.mjs, so the two cannot drift.
+    for (let i = 0; i < entries.length; i += 1) {
+      if (!boundKeptInConversion(entries[i]?.text, out[i].text)) return false; // the answer dropped it — ask again
+    }
   }
   return true;
 }
@@ -1349,6 +1519,249 @@ const CONVERSION_LINT_RULES = new Set([
  * edition's phrasing; the edition's phrasing lint then gates the result via
  * the usual ladder (deterministic fixes → one targeted entry-rewrite call).
  */
+// THE TRANSLATION PASS (owner, 2026-10-01: "a translation flag and just pass
+// a completed statblock as an extra call"). The engine builds, lints and audits
+// in English; this one call rewrites the PROSE of the finished block into the
+// requested language with every number, die expression, DC and distance held
+// — the same contract as convertEdition. Shape is validated before splicing;
+// a row whose digits change keeps its English text (per-row fallback); the
+// English block rides along as `english` the way `other_edition` does. The
+// card's fixed labels come from statblock-labels.mjs by `language` code.
+const HEADER_FIELDS = ['name', 'size', 'type', 'alignment', 'languages', 'senses', 'skills', 'immunities', 'resistances', 'vulnerabilities', 'gear'];
+const numbersOf = (t) => (String(t ?? '').match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.'));
+// a DISTANCE in the English row may come back in metres — the German, French and
+// Italian rules print 1,5 m for 5 ft. (the steel tithe's Thrown Blade fell back on
+// "range 30/90 ft." -> "9/27 m", 2026-10-02): each foot number also accepts its
+// 0.3 m equivalent (5 -> 1.5, 10 -> 3, 30 -> 9, 60 -> 18, 90 -> 27, 120 -> 36)
+const metricOf = (n) => { const m = Math.round(Number(n) * 0.3 * 10) / 10; return String(m); };
+const distanceNumbers = (t) => new Set((String(t ?? '').match(/\d+(?:\/\d+)?(?=[ -]?(?:ft\.?|feet|foot)\b)/g) ?? []).flatMap((x) => x.split('/')));
+// every number in the English row must survive in the translation; the translation may ADD digits where English spelled a number out ("three attacks" -> "3回", "one creature" -> "1体" — the knife ball's Multiattack fell back, 2026-10-01)
+const numbersKept = (src, dst) => {
+  const pool = numbersOf(dst); const dist = distanceNumbers(src);
+  const take = (n) => { const i = pool.indexOf(n); if (i < 0) return false; pool.splice(i, 1); return true; };
+  return numbersOf(src).every((n) => take(n) || (dist.has(n) && take(metricOf(n))));
+};
+export function validateTranslationResponse(jsonString, model) {
+  const parsed = tryParse(jsonString);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+  if (!parsed.header || typeof parsed.header !== 'object') return false;
+  for (const [section, entries] of Object.entries(model.sections ?? {})) {
+    if (!entries.length) continue;
+    const out = parsed.sections?.[section];
+    if (!Array.isArray(out) || out.length !== entries.length) return false;
+    if (!out.every((o) => o && typeof o.name === 'string' && o.name.trim() && typeof o.text === 'string' && o.text.trim())) return false;
+    const echoed = out.filter((o, i) => String(o.text).trim() === String(entries[i]?.text ?? '').trim()).length; if (echoed > entries.length / 2) return false; // an ECHO is not a translation: the provider returned the English rows under a translated header and the Steingolem shipped print's English (the critic's second species read, 2026-10-13)
+  }
+  return true;
+}
+export async function translateStatblock(monster, language, callLLM) {
+  const code = languageCodeFor(language);
+  const header = Object.fromEntries(HEADER_FIELDS.filter((k) => monster[k]).map((k) => [k, String(monster[k])]));
+  const sections = Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([, es]) => es.length).map(([s, es]) => [s, es.map((e) => ({ name: e.name, text: e.text }))]));
+  const prompt = `Translate this D&D 2024 stat block into ${language}. Use the official ${language} D&D terms for conditions, damage types, abilities and spells where they exist.
+HOLD EXACTLY: every number, every die expression (2d8 + 5), every DC, every *asterisk* markdown marker, the "- " bullets, and the entry COUNT and ORDER. Keep every distance in FEET with the same number — do not convert to metres (write the unit as "ft." or the ${language} word for feet: Fuß, pieds, piedi, pies, フィート). Number words may become digits ("three attacks" -> "3"). Translate entry names too, including "Multiattack". Do not add, drop or rebalance anything.
+
+${JSON.stringify({ header, sections }, null, 2)}
+
+Return ONLY a JSON object of the same shape — {"header": {...same keys...}, "sections": {"Traits": [{"name": "...", "text": "..."}], ...}} — no markdown fences, no commentary.`;
+  const raw = await callLLM(prompt, (sIn) => validateTranslationResponse(sIn, monster));
+  if (!raw) throw new Error('Empty translation response');
+  const parsed = tryParse(raw);
+  const english = JSON.parse(JSON.stringify(monster));
+  const kept = [];
+  const out = { ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).map(([sName, es]) => [sName, es.map((e, i) => {
+    const t = parsed.sections?.[sName]?.[i];
+    if (!t || !numbersKept(e.text, t.text)) { kept.push(e.name); return { ...e }; } // a number went missing — this row keeps its English
+    // the model keeps "Multiattack" as a proper noun about one run in three — the label table knows the term (Multiangriff, Attaques multiples, マルチアタック)
+    const name = e.name === 'Multiattack' && t.name === 'Multiattack' && code && labelsFor(code).multiattack !== 'Multiattack' ? labelsFor(code).multiattack : t.name;
+    return { ...e, name, text: t.text };
+  })])) };
+  for (const k of HEADER_FIELDS) if (typeof parsed.header?.[k] === 'string' && parsed.header[k].trim() && numbersKept(monster[k], parsed.header[k])) out[k] = parsed.header[k];
+  if (/^unaligned$/i.test(String(monster.alignment ?? '').trim()) && code) { const want = labelsFor(code).unaligned; if (want && String(out.alignment ?? '').trim().toLowerCase() !== want.toLowerCase()) { out.alignment = want; } } // Unaligned is a closed term: the translator rendered the Stone Golem's as "Neutral" (the critic's fourth read)
+  out.language = code ?? String(language).toLowerCase().slice(0, 2);
+  out.language_name = String(language);
+  out.english = english;
+  if (kept.length) out._translationNotes = `kept in English (numbers moved): ${kept.join(', ')}`;
+  return out;
+}
+
+// THE 2014 GRAMMAR PASS (checker sweep 2026-10-02: five 2024 tokens leaked into one
+// converted block): a deterministic transform for the structural idioms the
+// conversion model leaves behind — attack rolls, saving throws with Failure/
+// Success, Bloodied, capitalized damage types. Applied after the model's rows are
+// spliced, and in the never-fail legacy fallback.
+const LOWER_TYPES = /\b(Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Acid|Poison|Necrotic|Radiant|Psychic|Force) damage\b/g;
+// ONE 2014 SAVE IDIOM (critic's release audit 2026-10-03: three idioms shipped, two malformed — "On a failed save, 72 (16d8) fire
+// damage," with no verb; a condition save with a dangling clause). Print's: "<Targets> must make a DC n <Stat> saving throw,
+// taking N (dice) type damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also …"
+// A save with no damage: "<Targets> must make a DC n <Stat> saving throw. On a failed save, <effect>. On a successful save, <effect>."
+// The 2024 lead-in "is targeted once by the following effect." folds into the subject.
+const SAVE_HEAD = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw\*?:\*?\s*DC (\d+)(?:, ([^.]+?))?\.\s*\*?Failure:\*?\s*/g; // both asterisk orders: the engine's `Throw*:` and the model's `Throw:*`
+export function canonSave2014(text) {
+  let t = String(text ?? '');
+  const heads = [...t.matchAll(SAVE_HEAD)];
+  if (!heads.length) return t;
+  let out = ''; let cursor = 0;
+  heads.forEach((h, i) => {
+    const before = t.slice(cursor, h.index); const tail = t.slice(h.index + h[0].length, heads[i + 1]?.index ?? t.length);
+    const [failRaw, succRaw = ''] = tail.split(/\s*\*?Success:\*?\s*/);
+    const low = (s) => s.replace(/^The target\b/, 'the target').replace(/^It\b/, 'it');
+    const end = (s) => (s && !/[.!?]$/.test(s.trim()) ? `${s.trim()}.` : s.trim());
+    const lead = /(.*?)(\S[^.]*?) is targeted once by the following effect\.\s*$/s.exec(before);
+    const subject = lead ? lead[2].trim() : h[3] ? `${h[3].charAt(0).toUpperCase()}${h[3].slice(1)}` : 'The target';
+    const pre = lead ? lead[1] : before;
+    const dmg = /^(\d+ \(\d+d\d+(?: [+-] \d+)?\) \w+ damage)[.,]?\s*(?:and\s+)?([^]*)$/.exec(failRaw.trim());
+    const half = /half(?: as much)? damage/i.test(succRaw);
+    let s;
+    if (dmg) {
+      s = `${subject} must make a DC ${h[2]} ${h[1]} saving throw, taking ${dmg[1]} on a failed save${half ? ', or half as much damage on a successful one' : ''}.`;
+      if (dmg[2].trim()) s += ` On a failed save, ${low(end(dmg[2]))}`;
+      if (succRaw.trim() && !half) s += ` On a successful save, ${low(end(succRaw))}`;
+    } else {
+      s = `${subject} must make a DC ${h[2]} ${h[1]} saving throw. On a failed save, ${low(end(failRaw))}`;
+      if (succRaw.trim()) s += ` On a successful save, ${low(end(succRaw))}`;
+    }
+    out += pre + s + ' '; cursor = h.index + h[0].length + tail.length;
+  });
+  return (out + t.slice(cursor)).replace(/\s{2,}/g, ' ').trim();
+}
+// THE 2014 LABEL FOLLOWS THE STAT (fidelity pipeline step 4 forty): the conversion model wrote "Melee Spell Attack" on a
+// ghost's rope that rolls Dex 16 + PB on a sheet with no Spellcasting. A row's label is Weapon when its bonus derives from
+// STR or DEX and Spell when it derives only from the casting stat; the model's label is overruled by the arithmetic.
+export function relabel2014Attacks(legacyRows, stats, pb, castStat) {
+  const mod = (k) => Math.floor(((stats?.[k] ?? 10) - 10) / 2);
+  for (const r of legacyRows ?? []) {
+    const t = String(r.description ?? r.text ?? ''); const m = /\b(Melee or Ranged|Melee|Ranged) (Weapon|Spell) Attack: \+(\d+) to hit/.exec(t); if (!m) continue;
+    const n = Number(m[3]); const physical = n === pb + mod('STR') || n === pb + mod('DEX'); const magical = !!castStat && n === pb + mod(castStat);
+    const want = physical && !(magical && !physical) ? 'Weapon' : magical ? 'Spell' : null;
+    if (want && want !== m[2]) { const fixed = t.replace(m[0], `${m[1]} ${want} Attack: +${n} to hit`); if (r.description != null) r.description = fixed; else r.text = fixed; }
+  }
+  return legacyRows;
+}
+/** The 2014 Multiattack from the 2024 row, deterministic: the model enumerated "one with X, one with Y, or one with X and one
+ *  with Y" for three attacks over two names (Grandmother Ash, critic's step-5 read). One row: "makes N X attacks"; as many
+ *  names as attacks: "one with its X and one with its Y"; a mixed set: "makes N attacks, using X or Y". */
+export function multiattack2014(text) {
+  const t = String(text ?? '');
+  const combo = /makes (\w+) attacks, using (.+?) in any combination/.exec(t);
+  if (!combo) return to2014Grammar(t);
+  const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+  const names = combo[2].split(/,\s*|\s+or\s+/).map((x) => x.trim().replace(/^or\s+/i, '')).filter(Boolean); // an Oxford comma left "or Fiery Mace" as a name → "or or" (check-in 2026-10-11)
+  const n = WORDS[combo[1].toLowerCase()] ?? Number(combo[1]);
+  const its = /^(?:The|the) /.test(t) ? 'its ' : ''; // a named person's Multiattack does not say "its"
+  const list = (xs, joiner) => (xs.length === 2 ? xs.join(` ${joiner} `) : `${xs.slice(0, -1).join(', ')}, ${joiner} ${xs.at(-1)}`);
+  // THE ENUMERATED FORM COMMITS TO EVERY NAME, so it is only honest when one
+  // creature can use them all in a turn. A launcher beside a melee weapon cannot
+  // be (flagged three times: Sir Reginald's "one with Greatsword and one with
+  // Heavy Crossbow" forced a crossbow shot every round) — print writes those as
+  // a choice. The combination form carries the choice.
+  const LAUNCHER = /\b(?:bow|longbow|shortbow|crossbow|sling|musket|pistol|rifle|blowgun|firearm|gun|cannon)\b/i;
+  const mixedReach = names.some((x) => LAUNCHER.test(x)) && names.some((x) => !LAUNCHER.test(x));
+  const rep = names.length === 1 ? `makes ${combo[1]} ${names[0]} attacks`
+    : names.length === n && !mixedReach ? `makes ${combo[1]} attacks: ${list(names.map((x) => `one with ${its}${x}`), 'and')}`
+      : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
+  return to2014Grammar(t.replace(combo[0], rep));
+}
+// THE ONE CLOSED LOWERCASING RULE for this converter (N4, 2026-11-02). 2024 writes
+// a label and 2014 writes a clause, so a word that opened a sentence now sits mid
+// sentence: "*Failure:* Until the start of its next turn…" became "On a failed
+// save, Until the start of its next turn…" (the Bog Hound and the Nave Choir on
+// forty #1). Only a determiner or pronoun is lowered — a proper noun keeps its
+// capital, which is why "Vashka", "Ilvareth" and "Each creature" all survive the
+// reaction recomposition that uses the same list.
+const LOWERABLE = ['A', 'An', 'The', 'It', 'Any', 'Another', 'One', 'Each', 'Someone', 'Something', 'That', 'This', 'Until', 'While', 'If', 'They'];
+const uncap = (x) => { const w = String(x).trim(); const first = w.split(/\s+/)[0]; return LOWERABLE.includes(first) ? `${first.toLowerCase()}${w.slice(first.length)}` : w; };
+
+export function to2014Grammar(text) {
+  let t = String(text ?? '');
+  // a damage-plus-condition save converted as "taking X on a failed save, and is poisoned … on a failed save" (Grandmother Ash's Ash Choke, step 6): the condition is its own sentence
+  t = t.replace(/(on a failed save), and (is|has|becomes|can't|cannot) ([^.]*?) on a failed save\./gi, (m0, a, verb, rest) => `${a}. On a failed save, the target ${verb === 'is' ? 'is also' : verb === 'has' ? 'also has' : `also ${verb}`} ${rest}.`);
+  // 2014 RENDER REPAIRS (critic's blockers audit 2026-10-03 — "sheets that look broken"): the classic card renders an
+  // ability as one paragraph, so a bullet list has to become sentences before the whitespace collapse below flattens
+  // the line starts; an empty bullet is a stray "-" on the sheet; and a hybrid row's label has to match its range.
+  t = t.replace(/^[ \t]*-[ \t]*\*\*(?!At Will|\d+\/Day)([^*]+?)\*\*:?[ \t]*/gm, (m0, label) => `${label.trim()}: `);
+  t = t.replace(/:[ \t]*-[ \t]*(?=\n|$)/g, ':'); // "(spell save DC 17): -" — the model's bullet on the header line (the Adult Green Dragon 2014, check-in 2026-10-11)
+  // a hybrid row's LABEL matches its range, repaired before the conversions below (the conversion path shipped "Melee Spell Attack: … reach 5 ft. or range 120 ft.")
+  t = t.replace(/(?<!Melee or )\b(?:Melee|Ranged) (Weapon|Spell) Attack: (\+\d+ to hit, )?reach (\d+) ft\. or range/g, (m0, kind, hit, reach) => `Melee or Ranged ${kind} Attack: ${hit ?? ''}reach ${reach} ft. or range`); // never prefix a label that already carries it — five 2014 sheets read "Melee or Melee or Ranged" (critic's regressions brief 2026-10-04)
+  t = t.replace(/\*?Melee or Ranged Attack Roll:\*?\s*\+(\d+)[^.]*?reach (\d+) ft\. or range ([\d/]+) ft\.\s*/g, 'Melee or Ranged Weapon Attack: +$1 to hit, reach $2 ft. or range $3 ft., one target. Hit: ');
+  t = t.replace(/\*?Melee Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, reach (\d+) ft\.(?! or range)\s*/g, 'Melee Weapon Attack: +$1 to hit, reach $2 ft., one target. Hit: '); // a hybrid row keeps its "or range" tail for the Melee-or-Ranged branch above
+  t = t.replace(/\*?Ranged Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, range ([\d/]+) ft\.\s*/g, 'Ranged Weapon Attack: +$1 to hit, range $2 ft., one target. Hit: ');
+  // "*Dexterity Saving Throw*: DC 15, each creature in a 60-foot Cone. *Failure:* 28 (8d6) Fire damage. *Success:* Half damage."
+  t = canonSave2014(t);
+  // 2014 WRITES A CONDITION IN PROSE (critic, 2026-10-14: Karrow's 2014 sheet
+  // said "it has the Prone condition", which is 2024 idiom). Print 2014: "is
+  // knocked prone", "is poisoned", "is restrained" — lowercase, no "condition".
+  t = t.replace(/\b(?:it |the target |that creature |the creature )?(?:has|gains) the Prone condition\b/g, (m0) => `${/^(?:it|the target|that creature|the creature) /.exec(m0)?.[0] ?? ''}is knocked prone`);
+  t = t.replace(/\b(has|gains) the (Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Paralyzed|Petrified|Poisoned|Restrained|Stunned|Unconscious|Invisible) condition\b/g, (m0, v, c) => `is ${c.toLowerCase()}`);
+  t = t.replace(/\bhas the (Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Petrified|Poisoned|Restrained|Stunned) and (Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Petrified|Poisoned|Restrained|Stunned) conditions\b/g, (m0, a, b) => `is ${a.toLowerCase()} and ${b.toLowerCase()}`);
+  t = t.replace(/\*?Success:\*?\s*Half damage(?: only)?\.?/g, 'On a successful save, half as much damage.');
+  t = t.replace(/\*?Success:\*?\s*/g, 'On a successful save, ');
+  t = t.replace(/\*?Failure:\*?\s*/g, 'On a failed save, ');
+  // AND A DOUBLED LABEL IS A SEAM, NOT A SENTENCE. A welded rider that was itself a
+  // save block gave the Vampire's Bite "…on a failed save. On a failed save, plus
+  // 13 (3d8) necrotic damage" — the converter labelled both halves. The second
+  // label folds into the first clause, which is how print writes a split.
+  // ONLY A DAMAGE CONTINUATION FOLDS. The second label is correct when the clause
+  // after it is a sentence of its own — "…on a failed save. On a failed save, the
+  // target is also poisoned…" is how 2014 writes a damage-plus-condition save, and
+  // the first cut of this collapse destroyed it (Grandmother's Ash Choke, caught by
+  // its own test). The seam is narrower: the second clause continues the FIRST
+  // clause's damage expression ("plus 13 (3d8) Necrotic damage"), which is the
+  // welded rider's own grammar and belongs inside the damage phrase.
+  t = t.replace(/ on a failed save\.\s*On a failed save,\s*(?=plus \d+ \()/gi, ' on a failed save, ');
+  t = t.replace(/On a failed save,\s*On a failed save,\s*/gi, 'On a failed save, ');
+  t = t.replace(/\*?Hit or Miss:\*?\s*/g, '');
+  // a row that reaches AND throws is "Melee or Ranged": one warpriest sword printed "Melee Spell Attack: … reach 5 ft. or range 120 ft."
+  // the 2024 lead-in folds into the save's subject even when the save already reads 2014 (the mounted nova on the conversion path)
+  t = t.replace(/(^|[.!?]\s+)([^.!?]*?) is targeted once by the following effect\.\s*(?:The target|That creature|It) must make a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw/g,
+    (m0, pre, subj, dc, stat) => `${pre}${subj.trim().charAt(0).toUpperCase()}${subj.trim().slice(1)} must make a DC ${dc} ${stat} saving throw`);
+  t = t.replace(/\bis Bloodied\b/g, 'has half its hit points or fewer').replace(/\bBloodied\b/g, 'below half its hit point maximum');
+  t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
+  t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);
+  t = t.replace(/\bHit Points\b/g, 'hit points').replace(/\bTemporary Hit Points\b/g, 'temporary hit points');
+  // A 2024 REACTION IS TWO LABELLED HALVES; 2014 WRITES ONE SENTENCE (R3.2,
+  // measured on forty #1, 2026-11-02). Our reaction form answers `trigger` and
+  // `response` as fields and the engine writes "Trigger: … Response: …" — 2024
+  // idiom. The conversion CALL used to rewrite that into prose; R3.2 stopped
+  // sending a form row to the call, so three sheets shipped 2024 labels in a 2014
+  // block (Vashka's Riposte, the Black Iron Sentinel's Interpose, Protective
+  // Magic on two casters) and the checker's own `vocab-2024-in-2014` gate failed
+  // them. Recomposed here from the engine's own closed labels.
+  //
+  // The first word of the trigger is lowercased ONLY when it is a determiner or
+  // pronoun — "A creature within 5 feet…" becomes "a creature…", while "Vashka
+  // is hit by an attack roll" and "Ilvareth is hit…" keep their capital. That is
+  // a closed grammar fact about our own frames, not a judgement about the words.
+  // (The fields themselves are not carried onto the row — the sixth instance of
+  // "declared then not carried" this sprint — so this reads the labels the engine
+  // wrote. When the fields ride, this becomes a render and the read goes.)
+  // THE LABELS CARRY THEIR OWN EMPHASIS MARKS (the critic, 2026-11-03: "the 2014
+  // reaction renderer still prints 'When X. , Y'. It hit four sheets this roll and does
+  // every roll"). The engine writes `*Trigger:* … *Response:* …`, and this pattern
+  // matched `Trigger:` INSIDE those asterisks, so the capture kept them: the trigger came
+  // out as "* … roll. *", which ends in an asterisk, so `replace(/\.$/, '')` never struck
+  // the full stop. A later emphasis strip then removed the asterisks and left the two
+  // artifacts together — a doubled space where the `* ` had been, and ". ," where the
+  // unstripped stop met the comma this line adds. Reproduced on exactly the four sheets
+  // the critic named (sweep-2026-11-03T23-14-10: #18, #23, #25, #28 — Protective Magic,
+  // Riposte, Interpose, Protective Magic). The marks are now consumed and both halves are
+  // trimmed, so the stop is struck from the text it is actually on.
+  t = t.replace(/\*{0,2}\s*\bTrigger:\s*\*{0,2}\s*([^]*?)\s*\*{0,2}\s*Response:\s*\*{0,2}\s*([^]*)$/, (m0, trig, resp) => {
+    const lead = uncap(String(trig).trim().replace(/\.$/, '').trim());
+    const body = uncap(String(resp).trim());
+    if (!lead) return body;
+    return `When ${lead}, ${body}`;
+  });
+  // EVERY PATH THAT WRITES THE CLAUSE LANDS HERE. `canonSave2014` composes its own
+  // "On a failed save, …" before the label swaps above ever run, so lowercasing at
+  // each swap site missed two of its own cases on forty #1 ("On a failed save,
+  // Until the start of…", "On a failed save, While within the aura…"). One pass,
+  // after all of them, with the one closed list.
+  t = t.replace(/(On a (?:failed|successful) save, )(\S+)/g, (m0, lead, next) => `${lead}${uncap(next)}`);
+  // the edition's own vocabulary, from the table the checker's gate reads (R3.2)
+  for (const [from, to] of EDITION_TERMS_2024_TO_2014) t = t.split(from).join(to);
+  return t.replace(/\s{2,}/g, ' ').trim();
+}
 export async function convertEdition(monster, callLLM, { degraded = false } = {}) {
   const target = monster.format === '2024' ? '2014' : '2024';
   const model = target === '2014' ? monster : fromLegacyModel(monster);
@@ -1385,14 +1798,42 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   if (!raw) throw new Error('Empty conversion response');
   const parsed = tryParse(raw);
 
+  // A ROW THAT LOST ITS BOUND KEEPS THE SOURCE (2026-10-28). The validator above
+  // rejects a conversion that drops the duration on a condition that must be
+  // bounded, and the call is retried — but when the retries are spent `callLLM`
+  // hands back the last answer regardless, and an Ossarch Lich shipped "or be
+  // paralyzed" with no end: a permanently paralysed character, which is not
+  // playable. So the choice is made per ROW, exactly as the translation path
+  // keeps a row's English when a number goes missing. A row left in the source
+  // dialect is a blemish; it still goes through `to2014Grammar`, which converts
+  // the phrasing deterministically.
+  // A ROW WE WROTE FROM A FORM IS NOT TRANSLATED — IT IS RENDERED (roadmap R3.2,
+  // 2026-11-01). Its 2024 sentence is already in our own closed idiom, and
+  // `to2014Grammar` converts that idiom deterministically, clause for clause.
+  // Sending it to the model buys nothing and risks everything: the model is what
+  // dropped Krennik's "immune for 24 hours". So the call's answer is used only
+  // for a row whose prose the model actually wrote — a free-prose trait.
+  //
+  // The test is the row's own DECLARED origin, not a reading of its words: the
+  // catalog stamps `template`/`library`, the importer stamps `print`, and the
+  // kit, feature and rules rows stamp themselves.
+  const FROM_A_FORM = ['template', 'library', 'print', 'printNamed', 'kit', 'feature', 'rules'];
+  const renderedFromForm = (e) => FROM_A_FORM.some((k) => e?.[k]);
+  const answerFor = (e, s, i) => {
+    if (renderedFromForm(e)) return e.text; // `to2014Grammar` runs on it below
+    const out = parsed[s]?.[i]?.text;
+    if (!boundKeptInConversion(e.text, out)) return e.text;
+    if (!structureKeptInConversion(e.text, out)) return e.text; // Krennik's seam
+    return out ?? e.text;
+  };
   let converted = {
     ...model,
     sections: Object.fromEntries(Object.entries(model.sections).map(([s, es]) =>
-      [s, es.map((e, i) => ({ ...e, text: parsed[s]?.[i]?.text ?? e.text }))])),
+      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? (/^Multiattack/.test(e.name ?? '') ? multiattack2014(e.text) : to2014Grammar(answerFor(e, s, i))) : answerFor(e, s, i) }))])), /* the Multiattack is rendered from the 2024 row; every other row, print's included, is the conversion model's — the by-rule print conversion left 2024 idiom on the Kraken and the dragon (critic's step-8 read); the conversion-dropped-half gate watches the model */ // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
   };
 
   let ctx2;
-  try { ctx2 = buildContext(model.cr, model.archetype ?? 'balanced'); }
+  try { ctx2 = buildContext(model.cr, chassisRoleOf(model) ?? 'balanced'); }
   catch { ctx2 = buildContext(model.cr, 'balanced'); } // saved reskin blocks carry internal family names ('caster') — never crash a conversion on vocabulary (2026-09-14)
   const { chassis, plan } = ctx2;
   // Chassis passed so chassis-gated rules in the conversion set (bps-
@@ -1485,6 +1926,20 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
 const LOWERCASE_CONDITIONS_G = new RegExp(
   `\\b(${CONDITIONS.map((c) => c.toLowerCase()).join('|')})\\b`, 'g'
 );
+/** The 2024 capitalisation pass, on its own: conditions and game terms. Exposed
+ * so a row added AFTER applyCorrections can still be normalised — the lint only
+ * fixes rules it found at repair time, and the reskin path adds rows later (the
+ * Sallow Reedsman's free-text "Patient Assailant" shipped "grappled" and
+ * "advantage" lowercase, gate-2026-10-17T18-34-19). One definition, two readers.
+ */
+export const capsFix2024 = (t) => String(t ?? '')
+  .replace(/\badvantage\b/g, 'Advantage').replace(/\bdisadvantage\b/g, 'Disadvantage')
+  .replace(/\blong rest\b/g, 'Long Rest').replace(/\bshort rest\b/g, 'Short Rest')
+  .replace(/\bhit points\b/g, 'Hit Points').replace(/\bopportunity attacks?\b/g, (x) => (x.endsWith('s') ? 'Opportunity Attacks' : 'Opportunity Attack'))
+  .replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1));
+
+/** The rules whose fix is string surgery, never a judgement — the reskin applies these too (2026-10-19). */
+export const DETERMINISTIC_TEXT_RULES = () => DETERMINISTIC_TEXT_FIXES.map(([r]) => r);
 const DETERMINISTIC_TEXT_FIXES = [
   ['term-caps', (t) => t
     .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')
@@ -1517,17 +1972,26 @@ const DETERMINISTIC_TEXT_FIXES = [
     .replace(/(-foot-wide Line) that is \d+ feet wide/gi, '$1')],
   ['success-half-only', (t) => t.replace(/(Success:\*?\s*)Half damage,? and (?:no |the (?:target|creature) (?:isn't|is not) )[^.]*\./gi, '$1Half damage only.')],
   ['entry-name-meta-paren', (t) => t], // name-level fix — handled in applyCorrections
-  ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
   ['grapple-restrain-linkage', (t) => t.replace(
     /(Grappled condition \(escape DC \d+\)) and the Restrained condition/g,
     '$1. Until the grapple ends, the target also has the Restrained condition')],
   ['rider-flat-bonus', (t) => t.replace(/\bplus \d+\s*\((\d+)d(\d+)\s*[+-]\s*\d+\)/g,
     (m, n, die) => `plus ${Math.floor((Number(n) * (Number(die) + 1)) / 2)} (${n}d${die})`)],
   ['ba-opener', (t) => t.replace(/^As a Bonus Action,?\s*(\w)/i, (m, c) => c.toUpperCase())],
+  // PRONE VOCABULARY IS FOR TEXT THE ENGINE WROTE (forty #4, #22). An authored row
+  // said "the larder cannot be knocked Prone or forcibly moved" and this turned it
+  // into "cannot be has the Prone condition". The garble-fixer that repairs exactly
+  // that shape — `garbled-condition-grammar` — is listed ABOVE this rule and so ran
+  // before the garble existed; it has moved below. But the real answer is not a
+  // second rewrite: an authored row carries its condition as a FIELD and the renderer
+  // writes the sentence, so the model's own idiom inside a form is not the engine's to
+  // re-word. `skipAuthored` is honoured by the applier.
   ['prone-vocab', (t) => t
     .replace(/\bfalls? Prone\b/g, 'has the Prone condition')
     .replace(/\bis knocked Prone\b/g, 'has the Prone condition')
-    .replace(/\bknocked Prone\b/g, 'has the Prone condition')],
+    .replace(/\bknocked Prone\b/g, 'has the Prone condition'), { skipAuthored: true }],
+  // the safety net runs AFTER the rule that can create the garble, not before it
+  ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
   ['rider-target-mismatch', (t) => {
     // On-hit riders: the saver IS the hit creature.
     let out = t.replace(/(On a hit,?\s*\*?[A-Z]\w+ Saving Throw\*?:?\s*DC \d+,\s*)one creature within \d+ feet/gi, '$1the target');
@@ -1625,10 +2089,16 @@ export function applyCorrections(monster, findings, { chassis }) {
   let out = JSON.parse(JSON.stringify(monster));
   const has = (rule) => findings.some((f) => f.rule === rule);
 
-  for (const [rule, fix] of DETERMINISTIC_TEXT_FIXES) {
+  for (const [rule, fix, opts] of DETERMINISTIC_TEXT_FIXES) {
     if (!has(rule)) continue;
     for (const entries of Object.values(out.sections ?? {})) {
-      for (const entry of entries) entry.text = fix(entry.text);
+      // A RULE MAY STAND DOWN ON A ROW THE MODEL AUTHORED (forty #4, #22). An authored
+      // row holds its condition as a FIELD and the renderer writes its sentence, so a
+      // vocabulary rewrite aimed at engine prose has nothing to correct there and can
+      // only garble it: "cannot be knocked Prone" became "cannot be has the Prone
+      // condition". Only rules that declare `skipAuthored` stand down; every other rule
+      // is unchanged on every row.
+      for (const entry of entries) { if (opts?.skipAuthored && entry.authored) continue; entry.text = fix(entry.text); }
     }
   }
 
@@ -2197,7 +2667,7 @@ function parseLegacyAttributes(attributes) {
 function entryRows(monster) {
   if (monster.sections) {
     return Object.entries(monster.sections).flatMap(([section, list]) =>
-      (list ?? []).map((e) => ({ section, name: e.name, text: e.text })));
+      (list ?? []).map((e) => ({ section, name: e.name, text: e.text, template: e.template ?? null })));
   }
   const rows = [];
   for (const [field, section] of [['abilities', 'Traits'], ['actions', 'Actions'], ['legendary_actions', 'Legendary Actions']]) {
@@ -2208,8 +2678,171 @@ function entryRows(monster) {
 
 export function validateEntryResponse(jsonString) {
   const parsed = tryParse(jsonString);
-  return !!parsed && typeof parsed.name === 'string' && parsed.name.trim() !== ''
-    && typeof parsed.text === 'string' && parsed.text.trim() !== '';
+  if (!parsed || typeof parsed.name !== 'string' || parsed.name.trim() === '') return false;
+  // A RE-ROLL ANSWERS ONE OF TWO WAYS (step 9b): a template from the catalog,
+  // whose rules and numbers the engine renders, or — only when none fits — the
+  // text written out. A named template needs no text; free text needs text.
+  const picked = typeof parsed.template === 'string' && parsed.template.trim() !== '' && !/^(?:none|n\/a|null)$/i.test(parsed.template.trim());
+  return picked || (typeof parsed.text === 'string' && parsed.text.trim() !== '');
+}
+
+/** The GM's own words for this creature, wherever the saved shape keeps them. */
+function conceptOf(monster) {
+  for (const v of [monster.generation?.userConcept, monster.concept, monster.description, monster.flavor_description]) {
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+const stampInline = (text, inline) => (inline
+  ? String(text).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline)
+  : String(text));
+
+/**
+ * THE WHOLE CREATURE, FOR A CALL THAT ONLY EVER SAW A NAME (step 9b; users:
+ * a re-roll "seems incredibly random as though it doesn't take the whole
+ * creature into consideration"). The old prompt showed the monster's name, its
+ * CR, and the NAMES of its other entries. It never showed what the GM asked
+ * for, the header, the phrase the rows use for the creature, or one word of any
+ * other entry's rules — so the model invented from a name.
+ */
+function creatureInView(monster, { exclude = null, cr } = {}) {
+  const concept = conceptOf(monster);
+  const inline = String(monster.inline ?? '').trim();
+  const header = [
+    [monster.size, monster.type].filter(Boolean).join(' '),
+    monster.alignment, monster.ac != null ? `AC ${monster.ac}` : null, monster.hp != null ? `HP ${monster.hp}` : null,
+    monster.speed ? `Speed ${monster.speed}` : null, monster.senses ? `Senses ${monster.senses}` : null,
+    monster.languages ? `Languages ${monster.languages}` : null,
+  ].filter(Boolean).join('; ');
+  // a row the GM named — a part, a species row, a feature, anything carrying a
+  // clause — is the creature's own; the re-roll must not contradict or repeat it
+  const rows = entryRows(monster).filter((r) => r.name !== exclude);
+  const ownedBy = new Map(Object.entries(monster.sections ?? {}).flatMap(([, list]) => (list ?? []).map((e) => [e.name, !!(e.part || e.kit || e.feature || e.clause)])));
+  const lines = rows.map((r) => `- [${r.section}]${ownedBy.get(r.name) ? ' *' : ''} ${r.name}: ${String(r.text ?? '').replace(/\s+/g, ' ').slice(0, 220)}`);
+  return { concept, inline, text: `THE CREATURE — read all of it before you answer:
+${monster.name}${header ? `, ${header}` : ''}. CR ${crKeyFor(cr)}${monster.archetype && monster.archetype !== 'balanced' ? `, combat role: ${monster.archetype}` : ''}.
+${concept ? `WHAT THE GM ASKED FOR, in their words: "${concept.replace(/"/g, "'").slice(0, 400)}"\n` : ''}${inline ? `IT IS CALLED "${inline}" IN RULES TEXT — use that exact phrase, never "the creature".\n` : ''}ITS OTHER ENTRIES — the new one stands beside these; never repeat, replace or contradict one${lines.some((l) => l.includes('] *')) ? '. A * marks a row the GM asked for by name' : ''}:
+${lines.join('\n') || '- none'}` };
+}
+
+/**
+ * THE SHEET'S OWN DC AND ATTACK BONUS (step 9b). A re-roll showed the model the
+ * CARD's numbers for the CR while the creature's other rows carried its own
+ * derived ones — the reef-warden's rows read DC 14 and +6 and the skeleton said
+ * DC 15 and +7, so a re-rolled row landed a point off its siblings every time.
+ * The sheet wins where it is plausibly the engine's (within 2 of the card); a
+ * hand-edited outlier does not drag the budget with it.
+ */
+function sheetNumbersOf(monster, chassis) {
+  const rowsAll = entryRows(monster);
+  const maxOf = (re) => { const hits = rowsAll.map((e) => Number(re.exec(String(e.text ?? ''))?.[1] ?? 0)).filter(Boolean); return hits.length ? Math.max(...hits) : null; };
+  const near = (v, card) => (v != null && Math.abs(v - card) <= 2 ? v : card);
+  return {
+    save_dc: near(maxOf(/(?:Saving Throw\*?:?\*? DC|DC) (\d+)/), chassis.save_dc),
+    attack_bonus: near(maxOf(/Attack Roll:\*? \+(\d+)/), chassis.attack_bonus),
+  };
+}
+
+const SECTION_KEY_OF = { Traits: 'trait', Actions: 'action', 'Bonus Actions': 'bonus_action', Reactions: 'reaction' };
+const ALL_ROLES = ['brute', 'skirmisher', 'controller', 'lurker', 'defender', 'artillery', 'caster'];
+
+/**
+ * THE CATALOG, FOR A SAVED SHEET (step 9b). The signature path's rule is that
+ * rules text is never free — a shape or a seed from the catalog holds it and the
+ * engine fills every number. A re-roll had no catalog at all. The saved sheet IS
+ * the chassis here: its rows, its stats, its DCs. Returns null when no shelf
+ * applies (a legendary action, a sheet with no ability scores).
+ */
+/**
+ * THE FAMILY THE BODY STANDS ON — for any reader that picks a chassis, a band or a
+ * template shelf. Never the label the user picked.
+ *
+ * `monster.archetype` is the ROLE THE USER CHOSE (2026-11-13); `generation.archetype`
+ * is the family the route actually landed on. They used to be the same field doing
+ * both jobs, and they agreed only by accident — every menu role resolved to its own
+ * family. Once artillery could reach `skirmisher-hurler`, Big Bob saved as label
+ * "artillery" on a skirmisher body, and every engine reader of `.archetype` began
+ * comparing him to an artillery chassis: re-rolling one of his rows drew from the
+ * artillery shelf his body does not stand on, and the edit-time band hints measured
+ * him against the wrong card.
+ *
+ * Display reads the label; mechanics read this. One definition, every reader — the
+ * last time a shared rule grew private copies, widening it fixed none of them.
+ */
+export function bodyFamilyOf(monster) {
+  const routed = monster?.generation?.archetype;
+  if (routed && routed !== 'balanced') return routed;
+  const label = monster?.archetype;
+  return label && label !== 'balanced' ? label : null;
+}
+
+/**
+ * The same question, asked of the CHASSIS TABLE, which knows a narrower vocabulary.
+ *
+ * The route returns eight families — brute, skirmisher, lurker, caster, defender,
+ * swarm, ooze, dragon — and `ARCHETYPE_NAMES` holds only six of them: `caster`,
+ * `ooze` and `dragon` are not cards. `applyArchetype` THROWS on an unknown name, and
+ * `rerollEntry`/`rerollSection` call `buildContext` with no catch, so handing a caster
+ * body's own family to the chassis lookup breaks re-rolling on that sheet outright
+ * (2026-11-13: it did, on every caster sheet, until this existed). The band hints sit
+ * inside a try/catch and failed silently instead, which is worse to find.
+ *
+ * So the two readers ask different questions and get different answers. The template
+ * shelf wants the FAMILY and `caster` is a real template role there — `bodyFamilyOf`.
+ * The chassis table wants a name it actually has: the routed family when it is one,
+ * the user's label when it is not, and `null` (which `buildContext` reads as
+ * "balanced") rather than a throw. That last arm also fixes `ooze` and `dragon`, which
+ * threw here before any of today's work.
+ */
+export function chassisRoleOf(monster) {
+  for (const candidate of [monster?.generation?.archetype, monster?.archetype]) {
+    if (candidate && candidate !== 'balanced' && ARCHETYPE_NAMES.includes(candidate)) return candidate;
+  }
+  return null;
+}
+
+function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null, excludeTemplate = null }) {
+  const key = SECTION_KEY_OF[section];
+  if (!key || !stats) return null;
+  const sections = {};
+  for (const r of entryRows(monster)) { if (r.name === exclude) continue; (sections[r.section] ??= []).push({ name: r.name, text: r.text }); }
+  const rowsAll = Object.values(sections).flat();
+  const num = (re) => { const hits = rowsAll.map((e) => Number(re.exec(String(e.text ?? ''))?.[1] ?? 0)).filter(Boolean); return hits.length ? Math.max(...hits) : 0; };
+  const concept = readPhrases(conceptOf(monster));
+  const archetype = bodyFamilyOf(monster); // the body's family, not the user's label — a re-rolled row must come off the shelf the body stands on
+  const scaled = {
+    cr, pb, stats, striker_stat: attackStatFor(stats), per_hit: numbers.perAttack,
+    dc: num(/DC (\d+)/) || chassis.save_dc, atk: num(/Attack Roll:\*? \+(\d+)/) || chassis.attack_bonus, sections,
+  };
+  const melee = rowsAll.find((e) => /Melee(?: or Ranged)? Attack Roll/.test(e.text ?? ''));
+  const ctx = {
+    scaled, sections, archetype: archetype ?? 'brute', style: null, cr,
+    movement: String(monster.speed ?? ''), type: String(monster.type ?? ''), concept,
+    name: monster.name, energy: null, mix: null, projectile: null, mechanics: null,
+    meleeName: melee?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
+    rangedName: rowsAll.find((e) => /Ranged Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''))?.name?.replace(/ \(.*\)$/, '') ?? null,
+    meleeType: (/\) ([A-Z][a-z]+) damage/.exec(melee?.text ?? '') ?? [])[1] ?? null,
+    conditionMinor: 'Prone',
+    imposed: [],
+  };
+  // a saved sheet with no recorded role draws from every role's shelf: the
+  // engine does not guess a role it was never told (pre-engine monsters)
+  // the creature's OWN body verdicts, answered once at generation and recorded on the sheet. Without
+  // them every gated template falls to its `keys` here, and one that declares none is unreachable.
+  const verdicts = monster?.generation?.body_verdicts ?? null;
+  // and HOW it holds, if the sheet recorded it. A sheet made before 2026-11-11 has no `hold_shape`,
+  // and passing nothing leaves `holdShape` undefined, which the menu filter treats as "no shape was
+  // asked" and falls through — a legacy sheet re-rolls exactly as it did before.
+  const holdShape = monster?.generation?.hold_shape ?? undefined;
+  const shelf = (archetype ? [archetype] : ALL_ROLES)
+    .flatMap((a) => templatesFor({ ...ctx, archetype: a, section: key, trigger: null, text: concept, ...(verdicts ? { bodyVerdicts: verdicts } : {}), ...(holdShape ? { holdShape } : {}) }));
+  // THE ROW BEING REPLACED TAKES ITS TEMPLATE WITH IT (live block, 2026-10-14:
+  // re-rolling Assassinate returned assassinate again under a new name — the
+  // same-name check catches a repeated NAME, never a repeated mechanic)
+  const menu = [...new Map(shelf.map((t) => [t.id, t])).values()].filter((t) => t.id !== excludeTemplate);
+  if (!menu.length) return null;
+  return { ctx, scaled, sections, concept, menu: rankByVerb(menu, concept).map((r) => r.t).slice(0, 14) };
 }
 
 /**
@@ -2229,8 +2862,9 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   // First numeric token, tolerant of "CR 5 (1,800 XP)" style prefixes.
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
-  const numbers = damageBudgetFor(cr, chassis, plan);
+  const { chassis: card, plan } = buildContext(cr, chassisRoleOf(monster) ?? 'balanced');
+  const numbers = damageBudgetFor(cr, card, plan); // the DAMAGE budget is the card's; the DC and the attack bonus are stat-derived, so the sheet's own stand
+  const chassis = { ...card, ...sheetNumbersOf(monster, card) };
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
   const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
 
@@ -2248,18 +2882,23 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   const keepName = referenced || PROTECTED_ENTRY_NAME_RE.test(current.name ?? '');
 
   const skeletons = editionSkeletons(edition, chassis, numbers);
+  const view = creatureInView(monster, { exclude: current.name, cr });
+  const catalog = rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude: current.name, excludeTemplate: keepName ? null : (current.template ?? entryRows(monster).find((r) => r.name === current.name)?.template ?? null) });
 
   const prompt = `You are re-rolling ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. The numbers are fixed — never invent different ones.
 
-THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
-Its other entries (do not duplicate their mechanics or names): ${otherNames.join('; ') || 'none'}.
+${view.text}
 
 ${keepName
     ? `REWRITE THIS ${REROLL_ENTRY_LABEL[section]} — KEEP the name "${current.name}" EXACTLY (${referenced ? 'other entries reference it by name' : 'the name is structural'}) and write a fresh take on its text:`
     : `REPLACE THIS ${REROLL_ENTRY_LABEL[section]} with a brand-new ability filling the same role — invent a NEW name (never "${current.name}" or a variation of it) and a fresh idea, not a rewording of this one:`}
 "${current.name}": ${currentText}
 
-FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):
+${catalog ? `FIRST CHOICE — THE CATALOG. These are printed rules frames, each legal for this creature's role, CR, movement and section. The engine fills every number and every closed slot; you fill only the {slots} marked "you fill". Pick the ONE whose rules genuinely carry an ability THIS creature would have — read what the GM asked for. A template that merely resembles it does not fit.
+${templateMenuLines(catalog.menu, { cr, concept: catalog.concept, idea: currentText })}
+A VERB MATCH is a WORD match, not a judgement: name in "wrong" any template whose key word does not mean its mechanic here (the word sits in the modifier slot of a compound, the sheet already answers it, or it belongs to another fiction). Name the ability in Monster Manual register: two words, three at most, never the creature's own name.
+
+SECOND CHOICE — answer "template": "none" ONLY if nothing above carries it, and then write the text yourself with these skeletons:` : `FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):`}
 ${skeletons}
 
 RULES:
@@ -2268,26 +2907,64 @@ RULES:
     : `\n- This entry is a REACTION — not a free action. It must use EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.`) : ''}
 - Any attack you reference by name must be one of the other entries listed above${referenced ? '' : ', or omit attack references'}.
 
-Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
+Return ONLY JSON, no markdown fences: ${catalog
+    ? '{"template": "<id from the catalog, or none>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic>"], "text": "<ONLY when template is none: the full rules text>"}'
+    : '{"name": "...", "text": "..."}'}`;
 
   const attempt = async (p) => {
     const raw = await callLLM(p, validateEntryResponse);
     if (!raw) return null;
     const parsed = tryParse(raw);
     if (!parsed) return null;
+    // THE CATALOG FIRST, THE MODEL'S OWN TEXT AS THE FLOOR (step 9b). One call,
+    // two possible answers — a re-roll stays one call. A template that renders
+    // and clears the value floor IS the entry, with its numbers from the engine
+    // and its provenance on the row; anything else falls through to the text.
+    let proposed = null; let provenance = null; const catalogRejects = [];
+    if (catalog && typeof parsed.template === 'string') {
+      const fit = parseFit(raw, catalog.menu, monster.name);
+      if (fit.template) {
+        const rendered = renderTemplate(fit.template, catalog.ctx, fit.fills);
+        if (!rendered) catalogRejects.push({ message: `the template "${fit.template.id}" could not be filled from this sheet — answer "template": "none" and write the text yourself` });
+        else {
+          const row = { name: `${fit.name ?? rendered.name}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampInline(rendered.text, view.inline) };
+          // a TRAIT and a RIDER never climb the ladder (the signature path's own
+          // rule): the ladder's "Success: Half damage only" belongs to a save row,
+          // and on a trait it shipped as a dangling "*Success:* H" (live block)
+          const priced = !['Traits', 'Rider'].includes(rendered.section);
+          const vc = priced ? valueCheck(row, { scaled: catalog.scaled, sections: catalog.sections, cr, section: rendered.section }) : { steps: [], ev: null, floor: null, replaced: 'a trait (no trade)' };
+          if (vc.steps.length) { row.text = vc.text; row.name = vc.name; }
+          if (vc.steps.some((st) => /still under|does nothing/.test(st))) catalogRejects.push({ message: `"${row.name}" does too little for a CR ${crKeyFor(cr)} ${REROLL_ENTRY_LABEL[section].toLowerCase()} — pick another template or answer "none" and write it yourself` });
+          else {
+            proposed = row; provenance = { template: fit.template.id, boundKeys: rankByVerb([fit.template], catalog.concept)[0]?.concept ?? [] };
+            logger.log('[reroll] value check:', `"${row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
+          }
+        }
+      }
+    }
+    if (!proposed) {
+      if (typeof parsed.text !== 'string' || !parsed.text.trim()) {
+        const steer = catalogRejects.length ? catalogRejects : [{ message: 'no text was returned — answer "template": "none" and write the rules text' }];
+        logger.log('[reroll] nothing to ship:', `${steer[0].message} — the retry carries the reason`);
+        return { entry: null, rejects: steer };
+      }
+      proposed = { name: parsed.name, text: stampInline(parsed.text, view.inline) };
+      logger.log('[reroll] catalog miss:', catalogRejects.length ? catalogRejects[0].message : `no template held it (offered ${catalog?.menu.length ?? 0}); the model's own text stands, linted`);
+    } else logger.log('[reroll] catalog fit:', `${provenance.template} -> "${proposed.name}"${provenance.boundKeys.length ? ` [binds ${provenance.boundKeys.join(', ')}]` : ''}`);
     // Pseudo-block: full text only for the new entry; the rest are name stubs.
     const sections = {};
     for (const r of rows) {
       if (r.name === current.name && r.section === section) continue;
       (sections[r.section] ??= []).push({ name: r.name, text: '', _stub: true });
     }
-    (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
+    (sections[section] ??= []).push({ name: proposed.name, text: proposed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
     pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings, { chassis });
     const result = lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total });
-    const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
+    const entry0 = pseudo.sections[section].find((e) => e.name === proposed.name && e.text);
+    const entry = entry0 && provenance ? { ...entry0, ...provenance } : entry0;
     let rejects = result.findings.filter((f) => f.severity === 'reject');
-    const sameName = parsed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
+    const sameName = proposed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
     if (keepName && !sameName && entry) {
       // Keep-mode rename is deterministically repairable: stamp the
       // load-bearing name back over the fresh text (cheaper than a retry;
@@ -2324,7 +3001,19 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   const entryName = edition === '2014' && section === 'Legendary Actions'
     ? normalizeLegendaryCost(outcome.entry.name)
     : outcome.entry.name;
-  return { name: entryName, description: outcome.entry.text };
+  // A REWRITE KEEPS THE ROW'S OWN NUMBERS (live block, 2026-10-14: an Oathblade
+  // rewrite came back 25 (6d6 + 4) where the row read 26 (5d8 + 4)). The
+  // skeletons hand the model the budget for a NEW row; a row the engine is only
+  // rewording already has its numbers, and the engine owns them.
+  let text = outcome.entry.text;
+  if (keepName && /Attack Roll/.test(currentText)) {
+    const wasAtk = /Attack Roll:\*? (\+\d+)/.exec(currentText)?.[1] ?? null;
+    const wasDmg = /\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(currentText)?.[0] ?? null;
+    if (wasAtk) text = text.replace(/(Attack Roll:\*? )\+\d+/, `$1${wasAtk}`);
+    if (wasDmg) text = text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, wasDmg);
+    if (text !== outcome.entry.text) logger.log('[reroll] numbers kept:', `"${entryName}" is a rewrite — the row's own ${wasAtk ?? ''} ${wasDmg ?? ''} stand over the skeleton's`);
+  }
+  return { name: entryName, description: text, ...(outcome.entry.template ? { template: outcome.entry.template, boundKeys: outcome.entry.boundKeys ?? [] } : {}) };
 }
 
 const SECTION_KINDS = { abilities: 'Traits', actions: 'Actions', legendary: 'Legendary Actions' };
@@ -2355,8 +3044,9 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
-  const numbers = damageBudgetFor(cr, chassis, plan);
+  const { chassis: card, plan } = buildContext(cr, chassisRoleOf(monster) ?? 'balanced');
+  const numbers = damageBudgetFor(cr, card, plan);
+  const chassis = { ...card, ...sheetNumbersOf({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)) }, card) }; // the section being replaced is not its own reference
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
   const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
 
@@ -2366,6 +3056,8 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
   const actionNames = (section === 'Actions' ? otherRows : rows)
     .filter((r) => r.section === 'Actions')
     .map((r) => r.name);
+
+  const sectionView = creatureInView({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)), abilities: section === 'Traits' ? [] : monster.abilities, actions: section === 'Actions' ? [] : monster.actions, legendary_actions: section === 'Legendary Actions' ? [] : monster.legendary_actions }, { cr });
 
   const range = section === 'Traits' ? plan.traits
     : section === 'Actions' ? plan.actions
@@ -2385,8 +3077,7 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const prompt = `You are rewriting the ENTIRE ${section} section of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
 
-THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
-Its entries in OTHER sections (do not duplicate their mechanics): ${otherRows.map((r) => r.name).join('; ') || 'none'}.
+${sectionView.text}
 
 PREVIOUS VERSION of this section (write a fresh take on the same creature — do not copy):
 ${currentSection.map((r) => `- ${r.name}: ${r.text}`).join('\n') || '(empty)'}
@@ -2561,7 +3252,14 @@ Return ONLY a JSON array in the SAME order as the entries above, no markdown fen
     if (t) {
       matched.add(t);
       const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
-      if (entry && typeof resp.text === 'string' && resp.text.trim()) entry.text = resp.text;
+      // A PHRASING REWRITE MAY NOT DROP A BOUND (2026-10-28). This pass re-asks the
+      // model to fix phrasing warts and took its answer unconditionally, so a
+      // Barrow-Lich whose conversion HAD bounded Paralyzed came back as "or be
+      // paralyzed" with no end — the conversion gate had already passed it, and
+      // this pass undid it. The row keeps what it has rather than take a rewrite
+      // that costs it the duration; a phrasing wart is survivable, a permanent
+      // Paralyzed is not.
+      if (entry && typeof resp.text === 'string' && resp.text.trim() && boundKeptInConversion(entry.text, resp.text)) entry.text = resp.text;
     } else {
       unmatched.push(resp);
     }
@@ -2578,6 +3276,7 @@ Return ONLY a JSON array in the SAME order as the entries above, no markdown fen
     if (!entry) continue;
     // Same name normalization the assembly applies — fix-call renames were
     // bypassing it (live: "The Watcher", "The Mound-Warden" shipped).
+    if (!boundKeptInConversion(entry.text, resp.text)) continue; // same rule on the rename arm: never trade a bound for phrasing
     entry.name = resp.name.trim().replace(/^the\s+/i, '');
     entry.text = resp.text;
     const oldBase = t.entry.split(' (')[0];

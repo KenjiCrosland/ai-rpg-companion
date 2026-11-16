@@ -1,0 +1,268 @@
+{
+  "name": "Ilvareth Dusksong",
+  "inline": "Ilvareth",
+  "type_and_alignment": "Medium humanoid, neutral",
+  "armor_class": "17",
+  "hit_points": "170 (31d8 + 31)",
+  "speed": "30 ft.",
+  "attributes": "STR 10 (+0), DEX 14 (+2), CON 12 (+1), INT 20 (+5), WIS 15 (+2), CHA 16 (+3)",
+  "saving_throws": "INT +9, WIS +6",
+  "skills": "Arcana +13, History +9, Perception +6",
+  "senses": "passive Perception 16",
+  "languages": "Common plus five other languages, Elvish, Deep Speech",
+  "challenge_rating": "12 (8,400 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Magic Resistance",
+      "description": "Ilvareth has advantage on saving throws against spells and other magical effects."
+    },
+    {
+      "name": "Misty Step (3/Day) (Bonus Action)",
+      "description": "Ilvareth casts *Misty Step*, using the same spellcasting ability as Spellcasting."
+    },
+    {
+      "name": "Protective Magic (3/Day) (Reaction)",
+      "description": "*When * Ilvareth is hit by an attack roll. *, * Ilvareth casts *Shield* in response, gaining a +5 bonus to AC until the start of its next turn, including against the triggering attack."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "Ilvareth makes four Arcane Burst attacks. It can replace one attack with a use of Duskblinding Bolt."
+    },
+    {
+      "name": "Spellcasting",
+      "description": "Ilvareth casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17): - **At will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Invisibility*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n**2/day each:** *Fly*, *Lightning Bolt*\n**1/day each:** *Cone of Cold*, *Mind Blank*, *Scrying*, *Teleport*"
+    },
+    {
+      "name": "Duskblinding Bolt",
+      "description": "One creature within 30 feet of Ilvareth must make a DC 17 Constitution saving throw, taking 21 (6d6) force damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also blinded until the end of its next turn.",
+      "imposes": "Blinded"
+    },
+    {
+      "name": "Arcane Burst",
+      "description": "Melee or Ranged Spell Attack: +9 to hit, reach 5 ft. or range 150 ft., one target. Hit: 27 (4d10 + 5) force damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "artillery",
+  "archetype_source": "user",
+  "damage_immunities": "psychic, charmed ((with mind blank))",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Archmage",
+      "relation": null,
+      "class": "mage",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-12",
+    "archetype": "caster",
+    "class_kit": {
+      "key": "mage",
+      "clause": "archmage",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Ilvareth Dusksong — An elf archmage who bends shadow and steps between places.",
+    "clauses": [
+      {
+        "id": "cl_176teih",
+        "text": "Ilvareth Dusksong — An elf archmage",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1u7zhb4",
+        "text": "bends shadow and steps between places",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "steps between places",
+        "askShape": "movement",
+        "askMechanic": "teleport",
+        "askMechanicWhy": "steps between places"
+      }
+    ],
+    "menu_role": "artillery",
+    "cite": "composition after Archmage (CR 12) — four bursts, DPR above the card, the glass cannon",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Ilvareth Dusksong",
+    "inline": "Ilvareth",
+    "format": "2024",
+    "cr": 12,
+    "cr_str": "12",
+    "xp": 8400,
+    "challenge_rating": "12 (XP 8,400; PB +4)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral",
+    "ac": 17,
+    "hp": 170,
+    "hp_formula": "31d8 + 31",
+    "pb": 4,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 10,
+      "DEX": 14,
+      "CON": 12,
+      "INT": 20,
+      "WIS": 15,
+      "CHA": 16
+    },
+    "saves": {
+      "STR": 0,
+      "DEX": 2,
+      "CON": 1,
+      "INT": 9,
+      "WIS": 6,
+      "CHA": 3
+    },
+    "skills": "Arcana +13, History +9, Perception +6",
+    "senses": "Passive Perception 16",
+    "languages": "Common plus five other languages, Elvish, Deep Speech",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "Ilvareth makes four Arcane Burst attacks. It can replace one attack with a use of Duskblinding Bolt."
+        },
+        {
+          "name": "Spellcasting",
+          "rules": true,
+          "text": "Ilvareth casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Invisibility*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Fly*, *Lightning Bolt*\n- **1/Day Each:** *Cone of Cold*, *Mind Blank*, *Scrying*, *Teleport*",
+          "print": true
+        },
+        {
+          "name": "Duskblinding Bolt",
+          "text": "*Constitution Saving Throw*: DC 17, one creature within 30 feet. *Failure:* 21 (6d6) Force damage, and the target has the Blinded condition until the end of its next turn.",
+          "authored": true,
+          "clause": "Ilvareth steps through the seam between worlds and emerges within 30 feet of its previous space, then hurls an Arcane Bo",
+          "imposes": "Blinded",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "stepping between shadows to reposition",
+          "boundKeys": [],
+          "decoration": true
+        },
+        {
+          "name": "Arcane Burst",
+          "text": "*Melee or Ranged Attack Roll:* +9, reach 5 ft. or range 150 ft. 27 (4d10 + 5) Force damage.",
+          "print": true,
+          "weapon": null,
+          "attacksPerRound": 4
+        }
+      ],
+      "Reactions": [
+        {
+          "name": "Protective Magic (3/Day)",
+          "rules": true,
+          "text": "*Trigger:* Ilvareth is hit by an attack roll. *Response:* Ilvareth casts *Shield* in response, gaining a +5 bonus to AC until the start of its next turn, including against the triggering attack.",
+          "gate": "3/Day",
+          "kit": "mage",
+          "clause": "archmage",
+          "clauseId": "cl_176teih"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Misty Step (3/Day)",
+          "text": "Ilvareth casts *Misty Step*, using the same spellcasting ability as Spellcasting.",
+          "kit": "mage",
+          "clause": "bends shadow and steps between places",
+          "free": true,
+          "clauseId": "cl_1u7zhb4"
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Magic Resistance",
+          "text": "Ilvareth has Advantage on saving throws against spells and other magical effects.",
+          "rules": true,
+          "print": true
+        }
+      ]
+    },
+    "lore": "An elf archmage of a vanished dusk-court, Ilvareth traded his name to the plane of shadow for the secret of walking between places and now drifts through the seams of the world seeking the one doorway back to a home that no longer exists.",
+    "inline_kind": "person",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "class_npc",
+        "print_body": "Archmage",
+        "relation": null,
+        "class": "mage",
+        "species": null,
+        "by": "call"
+      },
+      "donor": "caster-12",
+      "archetype": "caster",
+      "class_kit": {
+        "key": "mage",
+        "clause": "archmage",
+        "landed": 1,
+        "yielded": 0,
+        "stood_down": null
+      },
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "Ilvareth Dusksong — An elf archmage who bends shadow and steps between places.",
+      "clauses": [
+        {
+          "id": "cl_176teih",
+          "text": "Ilvareth Dusksong — An elf archmage",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_1u7zhb4",
+          "text": "bends shadow and steps between places",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "steps between places",
+          "askShape": "movement",
+          "askMechanic": "teleport",
+          "askMechanicWhy": "steps between places"
+        }
+      ],
+      "menu_role": "artillery",
+      "cite": "composition after Archmage (CR 12) — four bursts, DPR above the card, the glass cannon",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "artillery",
+    "archetype_source": "user",
+    "immunities": "Psychic; Charmed ((with Mind Blank))",
+    "lint_findings": []
+  },
+  "monsterDescription": "An elf archmage who bends shadow and steps between places.",
+  "selectedChallengeRating": "12",
+  "monsterName": "Ilvareth Dusksong",
+  "caster": false
+}

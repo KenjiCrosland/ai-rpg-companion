@@ -1,0 +1,273 @@
+{
+  "name": "Adult Red Dragon",
+  "inline": "the red dragon",
+  "type_and_alignment": "Huge dragon, chaotic evil",
+  "armor_class": "19 (natural armor)",
+  "hit_points": "256 (19d12 + 133)",
+  "speed": "40 ft., fly 80 ft., climb 40 ft.",
+  "attributes": "STR 27 (+8), DEX 10 (+0), CON 25 (+7), INT 16 (+3), WIS 13 (+1), CHA 23 (+6)",
+  "saving_throws": "DEX +6, WIS +7",
+  "skills": "Perception +13, Stealth +6",
+  "senses": "blindsight 60 ft., darkvision 120 ft., passive Perception 23",
+  "languages": "Common, Draconic",
+  "challenge_rating": "17 (18,000 XP)",
+  "proficiency_bonus": "+6",
+  "abilities": [
+    {
+      "name": "Scar-Sight",
+      "description": "The red dragon can pinpoint the location of worked steel and open wounds within 120 feet of itself."
+    },
+    {
+      "name": "Legendary Resistance (3/Day)",
+      "description": "If the red dragon fails a saving throw, it can choose to succeed instead."
+    },
+    {
+      "name": "Sight Weakness",
+      "description": "The red dragon has disadvantage on Wisdom (Perception) checks that rely on sight."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The red dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast *Scorching Ray*."
+    },
+    {
+      "name": "Rend",
+      "description": "Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 13 (1d10 + 8) slashing damage plus 5 (2d4) fire damage."
+    },
+    {
+      "name": "Spellcasting",
+      "description": "The red dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20, +12 to hit with spell attacks): - **At will:** *Command*, *Detect Magic*, *Scorching Ray*\n**1/day each:** *Fireball*"
+    },
+    {
+      "name": "Fire Breath (Recharge 5-6)",
+      "description": "Each creature in a 60-foot cone must make a DC 21 Dexterity saving throw, taking 59 (17d6) fire damage on a failed save, or half as much damage on a successful one."
+    }
+  ],
+  "format": "2014",
+  "archetype": "dragon",
+  "archetype_source": "user",
+  "damage_immunities": "fire",
+  "legendary_actions": [
+    {
+      "name": "Commanding Presence",
+      "description": "The red dragon uses Spellcasting to cast *Command* (level 2 version). The red dragon can't take this action again until the start of its next turn."
+    },
+    {
+      "name": "Fiery Rays",
+      "description": "The red dragon uses Spellcasting to cast *Scorching Ray*. The red dragon can't take this action again until the start of its next turn."
+    },
+    {
+      "name": "Pounce",
+      "description": "The red dragon moves up to half its Speed, and it makes one Rend attack."
+    }
+  ],
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Adult Red Dragon",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "dragon-15",
+    "archetype": "dragon",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Adult Red Dragon — blind in one eye from an old lance",
+    "clauses": [
+      {
+        "id": "cl_d36g34",
+        "text": "Adult Red Dragon — blind in one eye from an old lance",
+        "kind": "mechanical",
+        "polarity": "lacks",
+        "takes": "sight",
+        "costs": "sight",
+        "lackQuote": "blind in one eye"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten adult dragons (CR 13-17) — the legendary tier begins",
+    "free_rows": 1,
+    "free_row_templates": [
+      "uncanny-sense"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Adult Red Dragon",
+    "inline": "the red dragon",
+    "format": "2024",
+    "cr": 17,
+    "cr_str": "17",
+    "xp": 18000,
+    "challenge_rating": "17 (XP 18,000; PB +6)",
+    "type": "Dragon",
+    "size": "Huge",
+    "alignment": "Chaotic Evil",
+    "ac": 19,
+    "hp": 256,
+    "hp_formula": "19d12 + 133",
+    "pb": 6,
+    "speed": "40 ft., Fly 80 ft., Climb 40 ft.",
+    "stats": {
+      "STR": 27,
+      "DEX": 10,
+      "CON": 25,
+      "INT": 16,
+      "WIS": 13,
+      "CHA": 23
+    },
+    "saves": {
+      "STR": 8,
+      "DEX": 6,
+      "CON": 7,
+      "INT": 3,
+      "WIS": 7,
+      "CHA": 6
+    },
+    "skills": "Perception +13, Stealth +6",
+    "senses": "blindsight 60 ft., darkvision 120 ft.; Passive Perception 23",
+    "languages": "Common, Draconic",
+    "initiative_bonus": 0,
+    "initiative_score": 10,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Scar-Sight",
+          "text": "The red dragon can pinpoint the location of worked steel and open wounds within 120 feet of itself.",
+          "library": true,
+          "template": "uncanny-sense",
+          "boundKeys": [
+            "pinpoint",
+            "pinpoints"
+          ],
+          "freeRow": true,
+          "expresses": "old lance-scarred blind eye",
+          "bound": false,
+          "decoration": true
+        },
+        {
+          "name": "Legendary Resistance (3/Day)",
+          "text": "If the red dragon fails a saving throw, it can choose to succeed instead.",
+          "gate": "3/Day"
+        },
+        {
+          "name": "Sight Weakness",
+          "text": "The red dragon has Disadvantage on Wisdom (Perception) checks that rely on sight.",
+          "rules": true,
+          "flaw": true,
+          "because": "blind in one eye",
+          "clauseId": "cl_d36g34",
+          "clause": "Adult Red Dragon — blind in one eye from an old lance"
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The red dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast *Scorching Ray*."
+        },
+        {
+          "name": "Rend",
+          "text": "*Melee Attack Roll:* +14, reach 10 ft. 13 (1d10 + 8) Slashing damage plus 5 (2d4) Fire damage.",
+          "weapon": null,
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Spellcasting",
+          "rules": true,
+          "text": "The red dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20, +12 to hit with spell attacks):\n\n- **At Will:** *Command*, *Detect Magic*, *Scorching Ray*\n- **1/Day Each:** *Fireball*",
+          "print": true
+        },
+        {
+          "name": "Fire Breath (Recharge 5-6)",
+          "text": "*Dexterity Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:*  59 (17d6) Fire damage. *Success:*  Half damage.",
+          "rules": true,
+          "print": true
+        }
+      ],
+      "Legendary Actions": [
+        {
+          "name": "Legendary Action Uses: 3",
+          "rules": true,
+          "text": "Immediately after another creature's turn, the red dragon can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+        },
+        {
+          "name": "Commanding Presence",
+          "text": "The red dragon uses Spellcasting to cast *Command* (level 2 version). The red dragon can't take this action again until the start of its next turn.",
+          "print": true
+        },
+        {
+          "name": "Fiery Rays",
+          "text": "The red dragon uses Spellcasting to cast *Scorching Ray*. The red dragon can't take this action again until the start of its next turn.",
+          "print": true
+        },
+        {
+          "name": "Pounce",
+          "text": "The red dragon moves up to half its Speed, and it makes one Rend attack.",
+          "print": true
+        }
+      ]
+    },
+    "lore": "Old Scarmark was struck across the eye by a knight's lance and left for dead on the cinder slopes of a volcano; now it hoards its burned valley and remembers every scent of steel that comes into its airspace.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "twist",
+        "print_body": "Adult Red Dragon",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "code"
+      },
+      "donor": "dragon-15",
+      "archetype": "dragon",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "Adult Red Dragon — blind in one eye from an old lance",
+      "clauses": [
+        {
+          "id": "cl_d36g34",
+          "text": "Adult Red Dragon — blind in one eye from an old lance",
+          "kind": "mechanical",
+          "polarity": "lacks",
+          "takes": "sight",
+          "costs": "sight",
+          "lackQuote": "blind in one eye"
+        }
+      ],
+      "body": "dragon",
+      "cite": "composition across the ten adult dragons (CR 13-17) — the legendary tier begins",
+      "free_rows": 1,
+      "free_row_templates": [
+        "uncanny-sense"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "dragon",
+    "archetype_source": "user",
+    "immunities": "Fire",
+    "lint_findings": []
+  },
+  "monsterDescription": "blind in one eye from an old lance",
+  "selectedChallengeRating": "17",
+  "monsterName": "Adult Red Dragon",
+  "caster": false
+}

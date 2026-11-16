@@ -1,0 +1,72 @@
+[
+  {
+    "name": "",
+    "description": "a tar-pit horror that drags what it touches down into the black sludge",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "BODY: adhesive TRUE \u2014 the gate must not be a wall"
+  },
+  {
+    "name": "",
+    "description": "a venomous lizardfolk raider with a blowpipe and a quiver of darts",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "BODY: resonant-body FALSE; `coating` is one of the 8 seed declarations that were silently inert until today"
+  },
+  {
+    "name": "",
+    "description": "a glacier's heart given legs, trailing a wake of killing cold",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "SEED DECL: zone-seed now live; heated-body and noxious-aura must stay FALSE"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "CLAUSE: a LACKS twist \u2014 the handed clause must keep 'instead of regrowing'"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2024",
+    "canary": "CLAUSE: the lack must survive into the handed clause ('blind in one eye')"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "RETRY (c): no clause to aim at, so NO retry call may be spent. NB: bare Owlbear is print-exact \u2014 NOT a test of the decoration gate"
+  },
+  {
+    "name": "",
+    "description": "a bronze shrine-warden that burns whoever lays a hand on it",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "FAMILY: a punisher/contact-damage row must bar a second of that family (own-turn-punisher)"
+  },
+  {
+    "name": "",
+    "description": "a will-o-wisp, a cold lantern-flame that leads travellers into the mire",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FAMILY: marking-light TRUE, and no second light-mark row beside it"
+  },
+  {
+    "name": "",
+    "description": "a gargantuan siege beast that flattens a shield wall underfoot",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SIZE: trample is offered on a Gargantuan body (requires_size Large+)"
+  },
+  {
+    "name": "",
+    "description": "a courtly duelist in silk who turns every thrust back on its owner",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "HOST: riposte needs a melee row; a duelist has one"
+  }
+]

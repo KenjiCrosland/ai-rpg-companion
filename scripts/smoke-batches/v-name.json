@@ -1,0 +1,26 @@
+[
+  {
+    "canary": "fix 4 leak #33 — typed40: the Ankheg's own Bite says \"(with Advantage if the target is Grappled by the ankheg)\". That parenthetical (`pr.note`) was the one print-text paste that never ran `asInline`, so Thornback shipped print's noun. The audit CAUGHT it and the print stamp waved it through as published text.",
+    "name": "Thornback",
+    "description": "an ankheg but legendary, boss fight for level 5",
+    "cr": "5",
+    "rules": "2024",
+    "green": "no row names \"the ankheg\"; if the Advantage parenthetical rides along it names Thornback"
+  },
+  {
+    "canary": "fix 4 leak #31 — typed40: \"pulled up to 10 feet straight toward Troll\". `personalName` reads \"Rimebound Troll\" as an epithet plus a GIVEN name (the Ashvowed-Brannor rule) and answers \"Troll\", a kind. The SEAT call was handed that guess as the creature's name and wrote it into a row; the repair the audit ordered was handed it again and wrote it back.",
+    "name": "Rimebound Troll",
+    "description": "a troll caked in black ice that hauls prey into the drifts",
+    "cr": "6",
+    "rules": "2024",
+    "green": "no row calls the creature \"Troll\"; rows say \"the troll\""
+  },
+  {
+    "canary": "fix 4 leak #05 — typed40: Lord Vexmoor shipped \"The mage casts Misty Step\". The mage kit's rows are lifted from the Mage while the class body is the Archmage, so substituting the BODY's noun alone could never catch it. The kit now hands over its own declared source.",
+    "name": "Lord Vexmoor",
+    "description": "an archmage in a black doublet who duels with a thin blade and a spellbook",
+    "cr": "12",
+    "rules": "2024",
+    "green": "no row says \"the mage\" or \"the archmage\"; rows name Vexmoor"
+  }
+]

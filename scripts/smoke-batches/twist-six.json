@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "SPINE 8 · print head + a negating addition"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "carved as a weeping saint",
+    "cr": "10",
+    "rules": "2024",
+    "canary": "SPINE 10 · print head + flavour only: numbers must stay print's"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "SPINE 13 · print head + addition, legendary tier 2014"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "SPINE 17 · print head + a lack, legendary 2014"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "USE CASE · OOZE body: the type's own immunities and conditions"
+  }
+]

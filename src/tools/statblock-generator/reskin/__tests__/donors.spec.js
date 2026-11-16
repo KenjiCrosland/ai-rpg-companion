@@ -124,9 +124,14 @@ describe('authored donors obey the card', () => {
           // the family signature: defenses UNDER the card, paid by tech
           // (Incorporeal, disguise, attach) — except the trap line's
           // armored stillness (the Roper runs AC +4 at near-card HP)
+          // THE LAW, NOT THE NUMBER (owner's ruling, 2026-10-18): this read
+          // hp_scale <= 0.8, the corpus sweep's figure. At CR 5, 0.8 of the card
+          // is 71 HP — under the thinnest block print ever made at CR 5 (75
+          // effective, n=52), so the number forced the lurker under print. The
+          // law is "defenses UNDER the card"; lurker-5 now sits at 0.9 (78 HP).
           if (d.style !== 'trap') {
             expect(d.ac_offset).toBeLessThanOrEqual(-1);
-            expect(d.hp_scale).toBeLessThanOrEqual(0.8);
+            expect(d.hp_scale).toBeLessThan(1);
           }
           // every lurker hides: Stealth on the sheet
           expect(d.skills).toMatch(/Stealth \+\d+/);
@@ -382,10 +387,10 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // the caster family (corpus sweep 2026-09-02): one chassis pool for
     // both the Artillery and Controller menu entries (style PRIORS)
     const casters = D.filter((d) => (d.archetypes ?? []).includes('caster'));
-    expect(casters.length).toBe(8);
+    expect(casters.length).toBe(9);   // +caster-15, the CR 13-16 legendary gap (2026-10-29)
     expect(pdm(6, null, 'caster').id).toBe('caster-6');
     expect(pdm(3, null, 'caster').id).toBe('caster-6'); // below the floor -> lowest seat
-    expect(pdm(15, null, 'caster').id).toBe('caster-12');
+    expect(pdm(15, null, 'caster').id).toBe('caster-15');   // an exact rung exists from 2026-10-29
     expect(pdm(24, null, 'caster').id).toBe('caster-21'); // the Lich seat — a CITED legendary caster boss
     expect(pdm(5, 'warpriest', 'caster').id).toBe('caster-2-warpriest');
     expect(pdm(21, 'warpriest', 'caster').id).toBe('caster-21-warpriest');
@@ -396,7 +401,7 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // 'phantom' and 'trap' style lines, invented 17 seats (no print
     // lurker above CR 8 — the defender-like ceiling, brute playbook)
     const lurkers = D.filter((d) => (d.archetypes ?? []).includes('lurker'));
-    expect(lurkers.length).toBe(11);
+    expect(lurkers.length).toBe(12);   // +lurker-13, the CR 13-16 legendary gap (2026-10-29)
     expect(pdm(2, null, 'lurker').id).toBe('lurker-2');
     expect(pdm(5, null, 'lurker').id).toBe('lurker-5'); // the mid seat (first smoke: lurker-2 was serving CR 3-6)
     expect(pdm(12, null, 'lurker').id).toBe('lurker-8');
@@ -412,7 +417,7 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // the defender family (corpus sweep 2026-09-08): plain = soldier
     // (Knight/Guard Captain), 'warden' (Shield Guardian), invented 17s
     const defenders = D.filter((d) => (d.archetypes ?? []).includes('defender'));
-    expect(defenders.length).toBe(7);
+    expect(defenders.length).toBe(11); // + the three leader rungs (2026-09-28); +defender-13, the CR 10-16 gap (2026-10-29)
     expect(pdm(1, null, 'defender').id).toBe('defender-1');
     expect(pdm(4, null, 'defender').id).toBe('defender-3');
     expect(pdm(9, null, 'defender').id).toBe('defender-5');
@@ -488,11 +493,36 @@ describe('lurker scaling machinery (2026-09-04): ambush grammar survives the sca
     expect(limb.text).toMatch(/Attack Roll:\* \+10/); // card atk at 13 (4+6), not the authored +6
   });
 
+  // THE LAW, NOT THE NUMBER (2026-10-15): this hardcoded 0.7, so raising
+  // lurker-5-phantom to clear print's CR 5 floor (the Wraith at 67) broke a pin
+  // about machinery. What it is actually asserting is that hp_scale is applied
+  // ONCE and flat — not multiplied by the flight tax — so it now reads the
+  // donor's own declared scale.
   test('the phantom deep-scale: hp_scale IS the total, the flight tax never double-charges', () => {
-    const s = sdl(pdl(5, 'phantom', 'lurker'), 5, { mechanics: [] });
-    expect(s.hp).toBe(Math.round(cbl(5, {}).hp * 0.7)); // 0.7x flat — not 0.7 x 0.9
+    const donor = pdl(5, 'phantom', 'lurker');
+    const s = sdl(donor, 5, { mechanics: [] });
+    expect(s.hp).toBe(Math.round(cbl(5, {}).hp * donor.hp_scale)); // flat — not hp_scale x 0.9
+    expect(donor.hp_scale).toBeLessThan(0.9); // and it IS a discount, not a no-op
     // and the winged skirmisher path is untouched (its tax still charges once)
     const w = sdl(pdl(8, 'winged', 'skirmisher'), 8, { mechanics: [] });
     expect(w.hp).toBe(Math.round(cbl(8, {}).hp * 0.9));
+  });
+});
+
+describe('the legendary tier picks a legendary rung (high-cr batch 2026-10-02)', () => {
+  const { pickDonor: pd } = require('../scale.mjs');
+  test('from CR 17 the nearest legendary rung wins, a rung above the CR included; below 17 the highest rung at or under the CR', () => {
+    expect(pd(17, 'mounted', 'skirmisher').id).toBe('skirmisher-18-mounted'); // the 13 rung carries no kit
+    expect(pd(16, 'mounted', 'skirmisher').id).toBe('skirmisher-13-mounted');
+    // caster-15 exists from 2026-10-29, so at CR 17 the NEAREST legendary rung is
+    // two CRs down rather than four up — which is the rule, and less stretching
+    expect(pd(17, null, 'caster').id).toBe('caster-15');
+    expect(pd(20, null, 'caster').id).toBe('caster-21');
+    expect(pd(12, null, 'caster').id).toBe('caster-12');
+    expect(pd(17, null, 'brute').id).toBe('brute-17');
+    expect(pd(19, null, 'skirmisher').id).toBe('skirmisher-18');
+    for (const [arch, style] of [['skirmisher', 'mounted'], ['skirmisher', 'skulker'], ['skirmisher', 'winged'], ['caster', null], ['caster', 'warpriest'], ['lurker', 'phantom'], ['defender', 'leader'], ['brute', 'charger']]) {
+      expect([`${arch}-${style} @ 17`, !!pd(17, style, arch).legendary]).toEqual([`${arch}-${style} @ 17`, true]);
+    }
   });
 });

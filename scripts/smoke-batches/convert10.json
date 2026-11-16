@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — 2024 only, no conversion runs at all." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2014",
+    "canary": "CANARY — a 2014 sheet whose rows impose nothing; the fallback must never trigger." },
+  { "name": "Goblin Boss", "description": "", "cr": "1", "rules": "2014", "mode": "exact",
+    "canary": "CANARY — print-exact into 2014; its rows must read as 2014 idiom, not 2024." },
+
+  { "name": "", "description": "a barrow-lich whose touch locks the living in place", "cr": "14", "rules": "2014",
+    "canary": "FEATURE — the Ossarch case: Paralyzed into 2014. Must carry a bound." },
+  { "name": "", "description": "a gorgon-priest whose gaze turns the faithless to stone", "cr": "12", "rules": "2014",
+    "canary": "FEATURE — Petrified into 2014, the most dangerous unbounded condition." },
+  { "name": "", "description": "a dream-eater that holds sleepers rapt and feeds", "cr": "10", "rules": "2014",
+    "canary": "FEATURE — Charmed or Incapacitated into 2014." },
+  { "name": "", "description": "a bell-wraith whose toll deafens and unnerves the living", "cr": "9", "rules": "2014",
+    "canary": "FEATURE — two bounded conditions in one sheet." },
+  { "name": "", "description": "a chapel-lamp whose glare blinds those who look at it", "cr": "13", "rules": "2014",
+    "canary": "FEATURE — Blinded into 2014; sensory-strike now declares its duration." },
+  { "name": "", "description": "a mire-thing that swallows what it catches", "cr": "11", "rules": "2014",
+    "canary": "FEATURE — containment into 2014; its bound is a state, which must survive the conversion." },
+  { "name": "", "description": "a frost-wight whose claws stun with cold", "cr": "12", "rules": "2014",
+    "canary": "FEATURE — Stunned into 2014, bounded in the source by prose rather than a field." }
+]

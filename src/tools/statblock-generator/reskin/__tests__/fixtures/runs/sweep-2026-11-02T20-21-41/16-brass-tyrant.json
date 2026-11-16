@@ -1,0 +1,175 @@
+{
+  "name": "Brass Tyrant",
+  "inline": "the brass tyrant",
+  "format": "2024",
+  "cr": 17,
+  "cr_str": "17",
+  "xp": 18000,
+  "challenge_rating": "17 (XP 18,000; PB +6)",
+  "type": "Construct",
+  "size": "Huge",
+  "alignment": "Lawful Neutral",
+  "ac": 19,
+  "hp": 230,
+  "hp_formula": "20d12 + 100",
+  "pb": 6,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 8,
+    "CON": 20,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 12,
+    "DEX": -1,
+    "CON": 11,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +12, Perception +6",
+  "senses": "darkvision 60 ft.; Passive Perception 16",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Searing Brass",
+        "text": "A creature that touches the brass tyrant or hits it with a melee attack while within 5 feet of it takes 10 (3d6) Fire damage.",
+        "library": true,
+        "template": "heated-body",
+        "boundKeys": [
+          "burn",
+          "brass",
+          "sear",
+          "molten",
+          "furnace"
+        ],
+        "accepted_closest": true,
+        "expresses": "burning brass body",
+        "bound": true
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the brass tyrant fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The brass tyrant can't shape-shift."
+      },
+      {
+        "name": "Siege Monster",
+        "rules": true,
+        "text": "The brass tyrant deals double damage to objects and structures."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The brass tyrant makes two Slam attacks. It can replace one attack with a use of Slag Pour."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +12, reach 10 ft. 20 (4d6 + 6) Bludgeoning damage plus 14 (4d6) Fire damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Molten Spray (Recharge 5-6)",
+        "text": "*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 72 (16d8) Fire damage. *Success:* Half damage only.",
+        "gate": "Recharge 5-6"
+      },
+      {
+        "name": "Slag Pour",
+        "text": "*Dexterity Saving Throw*: DC 19, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 35 (10d6) Fire damage, and the target has the Prone condition.",
+        "authored": true,
+        "clause": "The brass tyrant wades through a forge-gate or a rebel barricade, and the molten ruin it wrenches loose sluices ahead of",
+        "imposes": "Prone",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "burning brass body",
+        "boundKeys": [],
+        "expressedQuote": "the target has the Prone condition"
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the brass tyrant can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Crushing Advance",
+        "text": "The brass tyrant moves up to half its Speed without provoking Opportunity Attacks, and it makes one Slam attack."
+      },
+      {
+        "name": "Gate Breaker",
+        "text": "The brass tyrant moves up to half its Speed without provoking Opportunity Attacks. During this movement, it can move through Large or smaller objects and structures, destroying them."
+      },
+      {
+        "name": "Molten Quake",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 19, each creature within 10 feet of the brass tyrant. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "Poured in the first furnace of a city that forges weapons for a hundred wars, the Brass Tyrant was made to rule that city and has never once been cooled.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a tyrant of burning brass who rules a city of forges",
+    "clauses": [
+      {
+        "id": "cl_165yc82",
+        "text": "a tyrant of burning brass",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_cjxi88",
+        "text": "rules a city of forges",
+        "kind": "descriptive"
+      }
+    ],
+    "cite": "composition after Tarrasque (CR 30) — the juggernaut shapes under a legendary menu",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "resistances": "Fire",
+  "lint_findings": [],
+  "monsterDescription": "a tyrant of burning brass who rules a city of forges",
+  "selectedChallengeRating": "17",
+  "monsterName": "Brass Tyrant",
+  "caster": false
+}

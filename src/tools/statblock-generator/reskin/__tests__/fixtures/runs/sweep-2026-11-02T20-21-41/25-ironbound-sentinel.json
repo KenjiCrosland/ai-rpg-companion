@@ -1,0 +1,255 @@
+{
+  "name": "Ironbound Sentinel",
+  "inline": "the sentinel",
+  "type_and_alignment": "Huge construct, unaligned",
+  "armor_class": "20 (natural armor)",
+  "hit_points": "171 (18d12 + 54)",
+  "speed": "20 ft.",
+  "attributes": "STR 18 (+4), DEX 8 (-1), CON 17 (+3), INT 6 (-2), WIS 10 (+0), CHA 4 (-3)",
+  "saving_throws": "STR +8, CON +7",
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft., passive Perception 14",
+  "languages": "understands the languages of its creator but can't speak",
+  "challenge_rating": "11 (7,200 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Immutable Form",
+      "description": "The sentinel can't shape-shift."
+    },
+    {
+      "name": "Siege Monster",
+      "description": "The sentinel deals double damage to objects and structures."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The sentinel makes two Slam attacks. It can replace one attack with a use of Shoulder the line."
+    },
+    {
+      "name": "Slam",
+      "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 25 (6d6 + 4) bludgeoning damage."
+    },
+    {
+      "name": "Trampling Press (Recharge 5-6)",
+      "description": "Each creature in a 30-foot cone must make a DC 16 Constitution saving throw, taking 66 (12d10) bludgeoning damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also knocked prone.",
+      "imposes": "Prone"
+    },
+    {
+      "name": "Shoulder the Line",
+      "description": "Each creature in a 30-foot-long, 5-foot-wide line must succeed on a DC 16 Dexterity saving throw or take 24 (7d6) bludgeoning damage, be pushed up to 10 feet straight away from the sentinel, and be knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "charmed, exhaustion, frightened, paralyzed, petrified, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+    "clauses": [
+      {
+        "id": "cl_6slhx",
+        "text": "a sentinel of black iron",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_10y3ng",
+        "text": "AC 20",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1cgcr",
+        "text": "Huge",
+        "kind": "header"
+      },
+      {
+        "id": "cl_dqavef",
+        "text": "speed 20 feet",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library",
+    "declared": {
+      "ac": 20
+    }
+  },
+  "other_edition": {
+    "name": "Ironbound Sentinel",
+    "inline": "the sentinel",
+    "format": "2024",
+    "cr": 11,
+    "cr_str": "11",
+    "xp": 7200,
+    "challenge_rating": "11 (XP 7,200; PB +4)",
+    "type": "Construct",
+    "size": "Huge",
+    "alignment": "Unaligned",
+    "ac": 20,
+    "hp": 171,
+    "hp_formula": "18d12 + 54",
+    "pb": 4,
+    "speed": "20 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 8,
+      "CON": 17,
+      "INT": 6,
+      "WIS": 10,
+      "CHA": 4
+    },
+    "saves": {
+      "STR": 8,
+      "DEX": -1,
+      "CON": 7,
+      "INT": -2,
+      "WIS": 0,
+      "CHA": -3
+    },
+    "skills": "Athletics +8, Perception +4",
+    "senses": "darkvision 60 ft.; Passive Perception 14",
+    "languages": "Understands the languages of its creator but can't speak",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Immutable Form",
+          "rules": true,
+          "text": "The sentinel can't shape-shift."
+        },
+        {
+          "name": "Siege Monster",
+          "rules": true,
+          "text": "The sentinel deals double damage to objects and structures."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The sentinel makes two Slam attacks. It can replace one attack with a use of Shoulder the Line."
+        },
+        {
+          "name": "Slam",
+          "text": "*Melee Attack Roll:* +8, reach 10 ft. 25 (6d6 + 4) Bludgeoning damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Trampling Press (Recharge 5-6)",
+          "text": "*Constitution Saving Throw*: DC 16, each creature in a 30-foot Cone. *Failure:* 66 (12d10) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage only.",
+          "gate": "Recharge 5-6",
+          "imposes": "Prone"
+        },
+        {
+          "name": "Shoulder the Line",
+          "text": "*Dexterity Saving Throw*: DC 16, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 24 (7d6) Bludgeoning damage, and the target is pushed up to 10 feet straight away from the sentinel, and the target has the Prone condition.",
+          "authored": true,
+          "clause": "The sentinel does not steer around its enemies — it puts its shoulder down and walks its line. It moves up to its Speed ",
+          "imposes": "Prone",
+          "imposesMovement": true,
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "relentless straight-line crushing advance",
+          "boundKeys": [],
+          "expressedQuote": "the target is pushed up to 10 feet straight away from the sentinel, and the target has the Prone condition"
+        }
+      ]
+    },
+    "lore": "Forge-cults poured these silent colossi to hold a border that no soldier could, and the sentinel still walks its charge, though everyone it was sworn to guard is centuries dead.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-9-juggernaut",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+      "clauses": [
+        {
+          "id": "cl_6slhx",
+          "text": "a sentinel of black iron",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_10y3ng",
+          "text": "AC 20",
+          "kind": "header"
+        },
+        {
+          "id": "cl_1cgcr",
+          "text": "Huge",
+          "kind": "header"
+        },
+        {
+          "id": "cl_dqavef",
+          "text": "speed 20 feet",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the call named no template for the pick",
+      "signature": "library",
+      "declared": {
+        "ac": 20
+      }
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+  "selectedChallengeRating": "11",
+  "monsterName": "Ironbound Sentinel",
+  "caster": false
+}

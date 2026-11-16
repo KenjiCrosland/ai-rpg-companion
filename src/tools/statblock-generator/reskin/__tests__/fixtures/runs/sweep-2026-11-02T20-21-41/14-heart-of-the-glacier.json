@@ -1,0 +1,251 @@
+{
+  "name": "Heart of the Glacier",
+  "inline": "the heart",
+  "type_and_alignment": "Huge elemental, neutral",
+  "armor_class": "16 (natural armor)",
+  "hit_points": "210 (20d12 + 80)",
+  "speed": "30 ft.",
+  "attributes": "STR 18 (+4), DEX 8 (-1), CON 19 (+4), INT 6 (-2), WIS 10 (+0), CHA 4 (-3)",
+  "saving_throws": "STR +9, CON +9",
+  "skills": "Athletics +9, Perception +5",
+  "senses": "darkvision 60 ft., passive Perception 15",
+  "languages": "None",
+  "challenge_rating": "15 (13,000 XP)",
+  "proficiency_bonus": "+5",
+  "abilities": [
+    {
+      "name": "Aberrant Ground",
+      "description": "The ground in a 10-foot radius originating from the heart is Difficult Terrain."
+    },
+    {
+      "name": "Cold Absorption",
+      "description": "Whenever the heart is subjected to cold damage, it takes no damage and instead regains a number of hit points equal to the cold damage dealt."
+    },
+    {
+      "name": "Siege Monster",
+      "description": "The heart deals double damage to objects and structures."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The heart makes two Slam attacks. It can replace one attack with a use of Toppling Surge."
+    },
+    {
+      "name": "Slam",
+      "description": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 22 (4d8 + 4) bludgeoning damage plus 13 (3d8) cold damage."
+    },
+    {
+      "name": "Killing Wake (Recharge 5-6)",
+      "description": "Each creature in a 30-foot cone must make a DC 17 Constitution saving throw, taking 71 (13d10) cold damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also deafened until the end of its next turn.",
+      "imposes": "Deafened"
+    },
+    {
+      "name": "Toppling Surge",
+      "description": "Each creature in a 30-foot cone must succeed on a DC 17 Dexterity saving throw or be knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "damage_immunities": "cold, poison",
+  "condition_immunities": "exhaustion, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a glacier's heart given legs, trailing a wake of killing cold",
+    "clauses": [
+      {
+        "id": "cl_1cv4tc6",
+        "text": "a glacier's heart given legs",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_18mzopc",
+        "text": "trailing a wake of killing cold",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "zone",
+        "askMechanicWhy": "trailing a wake"
+      }
+    ],
+    "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Heart of the Glacier",
+    "inline": "the heart",
+    "format": "2024",
+    "cr": 15,
+    "cr_str": "15",
+    "xp": 13000,
+    "challenge_rating": "15 (XP 13,000; PB +5)",
+    "type": "Elemental",
+    "size": "Huge",
+    "alignment": "Neutral",
+    "ac": 16,
+    "hp": 210,
+    "hp_formula": "20d12 + 80",
+    "pb": 5,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 8,
+      "CON": 19,
+      "INT": 6,
+      "WIS": 10,
+      "CHA": 4
+    },
+    "saves": {
+      "STR": 9,
+      "DEX": -1,
+      "CON": 9,
+      "INT": -2,
+      "WIS": 0,
+      "CHA": -3
+    },
+    "skills": "Athletics +9, Perception +5",
+    "senses": "darkvision 60 ft.; Passive Perception 15",
+    "languages": "None",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Aberrant Ground",
+          "text": "The ground in a 10-foot Emanation originating from the heart is Difficult Terrain.",
+          "library": true,
+          "template": "aberrant-ground",
+          "boundKeys": [
+            "wake"
+          ],
+          "area": {
+            "shape": "Emanation",
+            "size": 10
+          },
+          "expresses": "a trailing wake of killing cold",
+          "bound": true,
+          "clause": "trailing a wake of killing cold",
+          "clauseId": "cl_18mzopc"
+        },
+        {
+          "name": "Cold Absorption",
+          "rules": true,
+          "text": "Whenever the heart is subjected to Cold damage, it takes no damage and instead regains a number of Hit Points equal to the Cold damage dealt."
+        },
+        {
+          "name": "Siege Monster",
+          "rules": true,
+          "text": "The heart deals double damage to objects and structures."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The heart makes two Slam attacks. It can replace one attack with a use of Toppling Surge."
+        },
+        {
+          "name": "Slam",
+          "text": "*Melee Attack Roll:* +9, reach 10 ft. 22 (4d8 + 4) Bludgeoning damage plus 13 (3d8) Cold damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Killing Wake (Recharge 5-6)",
+          "text": "*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 71 (13d10) Cold damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.",
+          "gate": "Recharge 5-6",
+          "imposes": "Deafened"
+        },
+        {
+          "name": "Toppling Surge",
+          "text": "*Dexterity Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Prone condition.",
+          "authored": true,
+          "clause": "trailing a wake of killing cold",
+          "imposes": "Prone",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "a trailing wake of killing cold",
+          "widened": true,
+          "boundKeys": [],
+          "decoration": true,
+          "clauseId": "cl_18mzopc"
+        }
+      ]
+    },
+    "lore": "A glacier that outlived its ice grew a mineral heart inside itself, and when the last of the ice calved away the heart walked out still beating its killing frost across the land.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-9-juggernaut",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a glacier's heart given legs, trailing a wake of killing cold",
+      "clauses": [
+        {
+          "id": "cl_1cv4tc6",
+          "text": "a glacier's heart given legs",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_18mzopc",
+          "text": "trailing a wake of killing cold",
+          "kind": "mechanical",
+          "askShape": "save_area",
+          "askMechanic": "zone",
+          "askMechanicWhy": "trailing a wake"
+        }
+      ],
+      "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "immunities": "Cold, Poison; Exhaustion, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a glacier's heart given legs, trailing a wake of killing cold",
+  "selectedChallengeRating": "15",
+  "monsterName": "Heart of the Glacier",
+  "caster": false
+}

@@ -1,0 +1,145 @@
+{
+  "name": "Stone Golem",
+  "inline": "the golem",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 18,
+  "hp": 220,
+  "hp_formula": "21d10 + 105",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 9,
+    "CON": 20,
+    "INT": 3,
+    "WIS": 11,
+    "CHA": 1
+  },
+  "saves": {
+    "STR": 10,
+    "DEX": -1,
+    "CON": 9,
+    "INT": -4,
+    "WIS": 0,
+    "CHA": -5
+  },
+  "skills": "Athletics +10, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands Common plus two other languages but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The golem makes two attacks, using Slam or Force Bolt in any combination."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Bludgeoning damage plus 9 (2d8) Force damage.",
+        "weapon": null,
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Force Bolt",
+        "text": "*Ranged Attack Roll:* +9, range 120 ft. 22 (4d10) Force damage.",
+        "weapon": "crossbow",
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Trample (1/Day)",
+        "gate": "1/Day",
+        "text": "The golem moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Dexterity Saving Throw*: DC 17. *Failure:* 35 (10d6) Necrotic damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.",
+        "library": true,
+        "template": "trample",
+        "imposes": "Prone",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Immutable Form",
+        "text": "The golem can't shape-shift.",
+        "print": true
+      },
+      {
+        "name": "Magic Resistance",
+        "text": "The golem has Advantage on saving throws against spells and other magical effects.",
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Slow (Recharge 5-6)",
+        "text": "The golem casts the *Slow* spell, requiring no spell components and using Constitution as the spellcasting ability (spell save DC 17).",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "A grief-mad sculptor carved his dead daughter's likeness in stone and begged the gods to make it weep; something answered, and the statue now walks the roads of the parish, mourning at every grave it finds and crushing anything that tries to stop it.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Stone Golem",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Stone Golem — carved as a weeping saint",
+    "clauses": [
+      {
+        "id": "cl_2cd3hd",
+        "text": "Stone Golem — carved as a weeping saint",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 1,
+    "free_row_templates": [
+      "trample"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison, Psychic; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [
+    "type-damage-affinity: Actions/Trample (1/Day): Necrotic damage on Construct — no official Construct deals Necrotic; re-theme the damage to the creature's substance (or the type itself is wrong)"
+  ],
+  "monsterDescription": "carved as a weeping saint",
+  "selectedChallengeRating": "10",
+  "monsterName": "Stone Golem",
+  "caster": false
+}

@@ -1,0 +1,240 @@
+{
+  "name": "Brother Halric",
+  "inline": "Halric",
+  "type_and_alignment": "Medium humanoid, neutral",
+  "armor_class": "13 (chain shirt)",
+  "hit_points": "38 (7d8 + 7)",
+  "speed": "30 ft.",
+  "attributes": "STR 16 (+3), DEX 10 (+0), CON 12 (+1), INT 13 (+1), WIS 16 (+3), CHA 13 (+1)",
+  "saving_throws": "CON +3, WIS +5",
+  "skills": "Medicine +7, Perception +5, Religion +5",
+  "senses": "passive Perception 15",
+  "languages": "Common plus one other language",
+  "challenge_rating": "3 (700 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Divine Aid (3/Day) (Bonus Action)",
+      "description": "Halric casts *Bless*, *Dispel Magic*, *Healing Word*, or *Lesser Restoration*, using the same spellcasting ability as Spellcasting."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "Halric makes two attacks: one with Mace and one with Radiant Flame. It can replace one attack with a use of Scalding Chain."
+    },
+    {
+      "name": "Mace",
+      "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) bludgeoning damage plus 5 (2d4) radiant damage."
+    },
+    {
+      "name": "Radiant Flame",
+      "description": "Ranged Weapon Attack: +5 to hit, range 60 ft., one target. Hit: 11 (2d10) radiant damage."
+    },
+    {
+      "name": "Scalding Chain",
+      "description": "Each creature in a 30-foot-long, 5-foot-wide line must succeed on a DC 13 Constitution saving throw or be blinded until the end of its next turn.",
+      "imposes": "Blinded"
+    },
+    {
+      "name": "Spellcasting",
+      "description": "Halric casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13): - **At will:** *Light*, *Thaumaturgy*\n**1/day each:** *Spirit Guardians*"
+    }
+  ],
+  "format": "2014",
+  "archetype": "defender",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Priest",
+      "relation": null,
+      "class": "cleric",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-3",
+    "archetype": "defender",
+    "class_kit": {
+      "key": "cleric",
+      "clause": "Brother",
+      "landed": 0,
+      "yielded": 0,
+      "stood_down": "already_answered"
+    },
+    "holds": true,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "Brother Halric",
+    "clauses": [
+      {
+        "id": "cl_pdo4e1",
+        "text": "Brother Halric",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Knight (CR 3) — AC 18 over 52 HP, the armor-over-everything trade",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Brother Halric",
+    "inline": "Halric",
+    "format": "2024",
+    "cr": 3,
+    "cr_str": "3",
+    "xp": 700,
+    "challenge_rating": "3 (XP 700; PB +2)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral",
+    "ac": 13,
+    "hp": 38,
+    "ac_gear": "chain shirt",
+    "hp_formula": "7d8 + 7",
+    "pb": 2,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 16,
+      "DEX": 10,
+      "CON": 12,
+      "INT": 13,
+      "WIS": 16,
+      "CHA": 13
+    },
+    "saves": {
+      "STR": 3,
+      "DEX": 0,
+      "CON": 3,
+      "INT": 1,
+      "WIS": 5,
+      "CHA": 1
+    },
+    "skills": "Medicine +7, Perception +5, Religion +5",
+    "senses": "Passive Perception 15",
+    "languages": "Common plus one other language",
+    "initiative_bonus": 0,
+    "initiative_score": 10,
+    "sections": {
+      "Traits": [],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "Halric makes two attacks, using Mace or Radiant Flame in any combination. It can replace one attack with a use of Scalding Chain."
+        },
+        {
+          "name": "Mace",
+          "text": "*Melee Attack Roll:* +5, reach 5 ft. 6 (1d6 + 3) Bludgeoning damage plus 5 (2d4) Radiant damage.",
+          "weapon": "mace",
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Radiant Flame",
+          "text": "*Ranged Attack Roll:* +5, range 60 ft. 11 (2d10) Radiant damage.",
+          "weapon": null,
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Scalding Chain",
+          "text": "*Constitution Saving Throw*: DC 13, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* The target has the Blinded condition until the end of its next turn.",
+          "authored": true,
+          "clause": "Halric's chain lashes out and the censer slams a foe, trailing a line of scalding smoke; each creature of his choosing a",
+          "imposes": "Blinded",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "swinging censer trailing scalding smoke",
+          "boundKeys": [],
+          "decoration": true,
+          "nameClaimRevoked": [
+            "scalding"
+          ]
+        },
+        {
+          "name": "Spellcasting",
+          "text": "Halric casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Light*, *Thaumaturgy*\n- **1/Day Each:** *Spirit Guardians*",
+          "rules": true,
+          "print": true
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Divine Aid (3/Day)",
+          "text": "Halric casts *Bless*, *Dispel Magic*, *Healing Word*, or *Lesser Restoration*, using the same spellcasting ability as Spellcasting.",
+          "rules": true,
+          "print": true
+        }
+      ]
+    },
+    "lore": "A village priest who died barricaded in his own chapel during the plague, Halric rose again still holding the burial rite, gathering the abandoned dead into a congregation he will not be parted from.",
+    "inline_kind": "person",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "class_npc",
+        "print_body": "Priest",
+        "relation": null,
+        "class": "cleric",
+        "species": null,
+        "by": "call"
+      },
+      "donor": "defender-3",
+      "archetype": "defender",
+      "class_kit": {
+        "key": "cleric",
+        "clause": "Brother",
+        "landed": 0,
+        "yielded": 0,
+        "stood_down": "already_answered"
+      },
+      "holds": true,
+      "creatureOnly": true,
+      "unplaced": [],
+      "userConcept": "Brother Halric",
+      "clauses": [
+        {
+          "id": "cl_pdo4e1",
+          "text": "Brother Halric",
+          "kind": "descriptive",
+          "head": true
+        }
+      ],
+      "cite": "composition after Knight (CR 3) — AC 18 over 52 HP, the armor-over-everything trade",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the call named no template for the pick",
+      "signature": "library"
+    },
+    "archetype": "defender",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "",
+  "selectedChallengeRating": "3",
+  "monsterName": "Brother Halric",
+  "caster": false
+}

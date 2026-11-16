@@ -1,0 +1,72 @@
+[
+ {
+  "name": "Hydra",
+  "description": "whose stumps smoke instead of regrowing",
+  "cr": "8",
+  "rules": "2014",
+  "canary": "SPINE 8 \u00b7 print head + a negating addition"
+ },
+ {
+  "name": "Stone Golem",
+  "description": "carved as a weeping saint",
+  "cr": "10",
+  "rules": "2024",
+  "canary": "SPINE 10 \u00b7 print head + flavour only: numbers must stay print's"
+ },
+ {
+  "name": "Vampire",
+  "description": "who keeps a garden of thorns",
+  "cr": "13",
+  "rules": "2014",
+  "canary": "SPINE 13 \u00b7 print head + addition, legendary tier 2014"
+ },
+ {
+  "name": "",
+  "description": "an archlich enthroned on a sun of bone",
+  "cr": "20",
+  "rules": "2014",
+  "canary": "SPINE 20 \u00b7 homebrew one-liner, 2014 legendary"
+ },
+ {
+  "name": "Adult Red Dragon",
+  "description": "blind in one eye from an old lance",
+  "cr": "17",
+  "rules": "2014",
+  "canary": "SPINE 17 \u00b7 print head + a lack, legendary 2014"
+ },
+ {
+  "name": "Dire Wolf",
+  "description": "with a frost-rimed hide",
+  "cr": "1",
+  "rules": "2024",
+  "canary": "SPINE 1 \u00b7 print head + addition: print's body, the GM's frost"
+ },
+ {
+  "name": "",
+  "description": "a skeleton with a greatsword",
+  "cr": "6",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 print name + addition ABOVE print's CR: the borrow re-scales and the weapon stands"
+ },
+ {
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "canary": "USE CASE \u00b7 a person's Name alone, no print match: the library stands in"
+ },
+ {
+  "name": "",
+  "description": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 paragraph naming parts: the parts become attack rows"
+ },
+ {
+  "name": "",
+  "description": "a marsh witch who curses trespassers, cr 7",
+  "cr": "auto",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 the CR is in the words, not the field"
+ }
+]

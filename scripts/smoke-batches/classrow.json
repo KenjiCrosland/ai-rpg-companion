@@ -1,0 +1,45 @@
+[
+  {
+    "canary": "ITEM 10 - goblin wizard: a goblin (Nimble Escape) AND a wizard (Spellcasting at CR 3)",
+    "name": "",
+    "description": "goblin wizard",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "canary": "ITEM 10 roll 2",
+    "name": "",
+    "description": "goblin wizard",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "canary": "CONTROL - cleric on the Priest (its own class body): Spellcasting already there, unchanged",
+    "name": "Sister Maudra",
+    "description": "cleric of the drowned god",
+    "cr": "7",
+    "rules": "2014",
+    "role": "controller"
+  },
+  {
+    "canary": "CONTROL - mage on the Mage: unchanged",
+    "name": "Grizzelda",
+    "description": "swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curses, can turn invisible. has a cauldron that she can summon things from 1/day",
+    "cr": "5",
+    "rules": "2014"
+  },
+  {
+    "canary": "CONTROL - mage on the Archmage: unchanged",
+    "name": "Lord Vexmoor",
+    "description": "necromancer BBEG, raises the party's fallen allies",
+    "cr": "12",
+    "rules": "2024"
+  },
+  {
+    "canary": "CONTROL - item 5 still holds: twist on the Ogre",
+    "name": "Krug",
+    "description": "ogre",
+    "cr": "2",
+    "rules": "2014"
+  }
+]

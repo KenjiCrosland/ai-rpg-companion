@@ -1,0 +1,9 @@
+[
+  {
+    "name": "",
+    "description": "a quarry-pit thing of living scree that buries what it catches",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "SPINE 5 \u00b7 homebrew one-liner"
+  }
+]

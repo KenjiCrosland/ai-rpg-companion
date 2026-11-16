@@ -1,0 +1,82 @@
+[
+ {
+  "canary": "FLOOR — exact Goblin Boss: print's own HP 21 stands",
+  "description": "goblin boss",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR — the kobold receipt (a sheet far above a tiny body): HP stays print's 7 at CR 1/8",
+  "name": "",
+  "description": "a kobold",
+  "cr": "1/8",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR — exact Unicorn: untouched",
+  "description": "unicorn",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "THE CASE — chapel ghost CR 3 on the Priest (CR 2): HP must land in print's CR 3 range 45-90, not the Priest's 38",
+  "description": "a chapel bell-ringer's ghost that tolls for the dying",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "THE CASE again — second roll",
+  "description": "a chapel bell-ringer's ghost that tolls for the dying",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "+1 ABOVE — cleric CR 3 on the Priest (CR 2): HP at CR 3, not 38",
+  "name": "",
+  "description": "a village cleric who tends the shrine",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "-1 BELOW — cleric CR 1 on the Priest (CR 2): HP at CR 1 (print 15-45), not 38",
+  "name": "",
+  "description": "a village cleric who tends the shrine",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "+1 ABOVE — fighter CR 6 on the Gladiator (CR 5): HP at CR 6, not 112",
+  "name": "",
+  "description": "an arena champion who fights for coin",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "-1 BELOW — fighter CR 4 on the Gladiator (CR 5): HP at CR 4, not 112",
+  "name": "",
+  "description": "an arena champion who fights for coin",
+  "cr": "4",
+  "rules": "2024"
+ },
+ {
+  "canary": "+1 ABOVE — rogue CR 2 on the Spy (CR 1): HP at CR 2, not 27",
+  "name": "",
+  "description": "a court spy who sells secrets",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "+1 ABOVE — mage CR 7 on the Mage (CR 6): HP at CR 7, not 81",
+  "name": "",
+  "description": "a tower wizard who studies the stars",
+  "cr": "7",
+  "rules": "2024"
+ },
+ {
+  "canary": "-1 BELOW — mage CR 5 on the Mage (CR 6): HP at CR 5, not 81",
+  "name": "",
+  "description": "a tower wizard who studies the stars",
+  "cr": "5",
+  "rules": "2024"
+ }
+]

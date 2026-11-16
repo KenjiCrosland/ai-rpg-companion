@@ -1,0 +1,12 @@
+[
+ { "name": "Adult Red Dragon", "description": "blind in one eye and brands the frightened", "cr": "17", "rules": "2014", "canary": "THE CASE · 2014; Burning Brand with no frightener" },
+ { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "SOUND PAYOFF · breath frightens, weld punishes" },
+ { "name": "", "description": "a bog troll that grabs and crushes", "cr": "8", "rules": "2024", "canary": "SOUND · grapple then crush" },
+ { "name": "", "description": "a marsh witch who curses trespassers", "cr": "7", "rules": "2014", "canary": "2014 · the original orphaned Cursed Sinkhole" },
+ { "name": "", "description": "a gaze-tyrant that petrifies and then shatters its victims", "cr": "11", "rules": "2024", "canary": "SOUND · petrify then shatter" },
+ { "name": "", "description": "a scholar who debates her enemies to death with no magic at all", "cr": "6", "rules": "2024", "canary": "NO IMPOSER · any payoff must leave" },
+ { "name": "", "description": "a fear-eater that feeds on the terrified", "cr": "9", "rules": "2014", "canary": "2014 SELF-SOURCED · must frighten before it feeds" },
+ { "name": "", "description": "a mind-flayer-ish thing that stuns then devours", "cr": "12", "rules": "2024", "canary": "SOUND · stun then eat" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · untouched" },
+ { "name": "", "description": "a plain mercenary with a spear and a shield", "cr": "4", "rules": "2024", "canary": "MUNDANE · no payoff at all" }
+]

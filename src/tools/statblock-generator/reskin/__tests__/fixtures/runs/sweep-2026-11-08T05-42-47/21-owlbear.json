@@ -1,0 +1,99 @@
+{
+  "name": "Owlbear",
+  "inline": "the owlbear",
+  "format": "2024",
+  "cr": 3,
+  "cr_str": "3",
+  "xp": 700,
+  "challenge_rating": "3 (XP 700; PB +2)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 13,
+  "hp": 59,
+  "hp_formula": "7d10 + 21",
+  "pb": 2,
+  "speed": "40 ft., Climb 40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 12,
+    "CON": 17,
+    "INT": 3,
+    "WIS": 12,
+    "CHA": 7
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 3,
+    "INT": -4,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The owlbear makes two Rend attacks.",
+        "print": true
+      },
+      {
+        "name": "Rend",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      }
+    ]
+  },
+  "lore": "A witch's crossbreeding of raptor and bear, the owlbear claims deep forest territory and kills anything that wanders inside it, hoarding carcasses in a den it defends to the last breath.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "exact",
+      "print_body": "Owlbear",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-2",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "Owlbear",
+    "clauses": [
+      {
+        "id": "cl_a1z120",
+        "text": "Owlbear",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "dropped"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "3",
+  "monsterName": "Owlbear",
+  "caster": false
+}

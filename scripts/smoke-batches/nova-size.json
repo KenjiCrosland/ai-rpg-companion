@@ -1,0 +1,6 @@
+[
+  { "name": "Knife Ball", "description": "knife ball", "cr": "5", "rules": "2024", "canary": "The owner's spot check: Rolling Blades dealt 22 against a 34-damage round (0.65x). Should now land near 1.0x. Keeps its Recharge — print gates 69 of 69 novas — and keeps the wind-up delay." },
+  { "name": "", "description": "a young storm drake whose breath is a rolling wall of thunder", "cr": "7", "rules": "2024", "canary": "A plain gated breath nova: should sit near its round, not a third under it." },
+  { "name": "", "description": "a bog-wyrm that spews a cone of rot", "cr": "3", "rules": "2024", "canary": "LOW CR, where NOVA_CAP was furthest below print (CR 3: cap 17, print median 21)." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "HIGH CR, where NOVA_CAP is already generous (ours 83, print median 59) — this must NOT get hotter." }
+]

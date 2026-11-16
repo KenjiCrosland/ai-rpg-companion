@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "CANARY — the concept the payoff family exists for. Does a COMPOSED payoff reach the menu, and does the call take it over the fixed one?" },
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — name-only; no payoff here. Must be unaffected." },
+  { "name": "", "description": "a headless horseman who rides down the fleeing and takes their heads", "cr": "8", "rules": "2024", "canary": "CANARY — two clauses; its own payoff shipped last run with a finisher clause." },
+  { "name": "", "description": "a scree-pit thing that buries what it catches and crushes what it holds", "cr": "8", "rules": "2024", "canary": "FEATURE — grapple then crush, the critic's best-of-sweep sheet. A composed payoff should fit it." },
+  { "name": "", "description": "a gaol-keeper who beats the shackled", "cr": "6", "rules": "2024", "canary": "FEATURE — a plainly human payoff; which reach does the call pick?" },
+  { "name": "", "description": "a mire-serpent that coils and then crushes what it holds", "cr": "11", "rules": "2024", "canary": "FEATURE — the 'tightens the coils' finisher plus a composed structure." },
+  { "name": "", "description": "a frost-wight that freezes a foe and then shatters them", "cr": "9", "rules": "2024", "canary": "FEATURE — a shatter payoff; the condition arm may fit better than damage." },
+  { "name": "", "description": "a plague-archon whose flies blind a victim and then strip them", "cr": "13", "rules": "2024", "canary": "FEATURE — Blinded consumed, and an AREA reach is plausible here." },
+  { "name": "", "description": "a bog-widow that webs a victim then hauls them in", "cr": "7", "rules": "2024", "canary": "FEATURE — the movement payload's own fiction: pull the held target closer." },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "6", "rules": "2024", "canary": "FEATURE — the standing sentinel concept, no payoff expected. Nothing should regress." }
+]

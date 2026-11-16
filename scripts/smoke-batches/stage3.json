@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "an adult storm dragon whose breath is a rolling wall of thunder", "cr": "15", "rules": "2024",
+    "canary": "STAGE 3 ITEM 2: the name-warrants-energy rule is retired, and no trace may claim the concept never said thunder", "mode": "band" },
+  { "name": "", "description": "a death knight who leads a cavalry of the damned and burns the living", "cr": "17", "rules": "2014",
+    "canary": "QUESTION 4: a name promising what its row lacks is renamed to a noun the row earns, modifier kept", "mode": "band" },
+  { "name": "", "description": "a minotaur reaver who herds prey into the maze", "cr": "6", "rules": "2024",
+    "canary": "QUESTION 4: \"Trampling Charge\" must either deliver movement or be renamed", "mode": "band" },
+  { "name": "", "description": "a ninja who moves through the shadows and strikes unseen", "cr": "5", "rules": "2024",
+    "canary": "ITEM 2 regression: with the name-ask retired, a Humanoid must not gain an element its words never named", "mode": "band" },
+  { "name": "", "description": "a cathedral-vault ooze that digests reliquaries and drips gilded acid", "cr": "9", "rules": "2024",
+    "canary": "ITEM 1 control: the GM's own element word IS warranted — acid must survive on a non-Humanoid body", "mode": "band" }
+]

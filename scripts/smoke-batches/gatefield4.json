@@ -1,0 +1,30 @@
+[
+ {
+  "name": "",
+  "description": "an archlich enthroned on a sun of bone",
+  "cr": "20",
+  "rules": "2014",
+  "canary": "SPINE 20 \u00b7 homebrew one-liner, 2014 legendary"
+ },
+ {
+  "name": "Air Elemental",
+  "description": "that carries stolen voices",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SPINE 5 \u00b7 print head + addition on an Elemental body"
+ },
+ {
+  "name": "",
+  "description": "a glacier's heart given legs, trailing a wake of killing cold",
+  "cr": "15",
+  "rules": "2014",
+  "canary": "SPINE 15 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "Adult Red Dragon",
+  "description": "blind in one eye from an old lance",
+  "cr": "17",
+  "rules": "2014",
+  "canary": "SPINE 17 \u00b7 print head + a lack, legendary 2014"
+ }
+]

@@ -1,0 +1,138 @@
+{
+  "name": "Vauntblade Duelist",
+  "inline": "the duelist",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 170,
+  "hp_formula": "20d8 + 80",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 22,
+    "CON": 18,
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 10,
+    "CON": 4,
+    "INT": 5,
+    "WIS": 2,
+    "CHA": 0
+  },
+  "skills": "Perception +6, Stealth +14",
+  "senses": "Passive Perception 16",
+  "languages": "Common",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The duelist makes three attacks, using Blade or Dart in any combination."
+      },
+      {
+        "name": "Blade",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Slashing damage.",
+        "weapon": "rapier",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Dart",
+        "text": "*Ranged Attack Roll:* +10, range 20/60 ft. 23 (7d4 + 6) Piercing damage.",
+        "weapon": "dart",
+        "attacksPerRound": 3
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the duelist takes the Hide action."
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Seized Opening",
+        "text": "*Trigger:* The first time on its turn a creature within the duelist's reach makes an attack, casts a spell, or leaves a square the duelist threatens. *Response:* The duelist makes one Blade attack against that creature with Advantage, ignoring the Disadvantage imposed by the target being hidden from it or by the duelist being unseen.",
+        "authored": true,
+        "clause": "it always lands",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a single strike that never misses",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_155hqwc"
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "A duelist sworn to a single-strike school of blade-craft, it roams the hidden places of the world challenging any who meet its eye to a duel of one blow — and it has never lost one.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a duellist who only ever makes one attack, and it always lands",
+    "clauses": [
+      {
+        "id": "cl_12uzek5",
+        "text": "a duellist",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1p3b1vv",
+        "text": "only ever makes one attack",
+        "kind": "mechanical",
+        "askOften": "once_per_turn",
+        "askOftenWhy": "only ever",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_155hqwc",
+        "text": "it always lands",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a duellist who only ever makes one attack, and it always lands",
+  "selectedChallengeRating": "12",
+  "monsterName": "Vauntblade Duelist",
+  "caster": false
+}

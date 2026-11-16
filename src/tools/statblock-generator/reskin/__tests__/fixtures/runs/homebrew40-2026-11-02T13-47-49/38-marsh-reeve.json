@@ -1,0 +1,216 @@
+{
+  "name": "Marsh Reeve",
+  "inline": "the reeve",
+  "type_and_alignment": "Medium undead, lawful neutral",
+  "armor_class": "13",
+  "hit_points": "135 (18d8 + 54)",
+  "speed": "5 ft., fly 60 ft. (hover), swim 30 ft.",
+  "attributes": "STR 6 (-2), DEX 18 (+4), CON 16 (+3), INT 12 (+1), WIS 14 (+2), CHA 15 (+2)",
+  "saving_throws": "DEX +7",
+  "skills": "Stealth +7",
+  "senses": "darkvision 60 ft., passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "8 (3,900 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Unerring Tracker",
+      "description": "When the reeve follows a creature's trail, the reeve can follow the trail without a check, at its full speed, regardless of terrain, darkness, or the time elapsed, and cannot be misled by a false trail."
+    },
+    {
+      "name": "Incorporeal Movement",
+      "description": "The reeve can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+    },
+    {
+      "name": "Sunlight Sensitivity",
+      "description": "While in sunlight, the reeve has disadvantage on ability checks and attack rolls."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The reeve makes two attacks."
+    },
+    {
+      "name": "Wading Strike",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 26 (5d8 + 4) necrotic damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "damage_resistances": "bludgeoning, piercing, slashing",
+  "damage_immunities": "poison",
+  "condition_immunities": "charmed, exhaustion, grappled, paralyzed, petrified, poisoned, prone, restrained",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a reeve of the drowned marsh who never loses a trail",
+    "clauses": [
+      {
+        "id": "cl_1jqnjo0",
+        "text": "a reeve of the drowned marsh",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vgjo41",
+        "text": "never loses a trail",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "track",
+        "askMechanicWhy": "never loses a trail"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "2 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "2x the free-row budget",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Marsh Reeve",
+    "inline": "the reeve",
+    "format": "2024",
+    "cr": 8,
+    "cr_str": "8",
+    "xp": 3900,
+    "challenge_rating": "8 (XP 3,900; PB +3)",
+    "type": "Undead",
+    "size": "Medium",
+    "alignment": "Lawful Neutral",
+    "ac": 13,
+    "hp": 135,
+    "hp_formula": "18d8 + 54",
+    "pb": 3,
+    "speed": "5 ft., Fly 60 ft. (hover), Swim 30 ft.",
+    "stats": {
+      "STR": 6,
+      "DEX": 18,
+      "CON": 16,
+      "INT": 12,
+      "WIS": 14,
+      "CHA": 15
+    },
+    "saves": {
+      "STR": -2,
+      "DEX": 7,
+      "CON": 3,
+      "INT": 1,
+      "WIS": 2,
+      "CHA": 2
+    },
+    "skills": "Stealth +7",
+    "senses": "darkvision 60 ft.; Passive Perception 12",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 4,
+    "initiative_score": 14,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Unerring Tracker",
+          "text": "When the reeve follows a creature's trail, The reeve can follow the trail without a check, at its full Speed, regardless of terrain, darkness, or the time elapsed, and cannot be misled by a false trail.",
+          "authored": true,
+          "clause": "never loses a trail",
+          "clauseId": "cl_vgjo41"
+        },
+        {
+          "name": "Incorporeal Movement",
+          "rules": true,
+          "text": "The reeve can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+        },
+        {
+          "name": "Sunlight Sensitivity",
+          "rules": true,
+          "text": "While in sunlight, the reeve has Disadvantage on ability checks and attack rolls."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The reeve makes two attacks."
+        },
+        {
+          "name": "Wading Strike",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 26 (5d8 + 4) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 1
+        }
+      ],
+      "Bonus Actions": []
+    },
+    "lore": "A drowned reeve who refused to abandon a pursuit as the marsh water rose over him, his oath outliving his body so that he now wades the flooded bottoms forever, running down anything that flees with the cold patience that drowned him.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "lurker-5-phantom",
+      "archetype": "lurker",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a reeve of the drowned marsh who never loses a trail",
+      "clauses": [
+        {
+          "id": "cl_1jqnjo0",
+          "text": "a reeve of the drowned marsh",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_vgjo41",
+          "text": "never loses a trail",
+          "kind": "mechanical",
+          "askShape": "condition",
+          "askMechanic": "track",
+          "askMechanicWhy": "never loses a trail"
+        }
+      ],
+      "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "gap_vetoed": "2 of 2",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "2x the free-row budget",
+      "signature": "library"
+    },
+    "archetype": "lurker",
+    "archetype_source": "user",
+    "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+    "resistances": "Bludgeoning, Piercing, Slashing",
+    "lint_findings": []
+  },
+  "monsterDescription": "a reeve of the drowned marsh who never loses a trail",
+  "selectedChallengeRating": "8",
+  "monsterName": "Marsh Reeve",
+  "caster": false
+}

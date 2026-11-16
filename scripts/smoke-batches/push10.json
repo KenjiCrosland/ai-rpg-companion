@@ -1,0 +1,12 @@
+[
+ { "name": "", "description": "a well-devourer that bites and holds what it catches", "cr": "5", "rules": "2024", "canary": "THE CASE · grapple host, push rider must refuse" },
+ { "name": "", "description": "a battering ram of lashed timber that shoulders through walls", "cr": "8", "rules": "2024", "canary": "THE CASE · repeats its Ram twice" },
+ { "name": "", "description": "a bull-headed brute that bowls foes over and keeps swinging", "cr": "6", "rules": "2024", "canary": "REPEAT · push would strand its own attacks" },
+ { "name": "", "description": "a wind-dancer who flings foes off ledges and darts away", "cr": "8", "rules": "2024", "canary": "PUSH BELONGS · single-swing or save row" },
+ { "name": "", "description": "a lance-knight who runs down fleeing footmen", "cr": "7", "rules": "2024", "canary": "CHARGER · a charge rider is fine; a push is not" },
+ { "name": "", "description": "a gale that hurls the unwary from the cliff path", "cr": "9", "rules": "2024", "canary": "PUSH BELONGS · an area save, no multiattack host" },
+ { "name": "", "description": "a mastiff that drags down whatever it catches", "cr": "3", "rules": "2024", "canary": "GRAPPLE · a drag is not a push" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · untouched" },
+ { "name": "", "description": "a cathedral-vault ooze that digests reliquaries", "cr": "9", "rules": "2024", "canary": "unrelated · menus must not collapse" },
+ { "name": "", "description": "a plain mercenary with a spear and a shield", "cr": "4", "rules": "2024", "canary": "MUNDANE CONTROL" }
+]

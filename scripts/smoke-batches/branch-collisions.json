@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a knight-errant of the fallen order who shields the weak", "cr": 7, "rules": "2024",
+    "mech": "the collision reported THREE times: 'fallen order' -> 'orders' -> rally. Nothing should rally" },
+  { "name": "", "description": "a bulwark-sworn sentinel with a broken greatsword and a battered shield", "cr": 7, "rules": "2024",
+    "mech": "'guard' -> Guarded Stance by force; the call's own read should decide" },
+  { "name": "", "description": "a goliath berserker who loses control when wounded", "cr": 8, "rules": "2024",
+    "mech": "'stone' (goliath's stone fiction) -> False Appearance on a living creature" },
+  { "name": "", "description": "a lizardfolk monk who strikes pressure points with an open hand", "cr": 5, "rules": "2024",
+    "mech": "control: a real key match the call should ACCEPT — stunning-strike is the mechanic the words name" },
+  { "name": "", "description": "a ninja who moves through the shadows and strikes unseen", "cr": 5, "rules": "2024",
+    "mech": "'moves through the shadows' -> a blink teleport by force; shadow movement is not teleportation" },
+  { "name": "", "description": "a cathedral-vault ooze that digests reliquaries and drips gilded acid", "cr": 9, "rules": "2024",
+    "mech": "'ooze' -> Aberrant Ground by force" }
+]

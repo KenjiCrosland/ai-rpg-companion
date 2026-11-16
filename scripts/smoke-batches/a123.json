@@ -1,0 +1,8 @@
+[
+  { "name": "Dame Oriel", "description": "a knight who holds the line with a shield and a longsword", "cr": "5", "rules": "2024", "canary": "A1: no Guarded Stance at AC over print's · A2: the round inside the card at CR 5 (was 66, reading CR 10)" },
+  { "name": "", "description": "a hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks", "cr": "6", "rules": "2024", "canary": "A1: the kit and the concept-first door both refuse Guarded Stance at AC 19" },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024", "canary": "A3: BOTH weapons land, the handaxe at range 20/60" },
+  { "name": "Harrowic Vane", "description": "a knight-captain who fights with a longsword", "cr": "6", "rules": "2014", "canary": "A2 (2014): three longswords inside the card at CR 6" },
+  { "name": "", "description": "a dwarven crossbow sergeant who orders a volley and holds the shield line", "cr": "5", "rules": "2024", "canary": "A1 control: the concept-first door refuses the stance and the volley still lands" },
+  { "name": "", "description": "a plague-bearing archon of flies", "cr": "13", "rules": "2024", "canary": "A2 control: a homebrew sheet with no print body is unchanged" }
+]

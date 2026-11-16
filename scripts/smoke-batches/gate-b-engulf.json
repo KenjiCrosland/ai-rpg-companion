@@ -1,0 +1,74 @@
+[
+ {
+  "canary": "FLOOR — exact Gelatinous Cube: print's Engulf stays",
+  "description": "gelatinous cube",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR — an ooze that CAN contain: engulf is legitimate here",
+  "description": "a black ooze that swallows adventurers whole",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "FLOOR — a frog's Swallow is print's own idiom: a swallow row is legitimate on a frog body",
+  "description": "a giant frog that swallows prey whole",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "THE CASE — bog hound 2014: NO engulf/whelm on a hound; a grapple-and-hold, and no cone on a single-target drag",
+  "description": "a mud-caked bog hound that drags fishermen under",
+  "cr": "1",
+  "rules": "2014"
+ },
+ {
+  "canary": "THE CASE — bog hound 2024: same",
+  "description": "a mud-caked bog hound that drags fishermen under",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "drags-under on a crocodile: grapple + restrain, no engulf",
+  "description": "a crocodile that drags swimmers under",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "pulls-beneath on an eel: grapple/pull, no engulf",
+  "description": "a giant eel that pulls sailors beneath the waves",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "holds-under on a troll: grapple, no engulf",
+  "description": "a marsh troll that holds victims under the muck",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "drowns on a kelpie (fey horse): no engulf",
+  "description": "a kelpie that lures riders into the lake and drowns them",
+  "cr": "4",
+  "rules": "2024"
+ },
+ {
+  "canary": "POSITIVE — a medium it COMMANDS, not its own body (owner 2026-11-10): engulf is legitimate",
+  "description": "a bog-witch who raises the mire to close over her victims",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "POSITIVE — print's Shambling Mound engulfs as a Plant: a strangling vine mass may too",
+  "description": "a shambling mass of strangling vines that wraps prey inside itself",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "POSITIVE — a maw-bodied horror that swallows: a Huge body with an interior, engulf/swallow legitimate",
+  "description": "a gargantuan sand-maw that swallows caravans whole",
+  "cr": "9",
+  "rules": "2024"
+ }
+]

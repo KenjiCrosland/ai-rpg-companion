@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "SPINE 8 · print head + a negating addition"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "USE CASE · DENSE: body + class + GM requests + math, all at once"
+  }
+]

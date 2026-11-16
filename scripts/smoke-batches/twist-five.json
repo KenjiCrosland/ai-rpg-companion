@@ -1,0 +1,7 @@
+[
+  { "name": "", "description": "a skeleton with a greatsword", "cr": "2", "rules": "2024", "canary": "TWIST (owner's spot check): the Skeleton's rows, the greatsword as the GM's weapon, no seed, no shelf, no chassis nova" },
+  { "name": "", "description": "a skeleton who was a gladiator in a former life", "cr": "4", "rules": "2024", "canary": "TWIST: the Skeleton scaled to CR 4, one receipted seat at most" },
+  { "name": "", "description": "an ogre with a greataxe", "cr": "3", "rules": "2024", "canary": "TWIST: the Ogre's rows, greataxe replaces the Greatclub in its own row" },
+  { "name": "", "description": "a cave troll that speaks only Giant", "cr": "6", "rules": "2024", "canary": "TWIST (the matcher missed it): Troll body by the path — Regeneration, Giant type, Large; languages Giant" },
+  { "name": "", "description": "a stone giant exile who speaks only Giant and understands no Common", "cr": "9", "rules": "2024", "canary": "TWIST (the matcher missed it): Stone Giant body by the path; Huge; Boulder; no Common" }
+]

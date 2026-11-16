@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a pumpkin king", "cr": "10", "rules": "2024", "canary": "TARGET · the owner's own dull case — a hookless concept that fell to plain brute" },
+  { "name": "", "description": "a corn-dolly judge who presides over the harvest", "cr": "6", "rules": "2024", "canary": "TARGET · hookless title-creature, no mechanical verb" },
+  { "name": "", "description": "a bell-founder's widow who never left the foundry", "cr": "5", "rules": "2014", "canary": "TARGET · hookless, no verb the shelf keys on" },
+  { "name": "", "description": "the king of cats", "cr": "8", "rules": "2024", "canary": "TARGET · hookless, small-bodied fiction routed as a bruiser" },
+  { "name": "", "description": "a tax-collector of the drowned", "cr": "7", "rules": "2024", "canary": "TARGET · hookless, drowned fiction (must not become lurker-phantom either)" },
+  { "name": "", "description": "a pumpkin king who lobs his own burning seeds", "cr": "10", "rules": "2024", "canary": "TARGET · same concept WITH a hook — should take a thrower/artillery line" },
+  { "name": "", "description": "a thorn-crowned herald who sends the briar ahead of him", "cr": "9", "rules": "2024", "canary": "TARGET · commands-allies hook — should take a leader or controller line" },
+  { "name": "Ogre", "description": "", "cr": "2", "rules": "2024", "canary": "CONTROL · print's plain bruiser — MUST stay brute" },
+  { "name": "Hill Giant", "description": "", "cr": "5", "rules": "2024", "canary": "CONTROL · print's plain bruiser — MUST stay brute" },
+  { "name": "Minotaur", "description": "", "cr": "3", "rules": "2014", "canary": "CONTROL · print brute, charger-adjacent — brute family either way" },
+  { "name": "", "description": "a quarry brute that just swings a stone fist and nothing else", "cr": "6", "rules": "2024", "canary": "CONTROL · explicitly no trick — MUST stay plain brute" },
+  { "name": "", "description": "a troll that knits its wounds shut and keeps coming", "cr": "5", "rules": "2024", "canary": "CONTROL · styled brute — brute-regenerator must still win" }
+]

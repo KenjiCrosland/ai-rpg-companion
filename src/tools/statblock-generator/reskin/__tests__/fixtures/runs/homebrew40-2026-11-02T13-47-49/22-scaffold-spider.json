@@ -1,0 +1,167 @@
+{
+  "name": "Scaffold-Spider",
+  "inline": "the scaffold-spider",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 119,
+  "hp_formula": "14d10 + 42",
+  "pb": 3,
+  "speed": "40 ft., Climb 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 18,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 14,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 7,
+    "CON": 3,
+    "INT": 0,
+    "WIS": 5,
+    "CHA": 0
+  },
+  "skills": "Perception +5, Stealth +7",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Ceiling Purchase",
+        "text": "The scaffold-spider climbs sheer walls and ceilings without an ability check and ignores Difficult Terrain on vertical surfaces, even while using a Reeling Line.",
+        "authored": true,
+        "clause": "The scaffold-spider ignores Difficult Terrain on vertical surfaces and can climb sheer walls and ceilings without an abi",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "never descends from its overhead scaffold",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "even while using a Reeling Line"
+      },
+      {
+        "name": "Overhead Stalker",
+        "text": "The scaffold-spider ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The scaffold-spider makes three attacks, using Mandibles or Reeling Line in any combination."
+      },
+      {
+        "name": "Mandibles",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Reeling Line",
+        "text": "*Ranged Attack Roll:* +7, range 20/60 ft. 13 (2d8 + 4) Bludgeoning damage. *Hit or Miss:* Immediately after the attack, a weighted anchor returns to the scaffold-spider's grasp. If the target is a Large or smaller creature, it has the Restrained condition until the end of the scaffold-spider's next turn. This effect can be applied only once per turn.",
+        "weldedRiders": [
+          "If the target is a Large or smaller creature, it has the Restrained condition until the end of the scaffold-spider's next turn. This effect can be applied only once per turn."
+        ],
+        "imposes": "Restrained",
+        "boundKeys": [],
+        "riderTemplates": [
+          "bolt-restrain"
+        ],
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Debris Drop (Recharge 5-6)",
+        "imposes": "Prone",
+        "text": "The scaffold-spider hurls a weighted anchor at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 14, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 42 (12d6) Bludgeoning damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.",
+        "gate": "Recharge 5-6"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Fleet Agility",
+        "text": "The scaffold-spider takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "A scaffold-spider is grown, not born — a Monstrosity of fused scaffold-timbers and hardened chitin that haunts the half-built towers and ruin-frames of dead sites, hoarding cable and stone to rebuild its web of beams higher and higher.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-8-hurler",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "never comes down",
+        "where": "description",
+        "text": "Nothing forces the scaffold-spider to descend: it cannot be knocked Prone off its perch, and a creature that tries to pull, shove, or drag it down must first succeed on a Strength saving throw against {dc}; on a failure the attempt is wasted."
+      }
+    ],
+    "userConcept": "a scaffold-spider that fights from the ceiling and never comes down",
+    "clauses": [
+      {
+        "id": "cl_qp4sm5",
+        "text": "a scaffold-spider",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_bvtrqt",
+        "text": "fights from the ceiling",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "fights from the ceiling"
+      },
+      {
+        "id": "cl_i9k37r",
+        "text": "never comes down",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "never comes down"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "answered_in_prose": [
+      "never comes down"
+    ],
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a scaffold-spider that fights from the ceiling and never comes down",
+  "selectedChallengeRating": "7",
+  "monsterName": "Scaffold-Spider",
+  "caster": false
+}

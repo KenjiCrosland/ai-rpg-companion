@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a cave lurker that drops on prey before it knows anything is there", "cr": "6", "rules": "2024", "canary": "BEAST/MONSTROSITY ambush — should ship the first-strike shape named Surprise Attack, never Assassinate. The mechanic must NOT be gated away." },
+  { "name": "", "description": "a pack of hunting cats that strike from the tall grass", "cr": "4", "rules": "2024", "canary": "Beast ambush again — the shape must still reach a beast body." },
+  { "name": "", "description": "an iron sentinel that steels the other sentinels around it", "cr": "9", "rules": "2024", "canary": "CONSTRUCT commander — rally was 76/81 of its wrong-body rows. Must read Bolstering Presence, never Bolstering Cry." },
+  { "name": "", "description": "a clockwork chirurgeon that patches its broken fellows mid-fight", "cr": "7", "rules": "2024", "canary": "CONSTRUCT healer — lay-on-hands on a body with no hands to lay. Must read Mending Touch." },
+  { "name": "", "description": "a troll that knits its wounds shut and keeps coming", "cr": "5", "rules": "2024", "canary": "GIANT self-heal — second-wind. Must read Recovery. Giant was the body the gate draft would have denied." },
+  { "name": "", "description": "a stalking assassin who kills before the alarm is raised", "cr": "8", "rules": "2024", "canary": "HUMANOID control — the class-capable body. Still Surprise Attack (print's 2024 Assassin has no Assassinate feature; it has Evasion)." },
+  { "name": "", "description": "a knight-captain who mends her soldiers and rallies the line", "cr": "9", "rules": "2024", "canary": "HUMANOID control for both renamed healers — Mending Touch and Bolstering Presence on a body that COULD have a class." },
+  { "name": "", "description": "a shimmering air elemental that slips every blast", "cr": "6", "rules": "2024", "canary": "ELEMENTAL — evasion KEPT its name deliberately (print's Assassin carries Evasion; the word is body-neutral). Should still read Evasion." },
+  { "name": "", "description": "a fiend that strikes first and asks nothing", "cr": "10", "rules": "2024", "canary": "FIEND — one of the owner's class-capable exceptions. Surprise Attack reads fine here too." },
+  { "name": "", "description": "a swarm of carrion beetles that boils over the fallen", "cr": "3", "rules": "2024", "canary": "SWARM — a body that cannot have a class at all; nothing class-named should appear." }
+]

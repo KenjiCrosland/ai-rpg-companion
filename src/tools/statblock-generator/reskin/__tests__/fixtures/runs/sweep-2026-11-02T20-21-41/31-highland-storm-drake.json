@@ -1,0 +1,122 @@
+{
+  "name": "Highland Storm Drake",
+  "inline": "the storm drake",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Dragon",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 18,
+  "hp": 105,
+  "hp_formula": "14d10 + 28",
+  "pb": 3,
+  "speed": "30 ft., Fly 60 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 12,
+    "CHA": 14
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 4,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 4,
+    "CHA": 2
+  },
+  "skills": "Perception +4, Stealth +4",
+  "senses": "blindsight 30 ft., darkvision 120 ft.; Passive Perception 14",
+  "languages": "Common, Draconic",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The storm drake makes two Bite attacks. It can replace one attack with a use of Rolling Thunderhead."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 17 (3d8 + 4) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Thunder Wall (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 15, each creature in a 15-foot Cone. *Failure:* 42 (12d6) Thunder damage. *Success:* Half damage."
+      },
+      {
+        "name": "Rolling Thunderhead",
+        "text": "*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 18 (4d8) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "a young storm drake whose breath is a rolling wall of thunder",
+        "imposes": "Deafened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "rolling wall of thunder breath",
+        "boundKeys": [],
+        "expressedQuote": "18 (4d8) Thunder damage, and the target has the Deafened condition until the end of its next turn",
+        "clauseId": "cl_v640f4"
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "Hatched in the thunderheads above a storm-wracked highland ridge, this young drake rides the squall line it was born from and descends to test its growing voice on anything that strays into its sky.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "dragon-2",
+    "archetype": "dragon",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a young storm drake whose breath is a rolling wall of thunder",
+    "clauses": [
+      {
+        "id": "cl_v640f4",
+        "text": "a young storm drake whose breath is a rolling wall of thunder",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "rolling wall of thunder"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten wyrmlings (CR 1-4) — bite, breath, wings",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "dragon",
+  "archetype_source": "user",
+  "immunities": "Thunder",
+  "lint_findings": [],
+  "monsterDescription": "a young storm drake whose breath is a rolling wall of thunder",
+  "selectedChallengeRating": "7",
+  "monsterName": "Highland Storm Drake",
+  "caster": false
+}

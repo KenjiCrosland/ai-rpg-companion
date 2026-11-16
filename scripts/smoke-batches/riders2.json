@@ -1,0 +1,16 @@
+[
+ {
+  "name": "Purple Worm",
+  "description": "that swallowed a war-band's armoury",
+  "cr": "15",
+  "rules": "2024",
+  "canary": "SPINE 15 \u00b7 print head + addition: the swallow engine"
+ },
+ {
+  "name": "Krennik Skullstandard",
+  "description": "riding a worg",
+  "cr": "4",
+  "rules": "2014",
+  "canary": "USE CASE \u00b7 Name + a seat verb: the mounted style"
+ }
+]

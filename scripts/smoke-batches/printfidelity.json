@@ -1,0 +1,6 @@
+[
+  { "name": "", "description": "a ghost of the drowned chapel who drifts through its walls", "cr": "4", "rules": "2024", "canary": "BORROWED PRINT BODY AT PRINT'S CR: the Ghost's Multiattack rides (two Withering Touch), HP 45 = 10d8", "mode": "band" },
+  { "name": "", "description": "a mummy that haunts the tomb of a forgotten pharaoh", "cr": "3", "rules": "2024", "canary": "BORROWED PRINT BODY: HP 58 on print's own 9d8 + 18, not a size-derived refit; no phantom", "mode": "band" },
+  { "name": "Mummy", "description": "", "cr": "3", "rules": "2024", "canary": "BARE PRINT NAME: print's numbers verbatim", "mode": "exact" },
+  { "name": "Ghost", "description": "", "cr": "4", "rules": "2024", "canary": "BARE PRINT NAME: Multiattack + incorporeality from print", "mode": "exact" }
+]

@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a bone-choir that shows the living what waits for them, and the dread lingers", "cr": "9", "rules": "2024", "canary": "DURATION: a clause asking for persistence on a condition" },
+  { "name": "", "description": "a basilisk-thing whose stare locks a victim in place until it looks away", "cr": "7", "rules": "2024", "canary": "DURATION: 'until it looks away' — a source-turn duration" },
+  { "name": "", "description": "a bile-spitting horror that hoses a line of acid down a corridor", "cr": "8", "rules": "2024", "canary": "SHAPE: spew as a Line" },
+  { "name": "", "description": "a quarry-pit golem that stamps a shockwave down the gallery", "cr": "8", "rules": "2024", "canary": "SHAPE: ground-burst as a Cone" },
+  { "name": "", "description": "a marsh witch who curses trespassers and drinks the years out of them", "cr": "7", "rules": "2024", "canary": "life-drain + a curse clause" },
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2024", "canary": "the thorn garden, and print's legendary rows" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "3", "rules": "2024", "canary": "CONTROL: read well before — must not regress" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a twist that removes print's mechanic" },
+  { "name": "", "description": "a lamplighter's widow who still walks her round, trailing cold", "cr": "3", "rules": "2024", "canary": "CONTROL: originality at low CR" },
+  { "name": "Brother Halric", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024", "canary": "CONTROL: an absence honoured" }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "canary": "regression set — typed40 #29: my best block on 11-13: CR 8, two attacks, grapple",
+    "name": "",
+    "description": "CR 8 brute, two attacks, grapples",
+    "cr": "8",
+    "rules": "2024",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #34: stated numbers: AC 18, HP 200",
+    "name": "",
+    "description": "AC 18 HP 200 hits hard, slow",
+    "cr": "10",
+    "rules": "2024",
+    "role": "brute",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #32: goblin boss with a heavy crossbow",
+    "name": "",
+    "description": "goblin boss with a heavy crossbow",
+    "cr": "1",
+    "rules": "2014",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #36: vague prompt: big scary tree thing",
+    "name": "",
+    "description": "big scary tree thing",
+    "cr": "6",
+    "rules": "2014",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #7: exact print body: the Ogre",
+    "name": "Krug",
+    "description": "ogre",
+    "cr": "2",
+    "rules": "2014",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #30: print body rescaled: Owlbear at CR 8",
+    "name": "",
+    "description": "owlbear but CR 8",
+    "cr": "8",
+    "rules": "2014",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #2: a caster with a role picked",
+    "name": "Sister Maudra",
+    "description": "cleric of the drowned god",
+    "cr": "7",
+    "rules": "2014",
+    "role": "controller",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  },
+  {
+    "canary": "regression set — typed40 #13: a monk: kit rider on a print attack",
+    "name": "",
+    "description": "lizard folk shadow monk",
+    "cr": "6",
+    "rules": "2024",
+    "green": "REGRESSION: no new checker FAIL and no new lint finding against the same entry before the change"
+  }
+]

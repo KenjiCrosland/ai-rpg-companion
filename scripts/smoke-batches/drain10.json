@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "LIFE-DRAIN: the clearest ask — must land the HP-maximum rider" },
+  { "name": "", "description": "a marsh witch who curses trespassers and drinks the years out of them", "cr": "7", "rules": "2024", "canary": "LIFE-DRAIN: a caster body, print's Mummy Lord shape" },
+  { "name": "", "description": "a clay guardian whose every blow leaves a wound that will not close", "cr": "9", "rules": "2024", "canary": "LIFE-DRAIN: print's Clay Golem shape, no drain words in the concept" },
+  { "name": "Vampire", "description": "", "cr": "13", "rules": "2024", "canary": "CONTROL: print-exact vampire already HAS the HP-max bite; the new rider must not double it" },
+  { "name": "", "description": "a withered husk-thing that leaves its victims hollow and grey", "cr": "6", "rules": "2024", "canary": "LIFE-DRAIN: body true, no literal 'drain'" },
+  { "name": "", "description": "a bronze shrine-warden that burns whoever lays a hand on it", "cr": "9", "rules": "2024", "canary": "CONTROL: life-drain must be judged NOT TRUE of a bronze body" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CONTROL: the real package-seven twist; no life-drain, no adhesive" },
+  { "name": "", "description": "a courtly duelist in silk who turns every thrust back on its owner", "cr": "7", "rules": "2024", "canary": "CONTROL: no life-drain on a living duelist" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: the clause path still works" },
+  { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024", "canary": "CONTROL: cold, not drain" }
+]

@@ -1,0 +1,140 @@
+{
+  "name": "Landing Eater",
+  "inline": "the landing eater",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Aberration",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 4,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 16,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": 3,
+    "CON": 7,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +5, Stealth +7",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Common",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Still Stair",
+        "text": "While the landing eater remains motionless, it is indistinguishable from an ordinary section of the staircase it inhabits.",
+        "library": true,
+        "template": "false-appearance",
+        "boundKeys": [
+          "hidden"
+        ],
+        "freeRow": true,
+        "expresses": "a hunger shaped as a climbable staircase",
+        "bound": false,
+        "expressedQuote": "indistinguishable from an ordinary section of the staircase it inhabits"
+      },
+      {
+        "name": "Folding Steps",
+        "text": "The landing eater ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The landing eater makes three Chitin Step attacks. It can replace one attack with a Swallowing Landing attack."
+      },
+      {
+        "name": "Chitin Step",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 7 (2d6) Acid damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Swallowing Landing (Beast or Hybrid Form Only)",
+        "imposes": "Poisoned",
+        "gate": "Beast or Hybrid Form Only",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 22 (4d8 + 4) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 15. *Failure:* The target has the Poisoned condition until the end of its next turn.",
+        "weapon": null,
+        "attacksPerRound": 1
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Shape-Shift",
+        "rules": true,
+        "text": "The landing eater shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      },
+      {
+        "name": "Fleet Agility",
+        "text": "The landing eater takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "Born when an arcane stair-lift folded into a feral hunger, it feeds on every climber, wanting only to find ever larger bodies to become stairs inside.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-8-shifter",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a hunger that wears the shape of a staircase",
+    "clauses": [
+      {
+        "id": "cl_1d63l1u",
+        "text": "a hunger",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_19seyzv",
+        "text": "wears the shape of a staircase",
+        "kind": "descriptive"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "false-appearance"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a hunger that wears the shape of a staircase",
+  "selectedChallengeRating": "9",
+  "monsterName": "Landing Eater",
+  "caster": false
+}

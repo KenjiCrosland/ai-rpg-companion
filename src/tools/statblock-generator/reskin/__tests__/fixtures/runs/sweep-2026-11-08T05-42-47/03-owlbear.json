@@ -1,0 +1,225 @@
+{
+  "name": "Owlbear",
+  "inline": "the owlbear",
+  "type_and_alignment": "Large monstrosity, unaligned",
+  "armor_class": "13 (natural armor)",
+  "hit_points": "59 (7d10 + 21)",
+  "speed": "40 ft., climb 30 ft.",
+  "attributes": "STR 20 (+5), DEX 12 (+1), CON 17 (+3), INT 3 (-4), WIS 12 (+1), CHA 7 (-2)",
+  "saving_throws": "DEX +3",
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft., passive Perception 15",
+  "languages": "None",
+  "challenge_rating": "3 (700 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Spider Climb",
+      "description": "The owlbear can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The owlbear makes two Rend attacks. It can replace one attack with a use of Deadfall Ambush."
+    },
+    {
+      "name": "Rend",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage."
+    },
+    {
+      "name": "Deadfall Ambush",
+      "description": "One creature within 5 feet of the owlbear must succeed on a DC 15 Dexterity saving throw or be knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Owlbear",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "skirmisher-3",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "Owlbear — that has learned to climb",
+    "clauses": [
+      {
+        "id": "cl_2grwuk",
+        "text": "Owlbear —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_54jrqr",
+        "text": "has learned to climb",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "learned to climb"
+      }
+    ],
+    "cite": "composition after Vampire Familiar (CR 3)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Owlbear",
+    "inline": "the owlbear",
+    "format": "2024",
+    "cr": 3,
+    "cr_str": "3",
+    "xp": 700,
+    "challenge_rating": "3 (XP 700; PB +2)",
+    "type": "Monstrosity",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "ac": 13,
+    "hp": 59,
+    "hp_formula": "7d10 + 21",
+    "pb": 2,
+    "speed": "40 ft., Climb 30 ft.",
+    "stats": {
+      "STR": 20,
+      "DEX": 12,
+      "CON": 17,
+      "INT": 3,
+      "WIS": 12,
+      "CHA": 7
+    },
+    "saves": {
+      "STR": 5,
+      "DEX": 3,
+      "CON": 3,
+      "INT": -4,
+      "WIS": 1,
+      "CHA": -2
+    },
+    "skills": "Perception +5",
+    "senses": "darkvision 60 ft.; Passive Perception 15",
+    "languages": "None",
+    "initiative_bonus": 1,
+    "initiative_score": 11,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Spider Climb",
+          "text": "The owlbear can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+          "library": true,
+          "template": "spider-climb",
+          "boundKeys": [
+            "climb",
+            "climbs",
+            "climbing",
+            "ceilings",
+            "walls",
+            "wall",
+            "cling",
+            "sheer"
+          ],
+          "expresses": "climbing ambushes from above",
+          "bound": true,
+          "clause": "has learned to climb",
+          "clauseId": "cl_54jrqr"
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The owlbear makes two Rend attacks. It can replace one attack with a use of Deadfall Ambush."
+        },
+        {
+          "name": "Rend",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.",
+          "weapon": null,
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Deadfall Ambush",
+          "text": "*Dexterity Saving Throw*: DC 15, one creature within 5 feet. *Failure:* The target has the Prone condition.",
+          "authored": true,
+          "clause": "has learned to climb",
+          "imposes": "Prone",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": null,
+          "boundKeys": [],
+          "clauseId": "cl_54jrqr"
+        }
+      ],
+      "Bonus Actions": []
+    },
+    "lore": "Bred by a hedge-witch who fed an owlbear the eyes of a cliff-hunting goat, these beasts den in the high canopy of old forests and pick off caravans that travel beneath a good climbing tree.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "twist",
+        "print_body": "Owlbear",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "code"
+      },
+      "donor": "skirmisher-3",
+      "archetype": "skirmisher",
+      "holds": false,
+      "creatureOnly": true,
+      "unplaced": [],
+      "userConcept": "Owlbear — that has learned to climb",
+      "clauses": [
+        {
+          "id": "cl_2grwuk",
+          "text": "Owlbear —",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_54jrqr",
+          "text": "has learned to climb",
+          "kind": "mechanical",
+          "askShape": "movement",
+          "askMechanic": "climb",
+          "askMechanicWhy": "learned to climb"
+        }
+      ],
+      "cite": "composition after Vampire Familiar (CR 3)",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "that has learned to climb",
+  "selectedChallengeRating": "3",
+  "monsterName": "Owlbear",
+  "caster": false
+}

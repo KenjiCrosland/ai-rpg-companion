@@ -1,0 +1,7 @@
+[
+  { "name": "Brother Halric", "description": "", "cr": "3", "rules": "2024", "canary": "B: a title with no class stands on a print PERSON, not a monster chassis — no Hurled Scripture" },
+  { "name": "Meshrin", "description": "a Large lizard folk raider. He is a barbarian who rages when wounded and roars to frighten the line.", "cr": "8", "rules": "2024", "canary": "B: the class name is its own receipt in a relative clause — barbarian kit lands; the roar frightens" },
+  { "name": "Sister Halamine", "description": "a plague-saint who blesses the faithful", "cr": "6", "rules": "2024", "canary": "B: 'Sister' implies cleric — the Priest body and the cleric kit" },
+  { "name": "", "description": "a hunter who kills the priests of the deep", "cr": "4", "rules": "2024", "canary": "B control: 'priests' is not this creature's class — no cleric kit" },
+  { "name": "", "description": "a kuo-toa priest who drags swimmers under the ice", "cr": "4", "rules": "2024", "canary": "B control: an implied title in the head clause still works" }
+]

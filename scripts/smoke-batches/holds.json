@@ -1,0 +1,18 @@
+[
+  { "name": "", "description": "a berserker who flies into an unstoppable rage once per day when wounded", "cr": "8", "rules": "2024",
+    "canary": "HOLD 3 (critic): 'flies into a rage' must not route to the winged seat — no Fly speed, and STR not DEX", "mode": "band" },
+  { "name": "", "description": "a druid of the standing stones who calls the briars", "cr": "6", "rules": "2024",
+    "canary": "HOLD (critic): there is no druid kit — an off-list class must be DROPPED, never coerced to cleric", "mode": "band" },
+  { "name": "", "description": "a troll that grows back unless the blade was silvered", "cr": "6", "rules": "2024",
+    "canary": "HOLD 4 (critic): 'grows back' must keep the regenerator seat — the removal-clause rule must not ban 'grows'", "mode": "band" },
+  { "name": "", "description": "a lizardfolk monk who strikes pressure points with an open hand", "cr": "5", "rules": "2024",
+    "canary": "HOLD 2: Patient Defense must LAND — a rules-only chassis row (Fleet Agility) is filler and leaves first", "mode": "band" },
+  { "name": "", "description": "a goliath berserker who loses control when wounded", "cr": "8", "rules": "2024",
+    "canary": "HOLD 2: Rampage must not yield to the cap while chassis filler stands", "mode": "band" },
+  { "name": "Thurivald", "description": "a skald who sings his warband into a fury", "cr": "6", "rules": "2014",
+    "canary": "COVERAGE INPUT: a 2014 sheet must carry generation.clauses — the conversion dropped it on every 2014 block", "mode": "band" },
+  { "name": "", "description": "a veteran soldier with a longsword who bashes with a buckler", "cr": "6", "rules": "2014",
+    "canary": "COVERAGE INPUT control, 2014: clauses survive the edition conversion here too", "mode": "band" },
+  { "name": "", "description": "a tiefling rogue who stalks the rooftops of the old quarter", "cr": "5", "rules": "2024",
+    "canary": "REGRESSION: the rogue's owed Assassinate must survive the trait ceiling beside a concept-bound signature", "mode": "band" }
+]

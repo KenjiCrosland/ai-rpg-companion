@@ -94,7 +94,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 15, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 15, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -120,7 +120,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 20 (4d6 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 17, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 17, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -148,7 +148,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 26 (4d8 + 8) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 20, each creature in a 60-foot-long, 10-foot-wide Line. *Failure:* 90 (20d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 20, each creature in a 60-foot-long, 10-foot-wide Line. *Failure:* 90 (20d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -182,7 +182,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 10 ft. 39 (6d10 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +15, range 90/240 ft. 37 (9d6 + 6) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 22, each creature in a 90-foot-long, 10-foot-wide Line. *Failure:* 77 (14d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 22, each creature in a 90-foot-long, 10-foot-wide Line. *Failure:* 77 (14d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 22, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -216,9 +216,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/90 ft. 7 (1d8 + 3) {damage_type} damage.' },
-        { name: 'Trampling Rush', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
+        { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -241,9 +241,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
-        { name: 'Trampling Rush', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -267,9 +267,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
-        { name: 'Trampling Rush', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -294,9 +294,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
-        { name: 'Trampling Rush', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -331,7 +331,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/90 ft. 10 (2d6 + 3) {damage_type} damage.' },
-        { name: 'Ranged Save Effect', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 12, one creature the creature can see within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.' },
+        { name: 'Ranged Save Effect', imposes: 'Frightened', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 12, one creature the creature can see within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -384,7 +384,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 25 (3d12 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 22 (3d10 + 6) {damage_type} damage.' },
-        { name: 'Ranged Save Effect', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 17, one creature the creature can see within 60 feet. *Failure:* 18 (4d8) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.' },
+        { name: 'Ranged Save Effect', imposes: 'Paralyzed', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 17, one creature the creature can see within 60 feet. *Failure:* 18 (4d8) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -412,7 +412,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 30 (5d8 + 8) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 29 (6d6 + 8) {damage_type} damage.' },
-        { name: 'Ranged Save Effect', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 20, one creature the creature can see within 90 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.' },
+        { name: 'Ranged Save Effect', imposes: 'Paralyzed', gated_on: 'gaze', text: '*Wisdom Saving Throw*: DC 20, one creature the creature can see within 90 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -446,7 +446,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage. *Hit or Miss:* Immediately after the attack, {projectile} returns to the creature\'s grasp.' },
-        { name: 'Hurled Burst', text: 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 15, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 45 (10d8) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Hurled Burst', imposes: 'Prone', text: 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 15, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 45 (10d8) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one Medium or smaller creature within 30 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target is pulled up to 20 feet straight toward the creature.' },
       ],
       'Bonus Actions': [
@@ -495,9 +495,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/90 ft. 7 (1d8 + 3) {damage_type} damage.' },
-        { name: 'Diving Attack', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
+        { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -520,9 +520,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
-        { name: 'Diving Attack', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -546,9 +546,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
-        { name: 'Diving Attack', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -573,9 +573,9 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
-        { name: 'Diving Attack', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -698,6 +698,19 @@ export const DONORS = [
       ],
     },
   },
+  // A HIGH-CR AREA NOVA USES PRINT'S HIGH-CR CONE (2026-11-04). brute-13, brute-17 and
+  // brute-17-juggernaut shipped a 30-foot Cone, which is print's size for CR 5-12, so a
+  // CR 17 brute's nova covered the area of a CR 8 one. Raised to 60, which is the only
+  // NON-DRAGON precedent print offers above CR 12: the Iron Golem's Poison Breath at
+  // CR 16 is a 60-foot Cone.
+  //
+  // NOT 90. Print's 90-foot cones are ancient dragons, and the dragon donors already
+  // carry print's banding exactly (dragon-2 15, dragon-8 30, dragon-15 60, dragon-22 90)
+  // — so that part was never broken. brute-21 keeps its 60 for the same reason: print's
+  // only non-dragon cone above CR 16 is the Tarrasque's 150 at CR 30, n=1, which is no
+  // basis for a band. Our aggregate cone median read 30 at CR 13+ only because brute
+  // novas outnumber dragon breaths 40% to 7% of sheets, not because the dragons were wrong.
+
   {
     id: 'brute-13',
     invented: true, // no printed plain brute at 13 outside dragons; card + sweep composition
@@ -711,7 +724,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 45 (9d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/240 ft. 38 (8d8 + 2) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -727,7 +740,7 @@ export const DONORS = [
     saves: ['STR'], skills: 'Athletics +5, Perception +2',
     sections: {
       Actions: [
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 9 (2d8) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +5, reach 5 ft. 9 (2d8) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and has the Prone condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -746,8 +759,8 @@ export const DONORS = [
     saves: ['STR', 'CON'], skills: 'Athletics +6, Perception +4',
     sections: {
       Actions: [
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 16 (3d8 + 3) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and has the Prone condition.' },
-        { name: 'Area Breath Attack', text: '*Constitution Saving Throw*: DC 13, each creature in a 30-foot Cone. *Failure:* 22 (5d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +6, reach 5 ft. 16 (3d8 + 3) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and has the Prone condition.' },
+        { name: 'Area Breath Attack', text: '*Constitution Saving Throw*: DC 13, each creature in a 30-foot Cone. *Failure:* 22 (5d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -767,7 +780,7 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 19 (3d10 + 3) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 13). While Grappled, the target has the Restrained condition.' },
+        { name: 'Melee Attack', imposes: ['Grappled', 'Restrained'], text: '*Melee Attack Roll:* +6, reach 5 ft. 19 (3d10 + 3) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 13). While Grappled, the target has the Restrained condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -775,7 +788,7 @@ export const DONORS = [
         // 2026-08-26: with no chassis swallow at CR 5, the model
         // improvised its own at 22 Acid/round — over double the priced
         // rate; print's Giant Toad swallows at CR 1)
-        { name: 'Swallow', rules: true, engulf_engine: true, text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 7 (2d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 15 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 7 (2d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 15 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
       ],
     },
   },
@@ -791,11 +804,11 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 15). While Grappled, the target has the Restrained condition.' },
+        { name: 'Melee Attack', imposes: ['Grappled', 'Restrained'], text: '*Melee Attack Roll:* +8, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 15). While Grappled, the target has the Restrained condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Swallow', rules: true, engulf_engine: true, text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more on a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more on a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
       ],
     },
   },
@@ -811,7 +824,7 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Lightning Absorption', rules: true, text: 'Whenever the creature is subjected to Lightning damage, it takes no damage and instead regains a number of Hit Points equal to the Lightning damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Magic Resistance', rules: true, text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
       ],
       Actions: [
@@ -833,13 +846,13 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Acid Absorption', rules: true, text: 'Whenever the creature is subjected to Acid damage, it takes no damage and instead regains a number of Hit Points equal to the Acid damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 35 (7d8 + 4) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -859,7 +872,7 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +9, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 11 (2d10) {damage_type} damage and has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +9, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 11 (2d10) {damage_type} damage and has the Prone condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 16, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -879,11 +892,11 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +11, reach 10 ft. 55 (11d8 + 6) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 18). While Grappled, the target has the Restrained condition.' },
+        { name: 'Melee Attack', imposes: ['Grappled', 'Restrained'], text: '*Melee Attack Roll:* +11, reach 10 ft. 55 (11d8 + 6) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 18). While Grappled, the target has the Restrained condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Swallow', rules: true, engulf_engine: true, text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 35 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 35 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
       ],
     },
   },
@@ -899,7 +912,7 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Fire Absorption', rules: true, text: 'Whenever the creature is subjected to Fire damage, it takes no damage and instead regains a number of Hit Points equal to the Fire damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
@@ -932,7 +945,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 42 (8d8 + 6) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 18 (4d8) {damage_type} damage and has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +12, reach 10 ft. 42 (8d8 + 6) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 18 (4d8) {damage_type} damage and has the Prone condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -942,7 +955,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Stampede', text: 'The creature moves up to its Speed in a straight line without provoking Opportunity Attacks, and it can move through the spaces of Large or smaller creatures. *Dexterity Saving Throw:* DC 19, each creature whose space it enters. *Failure:* The target is pushed 10 feet out of the creature\'s path.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -969,18 +982,18 @@ export const DONORS = [
         // print's own shape, the swallow IS the payoff) holds below the
         // legendary boundary. Do not re-file the missing nova as a gap.
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 60 (12d8 + 6) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 19). While Grappled, the target has the Restrained condition.' },
+        { name: 'Melee Attack', imposes: ['Grappled', 'Restrained'], text: '*Melee Attack Roll:* +12, reach 10 ft. 60 (12d8 + 6) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 19). While Grappled, the target has the Restrained condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60/240 ft. 49 (11d8) {damage_type} damage.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Swallow', rules: true, engulf_engine: true, text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 21 (6d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 40 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 21 (6d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 40 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Drag', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, carrying each creature it is grappling along with it.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -997,20 +1010,20 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 58 (13d8) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Wrecking Path', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks. During this movement, it can move through Large or smaller objects and structures, destroying them.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -1037,8 +1050,8 @@ export const DONORS = [
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
-        { name: 'Legendary Baleful Glare', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Baleful Glare', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -1079,14 +1092,14 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 46 (9d8 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60/240 ft. 39 (6d10 + 6) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -1107,14 +1120,14 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +14, reach 10 ft. 56 (11d8 + 7) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +14, range 60/240 ft. 44 (8d10) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 21, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+        { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 21, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
@@ -1139,7 +1152,12 @@ export const DONORS = [
     id: 'caster-6',
     cite: 'composition after Mage (CR 6) — three Arcane Bursts and the utility list',
     cr: 6, archetypes: ['caster'],
-    ac: 15, ac_offset: -1, hp: 84, hp_scale: 0.8, hp_formula: '13d8 + 26', atk: 7, dc: 14, pb: 3,
+    // hp_scale 0.8 -> 0.85 (druid smoke 2026-10-18). This seat is the floor caster
+    // from CR 3 up, and at CR 5 the card's 90 x 0.8 scaled to 71 — under print's
+    // effective floor of 75 (n=52), the lurker-5 defect one donor over. Print's
+    // Mage at its own CR 6 is 0.77 of card (81, print's own floor there); 0.85
+    // gives 89 at CR 6 and 77 at CR 5, over the floor at every CR this seat serves.
+    ac: 15, ac_offset: -1, hp: 89, hp_scale: 0.85, hp_formula: '14d8 + 26', atk: 7, dc: 14, pb: 3,
     speed: '30 ft.',
     stats: { STR: 9, DEX: 14, CON: 12, INT: 17, WIS: 12, CHA: 11 },
     saves: ['INT', 'WIS'], skills: 'Arcana +6, Perception +4',
@@ -1203,7 +1221,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Blast', text: 'The creature makes one Hybrid Attack attack.' },
         { name: 'Legendary Shift', text: 'The creature teleports up to 30 feet to an unoccupied space it can see. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1269,7 +1287,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Strike', text: 'The creature makes one Hybrid Attack attack.' },
         { name: 'Legendary Step', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Rebuke', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Rebuke', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1311,7 +1329,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 47 (7d12 + 2) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60 ft. 40 (9d8) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Wisdom Saving Throw*: DC 19, each enemy in a 30-foot Emanation originating from the creature. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Wisdom Saving Throw*: DC 19, each enemy in a 30-foot Emanation originating from the creature. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 19):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
@@ -1319,7 +1337,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Prowl', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Glare', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Glare', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1374,7 +1392,20 @@ export const DONORS = [
     id: 'lurker-5',
     cite: 'composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band',
     cr: 5, archetypes: ['lurker'],
-    ac: 15, ac_offset: -1, hp: 65, hp_scale: 0.72, hp_formula: '10d8 + 20', atk: 6, dc: 13, pb: 3,
+    // hp_scale 0.75 -> 0.90 (owner's lurker work, 2026-10-18). At 0.75 the sheet
+    // shipped 65 HP at CR 5 (10d8 + 20), under print's effective floor of 75
+    // (n=52) and under every print CR 5 creature: the thinnest unmitigated is
+    // the Xorn at 84 (AC 19), the thinnest of all the Wraith at 67 raw — which
+    // resists six damage types and is immune to two. This donor carried the
+    // lurker's thin HP and none of the lurker's payment: the phantom line pays
+    // with its defense_suite resistances (lurker-5-phantom at 0.75 reads 102
+    // effective), this line pays only with Umbral Step, which the reader now
+    // prices at +4 effective AC (the DMG's Shadow Stealth). 0.90 -> 78 on the
+    // sheet (12d8 + 24): over the floor, under the Crocodile, and the sheet reads
+    // CR 4.5 by the DMG method where 65 read 4. Print pays a trade with HP, never
+    // with the attack bonus: of 223 print blocks at CR 1+, 211 sit under the DMG
+    // table's HP and 2 under its attack bonus — so this is the lever.
+    ac: 15, ac_offset: -1, hp: 78, hp_scale: 0.90, hp_formula: '12d8 + 24', atk: 6, dc: 13, pb: 3,
     speed: '30 ft., Climb 30 ft.',
     stats: { STR: 12, DEX: 18, CON: 14, INT: 12, WIS: 13, CHA: 10 },
     saves: ['DEX'], skills: 'Perception +4, Stealth +10',
@@ -1438,7 +1469,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Stalk', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
         { name: 'Legendary Vanish', text: 'While in Dim Light or Darkness, the creature takes the Hide action. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Menace', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Menace', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1471,7 +1502,7 @@ export const DONORS = [
     cr: 5, archetypes: ['lurker'],
     defense_suite: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] }, // print's incorporeal suite (Specter/Wraith/Ghost) — the tech that pays the 0.7x HP
 
-    ac: 13, ac_offset: -3, hp: 63, hp_scale: 0.7, hp_formula: '14d8', atk: 6, dc: 13, pb: 3,
+    ac: 13, ac_offset: -3, hp: 63, hp_scale: 0.75, hp_formula: '14d8', atk: 6, dc: 13, pb: 3,
     speed: '5 ft., Fly 60 ft. (hover)',
     stats: { STR: 6, DEX: 16, CON: 16, INT: 12, WIS: 14, CHA: 15 },
     saves: ['DEX'], skills: 'Stealth +6',
@@ -1513,8 +1544,8 @@ export const DONORS = [
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Drift', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
-        { name: 'Legendary Fade', text: 'The creature has the Invisible condition until the start of its next turn or until immediately after it makes an attack roll. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Chill', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Fade', imposes: 'Invisible', text: 'The creature has the Invisible condition until the start of its next turn or until immediately after it makes an attack roll. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Chill', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1529,14 +1560,14 @@ export const DONORS = [
     saves: ['STR'], skills: 'Stealth +5',
     sections: {
       Traits: [
-        { name: 'Adhesive Hide', rules: true, text: 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature has the Grappled condition (escape DC 12).' },
+        { name: 'Adhesive Hide', imposes: 'Grappled', rules: true, text: 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature has the Grappled condition (escape DC 12).' },
       ],
       Actions: [
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +5 (with Advantage if the target is Grappled by the creature), reach 5 ft. 13 (2d8 + 4) {damage_type} damage.' },
         // the engulf ENGINE, gated on the claim (batch three 2026-09-05:
         // two swallowing traps hand-rolled containment — one inverted the
         // death-exit clause into suicide; the organ knows the direction)
-        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 7 (2d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 15 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 7 (2d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 15 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -1555,11 +1586,11 @@ export const DONORS = [
     saves: ['STR'], skills: 'Perception +6, Stealth +5',
     sections: {
       Actions: [
-        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks and uses Reel.' },
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks, makes two Grasping Limb attacks, and uses Reel.' }, // the Roper's line: bites, tentacles, Reel — the limb had sat outside the Multiattack (critic, fresh six); the damaging count leads so the budget reads it
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +6 (with Advantage if the target is Grappled by the creature), reach 5 ft. 18 (3d8 + 5) {damage_type} damage.' },
-        { name: 'Grasping Limb', text: '*Melee Attack Roll:* +6, reach 50 ft. The target has the Grappled condition (escape DC 13).' },
+        { name: 'Grasping Limb', imposes: 'Grappled', text: '*Melee Attack Roll:* +6, reach 50 ft. The target has the Grappled condition (escape DC 13).' },
         { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' },
-        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -1583,8 +1614,8 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8 (with Advantage if the target is Grappled by the creature), reach 10 ft. 24 (3d10 + 8) {damage_type} damage.' },
-        { name: 'Attach', text: '*Melee Attack Roll:* +8, reach 5 ft. 13 (3d6 + 3) {damage_type} damage. If the target is a Large or smaller creature, the creature attaches to it: the target has the Grappled condition (escape DC 15), and the creature\'s attacks hit only the Grappled target while attached.' },
-        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Attach', imposes: 'Grappled', text: '*Melee Attack Roll:* +8, reach 5 ft. 13 (3d6 + 3) {damage_type} damage. If the target is a Large or smaller creature, the creature attaches to it: the target has the Grappled condition (escape DC 15), and the creature\'s attacks hit only the Grappled target while attached.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -1607,11 +1638,11 @@ export const DONORS = [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
       ],
       Actions: [
-        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks and uses Reel.' },
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks, makes two Grasping Limb attacks, and uses Reel.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12 (with Advantage if the target is Grappled by the creature), reach 5 ft. 44 (8d8 + 8) {damage_type} damage.' },
-        { name: 'Grasping Limb', text: '*Melee Attack Roll:* +12, reach 60 ft. The target has the Grappled condition (escape DC 19).' },
+        { name: 'Grasping Limb', imposes: 'Grappled', text: '*Melee Attack Roll:* +12, reach 60 ft. The target has the Grappled condition (escape DC 19).' },
         { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 30 feet straight toward it.' },
-        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 35 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 35 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -1621,7 +1652,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Snap', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Drag', text: 'The creature pulls one creature Grappled by it up to 15 feet straight toward it.' },
-        { name: 'Legendary Stillness', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Stillness', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1663,6 +1694,272 @@ export const DONORS = [
   // the surviving insight of the original pin. Juggernaut stays brute.
   // Lines: plain = soldier (Knight/Guard Captain), 'warden' (Shield
   // Guardian — construct guardian, transfer + Regeneration).
+  // ================================================================
+  // THE THREE NEW LINES (owner 2026-09-28: "make these new donor templates").
+  // Print roles the five families never carried: the ARCHER (primary ranged,
+  // a bow not a throw), the LEADER (a modest attacker whose signature is what
+  // it does for allies), the SHIFTER (two forms, "(X Form Only)" gates). Card
+  // numbers copied from the same-CR donors; composition after the cited
+  // print blocks; the wildcard slot and the family's exit row per the spec.
+  // ================================================================
+  // ----- archer: Scout (CR 1/2) / Hobgoblin Captain's longbow line / Spy -----
+  {
+    id: 'skirmisher-3-archer',
+    cite: 'composition after Scout (CR 1/2, Shortsword + Longbow 150/600) and Spy (CR 1, Cunning Action) scaled to the CR 3 card',
+    style: 'archer',
+    cr: 3, archetypes: ['skirmisher', 'artillery'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 11, DEX: 16, CON: 12, INT: 11, WIS: 14, CHA: 11 },
+    saves: ['DEX'], skills: 'Perception +4, Stealth +5',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 150/600 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 60 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-8-archer',
+    invented: true, // the Scout line at CR 8 — no printed archer sits here; the Archer (2024 MM, CR 3) is not in this corpus
+    style: 'archer',
+    cr: 8, archetypes: ['skirmisher', 'artillery'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 12, DEX: 20, CON: 16, INT: 12, WIS: 16, CHA: 12 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +6, Stealth +8',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 150/600 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 60 feet. *Failure:* 10 (3d6) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-13-archer',
+    invented: true, // the Scout line at CR 13
+    style: 'archer',
+    cr: 13, archetypes: ['skirmisher', 'artillery'],
+    ac: 18, hp: 210, hp_formula: '28d10 + 56', atk: 10, dc: 17, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 14, DEX: 22, CON: 14, INT: 12, WIS: 18, CHA: 12 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +9, Stealth +11',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 25 (3d12 + 6) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 150/600 ft. 25 (3d12 + 6) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* 16 (3d10) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  // ----- leader: Hobgoblin Captain (CR 3) / Bandit Captain (CR 2) / Pirate Captain (CR 6) -----
+  {
+    id: 'defender-3-leader',
+    cite: 'composition after Hobgoblin Captain (CR 3: Aura of Authority + Greatsword/Longbow); the Bandit Captain\'s Parry is retired by the family sweep (2026-09-08: defenders carry no reactions)',
+    style: 'leader',
+    cr: 3, archetypes: ['defender'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 14, CON: 14, INT: 12, WIS: 11, CHA: 15 }, // STR mod + PB = the card's attack bonus
+    saves: ['CON', 'CHA'], skills: 'Athletics +4, Persuasion +4',
+    sections: {
+      Traits: [
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Hybrid Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +5, reach 5 ft. or range 30/120 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-8-leader',
+    invented: true, // the captain line at CR 8 — Pirate Captain (CR 6) is the nearest print rung
+    style: 'leader',
+    cr: 8, archetypes: ['defender'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 14, CON: 16, INT: 12, WIS: 13, CHA: 18 },
+    saves: ['CON', 'CHA'], skills: 'Athletics +7, Persuasion +7',
+    sections: {
+      Traits: [
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Hybrid Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +8, reach 5 ft. or range 30/120 ft. 18 (3d8 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  // ----- shifter: Werewolf (CR 3) / Weretiger (CR 4) / Doppelganger (CR 3) -----
+  {
+    id: 'skirmisher-3-shifter',
+    cite: 'composition after Werewolf (CR 3: Scratch + gated Bite + Shape-Shift) and Weretiger (CR 4: Prowl)',
+    style: 'shifter',
+    cr: 3, archetypes: ['skirmisher'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 14, CON: 14, INT: 10, WIS: 11, CHA: 10 },
+    saves: ['STR'], skills: 'Perception +2, Stealth +4',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Bite Attack', imposes: 'Poisoned', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 12. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', imposes: 'Frightened', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-8-shifter',
+    invented: true, // the were line at CR 8 — Werebear (CR 5) is the highest print rung
+    style: 'shifter',
+    cr: 8, archetypes: ['skirmisher'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 16, CON: 16, INT: 10, WIS: 12, CHA: 10 },
+    saves: ['STR', 'CON'], skills: 'Perception +4, Stealth +6',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Bite Attack', imposes: 'Poisoned', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 15. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', imposes: 'Frightened', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  // ----- the three lines' legendary top seats (owner rule 2026-09-01: every style line tops out in a legendary seat) -----
+  {
+    id: 'skirmisher-18-archer',
+    invented: true, // no printed archer boss — the Scout line at the skulker-18 card
+    style: 'archer', legendary: true,
+    cr: 18, archetypes: ['skirmisher', 'artillery'],
+    ac: 20, hp: 285, hp_formula: '38d10 + 76', atk: 13, dc: 20, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 16, DEX: 26, CON: 14, INT: 14, WIS: 20, CHA: 14 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +11, Stealth +14',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 150/600 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 120 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-18-shifter',
+    invented: true, // no printed were boss — the were line at the skulker-18 card
+    style: 'shifter', legendary: true,
+    cr: 18, archetypes: ['skirmisher'],
+    ac: 20, hp: 285, hp_formula: '38d10 + 76', atk: 13, dc: 20, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 24, DEX: 20, CON: 18, INT: 12, WIS: 16, CHA: 14 },
+    saves: ['STR', 'CON'], skills: 'Perception +9, Stealth +11',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Bite Attack', imposes: 'Poisoned', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 20. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', imposes: 'Frightened', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 30 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Large beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Rend', text: 'The creature makes one Melee Attack attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-17-leader',
+    invented: true, // no printed captain boss — the leader line at the warden-17 card (the defender family's armor-over-card, meat-over-damage tax)
+    style: 'leader', legendary: true,
+    cr: 17, archetypes: ['defender'],
+    ac: 20, ac_offset: 1, hp: 238, hp_scale: 1.1, hp_formula: '35d8 + 80', atk: 12, dc: 19, pb: 6, dpr_scale: 0.7,
+    speed: '30 ft.',
+    stats: { STR: 22, DEX: 14, CON: 20, INT: 14, WIS: 16, CHA: 20 },
+    saves: ['CON', 'CHA'], skills: 'Athletics +12, Persuasion +11',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Command', text: 'One ally of the creature that can see or hear it can immediately use its Reaction to move up to half its Speed or to make one attack.' },
+        { name: 'Legendary Rally', text: 'The creature and each of its allies within 10 feet of it that can see or hear it end the Charmed and Frightened conditions on themselves.' },
+      ],
+    },
+  },
   {
     id: 'defender-1',
     cite: 'composition after Guard (CR 1/8) and the Knight\'s armor line — the shield-wall floor',
@@ -1753,7 +2050,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
+        { name: 'Legendary Rebuke', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
       ],
     },
   },
@@ -1853,7 +2150,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
+        { name: 'Legendary Rebuke', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
       ],
     },
   },
@@ -1902,6 +2199,163 @@ export const DONORS = [
     },
   },
   {
+    // THE CR 10-16 DEFENDER GAP (owner's go, 2026-10-29, after the legend12 probe).
+    // The twelve put a defender-shaped CR 15 concept on `defender-5` — a CR 5
+    // chassis stretched TEN CRs, worse than the `lurker-8`-at-CR-13 case the
+    // lurker rung was added for. Measured: the defender family had NO donor
+    // anywhere in CR 10-16 (nor did swarm, ooze or controller), while brute had 5
+    // and skirmisher 6, all at CR 13 — which is also why band concepts misroute
+    // to those archetypes.
+    //
+    // NON-LEGENDARY ON PURPOSE. Print's CR 12-16 defenders are the Rakshasa (CR
+    // 13, AC 17, HP 221), the Ice Devil (CR 14, AC 18, HP 228) and the Iron Golem
+    // (CR 16, AC 20, HP 252) — not one of them has legendary actions. Only the
+    // dragons, the Vampire and the Mummy Lord do in that band, which the two
+    // legendary rungs added above already mirror.
+    //
+    // Numbered to the plain CR 13 card (hp 210, dpr 100, atk 10, ac 18, dc 17):
+    // the defender law is AC OVER the card paid by under-card HP, so ac_offset +2
+    // at AC 20, and hp_scale 0.86 clears print's own CR 13 floor of 170.
+    // ONE DAMAGE COMPONENT, AND NO INVENTED TOKEN (2026-10-30). All three donors
+    // added on 2026-10-29 wrote a second component as `{energy_type}` — a token
+    // that appears NOWHERE in the engine; every other donor uses `{damage_type}`
+    // (216 uses). It shipped unsubstituted on the Vampire's Grave Strike, which
+    // the critic scored the run's best idea at soundness 0, and the component
+    // also stacked on print's own Necrotic rider for ~26 unpriced damage a round.
+    // Print writes two-component rows, but a donor has only one damage token, so
+    // a single component carrying the whole average is the honest form.
+    id: 'defender-13',
+    cite: 'composition after Rakshasa (CR 13) and Ice Devil (CR 14) — print\'s CR 13-16 defenders: high AC, a ward, no legendary kit',
+    cr: 13, archetypes: ['defender'],
+    ac: 20, ac_offset: 2, hp: 181, hp_scale: 0.86, hp_formula: '19d10 + 76', atk: 10, dc: 17, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 14, CON: 20, INT: 14, WIS: 16, CHA: 16 },
+    saves: ['CON', 'WIS'], skills: 'Athletics +10, Perception +8',
+    sections: {
+      Traits: [
+        { name: 'Magic Resistance', text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
+        // the leader half's grammar, filed as print files auras — a trait
+        // `gated_on: 'aura'` is how the claim gate finds it — an ally-buff
+        // emanation ships only when the concept claims one (Hobgoblin Captain's
+        // grammar), and the defender shape law looks it up by this stamp
+        // `rules: true` as every other defender's aura carries it — a rules row is
+        // exempt from the rename pass. Without it the engine tried to rename this
+        // and threw "unrenamed entry: Aura of Authority", which took down six
+        // tests the moment this donor became reachable.
+        { name: 'Aura of Authority', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on saving throws against being Charmed or Frightened.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 49 (8d10 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    // THE CR 13-16 LEGENDARY GAP (owner's go, 2026-10-29: "where we're under we
+    // should pump up and I think it's because we're missing legendaries in the
+    // 10-16 range... mostly dragons and like a vampire/mummy lord", then "adding
+    // is better than subtracting").
+    //
+    // Measured: 10 of print's 18 blocks at CR 13-16 are legendary (56%), and a
+    // legendary block there carries 8.3 rows against 5.4 without — about three
+    // rows, which is the whole of the shortfall. Our own five forties since
+    // 2026-10-25 shipped legendaries on 22% of CR 13-16 sheets and ran 6.5 rows
+    // against print's 7.0, the one band where we sit UNDER print.
+    //
+    // The cause was the donor table, not a gate: 1 of 10 donors in the band had a
+    // Legendary Actions section (`dragon-15`), and the band had no lurker or
+    // caster chassis at all — print's Vampire routed to `lurker-8` and stretched
+    // five CRs. Print's own non-dragon legendaries at CR 13-16 are exactly two,
+    // the Vampire and the Mummy Lord, so these two donors mirror that population
+    // rather than inventing one. Nothing is removed; CR 17-20 keeps all 21 of its
+    // legendary donors.
+    //
+    // SHAPED after print's Vampire — AC under the card, Climb speed, the grave
+    // strike, the beguiling — but NUMBERED to the CR card, which is what every
+    // donor obeys (`cardBudget(13, {legendary:true})` = hp 168, dpr 145, atk 10,
+    // ac 18, dc 17). Print's own Vampire sits well under that card at AC 16 /
+    // HP 195 / +9, so copying its figures would have failed `donors.spec.js` on
+    // four counts. The lurker law is "defenses UNDER the card, paid by tech", so
+    // the AC offset is negative and hp_scale sits below 1.
+    id: 'lurker-13',
+    cite: 'composition after Vampire (CR 13) — print\'s non-dragon legendary lurker: the grave strike, the shape-shift, the beguiling',
+    legendary: true,
+    cr: 13, archetypes: ['lurker'],
+    // HP answers to BOTH laws: print's thinnest CR 13 block (170 over the spec's
+    // 11-block window) is the floor, and the legendary card is 168, so the lurker's
+    // under-card discount is paid in AC (-2) rather than in meat.
+    // hp_scale is what the HP floor reads (`cardBudget(13).hp * hp_scale` against
+    // print's thinnest CR 13 block x 0.95 = 161.5), so 0.95 came out at 160 and
+    // failed by a point and a half; 0.98 clears it and still sits under the card.
+    ac: 16, ac_offset: -2, hp: 170, hp_scale: 0.98, hp_formula: '20d8 + 80', atk: 10, dc: 17, pb: 5,
+    speed: '40 ft., Climb 40 ft.',
+    stats: { STR: 18, DEX: 20, CON: 18, INT: 17, WIS: 15, CHA: 18 },
+    // THE CHASSIS IS NOT THE VAMPIRE. Its own skills follow its own card (DEX 20,
+    // PB 5), and carry a third the Vampire has not — so when a Vampire rides this
+    // chassis, print canon still has something to install. Authoring these as
+    // print's exact pair made the derived line identical and the revision silently
+    // stopped firing, which is what `pipelines.spec.js` pins.
+    saves: ['DEX', 'CHA'], skills: 'Perception +7, Stealth +10, Acrobatics +10',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 48 (8d10 + 4) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        // every lurker line pays for its under-card defenses with the family's
+        // own ambush grammar, and the reader prices it
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Lunge', text: 'The creature moves up to half its Speed, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Withdraw', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', duration: 'target_end', text: '*Wisdom Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    // SHAPED after print's Mummy Lord — the glare, the rotting fist, magic
+    // resistance, a spell row aboard — and NUMBERED to the card
+    // (`cardBudget(15, {legendary:true})` = hp 192, dpr 170, atk 11, ac 18,
+    // dc 18). The caster law is the glass cannon: HP under the card, the spell
+    // row present, the mind stats high.
+    id: 'caster-15',
+    cite: 'composition after Mummy Lord (CR 15) — print\'s non-dragon legendary caster: the glare, the rotting fist, the dread command',
+    legendary: true,
+    cr: 15, archetypes: ['caster'],
+    // print's thinnest CR 15 block is 184 (the spec's 12-block window), and the
+    // legendary card is 192 — so the glass-cannon discount is small here and paid
+    // mostly in AC. A legendary block already trades HP for action economy.
+    ac: 17, ac_offset: -1, hp: 187, hp_scale: 0.95, hp_formula: '22d8 + 88', atk: 11, dc: 18, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 14, DEX: 12, CON: 18, INT: 20, WIS: 19, CHA: 16 },
+    saves: ['WIS', 'INT'], skills: 'Perception +9, Religion +5',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Magic Resistance', text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Hybrid Attack attacks.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +11, reach 5 ft. or range 120 ft. 56 (12d8 + 2) {damage_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Hybrid Attack attack.' },
+        { name: 'Legendary Step', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', duration: 'target_end', text: '*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
     id: 'dragon-15',
     cite: 'composition across the ten adult dragons (CR 13-17) — the legendary tier begins',
     legendary: true,
@@ -1925,7 +2379,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Wing Beat', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1953,7 +2407,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Wing Beat', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -1993,7 +2447,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 15 (2d10 + 4) {damage_type} damage.' },
-        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Medium or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 13, each creature whose space the creature enters for the first time during this move. *Failure:* 10 (3d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 13 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Medium or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 13, each creature whose space the creature enters for the first time during this move. *Failure:* 10 (3d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 13 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -2015,7 +2469,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 30 (4d12 + 4) {damage_type} damage.' },
-        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 15, each creature whose space the creature enters for the first time during this move. *Failure:* 13 (3d8) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 13 (3d8) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 15 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 15, each creature whose space the creature enters for the first time during this move. *Failure:* 13 (3d8) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 13 (3d8) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 15 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -2039,14 +2493,14 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
-        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 19, each creature whose space the creature enters for the first time during this move. *Failure:* 17 (5d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 19 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, imposes: ['Blinded', 'Restrained'], gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 19, each creature whose space the creature enters for the first time during this move. *Failure:* 17 (5d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 19 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Lash', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Surge', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Dissolution', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Dissolution', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
@@ -2132,7 +2586,7 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Harry', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Flow', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
-        { name: 'Legendary Dread Hum', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Dread Hum', imposes: 'Frightened', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },

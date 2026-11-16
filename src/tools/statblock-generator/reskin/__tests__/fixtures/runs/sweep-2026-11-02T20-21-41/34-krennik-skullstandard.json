@@ -1,0 +1,238 @@
+{
+  "name": "Krennik Skullstandard",
+  "inline": "Krennik",
+  "type_and_alignment": "Medium humanoid, neutral evil",
+  "armor_class": "14 (leather)",
+  "hit_points": "78 (12d8 + 24)",
+  "speed": "50 ft.",
+  "attributes": "STR 14 (+2), DEX 16 (+3), CON 14 (+2), INT 8 (-1), WIS 12 (+1), CHA 8 (-1)",
+  "saving_throws": "DEX +5",
+  "skills": "Perception +3, Stealth +5",
+  "senses": "passive Perception 13",
+  "languages": "Common",
+  "challenge_rating": "4 (1,100 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+    {
+      "name": "Skullstandard Planted",
+      "description": "While Krennik holds the skull-stitched standard-pole, allies within 5 feet of Krennik are immune to the frightened condition, and once per turn Krennik ignores difficult terrain or stands from prone without spending movement."
+    },
+    {
+      "name": "Skirmisher",
+      "description": "Krennik ignores difficult terrain, and opportunity attacks against it are made with disadvantage."
+    },
+    {
+      "name": "Mounted Agility (Bonus Action)",
+      "description": "Krennik takes the Dash or Disengage action."
+    },
+    {
+      "name": "Rampage (1/Day) (Bonus Action)",
+      "description": "Immediately after dealing damage to a creature that is already below half its hit point maximum, Krennik moves up to half its Speed, and it makes one Lance attack."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "Krennik makes two attacks: one with Lance and one with Javelin."
+    },
+    {
+      "name": "Lance",
+      "description": "Melee Weapon Attack: +5 to hit, reach 10 ft., one target. Hit: 10 (2d6 + 3) piercing damage. If Krennik moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) piercing damage and, if it is Medium or smaller, is knocked prone.",
+      "imposes": "Prone"
+    },
+    {
+      "name": "Javelin",
+      "description": "Ranged Weapon Attack: +5 to hit, range 30/120 ft., one target. Hit: 7 (1d8 + 3) piercing damage."
+    },
+    {
+      "name": "Run Them Down (Recharge 5-6)",
+      "description": "Krennik moves up to its speed without provoking opportunity attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. Each such creature must make a DC 13 Dexterity saving throw, taking 24 (7d6) bludgeoning damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-3-mounted",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Krennik Skullstandard — riding a worg",
+    "clauses": [
+      {
+        "id": "cl_1v7kayt",
+        "text": "Krennik Skullstandard — riding a worg",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the weld (a push that undoes its own row)",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Krennik Skullstandard",
+    "inline": "Krennik",
+    "format": "2024",
+    "cr": 4,
+    "cr_str": "4",
+    "xp": 1100,
+    "challenge_rating": "4 (XP 1,100; PB +2)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral Evil",
+    "ac": 14,
+    "hp": 78,
+    "hp_formula": "12d8 + 24",
+    "pb": 2,
+    "speed": "50 ft.",
+    "stats": {
+      "STR": 14,
+      "DEX": 16,
+      "CON": 14,
+      "INT": 8,
+      "WIS": 12,
+      "CHA": 8
+    },
+    "saves": {
+      "STR": 2,
+      "DEX": 5,
+      "CON": 2,
+      "INT": -1,
+      "WIS": 1,
+      "CHA": -1
+    },
+    "skills": "Perception +3, Stealth +5",
+    "senses": "Passive Perception 13",
+    "languages": "Common",
+    "initiative_bonus": 3,
+    "initiative_score": 13,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Skullstandard Planted",
+          "text": "While Krennik holds the skull-stitched standard-pole, allies within 5 feet of Krennik are immune to the Frightened condition, and once per turn Krennik ignores Difficult Terrain or stands from Prone without spending movement.",
+          "authored": true,
+          "clause": "The skull-stitched standard-pole is planted and trusted: allies within its reach cannot be Frightened, and Krennik can u",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "skull-stitched standard-pole",
+          "bound": false,
+          "boundKeys": [],
+          "expressedQuote": "While Krennik holds the skull-stitched standard-pole"
+        },
+        {
+          "name": "Skirmisher",
+          "text": "Krennik ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "Krennik makes two attacks, using Lance or Javelin in any combination."
+        },
+        {
+          "name": "Lance",
+          "imposes": "Prone",
+          "text": "*Melee Attack Roll:* +5, reach 10 ft. 10 (2d6 + 3) Piercing damage. If Krennik moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) Piercing damage and, if it is Medium or smaller, has the Prone condition.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Javelin",
+          "text": "*Ranged Attack Roll:* +5, range 30/120 ft. 7 (1d8 + 3) Piercing damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Run Them Down (Recharge 5-6)",
+          "imposes": "Prone",
+          "text": "Krennik moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Dexterity Saving Throw*: DC 13. *Failure:* 24 (7d6) Bludgeoning damage, and the target has the Prone condition.",
+          "gate": "Recharge 5-6"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Mounted Agility",
+          "text": "Krennik takes the Dash or Disengage action.",
+          "rules": true
+        },
+        {
+          "name": "Rampage (1/Day)",
+          "gate": "1/Day",
+          "text": "Immediately after dealing damage to a creature that is already Bloodied, Krennik moves up to half its Speed, and it makes one Lance attack.",
+          "library": true,
+          "seed": "rampage"
+        }
+      ]
+    },
+    "lore": "Once a disgraced standard-bearer of a shattered mercenary company, Krennik now rides the steppe with his worg, stitching the skulls of every crew that abandoned him onto his tattered banner.",
+    "inline_kind": "person",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "skirmisher-3-mounted",
+      "archetype": "skirmisher",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "Krennik Skullstandard — riding a worg",
+      "clauses": [
+        {
+          "id": "cl_1v7kayt",
+          "text": "Krennik Skullstandard — riding a worg",
+          "kind": "descriptive",
+          "head": true
+        }
+      ],
+      "invented": true,
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 1,
+      "seed_rows": 1,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the weld (a push that undoes its own row)",
+      "signature": "library"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "riding a worg",
+  "selectedChallengeRating": "4",
+  "monsterName": "Krennik Skullstandard",
+  "caster": false
+}

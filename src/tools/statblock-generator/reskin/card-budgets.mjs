@@ -1,3 +1,5 @@
+import DMG_TABLE from '@/data/challengeRatings.json';
+import { hpAim2014 } from './print-2014.mjs';
 /**
  * THE 2024 MONSTER MANUAL ON A BUSINESS CARD (Blog of Holding v2, CC BY 4.0,
  * blogofholding.com/?p=8469) — the reskin pilot's single numeric authority,
@@ -28,12 +30,238 @@ export const NOVA_USES_PER_FIGHT = { 'Recharge 4-6': 2, 'Recharge 5-6': 1, '1/Da
 export const FIGHT_ROUNDS = 3;
 export const AREA_TARGETS = 2;
 
+/**
+ * PRINT'S HARDEST SINGLE-TARGET ROW, BY BAND — one closed fact, one home.
+ *
+ * Derived from SRD 5.2 by summing every damage component of each attack row that
+ * names one target (the swarm's Bloodied split is one attack at two rates, never
+ * their sum). A RUNNING MAX is applied: print's own sample dips at CR 17-20 (43)
+ * below CR 13-16 (51), which is sampling and not a rule, and a ceiling must never
+ * fall as CR rises (the critic's own correction, 2026-10-29).
+ *
+ * Lived privately in checker.mjs as `CAP`. `scale.mjs` needs the same number to
+ * hold a one-attack body under it, and two copies of one fact is the drift this
+ * sprint's audit is about.
+ */
+export const SINGLE_TARGET_CEILING = { '0-2': 24, '3-5': 31, '6-9': 35, '10-12': 39, '13-16': 51, '17-20': 51, '21+': 60 };
+/**
+ * PRINT'S HARDEST SINGLE-TARGET **SAVE** ROW, BY BAND (the critic, 2026-11-03).
+ *
+ * The ceiling above is derived from print's ATTACK rows, and the checker was applying it
+ * to save rows too — so a single-target save row at CR 13-16 was judged against 51 when
+ * print's hardest is 27. Print keeps a focused save row softer than a hit in every band
+ * but the last, which makes sense: the target gets a save.
+ *
+ * Measured the same way (sum every damage component of a row that deals damage, names
+ * one target, and resolves by a saving throw rather than an attack roll). 43 rows:
+ *   0-2   n=4   5, 5, 7, 13
+ *   3-5   n=12  6, 8, 9, 10, 13, 13, 15, 16, 17, 18, 18, 24
+ *   6-9   n=4   9, 14, 15, 29
+ *   10-12 n=7   10, 14, 20, 20, 21, 28, 31
+ *   13-16 n=7   15, 17, 19, 22, 24, 25, 27
+ *   17-20 n=2   10, 36            <- TWO ROWS. Thin, and the running max carries it.
+ *   21+   n=7   24, 31, 33, 33, 47, 56, 60
+ *
+ * A RUNNING MAX is applied for the same reason the attack table needs one, and the 17-20
+ * sample is why: at n=2 a band's own maximum is sampling, not a rule.
+ *
+ * The margin discipline is unchanged — over print is a true statement at any margin, and
+ * the 1.25x severity line still separates "one-shots a PC" from "wants a reader".
+ */
+export const SINGLE_TARGET_SAVE_CEILING = { '0-2': 13, '3-5': 24, '6-9': 29, '10-12': 31, '13-16': 31, '17-20': 36, '21+': 60 };
+/** The ceiling a row answers to: a save row is held to print's save rows, a hit to print's hits. */
+export const ceilingFor = (cr, { save = false } = {}) => (save ? SINGLE_TARGET_SAVE_CEILING : SINGLE_TARGET_CEILING)[ceilingBandOf(cr)] ?? null;
+export const ceilingBandOf = (cr) => (cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+// WHAT A CONDITION UPGRADES INTO, measured off print (2026-11-05). A stepped payoff
+// rewards an already-afflicted target with a worse condition, and "worse" is not a
+// judgement call — print pairs them, and every pair it writes is a strict escalation:
+//
+//   Grappled      -> Restrained    4x  (Crocodile, Giant Crocodile, Giant Octopus, Roper)
+//   Restrained    -> Petrified     4x  (Basilisk, Cockatrice, Gorgon, Medusa — First/Second Failure)
+//   Poisoned      -> Paralyzed     3x  (Chuul, Phase Spider, Vampire Familiar)
+//   Poisoned      -> Unconscious   2x  (Homunculus, Pseudodragon)
+//   Incapacitated -> Paralyzed     4x  (the Silver Dragons — First/Second Failure)
+//   Charmed       -> Incapacitated 1x  (Harpy/Luring Song)
+//
+// NOTHING in print escalates into Prone, and that is the point: Prone on a Restrained
+// target adds nothing a GM can use — the attackers already have Advantage and the target
+// already has speed 0 and cannot stand. A reward must give the table something new.
+//
+// A trigger with no print escalation (Prone, Frightened, Blinded, Deafened) gets NO
+// condition reward; its frame falls back to the damage step rather than inventing a weak
+// pair. Print never upgrades those either.
+export const CONDITION_ESCALATION = {
+  Grappled: ['Restrained'],
+  Restrained: ['Petrified'],
+  Poisoned: ['Paralyzed', 'Unconscious'],
+  Incapacitated: ['Paralyzed'],
+  Charmed: ['Incapacitated'],
+};
+/** The condition a payoff may reward for finding its target already afflicted, or null
+ *  when print attests no escalation from it. `proposed` wins when print attests it.
+ *  NOT YET WIRED: reaching Petrified or Paralyzed needs print's First Failure / Second
+ *  Failure frame, and the `{condition_minor}` slot promises a MILD rider on purpose —
+ *  its vocabulary is Prone/Poisoned/Deafened/Frightened/Blinded and the save-stat
+ *  binding and the fear gate both lean on that. Kept here, measured, for that work. */
+export const escalationFrom = (trigger, proposed = null) => {
+  const up = CONDITION_ESCALATION[String(trigger ?? '')] ?? null;
+  if (!up) return null;
+  return up.includes(String(proposed ?? '')) ? String(proposed) : up[0];
+};
+// THE LADDER A PAYOFF CLIMBS. The point of this row is escalation: it finds a target
+// already afflicted and makes it worse, so the reward must be a step UP from the
+// specific condition the target has — not merely "something severe that is not
+// redundant", which is what a flat pool gives (it returns Restrained almost every time
+// and never reaches Paralyzed at all).
+//
+// print attests these, with counts:
+//   Grappled      -> Restrained    4x  Crocodile, Giant Crocodile, Giant Octopus, Roper
+//   Poisoned      -> Paralyzed     3x  Chuul, Phase Spider, Vampire Familiar
+//   Poisoned      -> Unconscious   2x  Homunculus, Pseudodragon
+//   Incapacitated -> Paralyzed     4x  the Silver Dragons (First/Second Failure)
+//   Charmed       -> Incapacitated 1x  Harpy/Luring Song
+//   Restrained    -> Petrified     4x  Basilisk, Cockatrice, Gorgon, Medusa
+//
+// Restrained's own print step is PETRIFIED, and we cannot write it yet: print only ever
+// reaches Petrified through First Failure / Second Failure, a frame shape this catalog
+// does not have. So Restrained climbs to Paralyzed here, which is marked below as OURS
+// rather than print's — it is the next rung by what the condition takes away (Paralyzed
+// is Incapacitated plus Speed 0 plus auto-failed Strength and Dexterity saves plus
+// critical hits within 5 feet), and it keeps the row escalating instead of stalling.
+//
+// The three rungs print does not attest are marked the same way. Each is the next step
+// by severity, never a sideways move, and never the condition the target already has.
+const ESCALATION = {
+  // print-attested
+  Grappled: 'Restrained',
+  Poisoned: 'Paralyzed',
+  Incapacitated: 'Paralyzed',
+  Charmed: 'Incapacitated',
+  // OURS, by severity, where print attests no step (or attests one we cannot write yet)
+  Restrained: 'Paralyzed',    // print's own is Petrified, which needs the two-failure frame
+  Prone: 'Restrained',        // Speed 0 and Advantage to attackers is strictly more than Prone
+  Frightened: 'Incapacitated',
+  Blinded: 'Incapacitated',
+  Deafened: 'Blinded',
+  Stunned: 'Paralyzed',
+  Paralyzed: 'Unconscious',
+};
+// THE SHELF OF ESCALATIONS a payoff can reward with (owner, 2026-11-05: "we can get
+// creative with this ... create a format for a model to fill out"). The call judges WHICH
+// escalation suits the creature; every number and every rule below is the engine's.
+//
+// grounding, measured:
+//   condition  — the ladder above, print-attested rung by rung
+//   exhaustion — print writes it 3 times, and twice as exactly this shape: the Sphinx of
+//                Lore (CR 11) and Sphinx of Valor (CR 17), "the target gains 1 Exhaustion
+//                level". Gated to CR 10+ because that is where print puts it, and because
+//                Exhaustion stacks — it is the one shape that escalates across rounds.
+//   damage     — the two-step rows, 11 of them: Mimic 7 or 12, Chimera 11 or 18.
+//   mark       — NO print precedent (0 rows grant Advantage against a named target). It
+//                ships because the owner asked for it, bounded two ways: it lasts only to
+//                the end of the creature's next turn, and the creature may hold ONE mark
+//                at a time (owner's constraint). Advantage for a minute, stacking across
+//                allies, would be permanent inside a fight.
+export const ESCALATION_SHAPES = ['condition', 'exhaustion', 'damage', 'mark'];
+/** Which shapes a payoff may use at this CR. `condition` is always available; exhaustion
+ *  waits for the band print uses it in. */
+export const escalationShapesFor = (cr) => ESCALATION_SHAPES.filter((x) => x !== 'exhaustion' || Number(cr) >= 10);
+/** The reward clause for a shape, numbers supplied. Returns null for `condition`, which
+ *  the frame already writes and the minor-clause machinery already declares. */
+export const escalationClause = (shape, { inline = 'the creature', damageType = 'Force', extra = null } = {}) => ({
+  exhaustion: 'it gains 1 Exhaustion level',
+  damage: extra ? `it takes an extra ${extra} ${damageType} damage` : null,
+  mark: `${inline} has Advantage on attack rolls against it until the end of ${inline}'s next turn, and ${inline} can have only one target marked this way at a time`,
+}[String(shape)] ?? null);
+export const SEVERE_CONDITIONS = ['Restrained', 'Incapacitated', 'Paralyzed', 'Unconscious', 'Blinded'];
+/** The condition a payoff imposes on a target it finds already afflicted: one rung up
+ *  the ladder from `trigger`. `severe` is false below the CRs where print's own
+ *  single-target saves take a turn away, and there the step stays inside the mild pool.
+ *  Returns null when no rung applies, and the frame then prints damage alone. */
+export const escalateFrom = (trigger, mild, { severe = false } = {}) => {
+  const trig = String(trigger ?? '');
+  const up = ESCALATION[trig] ?? null;
+  if (severe) return up && up !== trig ? up : null;
+  // A FINISHED TARGET HAS NO NEXT RUNG. Petrified is a statue and Unconscious is down;
+  // adding Deafened to either is a line a GM reads twice and ignores, and print escalates
+  // neither. The clause leaves instead (spot-checked 2026-11-05: "already Petrified, it
+  // also has the Deafened condition").
+  if (TERMINAL.includes(trig)) return null;
+  // below the severe bands a payoff stays mild: print's low-CR payoffs impose
+  // Frightened, Charmed and Prone, none of which is an escalation of anything
+  return mild.find((c) => c !== trig && !SUBSUMES_MILD(trig).includes(c)) ?? null;
+};
+const TERMINAL = ['Petrified', 'Unconscious']; // nothing escalates a statue or a body on the floor
+const SUBSUMES_MILD = (trig) => ({
+  Restrained: ['Prone'],            // Speed 0, Advantage to attackers, cannot stand
+  Paralyzed: ['Prone', 'Blinded'],
+  Stunned: ['Prone'],
+  Unconscious: ['Prone', 'Blinded', 'Deafened'],
+  Petrified: ['Prone', 'Blinded', 'Poisoned'],
+  Blinded: ['Prone'],
+}[trig] ?? []);
+// ONE DEFINITION OF "THIS SAVE HITS ONE CREATURE", shared by every writer. `per_hit` is
+// the round's budget and a save frame spends it whole — correct for a cone, where print
+// gates 68% of its area saves behind a Recharge so the CR math amortises them to about a
+// third, and wrong for "one creature within 60 feet", which 95% of print's single-target
+// saves deliver AT WILL, every round. The Merciless Strike shipped 65 at CR 13 and 66 at
+// CR 16 against print's hardest single-target save of 31: an area-sized number, at one
+// target, every turn.
+//
+// This lives HERE because two writers compute that damage — renderTemplate (the catalog
+// frames) and drawLibraryRow (the `{burst}` seeds) — and the first fix went into only one
+// of them, so the live run still shipped 66. A private copy hides the fix.
+const AREA_SHAPE = /each creature|all creatures|Emanation|Cone|Sphere|Cube|Cylinder|\d+-foot[- ][Ll]ine/i;
+export const isSingleTargetSave = (text) => /Saving Throw/i.test(String(text ?? ''))
+  && /\bone (?:creature|Large|Huge|Medium|Small|target)/i.test(String(text ?? ''))
+  && !AREA_SHAPE.test(String(text ?? ''));
+/** The per-row damage budget a save frame may spend, clamped to print's measured ceiling
+ *  when the frame names ONE creature. A ceiling, not a target: print's own payoffs sit
+ *  lower still (Glabrezu/Pummel 15 of an allowed 29). */
+export const capSingleTargetSave = (per, text, cr) => {
+  if (!isSingleTargetSave(text)) return per;
+  const cap = ceilingFor(Number(cr), { save: true });
+  return Number.isFinite(cap) && cap > 0 ? Math.min(per, cap) : per;
+};
+export const singleTargetCeiling = (cr) => SINGLE_TARGET_CEILING[ceilingBandOf(cr)] ?? null;
+
 const FRACTIONAL = { 0: { hp: 3, dpr: 2 }, 0.125: { hp: 9, dpr: 4 }, 0.25: { hp: 15, dpr: 6 }, 0.5: { hp: 24, dpr: 8 } };
 const roundUp5 = (n) => Math.ceil(n / 5) * 5;
 
-export function cardBudget(cr, { legendary = false, dragon = false } = {}) {
+// THE 2014 CARD is the DMG's own table (src/data/challengeRatings.json): a 2014
+// sheet budgets HP, AC, attack bonus, save DC and damage per round against the
+// band the 2014 rules print. The flat 0.7 damage discount it replaces (owner
+// ruling 2026-09-14, "~5 damage/CR") undershot the table — a CR 10 horseman
+// sustained 38 against the DMG's 63-68 (owner, 2026-10-02).
+const CR_KEY = (cr) => ({ 0.125: '1/8', 0.25: '1/4', 0.5: '1/2' }[cr] ?? String(cr));
+export function dmgRow(cr) { return DMG_TABLE[CR_KEY(cr)] ?? null; }
+const DMG_CRS = [0, 0.125, 0.25, 0.5, ...Array.from({ length: 30 }, (_, i) => i + 1)];
+// the DMG's defensive trade, inverted: a sheet whose AC sits 2 over the table
+// may carry the HP of one CR lower and still read as its CR (and the reverse),
+// so a 2014 sheet's HP is the band mid at cr - trunc((ac - tableAC) / 2)
+export function dmgHpForAc(cr, ac) {
+  const row = dmgRow(cr); if (!row) return null;
+  const i = DMG_CRS.indexOf(cr); if (i < 0) return null;
+  const adj = Math.trunc((ac - row.armor_class) / 2);
+  const at = DMG_CRS[Math.max(0, Math.min(DMG_CRS.length - 1, i - adj))];
+  const r = dmgRow(at); return Math.round((r.min_hit_points + r.max_hit_points) / 2);
+}
+export function cardBudget(cr, { legendary = false, dragon = false, edition = null } = {}) {
+  if (edition === '2014') {
+    const row = dmgRow(cr);
+    if (row) {
+      // HP is PRINT's median at the CR, not the table's band: the table says 71–85 at CR 1 where print 2014 sits at 19–37 (critic's release audit 2026-10-03); damage, attack, AC and DC stay the table's
+      const hp = hpAim2014(cr) ?? Math.round((row.min_hit_points + row.max_hit_points) / 2);
+      let dpr = Math.round((row.min_damage_per_round + row.max_damage_per_round) / 2);
+      const boosted = legendary || dragon;
+      if (boosted && cr >= 13 && cr <= 17) dpr = roundUp5(dpr * 1.45);
+      else if (boosted) dpr = roundUp5(dpr * 1.25);
+      return { hp, dpr, atk: Number(String(row.attack_bonus).replace('+', '')), ac: row.armor_class, dc: row.save_dc, edition: '2014' };
+    }
+  }
   const frac = FRACTIONAL[cr];
-  let hp = frac ? frac.hp : (cr <= 20 ? 15 + 15 * cr : 315 + 50 * (cr - 20));
+  // CR 18–20: the 15/CR line sits under print (Balor 287 at 19, Pit Fiend 337 and Ancient White 333 at 20) — +5/CR above 17 tracks the corpus (a CR 20 hurler at 312 failed print's 332 floor, checker 2026-10-02)
+  let hp = frac ? frac.hp : (cr <= 20 ? 15 + 15 * cr + (cr > 17 ? 5 * (cr - 17) : 0) : 315 + 50 * (cr - 20));
   let dpr = frac ? frac.dpr : (cr <= 20 ? roundUp5(7.5 * cr) : roundUp5(150 + 12.5 * (cr - 20)));
   const boosted = legendary || dragon;
   if (boosted && cr >= 13 && cr <= 17) { hp = Math.round(hp * 0.8); dpr = roundUp5(dpr * 1.45); }

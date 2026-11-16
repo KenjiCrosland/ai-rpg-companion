@@ -1,0 +1,144 @@
+{
+  "name": "Funeral Bell Swarm",
+  "inline": "the swarm",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Swarm of Tiny Constructs",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 178,
+  "hp_formula": "21d8 + 84",
+  "pb": 5,
+  "speed": "40 ft., Fly 30 ft. (hover)",
+  "stats": {
+    "STR": 8,
+    "DEX": 20,
+    "CON": 18,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 2
+  },
+  "saves": {
+    "STR": -1,
+    "DEX": 5,
+    "CON": 4,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -4
+  },
+  "skills": "",
+  "senses": "blindsight 30 ft.; Passive Perception 10",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Faultless Tracker",
+        "text": "The swarm knows the direction and distance to any creature it has damaged within the last 24 hours, as long as the two of them are on the same plane of existence.",
+        "library": true,
+        "template": "faultless-tracker",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true,
+        "expresses": null,
+        "bound": false
+      },
+      {
+        "name": "Swarm",
+        "rules": true,
+        "text": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Tolling Blows",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 32 (6d8 + 5) Bludgeoning damage plus 21 (6d6) Thunder damage, or 16 (3d10) Bludgeoning damage plus 10 (3d6) Thunder damage if the swarm is Bloodied.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Funeral Toll (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 17, each creature in a 30-foot Emanation originating from the swarm. *Failure:* 52 (15d6) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.",
+        "library": true,
+        "template": "active-toll",
+        "imposes": "Deafened",
+        "boundKeys": [
+          "ring",
+          "bell",
+          "deafen"
+        ],
+        "accepted_closest": true,
+        "area": {
+          "shape": "Emanation",
+          "size": 30
+        },
+        "clause": "a swarm of funeral bells",
+        "clauseId": "cl_1p80gjp"
+      }
+    ]
+  },
+  "lore": "Forged in a bell-foundry that cast the death-knells of an unburied plague-city, the swarm rose from the cooling molds when the last ringer died mid-call, and now drifts to the dying to finish the funeral no one survived to give.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "swarm-9",
+    "archetype": "swarm",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a swarm of funeral bells that ring themselves over the dying",
+    "clauses": [
+      {
+        "id": "cl_1p80gjp",
+        "text": "a swarm of funeral bells",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1qi383g",
+        "text": "ring themselves over the dying",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "ring themselves"
+      }
+    ],
+    "body": "swarm",
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "faultless-tracker"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 2",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "swarm",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a swarm of funeral bells that ring themselves over the dying",
+  "selectedChallengeRating": "13",
+  "monsterName": "Funeral Bell Swarm",
+  "caster": false
+}

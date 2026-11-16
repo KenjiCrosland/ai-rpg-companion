@@ -1,0 +1,128 @@
+{
+  "name": "Tithe Auditor",
+  "inline": "the auditor",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 13,
+  "hp": 67,
+  "hp_formula": "9d8 + 27",
+  "pb": 3,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 16,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 6,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +6",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The auditor can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the auditor has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The auditor makes two Ledger Slap attacks. It can replace one attack with a use of Heavy Ledger Strike."
+      },
+      {
+        "name": "Ledger Slap",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage plus 7 (2d6) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Heavy Ledger Strike",
+        "text": "*Dexterity Saving Throw*: DC 13, one creature within 60 feet. *Failure:* 21 (6d6) Bludgeoning damage.",
+        "authored": true,
+        "clause": "makes you drop what you are carrying",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "making prey drop what they carry",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_1n5rsnv"
+      }
+    ]
+  },
+  "lore": "Born of ledgers never balanced and tolls never paid, the Tithe Auditor drifts through floors and walls to collect from the living the debt it can never settle in death, dropping what they carry into its grave-horde.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a tax-ghost that makes you drop what you are carrying",
+    "clauses": [
+      {
+        "id": "cl_17rky5q",
+        "text": "a tax-ghost",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1n5rsnv",
+        "text": "makes you drop what you are carrying",
+        "kind": "mechanical",
+        "askShape": "save_single"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a tax-ghost that makes you drop what you are carrying",
+  "selectedChallengeRating": "5",
+  "monsterName": "Tithe Auditor",
+  "caster": false
+}

@@ -1,0 +1,98 @@
+[
+  {
+    "canary": "typed40 #13 (known case)",
+    "name": "",
+    "description": "lizard folk shadow monk",
+    "cr": "6",
+    "rules": "2024",
+    "green": "MONK RIDER: the Unarmed Strike save states its Failure outcome; no sentence ends at \"DC 14.\""
+  },
+  {
+    "canary": "typed40 #14 (known case)",
+    "name": "",
+    "description": "fire monk",
+    "cr": "5",
+    "rules": "2014",
+    "green": "MONK RIDER: same, in 2014 wording"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "dwarf drunken-fist monk",
+    "rules": "2024",
+    "cr": "4",
+    "green": "MONK RIDER: the stun rider is complete on a monk nobody tuned on"
+  },
+  {
+    "canary": "fresh (asks for a hold; replaces the typed40 #1 replay, whose grapple was the idea call's invention)",
+    "name": "Grask Ironjaw",
+    "description": "orc war chief who clamps his iron jaw on a foe and won't let go",
+    "cr": "5",
+    "rules": "2024",
+    "green": "RIDER ON ATTACK: a grapple rides an attack row with an escape DC; no trait imposes a condition on a hit"
+  },
+  {
+    "canary": "typed40 #5 (known case)",
+    "name": "Lord Vexmoor",
+    "description": "necromancer BBEG, raises the party's fallen allies",
+    "cr": "12",
+    "rules": "2024",
+    "green": "NAME LEAK + PRONOUN: no \"the mage\"; Vexmoor is never \"it\""
+  },
+  {
+    "canary": "typed40 #33 (known case)",
+    "name": "Thornback",
+    "description": "an ankheg but legendary, boss fight for level 5",
+    "cr": "8",
+    "rules": "2024",
+    "green": "NAME LEAK: no \"the ankheg\" in Thornback's rows"
+  },
+  {
+    "canary": "typed40 #31 (known case)",
+    "name": "",
+    "description": "a troll but weak to cold instead of fire",
+    "cr": "5",
+    "rules": "2024",
+    "green": "NAME LEAK: no \"toward Troll\"; the inline form is used"
+  },
+  {
+    "canary": "typed40 #16 (known case)",
+    "name": "",
+    "description": "vampire pirate",
+    "cr": "10",
+    "rules": "2014",
+    "green": "COMPOUND PRINT HEAD: routes as a twist on the print Vampire, not homebrew"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "ogre blacksmith",
+    "rules": "2014",
+    "cr": "4",
+    "green": "COMPOUND PRINT HEAD: routes as a twist on the print Ogre"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "Dame Isolde Varr",
+    "description": "disgraced knight turned caravan guard",
+    "rules": "2024",
+    "cr": "5",
+    "green": "PRONOUN: a named Humanoid is never \"it\""
+  },
+  {
+    "canary": "fresh (asks for a knockdown, 2014)",
+    "name": "",
+    "description": "bounty hunter whose hooked chain drags a target off its feet",
+    "cr": "4",
+    "rules": "2014",
+    "green": "RIDER ON ATTACK: Prone rides the chain attack; no trait imposes a condition on a hit"
+  },
+  {
+    "canary": "fresh control (a passive stance the idea call may mis-tag as a payoff condition)",
+    "name": "Captain Hesk",
+    "description": "shield-wall captain who fights better with allies beside her",
+    "cr": "5",
+    "rules": "2024",
+    "green": "CONTROL: the ally-adjacent stance stays a trait; no condition is welded onto an attack row for it"
+  }
+]

@@ -1,0 +1,30 @@
+[
+ {
+  "canary": "PROBE C STEP 1 \u2014 BASELINE for layer-mother-ash, pinned to caster-8-binder, the card its flagged run drew. Flag off.",
+  "name": "Mother Ash",
+  "description": "hag midwife",
+  "cr": "9",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Green Hag\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "caster-8-binder",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 BASELINE for layer-bellringer-ghost, pinned to lurker-1-phantom, the card its flagged run drew. Flag off.",
+  "name": "",
+  "description": "a chapel bell-ringer's ghost that tolls for the dying",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Ghost\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "lurker-1-phantom",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ }
+]

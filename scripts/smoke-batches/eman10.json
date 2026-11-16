@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a drowned cathedral choir whose hymn stops hearts", "cr": "15", "rules": "2024", "canary": "EMANATION: wail — a 60-foot Emanation, the size it always had" },
+  { "name": "", "description": "a marsh hag who drags travellers in with a lantern they cannot look away from", "cr": "12", "rules": "2024", "canary": "EMANATION: lure — the choice qualifier BEFORE, the sense qualifier AFTER" },
+  { "name": "", "description": "a plague-herald that drives a crowd before it with a bellow", "cr": "7", "rules": "2024", "canary": "EMANATION: herd — print's azer pattern" },
+  { "name": "", "description": "a bone-choir that shows the living what waits for them", "cr": "9", "rules": "2024", "canary": "EMANATION: terror-pulse — both qualifier positions at once" },
+  { "name": "", "description": "a quarry-pit golem that stamps the ground and throws everyone near it down", "cr": "8", "rules": "2024", "canary": "CONTROL: ground-burst's own Emanation, 15-foot" },
+  { "name": "", "description": "a bile-spitting horror that hoses a line of acid down a corridor", "cr": "8", "rules": "2024", "canary": "CONTROL: spew's Line still works" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a known twist" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CONTROL: the package-seven twist" },
+  { "name": "Ancient Gold Dragon", "description": "", "cr": "24", "rules": "2014", "canary": "CONTROL: print-exact, untouched" },
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "CONTROL: life-drain still lands" }
+]

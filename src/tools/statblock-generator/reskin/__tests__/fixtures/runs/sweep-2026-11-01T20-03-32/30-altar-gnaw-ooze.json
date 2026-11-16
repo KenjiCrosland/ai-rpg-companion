@@ -1,0 +1,236 @@
+{
+  "name": "Altar-Gnaw Ooze",
+  "inline": "the ooze",
+  "type_and_alignment": "Large ooze, unaligned",
+  "armor_class": "10 (natural armor)",
+  "hit_points": "153 (18d10 + 54)",
+  "speed": "20 ft., climb 20 ft.",
+  "attributes": "STR 16 (+3), DEX 6 (-2), CON 16 (+3), INT 2 (-4), WIS 8 (-1), CHA 1 (-5)",
+  "saving_throws": "",
+  "skills": "",
+  "senses": "blindsight 60 ft. (blind beyond this radius), passive Perception 9",
+  "languages": "None",
+  "challenge_rating": "9 (5,000 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Reliquary Digestion",
+      "description": "When the ooze is in contact with a reliquary or similar consecrated object, the ooze dissolves the object over the course of 1 minute, gaining temporary hit points and leaving behind only a sour, blackened smear."
+    },
+    {
+      "name": "Adhesive",
+      "description": "The ooze adheres to anything that touches it. A Huge or smaller creature adhered to the ooze is also grappled by it (escape DC 15). Ability checks made to escape this grapple have disadvantage.",
+      "imposes": "Grappled"
+    },
+    {
+      "name": "Amorphous",
+      "description": "The ooze can move through a space as narrow as 1 inch wide without squeezing."
+    },
+    {
+      "name": "Corrosive Form",
+      "description": "A creature that touches the ooze or hits it with a melee attack while within 5 feet of it takes 9 (2d8) acid damage."
+    },
+    {
+      "name": "Spider Climb",
+      "description": "The ooze can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The ooze makes two Pseudopod attacks."
+    },
+    {
+      "name": "Pseudopod",
+      "description": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 16 (3d8 + 3) bludgeoning damage plus 11 (2d10) acid damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "ooze",
+  "archetype_source": "user",
+  "damage_immunities": "acid",
+  "condition_immunities": "charmed, deafened, exhaustion, frightened, grappled, prone, restrained",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "ooze-9",
+    "archetype": "ooze",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a cathedral-vault ooze that digests reliquaries",
+    "clauses": [
+      {
+        "id": "cl_1enw6wp",
+        "text": "a cathedral-vault ooze",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_fm6z29",
+        "text": "digests reliquaries",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "body": "ooze",
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Altar-Gnaw Ooze",
+    "inline": "the ooze",
+    "format": "2024",
+    "cr": 9,
+    "cr_str": "9",
+    "xp": 5000,
+    "challenge_rating": "9 (XP 5,000; PB +4)",
+    "type": "Ooze",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "ac": 10,
+    "hp": 153,
+    "hp_formula": "18d10 + 54",
+    "pb": 4,
+    "speed": "20 ft., Climb 20 ft.",
+    "stats": {
+      "STR": 16,
+      "DEX": 6,
+      "CON": 16,
+      "INT": 2,
+      "WIS": 8,
+      "CHA": 1
+    },
+    "saves": {
+      "STR": 3,
+      "DEX": -2,
+      "CON": 3,
+      "INT": -4,
+      "WIS": -1,
+      "CHA": -5
+    },
+    "skills": "",
+    "senses": "blindsight 60 ft. (blind beyond this radius); Passive Perception 9",
+    "languages": "None",
+    "initiative_bonus": -2,
+    "initiative_score": 8,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Reliquary Digestion",
+          "text": "When the ooze is in contact with a reliquary or similar consecrated object, the ooze dissolves the object over the course of 1 minute, gaining temporary Hit Points and leaving behind only a sour, blackened smear.",
+          "authored": true,
+          "clause": "digests reliquaries",
+          "clauseId": "cl_fm6z29"
+        },
+        {
+          "name": "Adhesive",
+          "text": "The ooze adheres to anything that touches it. A Huge or smaller creature adhered to the ooze is also Grappled by it (escape DC 15). Ability checks made to escape this grapple have Disadvantage.",
+          "library": true,
+          "template": "adhesive",
+          "imposes": "Grappled",
+          "boundKeys": [],
+          "gmQuote": "a cathedral vault ooze that digests reliquaries",
+          "expresses": "digesting holy reliquaries",
+          "bound": false
+        },
+        {
+          "name": "Amorphous",
+          "rules": true,
+          "text": "The ooze can move through a space as narrow as 1 inch wide without squeezing."
+        },
+        {
+          "name": "Corrosive Form",
+          "rules": true,
+          "text": "A creature that touches the ooze or hits it with a melee attack while within 5 feet of it takes 9 (2d8) Acid damage."
+        },
+        {
+          "name": "Spider Climb",
+          "rules": true,
+          "text": "The ooze can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The ooze makes two Pseudopod attacks."
+        },
+        {
+          "name": "Pseudopod",
+          "text": "*Melee Attack Roll:* +7, reach 10 ft. 16 (3d8 + 3) Bludgeoning damage plus 11 (2d10) Acid damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        }
+      ]
+    },
+    "lore": "Legends say a cathedral whose relics were never translated grew a hunger of its own under the flagstones, and now the vault itself comes up to swallow every saint-box left on the altar.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "ooze-9",
+      "archetype": "ooze",
+      "holds": true,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a cathedral-vault ooze that digests reliquaries",
+      "clauses": [
+        {
+          "id": "cl_1enw6wp",
+          "text": "a cathedral-vault ooze",
+          "kind": "mechanical",
+          "askShape": "attack"
+        },
+        {
+          "id": "cl_fm6z29",
+          "text": "digests reliquaries",
+          "kind": "mechanical",
+          "askShape": "attack"
+        }
+      ],
+      "body": "ooze",
+      "invented": true,
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the free-row budget",
+      "signature": "library"
+    },
+    "archetype": "ooze",
+    "archetype_source": "user",
+    "immunities": "Acid; Charmed, Deafened, Exhaustion, Frightened, Grappled, Prone, Restrained",
+    "lint_findings": []
+  },
+  "monsterDescription": "a cathedral-vault ooze that digests reliquaries",
+  "selectedChallengeRating": "9",
+  "monsterName": "Altar-Gnaw Ooze",
+  "caster": false
+}

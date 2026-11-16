@@ -1,0 +1,14 @@
+[
+  { "canary": "23 — Grizzelda: Protective Magic is print's text WITH a Trigger", "name": "Grizzelda", "description": "swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curses, can turn invisible. has a cauldron that she can summon things from 1/day", "cr": "5", "rules": "2014" },
+  { "canary": "22 — slow: Speed ≤ 20 (was 40, 30, 40)", "description": "AC 18 HP 200 hits hard, slow", "cr": "10", "rules": "2024", "role": "brute" },
+  { "canary": "22 — fast: Speed ≥ 40", "name": "Dervish Kal", "description": "fast, two scimitars, hit and run", "cr": "5", "rules": "2014", "role": "skirmisher" },
+  { "canary": "21 — Thornback: no dice in a count slot, no 'options below' with none", "name": "Thornback", "description": "an ankheg but legendary, boss fight for level 5", "cr": "8", "rules": "2024" },
+  { "canary": "24 — heavy crossbow: 1d10, 100/400 (was light, 0 of 3)", "description": "goblin boss with a heavy crossbow", "cr": "1", "rules": "2014" },
+  { "canary": "26 — displacer beast: a Displacement-shaped row", "description": "displacer beast", "cr": "3", "rules": "2024" },
+  { "canary": "26 — Beholder: label follows the body (was CR 13 reading 6, 3 of 3)", "name": "Beholder", "description": "", "cr": "", "rules": "2024" },
+  { "canary": "25 — fire monk on the 2014 path: ONE name on the sheet (was 'Dart makes two attacks')", "description": "fire monk", "cr": "5", "rules": "2014" },
+  { "canary": "27 — war chief: no Performance +5 (Gladiator skills), a leader row", "name": "Grask Ironjaw", "description": "orc war chief", "cr": "5", "rules": "2024" },
+  { "canary": "27 — cleric: WIS-led array, not the Mage's INT 18 / WIS 16", "description": "cleric of the harvest god", "cr": "7", "rules": "2024", "role": "controller" },
+  { "canary": "27 — goblin wizard: darkvision + Nimble Escape (goblin kit on class_npc)", "description": "goblin wizard", "cr": "3", "rules": "2024" },
+  { "canary": "27 — alligator: Hold Breath (0 of 3); monk kit: Step of the Wind not Cunning Action", "description": "sewer alligator", "cr": "4", "rules": "2014" }
+]

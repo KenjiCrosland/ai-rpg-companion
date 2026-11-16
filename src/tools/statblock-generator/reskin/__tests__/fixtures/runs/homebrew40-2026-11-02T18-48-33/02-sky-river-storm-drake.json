@@ -1,0 +1,119 @@
+{
+  "name": "Sky-River Storm Drake",
+  "inline": "the storm drake",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Dragon",
+  "size": "Large",
+  "alignment": "Chaotic Neutral",
+  "ac": 18,
+  "hp": 105,
+  "hp_formula": "14d10 + 28",
+  "pb": 3,
+  "speed": "30 ft., Fly 60 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 12,
+    "CHA": 14
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 4,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 4,
+    "CHA": 2
+  },
+  "skills": "Perception +4, Stealth +4",
+  "senses": "blindsight 30 ft., darkvision 120 ft.; Passive Perception 14",
+  "languages": "Common, Draconic",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The storm drake makes two Talons attacks."
+      },
+      {
+        "name": "Talons",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 11 (2d6 + 4) Slashing damage plus 7 (2d6) Thunder damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Thunder Wall (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 15, each creature in a 15-foot Cone. *Failure:* 42 (12d6) Thunder damage. *Success:* Half damage."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Storm-Hover",
+        "text": "While it flies, the storm drake can hover, and winds buffet any creature that would strike at it in passing, so Opportunity Attacks against it are made with Disadvantage.",
+        "authored": true,
+        "clause": "While the storm drake flies, the air coils and shrieks around it, and opportunity attacks against it are made with disad",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "rolling wall of thunder",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "winds buffet any creature that would strike at it in passing"
+      }
+    ]
+  },
+  "lore": "Hatched in the turbulent upper reaches of a sky-river canyon, this young storm drake claims its territory by bottling the canyon's thunder into a rolling wall of sound, and it desires nothing more than a lair safe from older, larger drakes.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "dragon-2",
+    "archetype": "dragon",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a young storm drake whose breath is a rolling wall of thunder",
+    "clauses": [
+      {
+        "id": "cl_v640f4",
+        "text": "a young storm drake whose breath is a rolling wall of thunder",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "whose breath is a rolling wall of thunder"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten wyrmlings (CR 1-4) — bite, breath, wings",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "dropped"
+  },
+  "archetype": "dragon",
+  "archetype_source": "user",
+  "immunities": "Thunder",
+  "lint_findings": [],
+  "monsterDescription": "a young storm drake whose breath is a rolling wall of thunder",
+  "selectedChallengeRating": "7",
+  "monsterName": "Sky-River Storm Drake",
+  "caster": false
+}

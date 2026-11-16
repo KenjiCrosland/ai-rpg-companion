@@ -33,10 +33,34 @@ describe('header honesty', () => {
     expect(honestFireDefenses(m, { material: 'wax' })).toMatch(/vulnerable to Fire/);
     expect(m).toMatchObject({ resistances: 'Cold', vulnerabilities: 'Fire' });
     expect(honestFireDefenses({ resistances: 'Fire' }, { material: 'iron' })).toBeNull();
-    // read from the concept's own words: a glass ox is never immune to Thunder
-    expect(materialVulnerability('a glass ox forged for a parade, hollow and humming', 'iron')).toEqual({ material: 'glass', vulnerability: 'Thunder' });
+    // the GM's own words stand in when the CALL's answer carries no vulnerability
+    // ('iron' has no entry): a glass ox is never immune to Thunder
+    expect(materialVulnerability('a glass ox forged for a parade, hollow and humming', 'iron')).toEqual({ material: 'glass', vulnerability: 'Thunder', from: 'concept' });
+    // ...but the table never votes against an answer it DOES know (owner, 2026-10-25).
+    // A wax body stays Fire-vulnerable however much glass the concept mentions —
+    // the old reader searched both as one string and `glass` is declared first.
+    expect(materialVulnerability('a wax saint in a hall of glass mirrors', 'wax')).toEqual({ material: 'wax', vulnerability: 'Fire', from: 'call' });
     const ox = { immunities: 'Thunder; Charmed', resistances: '', vulnerabilities: '', sections: { Traits: [{ name: 'Absorb', text: 'Whenever the creature is subjected to Thunder damage, it takes no damage and instead regains Hit Points.' }] } };
     expect(honestFireDefenses(ox, { material: 'iron', concept: 'a glass ox that charges' })).toMatch(/vulnerable to Thunder/);
     expect(ox.vulnerabilities).toBe('Thunder'); expect(ox.sections.Traits.length).toBe(0);
+  });
+});
+
+test('a Beast never speaks, whatever the resolve read into its mind (0/89 in print; Common on a bird, 2026-09-28)', () => {
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Beast' })).toBe('None');
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Humanoid' })).toBe('Common');
+});
+
+test('an Elemental speaks Primordial (17/17 in print; Common on a wildfire, fresh six)', () => {
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Elemental' })).toBe('Primordial');
+});
+
+describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
+  test('every print Humanoid speaks: a bestial read on a Humanoid shifter never prints None', () => {
+    expect(honestLanguages('None', { mind: 'bestial', type: 'Humanoid' })).toBe('Common');
+    expect(honestLanguages('', { mind: 'sapient', type: 'Humanoid' })).toBe('Common');
+    expect(honestLanguages('Common, Orc', { mind: 'bestial', type: 'Humanoid' })).toBe('Common, Orc');
+    expect(honestLanguages('None', { mind: 'bestial', type: 'Beast' })).toBe('None');
+    expect(honestLanguages('Elvish, Sylvan', { mind: 'sapient', type: 'Humanoid' })).toBe('Common, Elvish, Sylvan'); // a print Humanoid speaks Common
   });
 });

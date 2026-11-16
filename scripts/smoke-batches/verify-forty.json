@@ -1,0 +1,31 @@
+[
+  {
+    "name": "Goblin Boss",
+    "description": "",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "VERIFY: USE CASE · bare print Name, 2014, CR from print"
+  },
+  {
+    "name": "",
+    "description": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+    "cr": "11",
+    "rules": "2014",
+    "canary": "VERIFY: USE CASE · header directives: the user's AC, size and speed stand"
+  },
+  {
+    "name": "Ilvareth Dusksong",
+    "description": "An elf archmage who bends shadow and steps between places.",
+    "cr": "12",
+    "rules": "2014",
+    "canary": "VERIFY: USE CASE · named spellcaster: one stat keys the attack and the DC"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "brute",
+    "canary": "VERIFY: USE CASE · archetype only, nothing typed: the role drives it"
+  }
+]

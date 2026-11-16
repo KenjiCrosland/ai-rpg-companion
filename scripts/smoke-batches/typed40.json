@@ -1,0 +1,47 @@
+[
+  { "canary": "A named NPC + CR + a role note (the common case)", "name": "Grask Ironjaw", "description": "orc war chief", "cr": "5", "rules": "2024" },
+  { "canary": "A named NPC + CR, role selected", "name": "Sister Maudra", "description": "cleric of the drowned god", "cr": "7", "rules": "2014", "role": "controller" },
+  { "canary": "A named NPC + CR, one-line hook", "name": "Captain Vell", "description": "pirate captain, lost a hand to a shark, hates the sea", "cr": "6", "rules": "2024" },
+  { "canary": "A named NPC + CR, class + species", "name": "Thessaly Nightbloom", "description": "elf ranger, twin shortswords", "cr": "4", "rules": "2014" },
+  { "canary": "A named NPC + CR, villain", "name": "Lord Vexmoor", "description": "necromancer BBEG, raises the party's fallen allies", "cr": "12", "rules": "2024" },
+  { "canary": "A named NPC + CR, role selected, no description", "name": "Bramblejack", "description": "", "cr": "3", "rules": "2024", "role": "lurker" },
+  { "canary": "A named NPC + CR, species only", "name": "Krug", "description": "ogre", "cr": "2", "rules": "2014" },
+  { "canary": "A named NPC + CR, two-word role", "name": "Mother Ash", "description": "hag midwife", "cr": "9", "rules": "2024" },
+  { "canary": "A named NPC + CR, GM shorthand", "name": "Dervish Kal", "description": "fast, two scimitars, hit and run", "cr": "5", "rules": "2014", "role": "skirmisher" },
+  { "canary": "A named NPC + CR, title as description", "name": "The Pale Warden", "description": "guardian of the crypt door", "cr": "8", "rules": "2024", "role": "defender" },
+  { "canary": "A named NPC + CR, pop-culture ref", "name": "Zarnak", "description": "basically a xenomorph", "cr": "7", "rules": "2024" },
+  { "canary": "A named NPC + CR, casual", "name": "big bob", "description": "giant who throws boulders", "cr": "9", "rules": "2014", "role": "artillery" },
+
+  { "canary": "Noun phrase, 3 words, no name (the owner's example)", "name": "", "description": "lizard folk shadow monk", "cr": "6", "rules": "2024" },
+  { "canary": "Noun phrase, 2 words", "name": "", "description": "fire monk", "cr": "5", "rules": "2014" },
+  { "canary": "Noun phrase, 2 words, class on a species", "name": "", "description": "goblin wizard", "cr": "3", "rules": "2024" },
+  { "canary": "Noun phrase, 2 words, two creatures", "name": "", "description": "vampire pirate", "cr": "10", "rules": "2014" },
+  { "canary": "Noun phrase, undead twist on print", "name": "", "description": "owlbear zombie", "cr": "4", "rules": "2024" },
+  { "canary": "Non-SRD print name, bare (the SRD-only rule has to answer)", "name": "Beholder", "description": "", "cr": "13", "rules": "2024" },
+  { "canary": "Non-SRD print name + CR", "name": "Mind Flayer", "description": "", "cr": "7", "rules": "2014" },
+  { "canary": "Non-SRD print name, lowercase", "name": "", "description": "displacer beast", "cr": "3", "rules": "2024" },
+  { "canary": "Noun phrase, 4 words, object creature", "name": "", "description": "haunted suit of armor", "cr": "4", "rules": "2014" },
+  { "canary": "Noun phrase, 3 words, thin concept", "name": "", "description": "clockwork spider", "cr": "2", "rules": "2024" },
+
+  { "canary": "Bio dump from GM notes, name + CR", "name": "Orrin Blackwell", "description": "Orrin was the village's blacksmith until the war took his sons. He made a pact with something under the forge and now his hammer glows when he's angry. He protects the village but the villagers are afraid of him. He fights with the hammer and can heat metal armor with a touch. Loyal to the party if they help the village.", "cr": "6", "rules": "2024" },
+  { "canary": "Bio dump, 2014, with stats the GM already decided", "name": "Queen Ysolde the Unburied", "description": "Ancient queen of the barrow kings, dead 400 years, woke when the players took the crown. She commands the wights in the barrow. Cold aura, regenerates unless hit with fire, speaks only the old tongue. AC 17, about 150 hp. She wants the crown back and will bargain.", "cr": "11", "rules": "2014" },
+  { "canary": "Bio dump, mostly lore, little mechanics", "name": "Pip", "description": "A kobold who was raised by a green dragon and thinks he IS a dragon. Wears homemade wings. Breathes a little poison gas (he practices). Extremely confident. The party's first recurring villain. He should be funny but actually a little dangerous in a group.", "cr": "1", "rules": "2024" },
+  { "canary": "Bio dump, villain, long", "name": "The Hollow Cardinal", "description": "Leader of the Church of the Empty Throne. A human priest whose faith was hollowed out and filled by an Aberration from beyond the stars. Looks normal until his face splits open. Casts divine spells but they come out wrong - healing that hurts, light that blinds. Has a retinue of brainwashed acolytes. Wants to open the throne room door at the bottom of the cathedral.", "cr": "14", "rules": "2024", "role": "controller" },
+  { "canary": "Bio dump, GM notes with abbreviations", "name": "Grizzelda", "description": "swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curses, can turn invisible. has a cauldron that she can summon things from 1/day", "cr": "5", "rules": "2014" },
+  { "canary": "Bio dump, beast companion", "name": "Shadowfang", "description": "the druid's wolf companion, bigger than a normal wolf, has a scar over one eye and shadows seem to follow it. Should be tougher than a dire wolf.", "cr": "3", "rules": "2024" },
+
+  { "canary": "Rules-speak: role + mechanics, no fiction", "name": "", "description": "CR 8 brute, two attacks, grapples", "cr": "8", "rules": "2024" },
+  { "canary": "Rules-speak: print body + CR change", "name": "", "description": "owlbear but CR 8", "cr": "8", "rules": "2014" },
+  { "canary": "Rules-speak: print body + weakness swap", "name": "", "description": "a troll but weak to cold instead of fire", "cr": "5", "rules": "2024" },
+  { "canary": "Rules-speak: print body + weapon swap", "name": "", "description": "goblin boss with a heavy crossbow", "cr": "1", "rules": "2014" },
+  { "canary": "Rules-speak: make it legendary", "name": "Thornback", "description": "an ankheg but legendary, boss fight for level 5", "cr": "8", "rules": "2024" },
+  { "canary": "Rules-speak: numbers first", "name": "", "description": "AC 18 HP 200 hits hard, slow", "cr": "10", "rules": "2024", "role": "brute" },
+
+  { "canary": "Casual: typo", "name": "", "description": "a drgon", "cr": "10", "rules": "2024" },
+  { "canary": "Casual: vague", "name": "", "description": "big scary tree thing", "cr": "6", "rules": "2014" },
+  { "canary": "Casual: a question, not a description", "name": "", "description": "what would a CR 4 swamp monster look like", "cr": "4", "rules": "2024" },
+  { "canary": "Casual: possessive, player-facing", "name": "", "description": "the thing that's been killing my players' horses", "cr": "3", "rules": "2014" },
+
+  { "canary": "No CR given (the rarer case), name only", "name": "Skarn the Tollkeeper", "description": "", "cr": "auto", "rules": "2024" },
+  { "canary": "No CR given, noun phrase", "name": "", "description": "sewer alligator", "cr": "auto", "rules": "2014" }
+]

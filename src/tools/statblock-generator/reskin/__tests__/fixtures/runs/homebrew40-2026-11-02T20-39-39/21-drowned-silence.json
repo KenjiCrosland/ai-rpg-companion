@@ -1,0 +1,141 @@
+{
+  "name": "Drowned Silence",
+  "inline": "the silence",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral Evil",
+  "ac": 15,
+  "hp": 78,
+  "hp_formula": "12d8 + 24",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 16,
+    "CON": 14,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 6,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +4, Stealth +9",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Common",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The silence makes two Claw attacks."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Slashing damage plus 7 (2d6) Necrotic damage. Once on each of the silence's turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 13. *Failure:* The target has the Stunned condition until the end of its next turn.",
+        "weldedRiders": [
+          "Once on each of the silence's turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 13. *Failure:* The target has the Stunned condition until the end of its next turn."
+        ],
+        "imposes": "Stunned",
+        "boundKeys": [],
+        "riderTemplates": [
+          "stunning-strike"
+        ],
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the silence takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Close as Breath",
+        "text": "The silence is Invisible to any creature more than 5 feet away from it; a creature within 5 feet of it can see it normally.",
+        "authored": true,
+        "clause": "is impossible to see until it is close enough to touch you",
+        "clauseId": "cl_1bcdxhd",
+        "imposes": "Invisible"
+      },
+      {
+        "name": "Fen Veil",
+        "text": "While the silence is in mire, reeds, or standing water, the silence is Heavily Obscured and leaves no track or ripple for a pursuer to follow.",
+        "authored": true,
+        "clause": "While it wades through mire, reeds, or standing water, the silence is Heavily Obscured and leaves no track or ripple a p",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "invisible until it touches you",
+        "bound": false,
+        "boundKeys": [],
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "Born where a drowned killing was left for the mire to hide, it is a shrouded, gangling horror whose hide drinks light and memory alike, dragging the curious into the fen one silent touch at a time.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mire-thing that is impossible to see until it is close enough to touch you",
+    "clauses": [
+      {
+        "id": "cl_1lcriq7",
+        "text": "a mire-thing",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1bcdxhd",
+        "text": "is impossible to see until it is close enough to touch you",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "disguise",
+        "askMechanicWhy": "impossible to see until it is close enough"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a mire-thing that is impossible to see until it is close enough to touch you",
+  "selectedChallengeRating": "5",
+  "monsterName": "Drowned Silence",
+  "caster": false
+}

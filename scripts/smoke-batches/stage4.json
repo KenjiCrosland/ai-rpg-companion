@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "a veteran soldier with a longsword who bashes with a buckler", "cr": "6", "rules": "2024",
+    "canary": "DARKVISION: a plain Humanoid gets NO sense line (print: 25 of 26) — the Passive Perception stands alone", "mode": "band" },
+  { "name": "", "description": "a tiefling rogue who stalks the rooftops of the old quarter", "cr": "5", "rules": "2024",
+    "canary": "DARKVISION control: a species kit that grants it must still grant it — the tiefling keeps darkvision 60", "mode": "band" },
+  { "name": "", "description": "a cathedral-vault ooze that digests reliquaries and drips gilded acid", "cr": "9", "rules": "2024",
+    "canary": "DARKVISION: an Ooze gets no invented darkvision (print: 0 of 4); print's own body senses still ride", "mode": "band" },
+  { "name": "", "description": "an adult storm dragon whose breath is a rolling wall of thunder", "cr": "15", "rules": "2024",
+    "canary": "DARKVISION regression: a Dragon keeps it (print: 45 of 45)", "mode": "band" },
+  { "name": "", "description": "a lizardfolk monk who strikes pressure points with an open hand", "cr": "5", "rules": "2024",
+    "canary": "EVICTION: a kit row must survive the cap — chassis filler leaves instead of Patient Defense or Marsh Stride", "mode": "band" },
+  { "name": "", "description": "a ninja who moves through the shadows and strikes unseen", "cr": "5", "rules": "2024",
+    "canary": "EVICTION: Evasion must not yield to a terrain trait; no Multiattack may cite an evicted row", "mode": "band" }
+]

@@ -168,21 +168,36 @@
               :width="850" :columns="userColumnsPreference" />
           </div>
           <div class="edition-preview__overlay">
-            <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
+            <ParButton data-testid="convert-edition" :disabled="converting || !!monster?.language" @click="convertMonsterEdition">
               {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
             </ParButton>
             <p class="edition-preview__note">One-time AI conversion (counts as one generation) — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
           </div>
         </div>
-        <Statblock v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-          :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
-          :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
-          @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-          @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-          @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        <template v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)">
+          <div v-if="!loadingPart1 && !loadingPart2 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
+            “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
+          </div>
+          <div v-if="!loadingPart1 && !loadingPart2 && monster && languageNote" class="sb24-stage-note" data-testid="language-note">
+            <template v-if="languageState === 'translated'">Translated into {{ languageNote }} by one extra generation; the block was built and checked in English first.</template>
+            <template v-else>The {{ languageNote }} translation didn't go through this time, so this one is in English.</template>
+          </div>
+          <Statblock :loadingPart1="loadingPart1"
+            :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
+            :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
+            @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+            @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+            @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        </template>
         <template v-else-if="displayFormat === '2024' && (loadingPart1 || monster)">
           <div v-if="loadingPart1 && generationStage" class="sb24-stage-note" data-testid="generation-stage">
             {{ generationStage }}
+          </div>
+          <div v-if="!loadingPart1 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
+            “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
+          </div>
+          <div v-if="!loadingPart1 && monster && languageNote" class="sb24-stage-note" data-testid="language-note">
+            Translation is available on 2024-format blocks only, so this 2014 block is in English.
           </div>
           <!-- Staged loading (owner ask, 2026-07-30): the assembled draft
                renders read-only while the audit/fix ladder polishes it;
@@ -309,10 +324,10 @@ import {
   generateMonster2024, buildIdentityPrompt, validateIdentityResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor, ENERGY_TYPES,
-  convertEdition, toLegacyModel, fromLegacyModel,
+  convertEdition, translateStatblock, to2014Grammar, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
-import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
+import { buildRandomConceptSeed, buildSynthesizedConcept, buildSynthesisGuidance, rollRandomCR } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -329,6 +344,8 @@ import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { filterVerdicts, rejectedCanon } from './reskin/lexicon.mjs';
 import { buildRoutePrompt, validateRouteResponse, chooseLine } from './reskin/route.mjs';
+import { buildPathPrompt, validatePathResponse, readPath, dispatch as dispatchPath, pathLine } from './reskin/path.mjs';
+import { crFromPrompt, crFromWords, readPhrases, piAliasesIn } from './reskin/lexicon.mjs';
 import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
@@ -426,6 +443,10 @@ const displayFormat = computed(() =>
   monster.value ? (monster.value.format === '2024' ? '2024' : '2014') : format.value
 );
 const monsterDescription = ref('');
+// one line under the result when a Product Identity name was rewritten to a description (PI alias spec 2026-10-01)
+const piAliasNote = ref(''); // the name the user typed (e.g. "mind flayer"), or '' when no alias fired
+const languageNote = ref(''); // the output language the user asked for, or ''
+const languageState = ref(''); // 'translated' | 'failed' | ''
 const selectedChallengeRating = ref(null);
 const monster = ref(null);
 const caster = ref(false);
@@ -789,6 +810,9 @@ function handleFolderMove() {
   if (!targetFolder) return;
 
   const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
+  // the same identity rule as the generate path below: two sheets may share a name, so
+  // the row to re-select after the move is this OBJECT, not the first one named like it
+  const movedMonster = monsters.value[activeFolder.value][activeMonsterIndex.value];
   const previousActiveFolder = activeFolder.value;
 
   // Create folder if new
@@ -826,7 +850,10 @@ function handleFolderMove() {
   for (const key of QUOTA_FIELDS) {
     if (stored[key] !== undefined) dataToStore[key] = stored[key];
   }
-  const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
+  const movedIdentity = monsters.value[activeFolder.value].indexOf(movedMonster);
+  const newIndex = movedIdentity !== -1
+    ? movedIdentity
+    : monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
 
@@ -1022,8 +1049,13 @@ async function generateStatblockEngine(edition) {
   // two-call flow set both, which is what filled both columns. The engine
   // is a single call, but the 2014 display still wants both halves ghosted.
   loadingPart2.value = true;
-  const crInput = selectedChallengeRating.value || rollRandomCR();
-  const cr = crNumberFor(crInput);
+  piAliasNote.value = piAliasesIn(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)[0]?.matched?.replace(/'s$/i, '') ?? '';
+  const crFromUser = selectedChallengeRating.value || crFromPrompt(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`); // the words name a CR before the dice do ("level 3 party", "cr 5")
+  const crInput = crFromUser || rollRandomCR();
+  let cr = crNumberFor(crInput); // a named concept with no CR takes the route call's read below; only a blank form keeps the roll
+  /* "uses 2014 rules format" in the words is a directive, not flavor (form-ten 2026-10-01) */
+  if (/\bin (?:german|french|spanish|italian|portuguese|japanese|chinese|polish|dutch|russian|korean)\b/i.test(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)) { languageNote.value = (/\bin (german|french|spanish|italian|portuguese|japanese|chinese|polish|dutch|russian|korean)\b/i.exec(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`) ?? [])[1] ?? ''; languageState.value = ''; logger.log('[concept] output-language directive:', `${languageNote.value} — the block is built and checked in English, then translated in one extra call`); }
+  if (/\b2014\b[^.]{0,20}\b(?:rules|format|edition)\b|\b(?:rules|format|edition)\b[^.]{0,20}\b2014\b/i.test(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)) { edition = '2014'; logger.log('[concept] edition directive:', 'the words ask for the 2014 format'); }
 
   // Archetype resolution order (settled in the architecture doc):
   // user-picked → no call; Auto + concept → micro resolve call;
@@ -1039,6 +1071,7 @@ async function generateStatblockEngine(edition) {
   let archetypeName = archetype.value;
   let archetypeSource = 'user';
   let synthesizedConcept = null;
+  let synthesisGuidance = null; // authoring rules for a blank roll: the PROMPT's, never the GM's words
   let conceptIdentity = null;
   let conceptLore = null;
   let conceptThemes = null;
@@ -1047,12 +1080,14 @@ async function generateStatblockEngine(edition) {
   // The synthesis's own proper name — a naming CANDIDATE, never an override.
   let conceptProposedName = null;
   let conceptMind = null;
+  let conceptMindTiers = null;
   let conceptSize = null;
   let conceptMovement = null;
   let conceptAttackMode = null;
   let conceptSignature = null;
   let conceptStyle = null;
   let conceptBody = null;
+  let conceptSwarmOf = null;
   let conceptEnergy = null;
   let conceptMix = null;
   let conceptRejectedCanon = []; // canon cues the resolve REJECTED on the sentence (lexical hints)
@@ -1064,10 +1099,19 @@ async function generateStatblockEngine(edition) {
   // the monster's name and propagated into every row's self-reference).
   let conceptProvidedName = null;
   let conceptMechanics = null;
+  let conceptBane = null;
+  let conceptHolds = null; // the route call's read of a containment engine
+  let conceptHoldShape = null; // HOW it holds: grip | reach | contain | medium | none | null (unanswered)
+  let conceptAskedMechanic = null; // the route call's read of WHAT the GM asked a row to do (2026-10-23)
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
   let resolvedType = randomSeed?.creature_type ?? null;
+  // WHICH STEP SET THE TYPE (trace 2, 2026-11-15). Three can — the identity call, the route,
+  // and fix A — and `[concept] resolve:` printed only the final answer, so a Construct could not
+  // be traced to its author. Recorded, not decided here.
+  let typeStep = null;
+  let conceptTypeSource = null; // the identity call's own answer: did the GM's words name the type? (replaces a regex over the GM's words — owner, 2026-10-18)
   // The resolve/synthesis call runs for USER-PICKED archetypes too (owner
   // call, 2026-08-04): those generations previously skipped it entirely and
   // got no identity, no lore, and no type honesty. The picked role is
@@ -1093,17 +1137,63 @@ async function generateStatblockEngine(edition) {
   // labels to translate.
   let conceptRole = null; // the menu label the saved monster records (artillery/controller for caster lines)
   let conceptLine = null;
+  let conceptPath = null; // THE PATH (critic's Five Pipelines brief, step 2): decided once, first; step 2 runs it in shadow beside the matcher
   const hintText = `${monsterName.value} ${monsterDescription.value}`;
   const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
   const KINDS = ['behavior', 'body', 'object', 'aura'];
+
+  // AN INJECTED SIGNATURE ELEMENT, FOR EVIDENCE RUNS ONLY (probe B, 2026-11-14).
+  // Probe B asks whether the existing idea, fit and author calls write a GOOD version
+  // of a hallmark once it is handed to them as a signature element. This supplies one
+  // without the identity call, so the same prompt can be run with and without it. Read
+  // from localStorage like the edition, the legacy flag and `statblock-pin-path`;
+  // nothing in the product sets it, and a run that uses it says so in its trace.
+  // PROBE C STEP 1, THE MODEL CREATURE (evidence only, 2026-11-14). The printed monster a
+  // resembling creature takes its body from. Read from localStorage like the edition, the
+  // legacy flag, `statblock-pin-path` and `statblock-inject-elements`; nothing in the product
+  // sets it, and a run that uses it says so in its trace.
+  // ITEM 4's WITHHOLD (evidence only, 2026-11-15) — generates the same prompt with the mind
+  // tiers held back, so a pair on one donor card measures the tiers and not the card.
+  const withholdMindTiers = () => {
+    try { const v = localStorage.getItem('statblock-withhold-mind-tiers'); if (!v || !v.trim() || v === '0') return false; logger.warn('[probe] MIND TIERS WITHHELD by statblock-withhold-mind-tiers — evidence run, not product behaviour'); return true; } catch { return false; }
+  };
+
+  // PROBE C's donor pin (evidence only, 2026-11-14) — holds the card still across a pair.
+  const donorPin = () => {
+    try { const v = localStorage.getItem('statblock-donor-pin'); if (!v || !v.trim()) return null; logger.warn('[probe] DONOR PIN set by statblock-donor-pin — evidence run, not product behaviour:', v.trim()); return v.trim(); } catch (e) { return null; }
+  };
+
+  const frameModel = () => {
+    try {
+      const v = localStorage.getItem('statblock-frame-model');
+      if (!v || !v.trim()) return null;
+      logger.warn('[probe] FRAME MODEL set by statblock-frame-model — this is an evidence run, not product behaviour:', v.trim());
+      return v.trim();
+    } catch (e) { logger.warn('[probe] frame model ignored:', e?.message ?? e); return null; }
+  };
+
+  const injectedElements = () => {
+    try {
+      const raw = localStorage.getItem('statblock-inject-elements');
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return null;
+      const els = arr.map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null })).filter((x) => x.element.trim());
+      if (!els.length) return null;
+      logger.warn('[probe] SIGNATURE ELEMENT INJECTED by statblock-inject-elements — this is an evidence run, not product behaviour:', els.map((e) => e.element).join(' | '));
+      return els;
+    } catch (e) { logger.warn('[probe] element injection ignored:', e?.message ?? e); return null; }
+  };
+
   // one prose reader for both calls — the identity call (user path) and the
   // synthesis call (blank path) return the same fields but for the lead
   const readProse = (parsed, { blank }) => {
     if (!blank && typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) conceptIdentity = parsed.identity.trim();
-    if (blank && parsed?.synthesis) synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
+    if (blank && parsed?.synthesis) { synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis); synthesisGuidance = buildSynthesisGuidance(randomSeed); }
     if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) conceptLore = parsed.lore.trim();
     // the route decides the type from substance; the prose only fills a gap
-    if (!resolvedType && typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
+    if (!resolvedType && typeof parsed?.creature_type === 'string') { resolvedType = parsed.creature_type; typeStep = blank ? 'the blank-roll synthesis' : 'the identity call'; }
+    if (/^(?:user|inferred)$/i.test(String(parsed?.type_source ?? ''))) conceptTypeSource = String(parsed.type_source).toLowerCase();
     if (Array.isArray(parsed?.themes)) {
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
       if (t.length) conceptThemes = t;
@@ -1111,6 +1201,16 @@ async function generateStatblockEngine(edition) {
     if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) conceptProposedName = parsed.name.trim();
     if (typeof parsed?.material === 'string' && parsed.material.trim()) conceptHouse = parsed.material.trim().toLowerCase();
     if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
+    // THE MIND TIERS (item 4, 2026-11-15) travel exactly as `mind` does. A missing, malformed
+    // or numeric answer becomes null for that score, and a null answer means today's sheet.
+    if (parsed?.mind_tiers && typeof parsed.mind_tiers === 'object') {
+      const t = {};
+      for (const k of ['INT', 'WIS', 'CHA']) {
+        const v = String(parsed.mind_tiers[k] ?? '').toLowerCase().trim();
+        if (['feeble', 'ordinary', 'capable', 'formidable'].includes(v)) t[k] = v;
+      }
+      if (Object.keys(t).length) conceptMindTiers = t;
+    }
     if (typeof parsed?.size === 'string') conceptSize = parsed.size;
     if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
     if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
@@ -1126,14 +1226,33 @@ async function generateStatblockEngine(edition) {
         const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
         if (hit) conceptEnergy = hit;
       }
-      if (typeof parsed?.provided_name === 'string') {
+      // THE NAME FIELD IS A CLOSED FACT (critic A3, owner 2026-10-18). With a name
+      // in the Name box AND a description in the textarea, the GM has already
+      // separated the two; nothing is left for the call to judge. It was asked
+      // anyway, and answered "not provided" for "Purple Worm" and "Air Elemental"
+      // with their descriptions beside them — the engine then minted Gutforge and
+      // Chorus of the Drowned. The call's `provided_name` still serves the ONE-BOX
+      // shape below (a concept, or a name followed by its description, typed into
+      // the Name field alone), which is what it was built to read.
+      const typedNameOnly = monsterName.value.trim();
+      if (typedNameOnly && monsterDescription.value.trim()) {
+        conceptProvidedName = typedNameOnly.replace(/^(?:a|an|the)\s+/i, '');
+        logger.log('[concept] name:', `"${conceptProvidedName}" — the Name field, beside a description; the field is the fact, the call is not asked`);
+      } else if (typeof parsed?.provided_name === 'string') {
         const pn = parsed.provided_name.trim();
         // provenance AND shape (2026-08-20 / 2026-09-20 item F): the name must
         // come from the name/concept field, be at most 4 words (0/329 print
         // names run longer), and never be the whole input — that is the
         // description, which the generator names
         const inputWords = monsterName.value.trim().split(/\s+/).length;
-        const nameShaped = pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2);
+        // A NAME THE GM TYPED IN THE NAME FIELD IS THE NAME, HOWEVER LONG
+        // (owner's stage 1b, 2026-10-16). The four-word cap exists to stop the
+        // model lifting a long DESCRIPTION as a name; it also rejected "Templar
+        // of the Unmoved Stone", five words the GM had typed in the Name field
+        // itself, as "the description, not a name". When the model's answer is
+        // the Name field whole, there is nothing to lift and nothing to guess.
+        const typedWhole = monsterName.value.trim() && pn.trim().toLowerCase().replace(/^(?:a|an|the)\s+/i, '') === monsterName.value.trim().toLowerCase().replace(/^(?:a|an|the)\s+/i, '');
+        const nameShaped = typedWhole || (pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2));
         // and CASE (two-call smoke 2026-09-21: "grave beetles", "Brass bull",
         // "Drowned Knight" were lifted out of lowercase descriptions 5/15 and
         // locked the generator out of naming): inside a longer input a name is
@@ -1141,10 +1260,19 @@ async function generateStatblockEngine(edition) {
         // input (≤4 words) is the name however it is cased ("brazen bull").
         const hit = pn && new RegExp(pn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').exec(monsterName.value);
         const asWritten = hit ? hit[0].replace(/^(?:a|an|the)\s+/i, '') : '';
-        const properCase = inputWords <= 4 || (asWritten && asWritten.split(/\s+/).every((w) => /^[A-Z]/.test(w)));
+        // TITLE CASE IS HOW A NAME IS WRITTEN (owner's stage 1b, 2026-10-16).
+        // This required EVERY word capitalized, so "Templar of the Unmoved Stone"
+        // was rejected as "written in lowercase inside a description" over its
+        // two title-case particles, and the GM lost the name they typed. A
+        // connective is lowercase in correct title case; the test is that every
+        // word that is NOT a connective is capitalized.
+        const CONNECTIVE = /^(?:of|the|a|an|and|in|at|on|to|for|from|with|de|du|von|van|le|la|el|bin|ibn)$/i;
+        const properCase = inputWords <= 4 || (asWritten && asWritten.split(/\s+/).filter((w) => !CONNECTIVE.test(w)).every((w) => /^[A-Z]/.test(w)) && /^[A-Z]/.test(asWritten));
         if (pn && nameShaped && hit && properCase) conceptProvidedName = asWritten;
         else if (pn && hit && !properCase) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}" is written in lowercase inside a description; the generator names it`);
         else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);
+        // the model returned no provided_name at all ("Meshrin" shipped as Meshrin Pit Champion, step 8 nine): a short Name field with no article IS the name, whatever the model read
+        if (!conceptProvidedName && !pn && inputWords <= 4 && monsterName.value.trim() && !/^(?:a|an|the|some)\s/i.test(monsterName.value.trim())) { conceptProvidedName = monsterName.value.trim(); logger.log('[concept] name:', `the Name field "${conceptProvidedName}" is the name — the model named none`); }
       }
       if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
       // contradiction belt: a declared element outranks a 'physical' mix
@@ -1166,10 +1294,23 @@ async function generateStatblockEngine(edition) {
     conceptRejectedCanon = rejectedCanon(parsed?.hint_verdicts, hintText);
     if (verdicts.length) logger.log('[concept] hints:', verdicts.map((h) => `${h.cue}→${h.field} ${h.accepted ? '✓' : '✗'}${h.because ? ` ("${h.because.slice(0, 40)}")` : ''}`).join(' | '));
   };
-  const routeOn = async (text) => {
+  // `gmWords` is what the GM actually typed. It is NOT always `text`: a thin
+  // concept is EXPANDED before routing (identity prose, body, attack mode,
+  // signature) so the route call has something to read. That expansion must never
+  // become the GM's evidence — `chooseLine` vets every yes/no answer by requiring
+  // the call's quote to appear in `rawText`, and if `rawText` carries the model's
+  // own prose the vet checks the model against itself. "knife ball" expanded to a
+  // sentence about a mass of blades, the swarm answer quoted that sentence, the vet
+  // passed, and the GM got a Swarm of Knife Balls (2026-11-08). The call still READS
+  // the expansion; only the GM's own words can CONFIRM it.
+  const routeOn = async (text, gmWords = null) => {
     try {
-      const raw = await generateGptResponse(buildRoutePrompt(text, { cr, menuRole: givenArchetype }), validateRouteResponse, 2);
-      return chooseLine(parseGenerationResponse(raw), { text, menuRole: givenArchetype });
+      for (const h of piAliasesIn(text)) logger.log('[route] pi alias:', `"${h.matched}" → "${h.text}"`);
+      const raw = await generateGptResponse(buildRoutePrompt(readPhrases(text), { cr, menuRole: givenArchetype }), validateRouteResponse, 2); // the rewritten concept is the only text the route reads (PI alias spec 2026-10-01)
+      // STEP 7: the PARSE comes back here, the CHOICE is made after the path
+      // call resolves, so chooseLine knows which pipeline it is routing for.
+      // Both calls still race — the path is known with no added latency.
+      return { parsed: parseGenerationResponse(raw), text: readPhrases(text), rawText: gmWords ?? text };
     } catch (e) {
       logger.warn('[route] call failed:', e?.message ?? e);
       return null;
@@ -1182,8 +1323,13 @@ async function generateStatblockEngine(edition) {
       conceptLine = route.line;
       conceptStyle = route.style;
       conceptBody = route.body;
+      conceptSwarmOf = route.swarmOf ?? null; // the swarm's own noun, for the name stamp
       conceptMechanics = route.mechanics;
-      if (route.resolvedType) resolvedType = route.resolvedType;
+      conceptBane = route.bane ?? null;
+      conceptHolds = route.holds ?? null; // the GM's own undoing, as the route call read it
+      conceptHoldShape = route.hold_shape ?? null; // the one answer every hold door reads (2026-11-11)
+      conceptAskedMechanic = route.askedMechanic ?? null;
+      if (route.resolvedType) { resolvedType = route.resolvedType; typeStep = 'the route call'; }
       logger.log('[route]', `${route.line}${route.role && route.role !== route.archetype ? ` (${route.role})` : ''} type=${resolvedType ?? '?'} mechanics=${route.mechanics.join(', ') || 'none'} — ${route.notes.join(' | ')}`);
     } else {
       // never-fail: the user's role, else a random plain line — drawn from the
@@ -1201,15 +1347,179 @@ async function generateStatblockEngine(edition) {
         const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
         const pinned = conceptResolutionCache.get(pinKey);
         if (pinned) {
-          ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
+          ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptTypeSource, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
-          // CALL 1 — ROUTE
-          applyRoute(await routeOn(`${userConcept} ${monsterDescription.value}`.trim()));
-          // CALL 2 — IDENTITY, conditioned on the routed line
+          // CALL 0 — THE PATH, beside the route call (step 2, shadow): code decides the
+          // closed cases (an exact print name, a Name-field print name beside a description)
+          // with no call; the call reads only free text. Its answer is traced as the first
+          // [path] line and compared with the matcher inside the engine; it changes no sheet yet.
+          const pathFields = { name: monsterName.value.trim(), concept: monsterDescription.value.trim(), cr: crFromUser ? cr : null, role: givenArchetype, edition };
+          const pathOn = async () => {
+            // (see `injectedElements` below for the sibling evidence-only override)
+            // A PINNED PATH, FOR EVIDENCE RUNS ONLY (2026-11-14). Three prompts had never been
+            // seen BOTH ways, because which path they take is the model's and it flips between
+            // runs. This lets a smoke batch ask for one, so the two readings of a prompt can be
+            // put side by side. It is read from localStorage, like the edition and the legacy
+            // flag, and nothing in the product sets it.
+            try {
+              const pinned = localStorage.getItem('statblock-pin-path');
+              if (pinned) { const d = JSON.parse(pinned); logger.warn('[path] PINNED by statblock-pin-path — this is an evidence run, not product behaviour'); return d; }
+            } catch (e) { logger.warn('[path] pin ignored:', e?.message ?? e); }
+            const byCode = dispatchPath(pathFields, null);
+            if (byCode.path && byCode.by === 'code') return byCode;
+            try {
+              const rawP = await generateGptResponse(buildPathPrompt(pathFields), validatePathResponse, 2);
+              const read = readPath(rawP, { concept: `${pathFields.name} ${pathFields.concept}`.trim(), edition });
+              for (const r of read.refused) logger.log('[path] refused:', r);
+              for (const n of read.notes ?? []) logger.log('[path] filled:', n); // a fill is not a refusal (trace 4)
+              return dispatchPath(pathFields, read);
+            } catch (e) { logger.warn('[path] call failed:', e?.message ?? e); return dispatchPath(pathFields, null); }
+          };
+          // A NAME ON ITS OWN IS EXPANDED BEFORE IT IS ROUTED (owner, 2026-11-03).
+          // "Pumpkin King" in the Name box with nothing in the textarea gave the route
+          // call two words, and `king` is the only one with a mechanical reading — so it
+          // routed to brute 6 times out of 6 (pumpkin-six-2026-11-03T22-27-06), drew
+          // `brute-9-juggernaut` 5 of those 6, and the Clay Golem composition then filled
+          // FIVE of the six rows: an Absorption trait with the energy re-skinned, Siege
+          // Monster, Multiattack, a slam and a Recharge 5-6 blast. Every Pumpkin King was
+          // a recoloured Stone Golem, which is exactly what the owner reported seeing.
+          //
+          // So this path runs the two calls in the BLANK ROLL's order — identity first,
+          // route second, on the expanded text — because a name with no description is in
+          // the same position as an empty form: there is almost nothing for the router to
+          // read. It is the SAME TWO CALLS, reversed, so it costs nothing extra.
+          //
+          // What it gives up: the prose is no longer conditioned on the chassis, which the
+          // two-call split was partly for ("words and block agree from the start"). With
+          // only a name, routing correctly matters more than prose-chassis agreement — the
+          // trade the blank path already makes one block below.
+          //
+          // THINNESS IS THE TRIGGER, NOT WHICH BOX IT WAS TYPED IN (owner, 2026-11-03:
+          // "lizardfolk shadow monk… is basically using the lore field as a place to jot
+          // down a short concept and should be expanded just as much as a short name").
+          // The first cut keyed on "the Name box is filled and the textarea is empty",
+          // which read a WHOLE CONCEPT typed into the name box as a bare name and broke
+          // eight tests — "A brass bull that charges down anyone who enters its pen" is
+          // not a name needing expansion.
+          //
+          // `significantWords` is the file's existing definition of a concept too thin to
+          // read, already the gate for `engineKeyOk` and for the body-verdict fallback at
+          // three words or fewer. One definition, not a private copy.
+          //
+          // A PRINT NAME KEEPS TODAY'S ORDER. "Ogre" needs no expansion: the exact and
+          // twist paths compose it from print, and engine words would only get in the way.
+          // DECIDING THE ORDER MAY NEVER FAIL THE SHEET. Both helpers are lazy-loaded, and
+          // a caller can have the engine module mocked or tree-shaken to something that
+          // does not carry them — which is exactly what happened here first: the 2024-flow
+          // spec mocks reskin/generate.mjs down to `generateReskin` alone, so `printHeadCr`
+          // was undefined, the call threw, and generation died before its first LLM call.
+          // Any failure here falls back to today's route-first order.
+          let expandFirst = false;
           try {
+            const [gen, tpl] = await Promise.all([import('./reskin/generate.mjs'), import('./reskin/templates.mjs')]);
+            if (typeof tpl?.significantWords === 'function') {
+              const thin = tpl.significantWords(userConcept).length <= 3;
+              const printHead = typeof gen?.printHeadCr === 'function'
+                && Number.isFinite(gen.printHeadCr(readPhrases(monsterName.value.trim() || userConcept)));
+              expandFirst = thin && !printHead;
+              if (thin && printHead) logger.log('[concept] thin but a print creature — keeping route-first:', userConcept);
+            }
+          } catch (e) {
+            logger.warn('[concept] could not decide the call order — keeping route-first:', e?.message ?? e);
+          }
+          let routeText = userConcept;
+          if (expandFirst) {
+            // CALL 1 — IDENTITY, unconditioned (`line: null`, which the prompt already
+            // tolerates): it answers creature_type, material, size, movement, attack_mode
+            // and signature_mechanic, which is the expansion this path needs.
+            try {
+              const rawX = await generateGptResponse(
+                buildIdentityPrompt(readPhrases(userConcept), '', { cr, archetype: givenArchetype, line: null, resolvedType: null }),
+                validateIdentityResponse,
+                2,
+              );
+              readProse(parseGenerationResponse(rawX), { blank: false });
+              const parts = [userConcept, conceptIdentity, conceptHouse ? `its body is ${conceptHouse}` : null, conceptAttackMode, conceptSignature]
+                .map((x) => String(x ?? '').trim()).filter(Boolean);
+              if (parts.length > 1) {
+                routeText = parts.join(' — ');
+                logger.log('[concept] thin concept expanded before routing:', routeText.slice(0, 300));
+                // THE PARTS, UNCUT (trace 1, 2026-11-15). The joined line is cut at 300
+                // characters and the body material sits past the cut, so the one field that
+                // explains a Construct was never in the trace. Each on its own short line.
+                logger.log('[concept] expansion answered:', `type=${resolvedType ?? '?'} (type_source=${conceptTypeSource ?? '?'}) material=${conceptHouse ?? '—'} size=${conceptSize ?? '—'} mind=${conceptMind ?? '—'}`);
+                logger.log('[concept] expansion attack mode:', conceptAttackMode || '—');
+                logger.log('[concept] expansion signature:', conceptSignature || '—');
+              }
+              else logger.log('[concept] expansion added nothing — routing on the words as typed');
+            } catch (e) {
+              // NEVER-FAIL: a failed expansion falls back to today's order, not to nothing.
+              logger.warn('[concept] expansion call failed — routing on the name alone:', e?.message ?? e);
+            }
+          }
+          // CALL 1 — ROUTE (CALL 2 on the expand-first path)
+          // a shadow decision may never delay the sheet: twenty seconds, then it is recorded as FAILED (timed out) and the route's own read stands
+          const routedP = routeOn(routeText, userConcept); // the route call is issued first; the path call rides beside it
+          const pathCapped = Promise.race([pathOn(), new Promise((res) => setTimeout(() => res({ path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: 'the path call did not answer within 20 s' }), 20_000))]);
+          const [routedRaw, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
+          conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
+          const routed = routedRaw ? chooseLine(routedRaw.parsed, { text: routedRaw.text, rawText: routedRaw.rawText, menuRole: givenArchetype, path: conceptPath?.path ?? null }) : null; // the quote check reads the same rewritten text the model saw
+          applyRoute(routed);
+          // A PERSON WITH NO NAMED BODY IS A HUMANOID (owner's ruling, 2026-11-15; widened by fix E
+          // on 2026-11-16, which dropped the requirement that a class be named).
+          //
+          // "Brother Halric" — a name alone — came out seven ways in one day: three Humanoid, two
+          // Undead, two Construct. The Construct carried Immunity to Poison and the whole construct
+          // condition package. Every roll took the same path: `class_npc — class cleric` with no
+          // body. A bare name is thin, so the identity call runs UNCONDITIONED before routing and
+          // answers a creature type with nothing in the GM's words to go on; the type then drives
+          // the immunities, the size and the rest.
+          //
+          // So when the path says a person with no named body, and the GM's words hold nothing but a
+          // name (and the class word, when there is one), the type is Humanoid. "Old Marga" read
+          // class_npc with NO class and came out Fey on one roll and Plant on the next; the path had
+          // already said she is a person.
+          //
+          // SETTLED HERE, not at the type line. The immunities are written by a pass that reads the
+          // type, so renaming the header afterwards would leave them. This runs before the sheet is
+          // built, so every later pass reads Humanoid. (On this path the second identity call is
+          // SKIPPED — the expansion was that call — so there is no earlier window.)
+          //
+          // "NOTHING BUT A NAME" is a measure of emptiness, not a reading of
+          // meaning: drop the class receipt and the words of the typed name, and `significantWords`
+          // — the file's existing definition of a concept too thin to read — has nothing left.
+          // "Clockwork friar" keeps "clockwork", so the call's Construct stands. A type the GM's own
+          // words name also stands, by the identity call's own `type_source` field.
+          if (conceptPath?.path === 'class_npc') {
+            try {
+              const { humanoidForAPersonWithNoBody } = await import('./reskin/path.mjs');
+              const settled = humanoidForAPersonWithNoBody({
+                ...conceptPath, concept: userConcept, name: conceptProvidedName ?? '',
+                callType: resolvedType, typeSource: conceptTypeSource,
+              });
+              if (settled && settled !== resolvedType) {
+                logger.log('[concept] type settled:', `${resolvedType} -> ${settled} — the GM's words are a name${conceptPath.class ? ' and the class word' : ''} and nothing else, and a person with no named body is a Humanoid (owner's ruling, 2026-11-15, widened 2026-11-16); ${typeStep ?? 'an earlier step'} had answered ${resolvedType}`);
+                resolvedType = settled;
+                typeStep = 'fix A/E (a person with no named body)';
+              }
+            } catch (e) {
+              logger.warn('[concept] could not settle the type — the call\'s answer stands:', e?.message ?? e);
+            }
+          }
+          if (!crFromUser) {
+            // a print creature with no CR set is its own CR (the Goblin Boss read 4 from the route, print says 1); otherwise the route's read; only a blank form keeps the roll
+            const { printHeadCr } = await import('./reskin/generate.mjs');
+            const headCr = printHeadCr(readPhrases(monsterName.value.trim() || userConcept)); // a print name in the NAME box, or heading the words ("a swarm of rats that…"), carries its own CR
+            if (Number.isFinite(headCr)) { cr = crNumberFor(headCr); logger.log('[concept] cr from print:', `${headCr} — a print creature heads the words and the user set none`); }
+            else { const ladder = crFromWords(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`); cr = ladder; logger.log('[concept] cr from the words:', `${ladder} — the user set none and no print name heads the words; a fixed ladder, never the model's read (critic form-ten 2026-10-01)`); }
+          }
+          // CALL 2 — IDENTITY, conditioned on the routed line. SKIPPED when the name was
+          // already expanded above: that was this same call, and running it twice would
+          // cost a second call for no new field.
+          if (!expandFirst) try {
             const raw = await generateGptResponse(
-              buildIdentityPrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
+              buildIdentityPrompt(readPhrases(userConcept), readPhrases(monsterDescription.value), { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
               validateIdentityResponse,
               2,
             );
@@ -1217,7 +1527,7 @@ async function generateStatblockEngine(edition) {
           } catch (e) {
             logger.warn('[concept] identity call failed — the routed line ships without prose:', e?.message ?? e);
           }
-          logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
+          logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'} typeFrom=${typeStep ?? 'unset'}`
             + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
             + ` style=${conceptStyle ?? '—'}`
             + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
@@ -1227,7 +1537,7 @@ async function generateStatblockEngine(edition) {
           if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
           if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
           if (conceptLore) logger.log('[concept] lore:', conceptLore);
-          conceptResolutionCache.set(pinKey, { archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon });
+          conceptResolutionCache.set(pinKey, { archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptTypeSource, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon });
         }
       } else {
         // CALL 1 — SYNTHESIS: fuse the rolled axes into one creature
@@ -1237,8 +1547,15 @@ async function generateStatblockEngine(edition) {
           2,
         );
         readProse(parseGenerationResponse(raw), { blank: true });
+        conceptPath = dispatchPath({ name: '', concept: '', role: givenArchetype }, null); logger.log(pathLine(conceptPath)); // blank, by code — no call
         // CALL 2 — ROUTE on the fused creature
-        applyRoute(await routeOn(synthesizedConcept ?? randomSeed.concept));
+        {
+          // THE BLANK ROLL keeps the override. The step-7 retirement rests on the
+          // call quoting THE GM'S OWN WORDS, and on a blank roll there are none —
+          // the text is the engine's own synthesis. Unmeasured there, so unchanged.
+          const rr = await routeOn(synthesizedConcept ?? randomSeed.concept);
+          applyRoute(rr ? chooseLine(rr.parsed, { text: rr.text, rawText: rr.rawText, menuRole: givenArchetype, path: 'blank' }) : null);
+        }
         logger.log('[concept] synthesis (blank roll):', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + ` style=${conceptStyle ?? '—'}${conceptLore ? ' lore=✓' : ''}`);
@@ -1253,8 +1570,10 @@ async function generateStatblockEngine(edition) {
     if (!archetypeName || archetypeName === 'auto' || archetypeName === 'balanced') archetypeName = givenArchetype ?? ['brute', 'skirmisher', 'lurker', 'defender', 'artillery'][Math.floor(Math.random() * 5)];
   }
 
-  const baseConcept = monsterName.value.trim()
-    || monsterDescription.value.trim()
+  // the user's own words are NAME AND DESCRIPTION together — the name alone
+  // dropped "Flying speed of 60ft" and "no legendary actions" on the floor
+  // (form-ten 2026-10-01: the engine read "Owlbear" and "Ancient Red Dragon")
+  const baseConcept = userConcept
     || synthesizedConcept
     || randomSeed.concept;
   let concept = conceptIdentity
@@ -1263,6 +1582,9 @@ async function generateStatblockEngine(edition) {
   // The lore line guides the ship (owner design, 2026-08-04): one sentence
   // of who-it-is-and-why that the generation designs toward and the naming
   // call reads for fit — the anti-hodgepodge anchor.
+  // a blank roll's authoring rules ride here, with identity and lore — never in
+  // baseConcept, which is what the engine reads as the GM's own words
+  if (synthesisGuidance) concept += `\nAUTHORING RULES (for this rolled concept; not the user's words): ${synthesisGuidance}`;
   if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
 
   // Two body derivations stay deterministic where print is certain: a
@@ -1307,8 +1629,27 @@ async function generateStatblockEngine(edition) {
     // (other_edition = the 2024 original, so the tabs flip free). The
     // slot path remains behind the kill switch:
     // localStorage['statblock-reskin-2014']='0'.
+    let served2014 = false;
     const reskin2014 = edition === '2014' && localStorage.getItem('statblock-reskin-2014') !== '0';
-    if ((edition === '2024' || reskin2014) && (
+    // OWNER'S RULING (2026-10-20): AN EXACT NAME ON A 2014 SHEET IS THE 2014
+    // BLOCK, SERVED STRAIGHT. The two books hold different creatures — the 5.1
+    // Vampire is AC 16 / 144 HP, the 5.2 one 16 / 195 — and a GM on 2014 rules
+    // who typed "Vampire" was getting the 5.2 creature with 2014 phrasing laid
+    // over it. The exact path takes no call in either edition, so this is a
+    // lookup: no generation, no conversion call, nothing rephrased.
+    // Narrow by ruling: TWISTS on a 2014 sheet still start from the 5.2 body.
+    if (edition === '2014' && conceptPath?.path === 'exact') {
+      const { exact2014Printing } = await import('./reskin/print-2014.mjs');
+      const served = exact2014Printing(conceptPath.print_body ?? monsterName.value.trim());
+      if (served) {
+        logger.log('[reskin] 2014 exact:', `"${served.name}" served from the SRD 5.1 corpus — no call, nothing rephrased (owner's ruling; the 2014 book's own creature)`);
+        finalMonster = served;
+        served2014 = true;
+      } else {
+        logger.log('[reskin] 2014 exact:', `"${conceptPath.print_body ?? monsterName.value.trim()}" is not in the SRD 5.1 corpus — the 5.2 block converts as before`);
+      }
+    }
+    if (!served2014 && (edition === '2024' || reskin2014) && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
       || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
@@ -1320,13 +1661,31 @@ async function generateStatblockEngine(edition) {
         {
           archetype: isCasterRole ? 'caster' : archetypeName,
           menuRole,
+          // THE LABEL THE USER PICKED IS NOT THE FAMILY THE ENGINE ROUTED ON
+          // (2026-11-13). One field was doing both jobs, and they only agreed by
+          // accident: every role used to resolve to its own family, so recording the
+          // routed family happened to echo the pick. Once artillery and controller
+          // could reach a non-magical line, a user who picked Artillery for a
+          // boulder-throwing giant saved a sheet that reads Skirmisher — and the
+          // dropdown is repopulated from the saved sheet, so reopening it shows a
+          // role they never chose. `archetypeSource` is already computed correctly
+          // here (`givenArchetype ? 'user' : 'auto'`) and the reskin path was
+          // hardcoding 'user', which also hid the card's own "auto" hint.
+          userArchetype: givenArchetype,
+          archetypeSource,
           stylePrior: menuRole === 'controller' ? 'binder' : null,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,
+          path: conceptPath, // shadow: the engine traces agreement with its matcher and reads nothing else from it (step 2)
           style: conceptStyle,
-          signatureElements: conceptElements ?? [],
+          signatureElements: injectedElements() ?? conceptElements ?? [],
+          ...(frameModel() ? { frameModel: frameModel() } : {}),
+          ...(donorPin() ? { donorPin: donorPin() } : {}),
           mind: conceptMind,
+          ...(conceptMindTiers ? { mindTiers: conceptMindTiers } : {}),
+          ...(withholdMindTiers() ? { withholdMindTiers: true } : {}),
           movement: conceptMovement ?? [],
+          edition, // the form's edition: print's 2024-only reclasses (goblins to Fey) are not 2014's (form-ten 2026-10-01)
           // the resolve's creature_type rides along — without it the
           // reskin call re-picks and defaults to Monstrosity (4 of 5
           // first-lurker-smoke blocks drifted, 2026-09-04)
@@ -1335,18 +1694,42 @@ async function generateStatblockEngine(edition) {
           // outrank the role at pickDonor; kill switch
           // statblock-reskin-bodies='0'
           bodyType: conceptBody ?? null,
+          swarmOf: conceptSwarmOf ?? null,
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,
           mechanics: conceptMechanics ?? null,
+          bane: conceptBane ?? null,
+          holds: conceptHolds,
+          hold_shape: conceptHoldShape,
+          askedMechanic: conceptAskedMechanic, // selects templates by DECLARED mechanic, ahead of any word rule
+          themes: conceptThemes ?? null, // the call's own read of the creature's substance, for the alias guard
           rejectedCanon: conceptRejectedCanon,
-          userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
+          typeSource: conceptTypeSource, // 'user' | 'inferred' | null — the call's field, not a word read
+          // THE MODEL'S OWN PROSE IS NOT A REQUEST (owner's ruling, 2026-11-08: "don't
+          // grade something we don't need a grade for"). `baseConcept` falls back to the
+          // SYNTHESIS on a blank roll, so passing it here told the engine its own
+          // invented description was the user's words — and the engine then extracted
+          // "clauses" from it and graded itself against them. Sweep 2026-11-08 #36: the
+          // synthesis wrote "it does not brawl: any round it is not striking, it is
+          // shifting its coils to close another exit", the extractor filed "does not
+          // brawl" as a LACKS clause, and `lack-honored` failed the sheet for carrying a
+          // Bite — reporting "the GM asked for an absence" when the GM asked for nothing.
+          // The same loop once deleted a sheet's only attack row (the Prismabound Warden,
+          // patched then with a keep-the-last-attack guard rather than at the cause).
+          //
+          // `concept` below still carries the synthesis, so generation is unchanged — it
+          // is only the GRADING inputs (the clause record, removals, `asked` receipts)
+          // that must see an empty hand, because on a blank roll there is nothing the GM
+          // asked for and no words of theirs a row could quote.
+          userConcept: userConcept || '', // the user's OWN words, and nothing stands in for them
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
-          // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
-          // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
-          // generations price at 0.7, uniform across archetypes. Tab
-          // conversions stay format-only (numbers never rebalance).
-          dprScale: reskin2014 ? 0.7 : 1,
+          // THE 2014 LINE is the DMG table itself (2026-10-02): `edition`
+          // above makes the card read challengeRatings.json for HP, AC,
+          // attack, DC and damage. The flat 0.7 it replaces undershot the
+          // table (a CR 10 horseman at 38 sustained vs the DMG's 63-68).
+          // Tab conversions stay format-only (numbers never rebalance).
+          dprScale: 1,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },
@@ -1361,6 +1744,14 @@ async function generateStatblockEngine(edition) {
         try {
           const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
           delete converted._conversionNotes;
+          // PROVENANCE SURVIVES THE EDITION (critic's gate-4 read, 2026-10-16).
+          // The conversion rewrites PHRASING and returns a fresh object, so
+          // `generation` — the clause record, the donor, the trace's provenance —
+          // was dropped on every 2014 sheet. Coverage reads generation.clauses,
+          // so it scored every 2014 block against an empty clause list: Kaelen
+          // and Thurivald were the only two 2014 blocks in
+          // classes-eight-2026-10-16T22-10-02 and the only two with none.
+          if (source.generation && !converted.generation) converted.generation = source.generation;
           converted.other_edition = finalMonster;
           finalMonster = converted;
           logger.log('[reskin] 2014 conversion:', 'one lint-gated call — both printings saved');
@@ -1368,12 +1759,19 @@ async function generateStatblockEngine(edition) {
           logger.warn('[reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing:', e2?.message ?? e2);
           const shaped = toLegacyModel(source);
           // the classic card renders inline markdown (owner 2026-09-14)
-          // — the 2024 markers display as italic labels, no strip needed
+          // — the 2024 markers display as italic labels, no strip needed;
+          // the deterministic 2014 grammar pass still runs so no 2024 token ships (checker 2026-10-02)
+          for (const k of ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions']) if (Array.isArray(shaped[k])) shaped[k] = shaped[k].map((e) => ({ ...e, name: String(e.name ?? '').replace(/\bBloodied\b/g, 'Wounded'), description: to2014Grammar(e.description) }));
+          if (source.generation && !shaped.generation) shaped.generation = source.generation; // the degraded path loses it too
+          // A FAILED CONVERSION SHIPS MARKED (critic A9, 2026-10-18): nine of 32 conversion
+          // calls failed in one run and every half-converted sheet read "edition: ok".
+          // The checker's edition gate reads this mark and fails the block.
+          shaped.generation = { ...(shaped.generation ?? {}), conversion: 'failed' };
           shaped.other_edition = finalMonster;
           finalMonster = shaped;
         }
       }
-    } else {
+    } else if (!served2014) {
       finalMonster = await generateMonster2024(
       {
         concept,
@@ -1394,6 +1792,8 @@ async function generateStatblockEngine(edition) {
         damageMix: userConcept ? conceptMix : rolledMix,
         naming: rolledNaming,
         mind: conceptMind,
+        ...(conceptMindTiers ? { mindTiers: conceptMindTiers } : {}),
+        ...(withholdMindTiers() ? { withholdMindTiers: true } : {}),
         conceptSize,
         movement: conceptMovement,
         attackMode: conceptAttackMode,
@@ -1448,6 +1848,15 @@ async function generateStatblockEngine(edition) {
 
   // Regen params — same fields the 2014 path stamps, so selectMonster
   // restores the form for Regenerate.
+  // THE TRANSLATION PASS: one extra call on the finished, lint-clean English block (owner 2026-10-01); never fails the generation
+  if (languageNote.value && finalMonster.format === '2024') {
+    try {
+      finalMonster = await translateStatblock(finalMonster, languageNote.value, (p, v) => generateGptResponse(p, v, 3));
+      languageState.value = 'translated';
+      logger.log('[concept] translated:', `${languageNote.value} — one extra call; the engine built and checked the block in English${finalMonster._translationNotes ? ` (${finalMonster._translationNotes})` : ''}`);
+      delete finalMonster._translationNotes;
+    } catch (e3) { languageState.value = 'failed'; logger.warn('[concept] translation failed — the English block ships:', e3?.message ?? e3); }
+  } else if (languageNote.value) languageState.value = 'failed';
   finalMonster.monsterDescription = monsterDescription.value;
   finalMonster.selectedChallengeRating = crKeyFor(cr);
   finalMonster.monsterName = monsterName.value || finalMonster.name;
@@ -1604,7 +2013,21 @@ async function saveGeneratedMonster(finalMonster) {
     monsters.value[folderName].push(finalMonster);
   }
   monsters.value[folderName] = sortMonstersByCR(folderName);
-  const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+  // IDENTITY, NOT NAME (owner, 2026-11-05: "if I generate two headless horsemans at the
+  // same cr the first one displays"). The sheet is pushed, the list is re-sorted, and the
+  // index was then recovered by NAME — so `findIndex` returned the FIRST monster with
+  // that name and the card showed the older sheet while the new one saved correctly. At
+  // the same CR the two land adjacent after the sort, which is why comparing variants of
+  // one creature is exactly the workflow that broke it. Caught by the critic on the
+  // 11-05 gate as #21 showing #03's Owlbear, with both sheets right in storage.
+  //
+  // `finalMonster` is the object this function just placed in the array, in BOTH the
+  // replace and the append branch, and a sort moves references rather than copying them,
+  // so its position is recoverable exactly. The name search stays as a fallback only.
+  const byIdentity = monsters.value[folderName].indexOf(finalMonster);
+  const newIndex = byIdentity !== -1
+    ? byIdentity
+    : monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
   // display-only: the form keeps what the user typed (the write-back
   // here is how the Grave-Hurler Vulture named itself 3 rolls running)
   selectMonster(folderName, newIndex, { fillForm: false });

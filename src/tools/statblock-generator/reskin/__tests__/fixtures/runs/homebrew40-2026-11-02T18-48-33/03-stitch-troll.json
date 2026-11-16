@@ -1,0 +1,138 @@
+{
+  "name": "Stitch-Troll",
+  "inline": "the stitch-troll",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Giant",
+  "size": "Large",
+  "alignment": "Chaotic Evil",
+  "ac": 15,
+  "hp": 94,
+  "hp_formula": "9d10 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 13,
+    "CON": 20,
+    "INT": 7,
+    "WIS": 9,
+    "CHA": 7
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 8,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Giant",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The stitch-troll makes three Rend attacks."
+      },
+      {
+        "name": "Rend",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 11 (2d6 + 4) Slashing damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The stitch-troll regains 15 Hit Points at the start of each of its turns. If the stitch-troll takes Acid or Fire damage, this trait doesn't function on the stitch-troll's next turn. The stitch-troll dies only if it starts its turn with 0 Hit Points and doesn't regenerate.",
+        "clause": "knits its wounds shut and keeps coming",
+        "answersAlso": [
+          "knits its wounds shut and keeps coming"
+        ],
+        "print": true,
+        "clauseId": "cl_17qoj2z"
+      },
+      {
+        "name": "Loathsome Limbs (4/Day)",
+        "text": "If the stitch-troll ends any turn Bloodied and took 15+ Slashing damage during that turn, one of the stitch-troll's limbs is severed, falls into the stitch-troll's space, and becomes a Troll Limb. The limb acts immediately after the stitch-troll's turn. The stitch-troll has 1 Exhaustion level for each missing limb, and it grows replacement limbs the next time it regains Hit Points.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Charge",
+        "text": "The stitch-troll moves up to half its Speed straight toward an enemy it can see.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Warped from giant flesh by an old tailor-witch's curse, the Stitch-Troll laces its own gashes shut with needles of bone and walks until everything before it lies still.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Troll",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a troll that knits its wounds shut and keeps coming",
+    "clauses": [
+      {
+        "id": "cl_k3jn1u",
+        "text": "a troll",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_17qoj2z",
+        "text": "knits its wounds shut and keeps coming",
+        "kind": "mechanical",
+        "askShape": "heal",
+        "askMechanic": "mend",
+        "askMechanicWhy": "knits its wounds shut"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "2 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "2x the call named no template for the pick",
+    "answered_by_existing": [
+      "knits its wounds shut and keeps coming -> Regeneration"
+    ],
+    "signature": "dropped"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a troll that knits its wounds shut and keeps coming",
+  "selectedChallengeRating": "5",
+  "monsterName": "Stitch-Troll",
+  "caster": false
+}

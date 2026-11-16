@@ -1,0 +1,139 @@
+{
+  "name": "Rime Hunger",
+  "inline": "the rime hunger",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Elemental",
+  "size": "Medium",
+  "alignment": "Neutral Evil",
+  "ac": 16,
+  "hp": 142,
+  "hp_formula": "19d8 + 57",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 20,
+    "CON": 17,
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 9,
+    "CON": 3,
+    "INT": 5,
+    "WIS": 2,
+    "CHA": 0
+  },
+  "skills": "Perception +6, Stealth +13",
+  "senses": "darkvision 60 ft.; Passive Perception 16",
+  "languages": "Primordial",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The rime hunger makes three Frost Touch attacks. It can replace one attack with a use of Numbing Dread."
+      },
+      {
+        "name": "Frost Touch",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 23 (4d8 + 5) Cold damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Numbing Dread",
+        "text": "*Wisdom Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Frightened condition until the end of its next turn.",
+        "authored": true,
+        "clause": "When the rime hunger hits with Frost Touch, the chill seizes the wound's nerves — the target must make a Wisdom saving t",
+        "imposes": "Frightened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a killing cold that locks prey in place with terror",
+        "widened": true,
+        "boundKeys": [],
+        "expressedQuote": "The target has the Frightened condition until the end of its next turn."
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the rime hunger takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Fear Aura",
+        "text": "The rime hunger emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 17, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "fear-aura",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "frightens",
+          "frightening"
+        ],
+        "gmQuote": "a frost thing whose cold makes you too frightened to run",
+        "duration": "target_end",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        },
+        "expresses": "a killing cold that locks prey in place with terror",
+        "bound": true
+      }
+    ]
+  },
+  "lore": "Born where the world's heat leaks out into the dark, the rime hunger is a cold that learned to want, and it comes for warmth the way fire comes for dry grass.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a frost-thing whose cold makes you too frightened to run",
+    "clauses": [
+      {
+        "id": "cl_1gul3e6",
+        "text": "a frost-thing whose cold makes you too frightened to run",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "resistances": "Cold",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a frost-thing whose cold makes you too frightened to run",
+  "selectedChallengeRating": "10",
+  "monsterName": "Rime Hunger",
+  "caster": false
+}

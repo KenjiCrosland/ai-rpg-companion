@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Air Elemental",
+    "description": "that carries stolen voices",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "FORTYFIX: SPINE 5 \u00b7 print head + addition on an Elemental body"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "FORTYFIX: SPINE 17 \u00b7 print head + a lack, legendary 2014"
+  },
+  {
+    "name": "",
+    "description": "an archlich enthroned on a sun of bone",
+    "cr": "20",
+    "rules": "2014",
+    "canary": "FORTYFIX: SPINE 20 \u00b7 homebrew one-liner, 2014 legendary"
+  },
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "FORTYFIX: USE CASE \u00b7 SWARM body: print's swarm shape and resistances"
+  },
+  {
+    "name": "",
+    "description": "a stone giant exile who speaks only Giant and understands no Common",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "FORTYFIX: USE CASE \u00b7 a language addition lands on the languages line"
+  },
+  {
+    "name": "",
+    "description": "a marsh witch who curses trespassers, cr 7",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "FORTYFIX: USE CASE \u00b7 the CR is in the words, not the field"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2024", "canary": "A5: a borrow at print's CR keeps print's Bite dice (small on purpose) — no re-price" },
+  { "name": "Adult Red Dragon", "description": "blind in one eye from an old lance", "cr": "17", "rules": "2024", "canary": "A5: print's Fire Breath (its own dice) is the one breath — the chassis nova leaves" },
+  { "name": "Goblin Boss", "description": "", "cr": "1", "rules": "2024", "canary": "A5: print's Shortbow lands though the chassis had no ranged row; the Multiattack cites it" },
+  { "name": "Wight", "description": "", "cr": "3", "rules": "2024", "canary": "A5: print's Necrotic Bow lands" },
+  { "name": "Pit Fiend", "description": "who collects the oaths of dying knights", "cr": "20", "rules": "2024", "canary": "A5: no chassis Legendary Actions on a body print gives none; Legendary Resistance (print's own) stays" },
+  { "name": "", "description": "a ghost of the drowned chapel who drifts through its walls", "cr": "4", "rules": "2024", "canary": "A5: the Ghost's full resistance list stands — not re-derived to B/P/S" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "A4 residual: 'instead of regrowing' is a lack now — no Regeneration, and Multiple Heads' regrowth addressed" },
+  { "name": "", "description": "a vice-rock griever of living scree that squeezes prey but never holds it", "cr": "6", "rules": "2024", "canary": "A4 residual: the call lists 'never holds'; no Grappled on any row" },
+  { "name": "", "description": "skeleton with a greatsword", "cr": "6", "rules": "2024", "canary": "A5 CONTROL: a borrow ABOVE print's CR still re-scales its dice" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "A5 CONTROL: a bare print name is print verbatim" }
+]

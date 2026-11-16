@@ -3,9 +3,10 @@
  * business card's lines; dice re-derive from the card's summed budget so
  * sustained + amortized nova land in band TOGETHER (the whole point).
  */
-import { cardBudget, withinBudget } from './card-budgets.mjs';
+import { cardBudget, withinBudget, singleTargetCeiling } from './card-budgets.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor, hpFormulaFor } from '../format-2024/dice.mjs';
 import { DONORS } from './donors.mjs';
+import { namesMelee, weaponProp } from './weapons.mjs';
 
 export function pickDonor(cr, style = null, archetype) {
   // archetype is REQUIRED (owner, 2026-08-26: "kill the default") — a
@@ -16,8 +17,30 @@ export function pickDonor(cr, style = null, archetype) {
   const mine = DONORS.filter((d) => (d.archetypes ?? []).includes(archetype));
   const pool = mine.filter((d) => (style ? d.style === style : !d.style));
   const fallback = mine.filter((d) => !d.style);
-  const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0] ?? list[0];
-  return (pool.length ? from(pool) : from(fallback)) ?? from(fallback);
+  // WHEN NOTHING SITS AT OR BELOW THE TARGET, TAKE THE NEAREST RUNG — not the first in
+  // the array (critic, 2026-11-05). A CR 4 regenerator brute found no regenerator at or
+  // below 4 and fell through to `list[0]`, which is `brute-17-regenerator`: a thirteen-rung
+  // jump that carried Regeneration 20 onto 85 Hit Points, so a level-4 party netting about
+  // 15 damage a round could not kill it. It shipped on 6 of 6 rolls of that concept.
+  //
+  // The style had cheaper rungs all along — brute-5-regenerator and brute-10-regenerator —
+  // and array order was the only reason the 17 won. Nearest-by-CR picks the 5, a gap of
+  // one, and keeps the style the concept asked for rather than dropping to a styleless
+  // body. Ties break downward, since scaling a donor UP adds rows and scaling it DOWN
+  // removes them, and the smaller sheet is the safer error at a low CR.
+  const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0]
+    ?? list.slice().sort((a, b) => Math.abs(a.cr - cr) - Math.abs(b.cr - cr) || a.cr - b.cr)[0];
+  // THE LEGENDARY TIER (high-cr batch 2026-10-02): from CR 17 a sheet carries the
+  // kit, so the pick prefers a legendary rung — the nearest one, a rung above the
+  // CR included (a CR 17 mounted skirmisher scaled the kit-less 13 rung up while
+  // the 18 rung sat one step away; its 2014 sheet shipped with no legendary actions)
+  const fromTier = (list) => {
+    if (cr < 17) return from(list);
+    const kit = list.filter((d) => d.legendary);
+    if (!kit.length) return from(list);
+    return kit.slice().sort((a, b) => Math.abs(a.cr - cr) - Math.abs(b.cr - cr) || b.cr - a.cr)[0];
+  };
+  return (pool.length ? fromTier(pool) : fromTier(fallback)) ?? from(fallback);
 }
 
 // group 2's first alternative is the caster family's HYBRID row (2024's
@@ -33,9 +56,125 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1 } = {}) {
-  const card = cardBudget(cr, { legendary: !!legendary });
+/**
+ * HOW MANY TIMES A ROUND THIS ROW CAN SWING, recorded on the row.
+ *
+ * The count lived only inside the Multiattack sentence, so every consumer that
+ * needed it had to re-read that sentence — `valueCheck` via `multiattackShape`,
+ * the dangling-citation sweep, and a weld guard that could not be built at all
+ * for want of it (the Wrackwork Ram pushed its own target out of reach of its
+ * second swing, critic 2026-10-25). print's text is the only source for a donor
+ * that brought its own Multiattack, so the sentence IS read — but ONCE, here,
+ * and the result becomes the field every consumer reads. The same move that
+ * retired seven name-readers for `gate` and completed the `imposes` record.
+ *
+ * Both of print's idioms give a row the same ceiling: "makes three Rend attacks"
+ * uses one row three times, and "makes three attacks, using Claw or Bite in any
+ * combination" permits three of either. So the stamp is the Multiattack's own
+ * count on each row it cites.
+ */
+export function stampAttacksPerRound(sections) {
+  const rows = Object.values(sections ?? {}).flat().filter(Boolean);
+  const ma = rows.find((e) => /^Multiattack/i.test(String(e.name ?? '')));
+  const attacks = rows.filter((e) => /Attack Roll/.test(String(e.text ?? '')));
+  for (const e of attacks) delete e.attacksPerRound;          // re-stamping after a rename must not leave a stale count
+  if (!ma) { for (const e of attacks) e.attacksPerRound = 1; return; }
+  const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+  const n = WORDS[(/\bmakes (one|two|three|four|five)\b/i.exec(ma.text ?? '') ?? [])[1]?.toLowerCase()] ?? 1;
+  const bare = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
+  // print's "It can replace one attack with a use of X" names X and grants it
+  // ONCE — searching the whole sentence counted it as N (a Spew cited only
+  // there read as three). The count clause is everything before that.
+  const counted = String(ma.text ?? '').split(/\bcan replace\b/i)[0];
+  for (const e of attacks) {
+    const cited = new RegExp(`\\b${bare(e).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(counted);
+    e.attacksPerRound = cited ? n : 1;   // an uncited attack row is a single swing (print's "can replace one attack with…")
+  }
+}
+
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false, stripMultiattack = null } = {}) {
+  const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
+  // A GATE IN THE NAME BECOMES THE FIELD, ONCE, HERE (2026-10-22). Most donor
+  // rows declare their gate as data — `{ name: 'Area Nova', gate: 'Recharge 5-6' }`
+  // — but 30 of them carry it inside the NAME instead (every Legendary Resistance
+  // and Protective Magic), with no field at all. Those were the last two rows
+  // failing the `e.gate` equivalence on branch10, and the reason five consumers
+  // still recover the gate by re-reading a name: `novasOf`, `hasChassisNova`, the
+  // late nova damage cap, `settleSheetBudgets`, and valueCheck's own `gated` read.
+  //
+  // The donor's own name is a CLOSED FACT, so reading it once at the boundary and
+  // recording what it says is the opposite of inferring meaning from prose — it
+  // converts a fact we already have into the field the rest of the engine can
+  // trust. The NAME is left exactly as it is: print shows the rate, and
+  // "Legendary Resistance (3/Day)" is the name print gives it.
+  for (const es of Object.values(scaled.sections ?? {})) {
+    for (const e of es ?? []) {
+      if (e.gate) continue;
+      const m = /\((Recharge [\d–-]+|\d+\/Day)\)\s*$/.exec(String(e.name ?? ''));
+      if (m) e.gate = m[1];
+    }
+  }
+  // ONE ATTACK MEANS ONE ATTACK'S WORTH OF DAMAGE (2026-10-16). print's seven
+  // swarms each make a single attack, so the swarm body drops the donor's
+  // inherited Multiattack — but it has to drop BEFORE the per-hit solve, or the
+  // dice are priced for two attacks and the round lands at half budget (a CR 13
+  // swarm shipped 45 a round against print's 72–126). Stripping it here lets the
+  // solver put the whole round into the one row.
+  // TWO RULES WORE ONE FLAG (2026-11-08). `oneAttack` both STRIPPED the Multiattack and
+  // enabled the single-hit CLAMP below, and those are different things: the strip is a
+  // body's identity ("print's swarms make one attack", measured on seven swarms all CR
+  // 0.25-3), while the clamp is safety for any creature left with a single hit, and must
+  // not lift just because the identity rule stops. Bounding the flag alone gave a CR 5
+  // swarm one UNCLAMPED attack of 52 against a ceiling of 31. `stripMultiattack` carries
+  // the identity half; `oneAttack` keeps the clamp.
+  if (stripMultiattack ?? oneAttack) {
+    for (const es of Object.values(scaled.sections ?? {})) {
+      for (let i = es.length - 1; i >= 0; i -= 1) if (/^Multiattack/.test(String(es[i]?.name ?? ''))) es.splice(i, 1);
+    }
+  }
+  // AND THE SAME LAW THE OTHER WAY (Five Pipelines step 7, 2026-10-20). A donor
+  // below CR 5 scaled UP keeps its low-CR shape: the CR 2 dragon-2 chassis at
+  // CR 7 shipped one Claw and no Multiattack (the Squallwing Drake, critic's read
+  // of the forty). Print is decisive — a Multiattack appears on 110 of its 113
+  // blocks at CR 5 and up, against 91 of 106 single-attack blocks below CR 1 —
+  // and 80 of the 90 donors already carry one, so this is the ten being brought
+  // to their scaled CR, not a new policy.
+  // Print's modal count: two at CR 5-10, three at CR 11+.
+  // ONE ATTACK ROW CITED N TIMES IS PRINT'S OWN IDIOM: 70 of its 110 CR 5+
+  // Multiattacks name a single row ("makes three Rend attacks").
+  // It lands HERE, beside the swarm strip and before the per-hit solve, so the
+  // round is priced for the attack count the sheet actually makes. A swarm is
+  // exempt by construction: oneAttack and this branch are exclusive.
+  else if (cr >= 5) {
+    // THE SWARM EXEMPTION WAS CR-BOUND ALL ALONG (owner's ruling, 2026-11-08). This
+    // branch used to exclude a swarm chassis outright, because "print's seven swarms each
+    // make exactly one attack and the checker hard-fails a swarm that carries a
+    // Multiattack". Both halves were true and both were measured on swarms that are ALL
+    // CR 0.25-3 — print has no swarm above CR 3 and no ooze above CR 4. The reached state
+    // is now unreachable anyway: this branch only runs at CR >= 5, which is past the band
+    // the rule was measured in, and `stripMultiattack` (the caller's identity flag) has
+    // already returned false to get here. The checker's `swarm-multiattack` gate carries
+    // the same CR bound, so the two still agree.
+    //
+    // Why it matters: one attack cannot reach a CR 13 card of 100 without breaching the
+    // single-target ceiling of 51, so a high-CR swarm was unpriceable by construction and
+    // shipped `under` every time. Identity stays where print actually puts it — the
+    // `Swarm` trait, Bludgeoning/Piercing/Slashing resistance, and the Bloodied split on
+    // the attack, which reads the same across two rolls as one.
+    const esA = scaled.sections?.Actions ?? [];
+    const hasMa = esA.some((e) => /^Multiattack/.test(String(e?.name ?? '')));
+    const atk = esA.filter((e) => /Attack Roll/.test(String(e?.text ?? ''))).map((e) => String(e.name));
+    if (!hasMa && atk.length) {
+      const count = cr >= 11 ? 'three' : 'two';
+      const text = atk.length === 1
+        ? `The creature makes ${count} ${atk[0]} attacks.`
+        : `The creature makes ${count} attacks, using ${atk.join(' or ')} in any combination.`;
+      esA.unshift({ name: 'Multiattack', text });
+      scaled.sections.Actions = esA;
+      stampAttacksPerRound(scaled.sections); // the count is known HERE; every consumer reads the field, not the sentence
+    }
+  }
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
   // ~5 damage/CR vs 2024's ~7.5 — direct-2014 generations pass 0.7
   // (5/7.5 = 0.667; the band's upper half). Uniform across archetypes:
@@ -104,8 +243,11 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // Ghost runs 0.6x of card — Incorporeal + hover ARE the armor; the
   // winged 0.98 path below is untouched, its tax still charges once)
   const deepScale = donor.hp_scale && donor.hp_scale < 0.9 && /Fly/i.test(donor.speed ?? '');
-  scaled.hp = (donor.hp_scale && (deepScale || !/Fly/i.test(donor.speed ?? '')))
-    ? Math.round(card.hp * donor.hp_scale) : card.hp;
+  // a deep discount eases at the legendary tier: print's incorporeals stop at CR 4 (the Ghost's 0.6), and a CR 24 phantom at 0.69 of card sat 25% under print's floor (checker sweep 2026-10-02) — 0.85 is the Lich's own ratio
+  // print's own deep discounts end at CR 6 (Ghost 4, Wraith 5, Invisible Stalker 6): from CR 7 a discount keeps at least 0.85 of the card (goldens gate table 2026-10-02: a CR 7 lurker at 82 HP, a CR 13 warden at 161, both under print's floor)
+  const hpScale = donor.hp_scale ? (cr >= 7 ? Math.max(donor.hp_scale, 0.85) : donor.hp_scale) : null;
+  scaled.hp = (hpScale && (deepScale || !/Fly/i.test(donor.speed ?? '')))
+    ? Math.round(card.hp * hpScale) : card.hp;
   scaled.atk = card.atk; scaled.dc = card.dc;
   // full print ladder: the old ceiling of 6 shipped wrong PB/saves/skills
   // on every CR 21+ block (Stormfall +6 at CR 22, lint-caught 2026-08-20)
@@ -131,7 +273,15 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // whose final speed carries Fly pays the measured 10% (flyers 0.98 of
   // card HP vs grounded 1.08, corpus sweep). Winged donors, movement
   // grants, and any future wings all price identically.
-  if (/Fly/.test(scaled.speed) && !deepScale) scaled.hp = Math.round(scaled.hp * 0.9);
+  // the flight tax stops at the legendary tier: print's CR 17+ fliers are not lighter (Balor 287 at 19, Pit Fiend 337 at 20, Solar 363 at 21) and a taxed skirmisher-18 sat under print's lowest HP (checker 2026-10-02)
+  // and never on top of the legendary HP trade (dragon-15 at CR 15: 240 × 0.8 × 0.9 = 173 against the Adult Green's 207)
+  if (/Fly/.test(scaled.speed) && !deepScale && cr < 17 && !(legendary && cr >= 13)) scaled.hp = Math.round(scaled.hp * 0.9);
+  // discounts never STACK below 0.85 of the card from CR 7 (a hovering CR 13 warden paid the ward tax and the flight tax to 0.77 and sat under print's floor — goldens gate table 2026-10-02)
+  if (cr >= 7) scaled.hp = Math.max(scaled.hp, Math.round(card.hp * 0.85));
+  // a 2014 sheet's HP is the DMG band after the AC trade — the donors' hp_scale
+  // and the flight tax are 2024-card calibrations that left four of five 2014
+  // sheets under the band (owner's numbers check, 2026-10-02)
+  if (edition === '2014') scaled.hp = card.hp; // print's 2014 median at the CR (the SRD 5.1), not the table's band after an AC trade — a CR 1 goblin sat at 77 HP where print 2014 is 19–37 (critic's release audit 2026-10-03)
   // STAT COHERENCE (raise-only, the skeleton path's idiom): a reader
   // recomputes attack = striker mod + PB, so the striker stat rises to
   // pay the card's attack bonus. The DC stays at card — print lets DCs
@@ -141,9 +291,21 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     // casters strike with the MIND (corpus sweep 2026-09-02: Archmage +9
     // = INT 5 + PB 4; raising DEX instead ships a DEX-20 wizard)
     const isCaster = (donor.archetypes ?? []).includes('caster');
-    const striker = isCaster
-      ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0]
-      : (scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR');
+    // A CASTER WHO CARRIES A WEAPON NEEDS THE ARM FOR IT (critic, 2026-10-14:
+    // Lady Merivane swung a greatsword at +8 off WIS 20 with STR 12, because a
+    // caster line keys every attack to the mind). Print's own warpriest, the
+    // Priest, swings its Mace off STR 16. When the GM's words name a mundane
+    // melee weapon, the striker is physical and the mind keeps the DC.
+    const armed = namesMelee(concept);
+    // THE WARPRIEST LINE IS A WEAPON LINE: its chassis carries a melee row the
+    // model will name a mace or a sword, so the arm has to be fitted before that
+    // name exists. Print's Priest is STR 16 and WIS 16 — it swings off one and
+    // casts off the other (critic, 2026-10-14: Vareth's Mace rolled +7 off WIS).
+    const weaponLine = String(donor.style ?? '') === 'warpriest';
+    const byStats = scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR';
+    const striker = armed
+      ? (weaponProp(concept)?.finesse ? byStats : 'STR')
+      : (isCaster && !weaponLine ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0] : byStats);
     // EXACT-fit, both directions (2026-09-11: the Cistern Lurker's
     // authored Str 18 derived +7 beside a +6 card stamp at CR 5 — donor
     // stats are ours to move; raise-only was the slot path's rule for
@@ -176,17 +338,30 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // budget its nova carries); the card decides the total. Solve per-hit
   // damage so summedDPR hits the card's dpr, holding the donor's attack
   // count and nova-to-sustained ratio.
+  // below CR 1/2 print makes ONE attack (corpus 2026-10-01: 2 of 79 blocks at CR <= 1/4 carry Multiattack — Pseudodragon, Violet Fungus; 5 of 27 at CR 1/2): the row leaves before the per-hit solver prices the budget into one swing (a CR 1/4 kobold made two, critic form-ten)
+  if (cr < 0.5) for (const es of Object.values(scaled.sections)) { const mi = es.findIndex((e) => e.name === 'Multiattack'); if (mi >= 0) es.splice(mi, 1); }
+  // below CR 5 print makes at most TWO attacks (corpus 2026-10-01: of 216 blocks under CR 5 only the Manticore makes three) — a CR 2 hedge-witch made three
+  if (cr < 5) for (const es of Object.values(scaled.sections)) for (const e of es) if (e.name === 'Multiattack' && /makes three\b/.test(e.text ?? '')) e.text = e.text.replace(/makes three\b/, 'makes two');
   const rows = Object.entries(scaled.sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
   const multi = rows.find((r) => r.e.name === 'Multiattack');
   const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
-  const legendaryStrikes = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text)).length;
+  // A ONCE-PER-ROUND LEGENDARY FIRES ONCE (bodies + high-cr, 2026-10-15). The
+  // donors already carry print's own brake — "The creature can't take this
+  // action again" — and the checker honours it (`once ? 1 : uses/cost`). This
+  // filter did not, so a donor with one free repeat row and one braked row was
+  // priced as two free ones: six extra attacks where the checker counts four.
+  const legendaryRepeat = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text));
+  const onceOnly = (t) => /can['’]t (?:take|use) this action again|once per round|only once/i.test(String(t ?? ''));
+  const legendaryStrikes = legendaryRepeat.length;
   // DAMAGE-bearing gated rows only (the Aegis bug, 2026-09-09: the
   // per-hit solver priced the warden's 2/Day temp-HP blessing as a
   // damage nova and crushed every warden ~50% under budget — 8 (1d8+4)
   // fists on a CR 7). A gated support row is budget-neutral.
   const novaRows = rows.filter((r) => r.e.gate && /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) [\w{}]+ damage/.test(r.e.text));
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
-  let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryStrikes + 1)));
+  const legendaryHits = legendaryRepeat.reduce((n, r) => n + (onceOnly(r.e.text) ? 1 : 3), 0); // the DMG counts every legendary use: a cost-1 strike row fires three times a round (critic's release audit 2026-10-03 — 2014 legendaries ran 1.5–2.3× the band with Multiattack solved to the band and three strikes on top; a 2024 lurker at 18 read +8 on offense, past print's +7 ceiling). Receipt: print 2024 legendaries sit at ~1.0× the legendary card by this count (Adult Brass 126 vs 125 at CR 13)
+  let hitClamped = null; // set when a one-attack body is held under print's single-target ceiling
+  let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryHits + 1)));
   // PER-USE nova ceiling, measured against ALL printed single-entry
   // maxima (2026-08-18, the reviewer's non-dragon rider — which was
   // earned: 5.5xCR ran 75% over print at the top). Print's biggest
@@ -203,15 +378,54 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const novaCeil = Math.min(Math.round(6 * cr), 55 + Math.round(cr));
   const novaAvgFor = (ph) => Math.min(Math.round(ph * attacks * 1.5), novaCeil);
   for (let i = 0; i < 40; i += 1) {
-    const sustained = perHit * (attacks + legendaryStrikes);
+    // THE LOOP MUST COUNT WHAT THE SEED COUNTS (bodies, 2026-10-15). The seed
+    // two blocks up divides the card by `attacks + legendaryHits + 1`, where
+    // legendaryHits is the strike row times three — the DMG's own reading, and
+    // the checker's. This line counted the row ONCE, so the loop drove per-hit
+    // back up until the sheet was hot: the CR 15 storm dragon shipped a 32-point
+    // bite where print's adult dragons at CR 13-16 deal 17-21, and its offense
+    // read CR 23.
+    const sustained = perHit * (attacks + legendaryHits);
     const novas = novaRows.map((r) => ({ avg: novaAvgFor(perHit), gate: r.e.gate }));
-    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1 });
+    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1, edition });
     // a scaled-down block (dprScale < 1) descends from the donor's
     // numbers — first-in-band from above is the band CEILING, ~20%
     // over the 2014 line (live 2026-09-14); keep descending to within
     // 110% of target. Unscaled generations keep the historical stop.
     if (ok && actual >= target * 0.9 && ((scaled.dpr_scale ?? 1) >= 1 || actual <= target * 1.1)) break;
     perHit += actual < target ? 1 : -1;
+  }
+  // A ONE-ATTACK BODY CANNOT CARRY A WHOLE ROUND IN ONE HIT (owner's ruling,
+  // 2026-11-01). The swarm strip above drops the donor's Multiattack so "the
+  // solver puts the whole round into the one row" — correct for the ROUND and
+  // ruinous for the HIT: at CR 13 that is 90 against print's hardest single-target
+  // row of 51 (1.76x), which one-shots a player character. Print's own answer is
+  // that it has NO swarm above CR 3, so there is no printed peer to copy; what
+  // print does state is the per-band ceiling, and that holds whatever the body.
+  //
+  // MEASURED BEFORE CHOOSING (sweep-2026-10-30T02-34-52 #29, four variants through
+  // the real checker): clamping alone clears the `single-target-ceiling` FAIL and
+  // leaves soft `aim-dpr`/`band` (the round lands near half budget). MOVING the
+  // surplus into the sheet's area row — the ruling's second half — fails
+  // `nova-cap` instead, because that row is a Recharge nova and print caps nova
+  // damage per use; ungating it to dodge that fails `under`. So the surplus has
+  // nowhere legal to go, and the clamp ships alone. Reported to the owner.
+  // AFTER the budget loop, which is the whole point: the loop drives per-hit back
+  // UP until the round meets the card, so a clamp placed before it is simply undone
+  // (measured: it set 51 and the loop returned 90). Clamping here means the round
+  // lands under budget by construction — the soft `aim-dpr`/`band` read that the
+  // four-variant measurement showed is the cheapest of the available costs.
+  if (oneAttack && cr > 3) {
+    const ceiling = singleTargetCeiling(cr);
+    if (ceiling && perHit > ceiling) {
+      // scale.mjs has no tracer and is given none, so the clamp is recorded as a
+      // FIELD and generate.mjs traces it where the trace belongs. (`trace?.()`
+      // would have thrown here: optional-call does not protect an UNDECLARED
+      // identifier, only a nullish value — the same shape as the unimported
+      // `bandFor` caught earlier today.)
+      hitClamped = { from: perHit, to: ceiling, cr };
+      perHit = ceiling;
+    }
   }
   const dexMod = Math.floor((scaled.stats.DEX - 10) / 2);
   const strMod = Math.floor((scaled.stats.STR - 10) / 2);
@@ -299,7 +513,10 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       const main = /(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/.exec(e.text);
       if (!main) continue;
       const half = saveDamageDiceFor(Math.max(1, Math.floor(Number(main[1]) / 2)));
-      e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''} if `);
+      // the plus-rider rides the Bloodied half too, halved — print's split carries one type, but a rider the model added is not dropped on the half (the plague swarm's Poison vanished when Bloodied, critic form-ten 2026-10-01)
+      const plus = /(?<=\{damage_type\} damage) plus (\d+) \((\d+d\d+)\) \{damage_type_2\} damage(?=, or )/.exec(e.text);
+      const halfPlus = plus ? saveDamageDiceFor(Math.max(1, Math.floor(Number(plus[1]) / 2))) : null;
+      e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''}${halfPlus && tok ? ` plus ${halfPlus.avg} (${halfPlus.dice}) {damage_type_2} damage` : ''} if `);
     }
   }
   // escape DCs re-derive from the FINAL stats (2024 rule: 8 + Str mod
@@ -329,5 +546,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
   scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);
   scaled.per_hit = perHit;
+  if (hitClamped) scaled.hit_clamped = hitClamped;
+  stampAttacksPerRound(scaled.sections); // a donor that brought print's own Multiattack is stamped from it, once
   return scaled;
 }

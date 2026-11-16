@@ -1,0 +1,288 @@
+{
+  "name": "Bone-Choir",
+  "inline": "the bone-choir",
+  "type_and_alignment": "Large undead, neutral",
+  "armor_class": "17 (natural armor)",
+  "hit_points": "210 (20d10 + 100)",
+  "speed": "30 ft.",
+  "attributes": "STR 14 (+2), DEX 15 (+2), CON 20 (+5), INT 14 (+2), WIS 15 (+2), CHA 18 (+4)",
+  "saving_throws": "WIS +7, CHA +9",
+  "skills": "Perception +7, Deception +9",
+  "senses": "darkvision 60 ft., passive Perception 17",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "16 (15,000 XP)",
+  "proficiency_bonus": "+5",
+  "abilities": [
+    {
+      "name": "Fear Aura",
+      "description": "The bone-choir emanates an aura in a 20-foot radius while it is not incapacitated. Any enemy that starts its turn in the aura must make a DC 18 Wisdom saving throw. On a failed save, the target is frightened until the end of its next turn. On a successful save, the target is immune to this creature's aura for 24 hours.",
+      "imposes": "Frightened"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The bone-choir makes three attacks, using Rib Lance or Dirge Bolt. It can replace one attack with a use of (A) Eulogy Wrack or (B) Spellcasting to cast *Bestow Curse*."
+    },
+    {
+      "name": "Rib Lance",
+      "description": "Melee Spell Attack: +9 to hit, reach 10 ft., one target. Hit: 18 (4d6 + 4) piercing damage plus 13 (3d8) necrotic damage."
+    },
+    {
+      "name": "Dirge Bolt",
+      "description": "Ranged Spell Attack: +9 to hit, range 80/320 ft., one target. Hit: 26 (5d8 + 4) necrotic damage."
+    },
+    {
+      "name": "Eulogy Wrack",
+      "description": "One creature within 60 feet of the bone-choir must succeed on a DC 18 Wisdom saving throw or take 28 (8d6) necrotic damage and be frightened of the bone-choir until the end of its next turn.",
+      "imposes": "Frightened"
+    },
+    {
+      "name": "Spellcasting",
+      "description": "The bone-choir casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks): - **At will:** *Bestow Curse*, *Fear*, *Charm Person*\n**1/day each:** *Vampiric Touch* (level 9 version)"
+    },
+    {
+      "name": "Choir's Call",
+      "description": "Each creature of the bone-choir's choice in a 90-foot radius originating from the bone-choir that can see or hear the bone-choir must make a DC 18 Wisdom saving throw. On a failed save, the target is charmed until the end of its next turn, and while charmed this way, it must move toward the bone-choir by the safest available route on its turn and can't take Reactions. On a successful save, the target is immune to this creature's lure for 24 hours.",
+      "imposes": "Charmed"
+    }
+  ],
+  "format": "2014",
+  "archetype": "controller",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "exhaustion, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-8-binder",
+    "archetype": "caster",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "sings the dying into its ranks",
+        "where": "description",
+        "text": "The bone-choir draws the creature's last breath into its choir; it regains {dmg} hit points, and its Dirge Bolt deals Necrotic damage to a creature of its choice within 60 feet unless that creature succeeds on a {dc} Wisdom saving throw."
+      }
+    ],
+    "userConcept": "a bone-choir that sings the dying into its ranks",
+    "clauses": [
+      {
+        "id": "cl_bakwmh",
+        "text": "a bone-choir",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "sings",
+        "askShape": "save_single",
+        "askMechanic": "charm",
+        "askMechanicWhy": "sings the dying into its ranks"
+      },
+      {
+        "id": "cl_1bvji19",
+        "text": "sings the dying into its ranks",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "sings",
+        "askShape": "save_single",
+        "askMechanic": "charm",
+        "askMechanicWhy": "sings the dying into its ranks"
+      }
+    ],
+    "menu_role": "controller",
+    "cite": "composition after Spirit Naga (CR 8) — the or-form bite-and-ray with the debuff single",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_in_prose": [
+      "sings the dying into its ranks"
+    ],
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Bone-Choir",
+    "inline": "the bone-choir",
+    "format": "2024",
+    "cr": 16,
+    "cr_str": "16",
+    "xp": 15000,
+    "challenge_rating": "16 (XP 15,000; PB +5)",
+    "type": "Undead",
+    "size": "Large",
+    "alignment": "Neutral",
+    "ac": 17,
+    "hp": 210,
+    "hp_formula": "20d10 + 100",
+    "pb": 5,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 14,
+      "DEX": 15,
+      "CON": 20,
+      "INT": 14,
+      "WIS": 15,
+      "CHA": 18
+    },
+    "saves": {
+      "STR": 2,
+      "DEX": 2,
+      "CON": 5,
+      "INT": 2,
+      "WIS": 7,
+      "CHA": 9
+    },
+    "skills": "Perception +7, Deception +9",
+    "senses": "darkvision 60 ft.; Passive Perception 17",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The bone-choir makes three attacks, using Rib Lance or Dirge Bolt in any combination. It can replace one attack with a use of (A) Eulogy Wrack or (B) Spellcasting to cast *Bestow Curse*."
+        },
+        {
+          "name": "Rib Lance",
+          "text": "*Melee Attack Roll:* +9, reach 10 ft. 18 (4d6 + 4) Piercing damage plus 13 (3d8) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Dirge Bolt",
+          "text": "*Ranged Attack Roll:* +9, range 80/320 ft. 26 (5d8 + 4) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Eulogy Wrack",
+          "text": "*Wisdom Saving Throw*: DC 18, one creature within 60 feet. *Failure:* 28 (8d6) Necrotic damage, and the target has the Frightened condition until the end of its next turn.",
+          "imposes": "Frightened"
+        },
+        {
+          "name": "Spellcasting",
+          "rules": true,
+          "text": "The bone-choir casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks):\n\n- **At Will:** *Bestow Curse*, *Fear*, *Charm Person*\n- **1/Day Each:** *Vampiric Touch* (level 9 version)"
+        },
+        {
+          "name": "Choir's Call",
+          "text": "*Wisdom Saving Throw:* DC 18, each creature of the bone-choir's choice in a 90-foot Emanation originating from the bone-choir that can see or hear the bone-choir. *Failure:* The target has the Charmed condition until the end of its next turn, and while Charmed this way, it must move toward the bone-choir by the safest available route on its turn and can't take Reactions. *Success:* The target is immune to this creature's lure for 24 hours.",
+          "library": true,
+          "template": "lure",
+          "imposes": "Charmed",
+          "boundKeys": [
+            "song",
+            "hymn"
+          ],
+          "gmQuote": "sings the dying into its ranks",
+          "duration": "target_end",
+          "area": {
+            "shape": "Emanation",
+            "size": 90
+          }
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Fear Aura",
+          "text": "The bone-choir emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 18, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+          "library": true,
+          "template": "fear-aura",
+          "imposes": "Frightened",
+          "boundKeys": [],
+          "accepted_closest": true,
+          "gmQuote": "a bone choir that sings the dying into its ranks",
+          "duration": "target_end",
+          "area": {
+            "shape": "Emanation",
+            "size": 20
+          },
+          "expresses": "singing the dying into its choir",
+          "bound": false
+        }
+      ]
+    },
+    "lore": "What becomes of a battlefield's last rites when no one came to finish them — a knot of unburied ribs and jawbones that learned to sing the dying into its own ranks so that no one, singer or sung, is ever left unremembered and alone.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "caster-8-binder",
+      "archetype": "caster",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [
+        {
+          "clause": "sings the dying into its ranks",
+          "where": "description",
+          "text": "The bone-choir draws the creature's last breath into its choir; it regains {dmg} hit points, and its Dirge Bolt deals Necrotic damage to a creature of its choice within 60 feet unless that creature succeeds on a {dc} Wisdom saving throw."
+        }
+      ],
+      "userConcept": "a bone-choir that sings the dying into its ranks",
+      "clauses": [
+        {
+          "id": "cl_bakwmh",
+          "text": "a bone-choir",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "sings",
+          "askShape": "save_single",
+          "askMechanic": "charm",
+          "askMechanicWhy": "sings the dying into its ranks"
+        },
+        {
+          "id": "cl_1bvji19",
+          "text": "sings the dying into its ranks",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "sings",
+          "askShape": "save_single",
+          "askMechanic": "charm",
+          "askMechanicWhy": "sings the dying into its ranks"
+        }
+      ],
+      "menu_role": "controller",
+      "cite": "composition after Spirit Naga (CR 8) — the or-form bite-and-ray with the debuff single",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 2,
+      "seed_rows": 0,
+      "gap_vetoed": "0 of 1",
+      "gap_missing_unstated": 0,
+      "answered_in_prose": [
+        "sings the dying into its ranks"
+      ],
+      "signature": "library"
+    },
+    "archetype": "controller",
+    "archetype_source": "user",
+    "immunities": "Poison; Exhaustion, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a bone-choir that sings the dying into its ranks",
+  "selectedChallengeRating": "16",
+  "monsterName": "Bone-Choir",
+  "caster": false
+}

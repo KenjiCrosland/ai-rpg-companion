@@ -1,0 +1,213 @@
+[
+  {
+    "name": "",
+    "description": "an eyeless hunter that tracks prey by scent alone",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "LURKER PRICING: stealth read as +4 effective AC; HP over print's floor; polarity lands on the senses line"
+  },
+  {
+    "name": "",
+    "description": "a mournful ghost that drifts through the walls of the drowned chapel",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "INCORPOREAL: the phantom's resistance package is its payment, effective HP over the floor"
+  },
+  {
+    "name": "",
+    "description": "a barrow wight who drifts between the standing stones at night",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "WIGHT: a corporeal print body stands the phantom seat down \u2014 no hover, no Incorporeal Movement"
+  },
+  {
+    "name": "",
+    "description": "an unseen stalker of living wind that is invisible at all times",
+    "cr": "6",
+    "rules": "2014",
+    "canary": "INVISIBILITY: priced at +2 AC, read from row text not row names"
+  },
+  {
+    "name": "",
+    "description": "a halfling scout who ducks behind her allies and hides between shots",
+    "cr": "3",
+    "rules": "2014",
+    "canary": "LURKER-LIKE ON A NON-LURKER: the hide bonus action priced once, 2014"
+  },
+  {
+    "name": "Druid",
+    "description": "",
+    "cr": "2",
+    "rules": "2024",
+    "canary": "PRINT CASTER: Spellcasting says Wisdom, WIS is the fitted stat, INT stays print's 12"
+  },
+  {
+    "name": "",
+    "description": "a priest who heals the faithful and burns the heretic with holy fire",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "WISDOM CASTER by print head, 2014: the DC keys the body's casting stat"
+  },
+  {
+    "name": "",
+    "description": "a wizard but he cannot cast any spells, he just hits people with his staff",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "ARMED CASTER: no Spellcasting, and the staff rolls a weapon stat"
+  },
+  {
+    "name": "",
+    "description": "skeleton with a greatsword",
+    "cr": "2",
+    "rules": "2024",
+    "canary": "PRINT + ADDITION: remainder makes a borrow; the GM's weapon stands over print's Shortsword"
+  },
+  {
+    "name": "",
+    "description": "a skeleton who was a gladiator in a former life",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "PRINT + FORMER LIFE: the class kit arrives, 2014"
+  },
+  {
+    "name": "",
+    "description": "an ogre with a greataxe",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "PRINT + WEAPON: Greataxe stands, print's Javelin rides with its own weapon stamp"
+  },
+  {
+    "name": "Mummy",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "PRINT FIDELITY: HP 58 on print's own 9d8 + 18, Multiattack verbatim"
+  },
+  {
+    "name": "",
+    "description": "a ghost of the drowned chapel who drifts through its walls",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "BORROW AT PRINT'S CR: print's Multiattack rides, HP 45 = 10d8"
+  },
+  {
+    "name": "",
+    "description": "a lamplighter's widow who still walks her round, trailing cold",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "WEAPON 'NONE': a coined row carries no weapon; the attack stat reads clean"
+  },
+  {
+    "name": "",
+    "description": "a mountain that has begun to walk and does not know why",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "NAME CLAIMS: a legendary row that only moves may not keep a Shove name"
+  },
+  {
+    "name": "",
+    "description": "a troll that grows back unless the blade was silvered",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "BANE: the weakness clause stamps a silvered-weapon bane, the call's own quote"
+  },
+  {
+    "name": "",
+    "description": "a berserker who flies into an unstoppable rage once per day when wounded",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "IDIOM IS NOT A CAPABILITY: no wings; the rage is a gated trait, 2014"
+  },
+  {
+    "name": "",
+    "description": "an iron-willed inquisitor who never yields ground",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "IDIOM: 'iron-willed' is resolve, not a forged body"
+  },
+  {
+    "name": "",
+    "description": "a coil-bodied horror that seizes a victim and will not let go",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "HOLDS: the call's own answer opens the grappler engine and its escape DC"
+  },
+  {
+    "name": "",
+    "description": "a crushing press of stone that squeezes but never holds",
+    "cr": "6",
+    "rules": "2014",
+    "canary": "HOLDS, NEGATIVE: crushing is not holding \u2014 no grapple engine, 2014"
+  },
+  {
+    "name": "",
+    "description": "a monk of the open hand who strikes pressure points",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "IMPLIED CLASS: the call names the class, the engine validates it against the kit"
+  },
+  {
+    "name": "",
+    "description": "a kuo-toa priest who drags swimmers under the ice",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "BODY OUTRANKS THE VERB: a bodied Humanoid is no phantom"
+  },
+  {
+    "name": "",
+    "description": "a drowned bell-diver who rises from the harbour mud",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "ELEMENT/TYPE GUARD: the water element and the walking dead, 2014"
+  },
+  {
+    "name": "Dame Oriel",
+    "description": "",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "A GATE MAY SHAPE WHAT THE GM ASKED FOR, NEVER REMOVE IT: the disadvantage trait stays, the AC pays"
+  },
+  {
+    "name": "",
+    "description": "a swarm of carrion beetles that strips a corpse in a minute",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "SWARM BY CALL FIELD: print's swarm shape, one attack, no Multiattack"
+  },
+  {
+    "name": "",
+    "description": "an archer of the black fletching who never misses the eye",
+    "cr": "6",
+    "rules": "2014",
+    "canary": "ARCHER BY CALL FIELD: a bow, its own range, 2014"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "lurker",
+    "canary": "BLANK ROLL, archetype only: a legal sheet with an attack row"
+  },
+  {
+    "name": "Grik",
+    "description": "",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "BLANK ROLL, name only: no description at all"
+  },
+  {
+    "name": "",
+    "description": "a cave troll that speaks only Giant and understands no Common",
+    "cr": "3",
+    "rules": "2014",
+    "canary": "LANGUAGE NEGATION on a print head, 2014"
+  },
+  {
+    "name": "Thurivald",
+    "description": "A Huge frost giant jarl. He throws boulders, swings a greataxe, and his roar freezes the blood. AC 17, 180 hit points, cr 9.",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "DENSE: body + parts + GM requests + math + CR in the words"
+  }
+]

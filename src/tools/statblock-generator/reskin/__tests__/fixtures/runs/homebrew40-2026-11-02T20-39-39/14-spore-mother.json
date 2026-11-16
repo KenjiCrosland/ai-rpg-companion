@@ -1,0 +1,158 @@
+{
+  "name": "Spore-Mother",
+  "inline": "the spore-mother",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Plant",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 18,
+  "hp": 195,
+  "hp_formula": "23d8 + 92",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 18,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 8,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 8
+  },
+  "skills": "Athletics +10, Persuasion +8",
+  "senses": "Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Cadaver Verdure",
+        "text": "When a creature the spore-mother can see is reduced to 0 Hit Points, the spore-mother seeds the corpse; it rises as a fungal thrall under her command at the start of her next turn.",
+        "authored": true,
+        "clause": "takes over the bodies of the things she kills",
+        "clauseId": "cl_shlr3d"
+      },
+      {
+        "name": "Word of Command",
+        "text": "When a creature the spore-mother can see is reduced to 0 Hit Points, the spore-mother speaks a word of rot; each fungal thrall that can hear her within 60 feet can immediately move or make one attack as a reaction to her command.",
+        "authored": true,
+        "clause": "When a creature the spore-mother can see is reduced to 0 hit points, the spore-mother can speak a word of rot that reson",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "raising corpses as fungal thralls",
+        "bound": false,
+        "boundKeys": [],
+        "answersAlso": [
+          "sends them at you"
+        ],
+        "decoration": true
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the spore-mother, the spore-mother and its allies have Advantage on attack rolls and saving throws, provided the spore-mother doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The spore-mother makes three attacks, using Spore Limb or Cadaver Seed in any combination."
+      },
+      {
+        "name": "Spore Limb",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Bludgeoning damage plus 11 (2d10) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Cadaver Seed",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Cadaverspore Hex",
+        "text": "*Wisdom Saving Throw:* DC 18, one creature within 30 feet. *Failure:* Until the start of the spore-mother's next turn, the target has Disadvantage on attack rolls against creatures other than the spore-mother.",
+        "library": true,
+        "template": "aggro-curse",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "takes over the bodies of the things she kills and sends them at you"
+      }
+    ]
+  },
+  "lore": "Born of a rotting grove where the fallen were never buried, the spore-mother drifts between battlefields and mass graves, seeding cadaver-fungus into any corpse that has not yet cooled, so that she may build a family of the dead and march it home.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+    "clauses": [
+      {
+        "id": "cl_1x5f05m",
+        "text": "a spore-mother",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_shlr3d",
+        "text": "takes over the bodies of the things she kills",
+        "kind": "mechanical"
+      },
+      {
+        "id": "cl_1rip7y9",
+        "text": "sends them at you",
+        "kind": "mechanical"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "sends them at you -> Word of Rot"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+  "selectedChallengeRating": "12",
+  "monsterName": "Spore-Mother",
+  "caster": false
+}

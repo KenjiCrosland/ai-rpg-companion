@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "#17 TARGET - Pit Fiend: Bite + Devilish Claw + Fiery Mace all ship, Multiattack is print's verbatim, 0 re-reads"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "#17 TARGET roll 2 - same"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "#01 TARGET - Dire Wolf: ONE Bite, no Multiattack (print has none at CR 1)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "#01 TARGET roll 2 - same"
+  },
+  {
+    "name": "",
+    "description": "a skeleton with a greatsword",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SAFETY - CR 6 brute on the Skeleton's names: its pool Multiattack MUST survive (print CR 1/4 does not govern)"
+  },
+  {
+    "name": "",
+    "description": "a skeleton with a greatsword",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "SAFETY roll 2 - same"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "CONTROL - Owlbear exact: Rend + print's \"two Rend attacks\", unchanged"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "CONTROL - Goblin Boss: print's list is already whole, nothing added"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "CONTROL - Vampire: \"Multiattack (Vampire Form Only)\" must be KEPT, never stripped"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "CONTROL - Purple Worm: print body, two melee rows, no change expected"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "CONTROL 2014 - Adult Red Dragon: the other printing takes the same path"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "brute",
+    "canary": "CONTROL - a homebrew sheet on no print body: untouched by either mechanism"
+  }
+]

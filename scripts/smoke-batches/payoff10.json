@@ -1,0 +1,22 @@
+[
+ { "name": "", "description": "a marsh witch who curses trespassers", "cr": "7", "rules": "2024",
+   "canary": "PAYOFF SOURCE · hit condition-payoff twice in three runs; the condition must be one the sheet imposes" },
+ { "name": "", "description": "a bog troll that grabs and crushes", "cr": "8", "rules": "2024",
+   "canary": "IMPOSER PRESENT · a grapple row exists, so a Grappled payoff is legitimate" },
+ { "name": "", "description": "a gaze-tyrant that petrifies and then shatters its victims", "cr": "11", "rules": "2024",
+   "canary": "IMPOSER PRESENT · petrify then exploit — the payoff has a real source" },
+ { "name": "", "description": "a scholar who debates her enemies to death with no magic at all", "cr": "6", "rules": "2024",
+   "canary": "NO IMPOSER · nothing here imposes a condition; a payoff must be REFUSED, not defaulted to Frightened" },
+ { "name": "", "description": "a plain mercenary with a spear and a shield", "cr": "4", "rules": "2024",
+   "canary": "NO IMPOSER · the mundane control — a condition payoff would be unplayable" },
+ { "name": "", "description": "a fear-eater that feeds on the terrified", "cr": "9", "rules": "2024",
+   "canary": "SELF-SOURCED · it must impose Frightened itself before it can feed on it" },
+ { "name": "", "description": "a venom-priest whose poison rots the helpless", "cr": "10", "rules": "2014",
+   "canary": "2014 + POISON · the path that produced the orphaned Cursed Sinkhole" },
+ { "name": "Owlbear", "description": "that pins prey and tears at what it holds", "cr": "3", "rules": "2024",
+   "canary": "TWIST + GRAPPLE · print's Owlbear has no grapple; the twist adds one" },
+ { "name": "", "description": "a mind-flayer-ish thing that stuns then devours", "cr": "12", "rules": "2024",
+   "canary": "STUN THEN EAT · a Stunned payoff with a Stunned source" },
+ { "name": "Stone Golem", "description": "", "cr": "10", "rules": "2024",
+   "canary": "EXACT CONTROL · print only; no payoff, no change expected" }
+]

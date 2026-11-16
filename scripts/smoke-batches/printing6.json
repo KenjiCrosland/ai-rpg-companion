@@ -1,0 +1,14 @@
+[
+  { "name": "Lich", "description": "", "cr": "auto", "rules": "2014", "mode": "exact",
+    "canary": "KRENNIK'S CLASS — print's Paralyzing Touch and its save. Every row is print's, so NONE goes to the conversion call now: the 2014 twin must be rendered from our own 2024 text and must not lose a branch, a die or an escape DC." },
+  { "name": "Harpy", "description": "", "cr": "auto", "rules": "2014", "mode": "exact",
+    "canary": "FLOOR — Luring Song carries print's own 'immune ... for 24 hours' Success clause. That clause is exactly what Krennik's Fear Aura lost in translation; it must survive into 2014." },
+  { "name": "", "description": "a bell-wraith whose thunderous toll deafens everything in the chapel", "cr": "9", "rules": "2014",
+    "canary": "FEATURE — a template save row with Failure AND Success branches. The 2014 compressed idiom ('taking X on a failed save, or half as much on a successful one') must appear, NOT 2024 phrasing: the first cut of the structure guard false-positived on exactly this and would have kept the 2024 text." },
+  { "name": "", "description": "an aboleth-spawn that breathes air and water and climbs sheer stone", "cr": "10", "rules": "2014",
+    "canary": "R3.3 — two traits print writes with no word on the old MECHANIC list (Amphibious, Spider Climb). They were refused 21% of the time; the call's declared passive_effect should now carry them onto the sheet." },
+  { "name": "", "description": "a reliquary abbot whose litany mends the faithful once a day", "cr": "12", "rules": "2014",
+    "canary": "R3.3 the other way — a heal must still name its amount and its limit. If it lands unquantified the form validator has gone soft." },
+  { "name": "", "description": "a gaol-keeper who shackles a victim and drags them to the pit", "cr": "8", "rules": "2014",
+    "canary": "FEATURE — a grapple with an escape DC, and an authored free-prose trait beside it. The escape DC is one of the three counts the structure guard protects; the free-prose trait is the ONE row that still goes to the conversion call." }
+]

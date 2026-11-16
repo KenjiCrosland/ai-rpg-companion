@@ -1,0 +1,159 @@
+{
+  "name": "Coal-Cat",
+  "inline": "the coal-cat",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Beast",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 14,
+  "hp": 85,
+  "hp_formula": "9d8 + 45",
+  "pb": 2,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 20,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 1,
+    "CON": 7,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +6, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Ember Wound",
+        "text": "The first time the coal-cat is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC 15, each creature in a 15-foot Emanation originating from the coal-cat. *Failure:* 4 (1d8) Fire damage, and the target has the Blinded condition until the end of its next turn.",
+        "library": true,
+        "template": "bloodied-burst",
+        "imposes": "Blinded",
+        "boundKeys": [
+          "wounded",
+          "crack"
+        ],
+        "accepted_closest": true,
+        "minorClause": ", and the target has the Blinded condition until the end of its next turn",
+        "area": {
+          "shape": "Emanation",
+          "size": 15
+        },
+        "expresses": "wounds stoke its fire hotter",
+        "bound": true
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the coal-cat fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The coal-cat regains 20 Hit Points at the start of each of its turns. If the coal-cat takes Cold damage, this trait doesn't function on the coal-cat's next turn. The coal-cat dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The coal-cat makes two Claw attacks. It can replace one attack with a use of Smoldering Menace."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +6, reach 10 ft. 7 (1d6 + 4) Slashing damage plus 4 (1d8) Fire damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Smoldering Menace",
+        "text": "*Wisdom Saving Throw:* DC 15, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of the coal-cat's next turn. If the target was already Frightened by this ability, it also takes 7 (2d6) Fire damage.",
+        "library": true,
+        "imposes": "Frightened",
+        "seed": "escalating-dread",
+        "duration": "source_end"
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the coal-cat can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Stalk and Strike",
+        "text": "The coal-cat moves up to half its Speed without provoking Opportunity Attacks, and it makes one Claw attack."
+      },
+      {
+        "name": "Cinder Glare",
+        "imposes": "Frightened",
+        "text": "*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+      },
+      {
+        "name": "Coalscatter",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 15, each creature within 10 feet of the coal-cat. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "A coal-cat is a feral beast kindled in the smoldering slag-heaps of ruined forges, hunting the warmth of living things to feed the banked fire inside it.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a coal-cat whose every wound makes it burn hotter",
+    "clauses": [
+      {
+        "id": "cl_fvvaz2",
+        "text": "a coal-cat whose every wound makes it burn hotter",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Fire",
+  "lint_findings": [],
+  "monsterDescription": "a coal-cat whose every wound makes it burn hotter",
+  "selectedChallengeRating": "4",
+  "monsterName": "Coal-Cat",
+  "caster": false
+}

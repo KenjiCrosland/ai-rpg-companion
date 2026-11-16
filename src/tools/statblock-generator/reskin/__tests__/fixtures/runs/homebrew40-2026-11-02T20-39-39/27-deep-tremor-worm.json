@@ -1,0 +1,164 @@
+{
+  "name": "Deep Tremor Worm",
+  "inline": "the tremor worm",
+  "format": "2024",
+  "cr": 24,
+  "cr_str": "24",
+  "xp": 62000,
+  "challenge_rating": "24 (XP 62,000; PB +7)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Unaligned",
+  "ac": 20,
+  "hp": 542,
+  "hp_formula": "31d20 + 217",
+  "pb": 7,
+  "speed": "40 ft., Burrow 30 ft.",
+  "stats": {
+    "STR": 28,
+    "DEX": 8,
+    "CON": 24,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 16,
+    "DEX": -1,
+    "CON": 14,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +16, Perception +7",
+  "senses": "tremorsense 60 ft.; Passive Perception 17",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Groundsight",
+        "text": "While a creature that has moved across earth, sand, or stone since the tremor worm's last turn is within range of its tremorsense, the tremor worm pinpoints that creature's location and knows its direction and distance, even through solid rock; the creature cannot use the Hide action against the tremor worm.",
+        "authored": true,
+        "clause": "Groundsight. The tremor worm reads the ground the way other hunters read scent. Any creature that has moved across earth",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "tunnels carved through solid earth",
+        "bound": false,
+        "boundKeys": [],
+        "decoration": true
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the tremor worm fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The tremor worm makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +16, reach 15 ft. 45 (8d8 + 9) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 24). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Swallow",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The tremor worm swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the tremor worm, and takes 21 (6d6) Acid damage at the start of each of the tremor worm's turns. The tremor worm can have only one creature swallowed at a time. If the tremor worm takes 40 damage or more in a single turn from the swallowed creature, the tremor worm must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the tremor worm. If the tremor worm dies, a swallowed creature exits the body Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the tremor worm can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Breach",
+        "text": "The tremor worm moves up to half its Speed without provoking Opportunity Attacks, and it makes one Bite attack."
+      },
+      {
+        "name": "Coil Drag",
+        "text": "The tremor worm moves up to half its Speed without provoking Opportunity Attacks, carrying each creature it is grappling along with it."
+      },
+      {
+        "name": "Thrash",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 24, each creature within 10 feet of the tremor worm. *Failure:* The target has the Prone condition."
+      }
+    ]
+  },
+  "lore": "Birthed in the lightless deep layers where the world's crust grinds against itself, the worm exists only to feed, following the tremors of footsteps and settlement above like a hunter trailing a wounded animal's blood.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-grappler",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a worm",
+    "clauses": [
+      {
+        "id": "cl_1ah53si",
+        "text": "a worm",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Kraken (CR 23) — the swallow engine at the legendary tier",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a worm",
+  "selectedChallengeRating": "24",
+  "monsterName": "Deep Tremor Worm",
+  "caster": false
+}

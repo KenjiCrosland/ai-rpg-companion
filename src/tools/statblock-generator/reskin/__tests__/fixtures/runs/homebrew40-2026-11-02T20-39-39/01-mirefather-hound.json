@@ -1,0 +1,164 @@
+{
+  "name": "Mirefather Hound",
+  "inline": "the mirefather hound",
+  "format": "2024",
+  "cr": 1,
+  "cr_str": "1",
+  "xp": 200,
+  "challenge_rating": "1 (XP 200; PB +2)",
+  "type": "Beast",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 13,
+  "hp": 30,
+  "hp_formula": "4d8 + 12",
+  "pb": 2,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 14,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +4, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The mirefather hound makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +4, reach 5 ft. 6 (1d8 + 2) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 12). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Whelm",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The mirefather hound whelms one Medium or smaller creature it is grappling. While whelmed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the mirefather hound, and takes 3 (1d6) Bludgeoning damage at the start of each of the mirefather hound's turns. The mirefather hound can have only one creature whelmed at a time. If the mirefather hound takes 5 damage or more in a single turn from the whelmed creature, the mirefather hound must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the mirefather hound. If the mirefather hound dies, a whelmed creature pulls free Prone by using 5 feet of movement.",
+        "boundKeys": [
+          "whelm",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon"
+        ]
+      },
+      {
+        "name": "Mud-Lash Backlash",
+        "text": "One creature within 5 feet that hit the mirefather hound with an attack roll since the end of the mirefather hound's last turn takes 3 (1d6) Bludgeoning damage.",
+        "library": true,
+        "seed": "own-turn-punisher"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Mire-Drag",
+        "text": "While the mirefather hound is in mud, marsh, or shallow water, the mirefather hound can move a creature it is grappling with it at full Speed, pulling the Grappled creature beneath the surface; a creature dragged under must hold its breath.",
+        "authored": true,
+        "clause": "drags fishermen under",
+        "clauseId": "cl_1noqc7c"
+      },
+      {
+        "name": "Bank-Mud Ambush",
+        "text": "While the mirefather hound remains motionless in mud, marsh, or shallow water, it has Advantage on Dexterity (Stealth) checks and can pass for a lump of bank mud to any creature that has not yet seen it move.",
+        "authored": true,
+        "clause": "Mud-caked hide lets the hound lie half-submerged at the water's edge with only its nostrils breaking the surface; while ",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "bound": false,
+        "boundKeys": []
+      }
+    ]
+  },
+  "lore": "Born from the drowned sorrows of a forgotten fen, the bog hound waits mud-caked at the water's edge to drag the unwary beneath the surface and feed a hunger that never dies.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mud-caked bog hound that drags fishermen under",
+    "clauses": [
+      {
+        "id": "cl_q9h7bu",
+        "text": "a mud-caked bog hound",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1noqc7c",
+        "text": "drags fishermen under",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "drags fishermen under",
+        "askOften": "at_will",
+        "askOftenWhy": "drags fishermen under",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "drags fishermen under"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a mud-caked bog hound that drags fishermen under",
+  "selectedChallengeRating": "1",
+  "monsterName": "Mirefather Hound",
+  "caster": false
+}

@@ -1,0 +1,164 @@
+{
+ "what": "Reference prompts for the three layered-design probes (Fable 5.2, 2026-11-14). Evidence runs only. \"model\" is the printed creature the prompt resembles; \"hallmark\" is a hand answer key for probe A, judged by reading; \"inject\" is the signature element for probe B and probe C.",
+ "prompts": [
+  {
+   "id": "layer-clockwork-spider",
+   "name": "",
+   "concept": "clockwork spider",
+   "cr": "2",
+   "edition": "2024",
+   "model": "Spider",
+   "hallmark": "a web: a ranged restrain, the strand can be destroyed (the identity list calls this \"snare\")",
+   "inject": "fires a line of tar that binds prey like a web",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "The word resolves to the CR 0 Spider, whose own rows are Spider Climb, Web Walker and Bite. The web action is on the Giant Spider. Report what the call does with the weaker block.",
+   "probeC": {
+    "model": "Giant Spider",
+    "holdDonor": "brute-5-juggernaut",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #02 (Escaped Watchmaker's Hunter)",
+    "why": "Model changed from the Spider: the CR 0 Spider has no web and a STR of 2; the Giant Spider is the nearest in CR and carries the Web"
+   }
+  },
+  {
+   "id": "layer-medusa-sculptor",
+   "name": "",
+   "concept": "medusa sculptor",
+   "cr": "6",
+   "edition": "2024",
+   "model": "Medusa",
+   "hallmark": "a gaze that petrifies (\"gaze\")",
+   "inject": "a gaze that turns the living to stone",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "",
+   "probeC": {
+    "model": "Medusa",
+    "holdDonor": "skirmisher-8-hurler",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #04 (Vessaline the Gallery)",
+    "why": ""
+   }
+  },
+  {
+   "id": "layer-vampire-pirate",
+   "name": "",
+   "concept": "vampire pirate",
+   "cr": "8",
+   "edition": "2024",
+   "model": "Vampire",
+   "hallmark": "drinks blood: a bite that drains and mends it",
+   "inject": "drinks blood and is mended by it",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "No entry in the identity list of nine mechanics fits a drain; it can only arrive as a signature element.",
+   "probeC": {
+    "model": "Vampire",
+    "holdDonor": "skirmisher-8-hurler",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #06 (Brinebound Corsair)",
+    "why": "The Vampire is CR 13 against an asked CR 8: the far-above case"
+   }
+  },
+  {
+   "id": "layer-mother-ash",
+   "name": "Mother Ash",
+   "concept": "hag midwife",
+   "cr": "9",
+   "edition": "2024",
+   "model": "Green Hag",
+   "hallmark": "deception: disguise, invisibility, a mimicked voice",
+   "inject": null,
+   "probes": [
+    "A",
+    "C"
+   ],
+   "note": "A pinned twist on the Green Hag already exists in BLOCKS-bothways-2026-11-14.md to compare against.",
+   "probeC": {
+    "model": "Green Hag",
+    "holdDonor": null,
+    "baseline": "run once without the flag on whatever donor the flagged run drew",
+    "why": "Compare also with the pinned twist in BLOCKS-bothways-2026-11-14.md #05"
+   }
+  },
+  {
+   "id": "layer-mummy-librarian",
+   "name": "",
+   "concept": "mummy librarian",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Mummy",
+   "hallmark": "a rotting curse on its touch, or a glare that frightens",
+   "inject": "a rotting touch that will not heal",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "Healing denial is on the brief's list of missing effects (item 5). A [gap] here is a finding, not a failure of the probe.",
+   "probeC": {
+    "model": "Mummy",
+    "holdDonor": "caster-8-binder",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #08 (Callix the Stacks)",
+    "why": ""
+   }
+  },
+  {
+   "id": "layer-ghoul-gravedigger",
+   "name": "",
+   "concept": "ghoul gravedigger",
+   "cr": "5",
+   "edition": "2024",
+   "model": "Ghoul",
+   "hallmark": "claws that paralyse",
+   "inject": null,
+   "probes": [
+    "A"
+   ],
+   "note": ""
+  },
+  {
+   "id": "layer-bellringer-ghost",
+   "name": "",
+   "concept": "a chapel bell-ringer's ghost that tolls for the dying",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ghost",
+   "hallmark": "possession, or a visage that frightens; the frame matters as much: it flies and is incorporeal",
+   "inject": null,
+   "probes": [
+    "A",
+    "C"
+   ],
+   "note": "",
+   "probeC": {
+    "model": "Ghost",
+    "holdDonor": null,
+    "baseline": "run once without the flag on whatever donor the flagged run drew",
+    "why": "The frame matters most here: it flies and is incorporeal"
+   }
+  },
+  {
+   "id": "layer-ogre-blacksmith-control",
+   "name": "",
+   "concept": "ogre blacksmith",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ogre",
+   "hallmark": null,
+   "inject": null,
+   "probes": [
+    "A"
+   ],
+   "note": "CONTROL: the Ogre has no hallmark beyond its numbers. The model line must not make the call invent one."
+  }
+ ],
+ "revised": "2026-11-14, second version: a probeC block per prompt (model creature, donor to hold, baseline sheet). Probe C injects nothing."
+}

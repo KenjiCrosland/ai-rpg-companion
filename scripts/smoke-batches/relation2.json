@@ -1,0 +1,16 @@
+[
+ {
+  "name": "",
+  "description": "a drowned cathedral choir that sings in one voice",
+  "cr": "10",
+  "rules": "2014",
+  "canary": "SPINE 10 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "an archlich enthroned on a sun of bone",
+  "cr": "20",
+  "rules": "2014",
+  "canary": "SPINE 20 \u00b7 homebrew one-liner, 2014 legendary"
+ }
+]

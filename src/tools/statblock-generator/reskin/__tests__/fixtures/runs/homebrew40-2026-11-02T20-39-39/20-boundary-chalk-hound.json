@@ -1,0 +1,173 @@
+{
+  "name": "Boundary Chalk-Hound",
+  "inline": "the chalk-hound",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Lawful Neutral",
+  "ac": 15,
+  "hp": 150,
+  "hp_formula": "20d8 + 60",
+  "pb": 3,
+  "speed": "40 ft., Burrow 30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The chalk-hound makes two Bite attacks. It can replace one attack with a use of Chalk Ribbon Drag."
+      },
+      {
+        "name": "Bite",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 14 (2d8 + 5) Piercing damage plus 11 (2d10) Thunder damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 16). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Chalk Ribbon Drag",
+        "text": "*Strength Saving Throw*: DC 16, one Medium or smaller creature the chalk-hound is touching. *Failure:* 14 (4d6) Thunder damage, and the chalk-hound drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved. *Success:* Half damage only.",
+        "library": true,
+        "template": "pull-through",
+        "imposes": "Prone",
+        "boundKeys": [
+          "through walls",
+          "through stone"
+        ],
+        "gmQuote": "walks through walls and drags you back out through them",
+        "clause": "walks through walls",
+        "clauseId": "cl_1ebkvso"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Entomb",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The chalk-hound entombs one Medium or smaller creature it is grappling. While entombed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the chalk-hound, and takes 10 (3d6) Thunder damage at the start of each of the chalk-hound's turns. The chalk-hound can have only one creature entombed at a time. If the chalk-hound takes 25 damage or more on a single turn from the entombed creature, the chalk-hound must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the chalk-hound. If the chalk-hound dies, an entombed creature breaks free Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "entomb",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Seam of Stone",
+        "text": "While the chalk-hound remains motionless, it is indistinguishable from worked stone masonry.",
+        "library": true,
+        "template": "false-appearance",
+        "boundKeys": [
+          "still",
+          "stone"
+        ],
+        "freeRow": true,
+        "expresses": "phasing through walls, carrying prey through them",
+        "bound": false,
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "A chalk-hound is what the boundary-stones remember: when a wall is drawn with salt and good faith yet still lets a thing slip through, the trapped between-space takes a hound's shape and hunts to drag the living into the gap it came from.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-8-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a chalk-hound that walks through walls and drags you back out through them",
+    "clauses": [
+      {
+        "id": "cl_166bg2b",
+        "text": "a chalk-hound",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1ebkvso",
+        "text": "walks through walls",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "teleport",
+        "askMechanicWhy": "walks through walls"
+      },
+      {
+        "id": "cl_qb1k9s",
+        "text": "drags you back out through them",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "drags you",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "drags you back out through them"
+      }
+    ],
+    "cite": "composition after Tyrannosaurus Rex / Purple Worm — the swallow engine",
+    "free_rows": 1,
+    "free_row_templates": [
+      "false-appearance"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a chalk-hound that walks through walls and drags you back out through them",
+  "selectedChallengeRating": "8",
+  "monsterName": "Boundary Chalk-Hound",
+  "caster": false
+}

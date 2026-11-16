@@ -1,0 +1,159 @@
+{
+  "name": "Marshena Debtbinder",
+  "inline": "Marshena",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 81,
+  "hp_formula": "18d8",
+  "pb": 3,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 9,
+    "DEX": 14,
+    "CON": 11,
+    "INT": 17,
+    "WIS": 12,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": -1,
+    "DEX": 2,
+    "CON": 0,
+    "INT": 3,
+    "WIS": 4,
+    "CHA": 3
+  },
+  "skills": "Arcana +6, History +6, Perception +4",
+  "senses": "Passive Perception 14",
+  "languages": "Common and any three languages, Sylvan",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "Marshena makes three Arcane Burst attacks. It can replace one attack with a use of (A) Withering Bolt or (B) Spellcasting to cast *Ray of Sickness*."
+      },
+      {
+        "name": "Arcane Burst",
+        "text": "*Melee or Ranged Attack Roll:* +6, reach 5 ft. or range 120 ft. 16 (3d8 + 3) Force damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Spellcasting",
+        "rules": true,
+        "text": "Marshena casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Fireball*, *Invisibility*\n- **1/Day Each:** *Cone of Cold*, *Fly*",
+        "print": true
+      },
+      {
+        "name": "Withering Bolt",
+        "text": "*Dexterity Saving Throw*: DC 14, one creature within 60 feet. *Failure:* 19 (3d12) Bludgeoning damage.",
+        "authored": true,
+        "clause": "curses trespassers",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "curses meant to take actions away",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_a3qo0a"
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Protective Magic (3/Day)",
+        "text": "Marshena casts *Counterspell* or *Shield* in response to the spell's trigger, using the same spellcasting ability as Spellcasting.",
+        "kit": "mage",
+        "clause": "witch",
+        "free": true,
+        "clauseId": "cl_1enkq57"
+      }
+    ],
+    "Traits": [],
+    "Bonus Actions": [
+      {
+        "name": "Misty Step (3/Day)",
+        "text": "Marshena casts *Misty Step*, using the same spellcasting ability as Spellcasting.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "A hedge-hexer who drowned her debts in the marsh and stayed to collect on the trespassers who follow, she hoards every curse she has laid like a ledger of small, repayable cruelties.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Mage",
+      "relation": null,
+      "class": "mage",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-8-binder",
+    "archetype": "caster",
+    "class_kit": {
+      "key": "mage",
+      "clause": "witch",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a marsh witch who curses trespassers, cr 7",
+    "clauses": [
+      {
+        "id": "cl_1enkq57",
+        "text": "a marsh witch",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_a3qo0a",
+        "text": "curses trespassers",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "curses trespassers",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "curses"
+      },
+      {
+        "id": "cl_1tl1i",
+        "text": "cr 7",
+        "kind": "header"
+      }
+    ],
+    "menu_role": "controller",
+    "cite": "composition after Spirit Naga (CR 8) — the or-form bite-and-ray with the debuff single",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "controller",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a marsh witch who curses trespassers, cr 7",
+  "selectedChallengeRating": "7",
+  "monsterName": "Marshena Debtbinder",
+  "caster": false
+}

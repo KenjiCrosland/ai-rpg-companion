@@ -1,0 +1,29 @@
+[
+  { "name": "", "description": "a brute of piled gravecairn stone that shoulders walls down", "cr": "13", "rules": "2024",
+    "canary": "CANARY — a brute at CR 13 must still route to brute-13, which is NOT legendary. Adding lurker/caster rungs must not make every CR 13 concept legendary." },
+  { "name": "", "description": "a hobgoblin warlord who fights from a shield wall", "cr": "14", "rules": "2014",
+    "canary": "CANARY — a class-NPC body at CR 14; the class kit owns the sheet and should not acquire legendary actions from the new rungs." },
+
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2014",
+    "canary": "REPLAY — the case that proved the gap: it routed to lurker-8 and stretched five CRs. Must now take lurker-13, and print canon must still install the Vampire's own skills over the chassis's." },
+  { "name": "", "description": "a grave-silk stalker that hunts from the rafters of a dead city", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — lurker-shaped at CR 13; the new legendary lurker rung should be reachable." },
+  { "name": "", "description": "an assassin-saint who steps out of lamplight to kill and is gone", "cr": "15", "rules": "2014",
+    "canary": "FEATURE — lurker-shaped at CR 15, a CR where the nearest rung is now lurker-13 rather than lurker-8." },
+  { "name": "", "description": "a drowned archivist that drags readers into its flooded stacks", "cr": "16", "rules": "2024",
+    "canary": "FEATURE — lurker-shaped at the top of the band." },
+
+  { "name": "Mummy Lord", "description": "", "cr": "15", "rules": "2024", "mode": "exact",
+    "canary": "REPLAY — print-exact. Print's own non-dragon legendary caster at CR 15; its rows are print's and must be untouched, legendary section included." },
+  { "name": "", "description": "a bog witch whose curses rot a bloodline, not a body", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — caster-shaped at CR 13; the nearest caster rung is now caster-15 rather than caster-12." },
+  { "name": "", "description": "a cathedral archmagus who rewrites what the walls remember", "cr": "15", "rules": "2014",
+    "canary": "FEATURE — caster-shaped at CR 15, an exact rung for the first time." },
+  { "name": "", "description": "a plague-saint whose blessings are diseases", "cr": "16", "rules": "2024",
+    "canary": "FEATURE — caster-shaped at the top of the band." },
+
+  { "name": "Adult Red Dragon", "description": "blind in one eye from an old lance", "cr": "17", "rules": "2014",
+    "canary": "GUARD — just above the band. CR 17 now has nearer legendary rungs below it (lurker-13, caster-15); a dragon must still take dragon-15/dragon-18, not a caster chassis." },
+  { "name": "", "description": "a knight-commander of the drowned legion who will not fall while her banner stands", "cr": "15", "rules": "2024",
+    "canary": "FEATURE — defender-shaped at CR 15. No legendary defender rung exists in the band; this reads whether the gap is wider than the two donors just added." }
+]

@@ -1,0 +1,132 @@
+{
+  "name": "Glacier Scream",
+  "inline": "the scream",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Elemental",
+  "size": "Large",
+  "alignment": "Neutral Evil",
+  "ac": 15,
+  "hp": 178,
+  "hp_formula": "21d10 + 63",
+  "pb": 4,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 8,
+    "WIS": 10,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 9,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -1,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +9, Perception +4",
+  "senses": "blindsight 30 ft. (blind beyond this radius); Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The scream makes two Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +9, reach 10 ft. 19 (4d6 + 5) Bludgeoning damage plus 14 (4d6) Cold damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Frozen Heart's Echo",
+        "text": "While a creature within 60 feet has the Frightened condition from the scream, the scream senses the scream's frozen heart through any barrier, and the scream cannot move away from the scream until the start of its next turn.",
+        "authored": true,
+        "clause": "While a creature within 60 feet of the scream has the Frightened condition from it, the scream knows that creature's loc",
+        "requiresCondition": "Frightened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a paralyzing aura of supernatural cold that freezes prey in fear",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the scream senses the scream's frozen heart through any barrier"
+      },
+      {
+        "name": "Fear Aura",
+        "text": "The scream emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 17, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "fear-aura",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "frightens",
+          "frightening",
+          "terror",
+          "dread"
+        ],
+        "gmQuote": "a frost thing whose cold makes you too frightened to run",
+        "duration": "target_start",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        }
+      }
+    ]
+  },
+  "lore": "Born from a glacier that swallowed a village's last scream, it wears the frozen dread of that moment and seeks only to share it, one frozen heart at a time.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a frost-thing whose cold makes you too frightened to run",
+    "clauses": [
+      {
+        "id": "cl_1gul3e6",
+        "text": "a frost-thing whose cold makes you too frightened to run",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Cold",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a frost-thing whose cold makes you too frightened to run",
+  "selectedChallengeRating": "10",
+  "monsterName": "Glacier Scream",
+  "caster": false
+}

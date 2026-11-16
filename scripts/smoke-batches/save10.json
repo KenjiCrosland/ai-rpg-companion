@@ -1,0 +1,12 @@
+[
+ { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "THE CASE · Furnace Breath on Wisdom, Molten Weld on Strength" },
+ { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "8", "rules": "2024", "canary": "area + damage · DEX or CON" },
+ { "name": "", "description": "a young storm drake whose breath is a rolling wall of thunder", "cr": "7", "rules": "2024", "canary": "BREATH · CON is print-legal" },
+ { "name": "", "description": "a plague-bearing archon of flies", "cr": "13", "rules": "2024", "canary": "gas / spores · CON" },
+ { "name": "", "description": "a bell-ghost whose toll builds to one shattering peal", "cr": "6", "rules": "2024", "canary": "area + damage · not Wisdom" },
+ { "name": "", "description": "a dread sovereign whose gaze alone breaks the will", "cr": "12", "rules": "2024", "canary": "FEAR, condition-dominant · Wisdom is RIGHT here" },
+ { "name": "", "description": "a siege-engine golem of lashed timber that shoulders through walls", "cr": "8", "rules": "2024", "canary": "shove · Strength" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · untouched" },
+ { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024", "canary": "the forty's Killing Cold cone" },
+ { "name": "", "description": "a plain mercenary with a spear and a shield", "cr": "4", "rules": "2024", "canary": "MUNDANE CONTROL" }
+]

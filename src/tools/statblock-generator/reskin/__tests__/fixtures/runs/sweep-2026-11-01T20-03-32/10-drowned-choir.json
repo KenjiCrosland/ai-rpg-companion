@@ -1,0 +1,233 @@
+{
+  "name": "Drowned Choir",
+  "inline": "the drowned choir",
+  "type_and_alignment": "Large undead, neutral",
+  "armor_class": "14 (natural armor)",
+  "hit_points": "178 (21d10 + 63)",
+  "speed": "5 ft., fly 60 ft. (hover), swim 30 ft.",
+  "attributes": "STR 6 (-2), DEX 16 (+3), CON 17 (+3), INT 12 (+1), WIS 14 (+2), CHA 15 (+2)",
+  "saving_throws": "DEX +7",
+  "skills": "Stealth +7",
+  "senses": "darkvision 60 ft., passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "10 (5,900 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Incorporeal Movement",
+      "description": "The drowned choir can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+    },
+    {
+      "name": "Sunlight Sensitivity",
+      "description": "While in sunlight, the drowned choir has disadvantage on ability checks and attack rolls."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The drowned choir makes two Drowning Touch attacks. It can replace one attack with a use of Wailing Radiance."
+    },
+    {
+      "name": "Drowning Touch",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 30 (6d8 + 3) necrotic damage."
+    },
+    {
+      "name": "Wailing Radiance",
+      "description": "Each creature in a 30-foot cone must succeed on a DC 15 Constitution saving throw or be blinded until the end of the drowned choir's next turn.",
+      "imposes": "Blinded"
+    }
+  ],
+  "format": "2014",
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "damage_resistances": "bludgeoning, piercing, slashing",
+  "damage_immunities": "poison",
+  "condition_immunities": "charmed, exhaustion, grappled, paralyzed, petrified, poisoned, prone, restrained",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "sings in one voice",
+        "where": "description",
+        "text": "The drowned choir sings in one voice."
+      }
+    ],
+    "userConcept": "a drowned cathedral choir that sings in one voice",
+    "clauses": [
+      {
+        "id": "cl_1qdvyuv",
+        "text": "a drowned cathedral choir",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "drain",
+        "askMechanicWhy": "sings in one voice"
+      },
+      {
+        "id": "cl_vn7g61",
+        "text": "sings in one voice",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "drain",
+        "askMechanicWhy": "sings in one voice"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "answered_in_prose": [
+      "sings in one voice"
+    ],
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Drowned Choir",
+    "inline": "the drowned choir",
+    "format": "2024",
+    "cr": 10,
+    "cr_str": "10",
+    "xp": 5900,
+    "challenge_rating": "10 (XP 5,900; PB +4)",
+    "type": "Undead",
+    "size": "Large",
+    "alignment": "Neutral",
+    "ac": 14,
+    "hp": 178,
+    "hp_formula": "21d10 + 63",
+    "pb": 4,
+    "speed": "5 ft., Fly 60 ft. (hover), Swim 30 ft.",
+    "stats": {
+      "STR": 6,
+      "DEX": 16,
+      "CON": 17,
+      "INT": 12,
+      "WIS": 14,
+      "CHA": 15
+    },
+    "saves": {
+      "STR": -2,
+      "DEX": 7,
+      "CON": 3,
+      "INT": 1,
+      "WIS": 2,
+      "CHA": 2
+    },
+    "skills": "Stealth +7",
+    "senses": "darkvision 60 ft.; Passive Perception 12",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 3,
+    "initiative_score": 13,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Incorporeal Movement",
+          "rules": true,
+          "text": "The drowned choir can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+        },
+        {
+          "name": "Sunlight Sensitivity",
+          "rules": true,
+          "text": "While in sunlight, the drowned choir has Disadvantage on ability checks and attack rolls."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The drowned choir makes two Drowning Touch attacks. It can replace one attack with a use of Wailing Radiance."
+        },
+        {
+          "name": "Drowning Touch",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 30 (6d8 + 3) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Wailing Radiance",
+          "text": "*Constitution Saving Throw:* DC 15, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of the drowned choir's next turn.",
+          "library": true,
+          "imposes": "Blinded",
+          "seed": "sensory-strike",
+          "duration": "source_end"
+        }
+      ]
+    },
+    "lore": "When the cathedral of Saint Vell drowned beneath the reservoir, its choir never stopped singing, and now the whole congregation of the dead shares one throat, one hymn, and one hunger for the breath of the living.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "lurker-5-phantom",
+      "archetype": "lurker",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [
+        {
+          "clause": "sings in one voice",
+          "where": "description",
+          "text": "The drowned choir sings in one voice."
+        }
+      ],
+      "userConcept": "a drowned cathedral choir that sings in one voice",
+      "clauses": [
+        {
+          "id": "cl_1qdvyuv",
+          "text": "a drowned cathedral choir",
+          "kind": "mechanical",
+          "askShape": "save_area",
+          "askMechanic": "drain",
+          "askMechanicWhy": "sings in one voice"
+        },
+        {
+          "id": "cl_vn7g61",
+          "text": "sings in one voice",
+          "kind": "mechanical",
+          "askShape": "save_area",
+          "askMechanic": "drain",
+          "askMechanicWhy": "sings in one voice"
+        }
+      ],
+      "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 1,
+      "answered_in_prose": [
+        "sings in one voice"
+      ],
+      "signature": "library"
+    },
+    "archetype": "lurker",
+    "archetype_source": "user",
+    "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+    "resistances": "Bludgeoning, Piercing, Slashing",
+    "lint_findings": []
+  },
+  "monsterDescription": "a drowned cathedral choir that sings in one voice",
+  "selectedChallengeRating": "10",
+  "monsterName": "Drowned Choir",
+  "caster": false
+}

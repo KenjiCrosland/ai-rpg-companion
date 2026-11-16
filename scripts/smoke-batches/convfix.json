@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Owlbear",
+    "description": "that has learned to climb",
+    "cr": "3",
+    "rules": "2014",
+    "canary": "CONVFIX: SPINE 3 \u00b7 print head + addition, 2014 conversion"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "CONVFIX: USE CASE \u00b7 bare print Name, 2014, CR from print"
+  },
+  {
+    "name": "Krennik Skullstandard",
+    "description": "riding a worg",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "CONVFIX: USE CASE \u00b7 Name + a seat verb: the mounted style"
+  },
+  {
+    "name": "",
+    "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "CONVFIX: USE CASE \u00b7 the weapon table: a thrown weapon's range, a blade's type"
+  },
+  {
+    "name": "Sister Halamine",
+    "description": "a plague-saint cleric whose blessings rot the unworthy",
+    "cr": "6",
+    "rules": "2014",
+    "canary": "CONVFIX: CONVFIX: emptied Reactions section no longer fails the conversion; no 2024 vocabulary"
+  }
+]

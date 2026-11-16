@@ -1,0 +1,139 @@
+{
+  "name": "Walking Plague Satchel",
+  "inline": "the plague satchel",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Construct",
+  "size": "Small",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 104,
+  "hp_formula": "19d6 + 38",
+  "pb": 3,
+  "speed": "40 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 18,
+    "CON": 15,
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 7,
+    "CON": 2,
+    "INT": -1,
+    "WIS": 1,
+    "CHA": -1
+  },
+  "skills": "Perception +4, Stealth +10",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Scuttle",
+        "text": "The plague satchel ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.",
+        "clause": "has learned to walk",
+        "answersAlso": [
+          "has learned to walk"
+        ],
+        "clauseId": "cl_ii79fv"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The plague satchel makes two Clasp attacks. It can replace one attack with a use of Crushing Cascade."
+      },
+      {
+        "name": "Clasp",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Piercing damage plus 7 (2d6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Crushing Cascade",
+        "text": "*Strength Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* The target has the Prone condition.",
+        "authored": true,
+        "clause": "The plague satchel skitters a short distance on its stiff leather legs, then springs, jaws-clasp first, from that new po",
+        "imposes": "Prone",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "skulks and hides, then lunges from cover",
+        "widened": true,
+        "boundKeys": [],
+        "decoration": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Nimble Escape",
+        "text": "The plague satchel takes the Disengage or Hide action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "Stitched together by a physician who kept his instruments too close, this bag walked out of a quarantine ward carrying his last, unfinished cure and a hunger to complete it on any patient it can catch.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-3-skulker",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a plague-doctor's bag that has learned to walk",
+    "clauses": [
+      {
+        "id": "cl_bfm2y7",
+        "text": "a plague-doctor's bag",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_ii79fv",
+        "text": "has learned to walk",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "walk"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) + Blink Dog; gaze after Mummy (CR 3)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "has learned to walk -> Scuttle"
+    ],
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a plague-doctor's bag that has learned to walk",
+  "selectedChallengeRating": "6",
+  "monsterName": "Walking Plague Satchel",
+  "caster": false
+}

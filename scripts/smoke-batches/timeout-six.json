@@ -1,0 +1,8 @@
+[
+  { "name": "", "description": "a glass monk who turns every blow back on whoever struck it", "cr": "10", "rules": "2024", "canary": "TIMED OUT at 356s in homebrew40 2026-11-05T08-05" },
+  { "name": "", "description": "a sand-shrike that is only dangerous on the turn after it goes still", "cr": "6", "rules": "2024", "canary": "TIMED OUT" },
+  { "name": "", "description": "a mire-thing that is impossible to see until it is close enough to touch you", "cr": "5", "rules": "2024", "canary": "TIMED OUT" },
+  { "name": "", "description": "a coal-cat whose every wound makes it burn hotter", "cr": "4", "rules": "2024", "canary": "TIMED OUT" },
+  { "name": "", "description": "something enormous and patient under the ice", "cr": "20", "rules": "2024", "canary": "TIMED OUT" },
+  { "name": "", "description": "a thing like an owlbear but grown through with brambles", "cr": "4", "rules": "2024", "canary": "TIMED OUT" }
+]

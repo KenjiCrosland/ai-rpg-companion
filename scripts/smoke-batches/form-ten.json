@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Headless Horseman",
+    "description": "",
+    "cr": "auto"
+  },
+  {
+    "name": "Owlbear",
+    "description": "Flying speed of 60ft",
+    "cr": "3"
+  },
+  {
+    "name": "",
+    "description": "a swarm of rats that carries plague",
+    "cr": "auto"
+  },
+  {
+    "name": "Grandmother Ashwick",
+    "description": "a village hedge-witch who seems harmless but curses anyone who steals from her garden",
+    "cr": "2"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "Output statblock in German",
+    "cr": "auto"
+  },
+  {
+    "name": "Kobold",
+    "description": "Can turn invisible once per day",
+    "role": "skirmisher",
+    "cr": "1/4"
+  },
+  {
+    "name": "the thing in the well",
+    "description": "",
+    "cr": "5"
+  },
+  {
+    "name": "Ancient Red Dragon",
+    "description": "no legendary actions, no lair, I want it beatable by a level 10 party",
+    "cr": "15"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "riding a worg, uses 2014 rules format",
+    "cr": "auto"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "8"
+  }
+]

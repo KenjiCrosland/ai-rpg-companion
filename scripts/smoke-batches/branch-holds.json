@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Vareth Solmane",
+    "description": "a templar priest of the dawn who blesses her soldiers",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "HOLD 7a: the Priest keys STR 16 over DEX 10, so the stand-down line is the defender's — print's DEX 10 must survive, not be fitted to 18",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a templar priest with a mace and no magic at all",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "HOLD 7a control: the same print body by concept alone, plus the lacks clause",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a kenku thief who speaks only in stolen voices",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "HOLD 7a regression: a DEX-keyed print species must still take the skirmisher line",
+    "mode": "band"
+  },
+  {
+    "name": "Templar of the Unmoved Stone",
+    "description": "a templar who guards a standing stone and never yields ground",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "HOLD 2 second door: the head is the templar — \"the unmoved stone\" is the thing it guards, and byRule must refuse it too",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a ninja who moves through the shadows and strikes unseen",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "HOLD 7b: a DEX melee row takes the finesse weapon print would arm it with, and a name that claims poison keeps the poison",
+    "mode": "band"
+  }
+]

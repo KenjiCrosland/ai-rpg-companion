@@ -1,0 +1,257 @@
+{
+  "name": "Vault Warden",
+  "inline": "the warden",
+  "type_and_alignment": "Huge construct, unaligned",
+  "armor_class": "20 (natural armor)",
+  "hit_points": "171 (18d12 + 54)",
+  "speed": "20 ft.",
+  "attributes": "STR 18 (+4), DEX 8 (-1), CON 17 (+3), INT 6 (-2), WIS 10 (+0), CHA 4 (-3)",
+  "saving_throws": "STR +8, CON +7",
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft., passive Perception 14",
+  "languages": "understands the languages of its creator but can't speak",
+  "challenge_rating": "11 (7,200 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Fire Absorption",
+      "description": "Whenever the warden is subjected to fire damage, it takes no damage and instead regains a number of hit points equal to the fire damage dealt."
+    },
+    {
+      "name": "Immutable Form",
+      "description": "The warden can't shape-shift."
+    },
+    {
+      "name": "Siege Monster",
+      "description": "The warden deals double damage to objects and structures."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The warden makes two Slam attacks. It can replace one attack with a use of Punish the Fallen."
+    },
+    {
+      "name": "Slam",
+      "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage plus 10 (3d6) fire damage."
+    },
+    {
+      "name": "Iron Shove (Recharge 5-6)",
+      "description": "Each creature in a 30-foot cone must make a DC 16 Constitution saving throw, taking 66 (12d10) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also knocked prone.",
+      "imposes": "Prone"
+    },
+    {
+      "name": "Punish the Fallen",
+      "description": "One creature within 30 feet of the warden that is prone must make a DC 16 Strength saving throw, taking 42 (12d6) fire damage on a failed save, or half as much damage on a successful one.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "damage_immunities": "fire, poison",
+  "condition_immunities": "charmed, exhaustion, frightened, paralyzed, petrified, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+    "clauses": [
+      {
+        "id": "cl_6slhx",
+        "text": "a sentinel of black iron",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_10y3ng",
+        "text": "AC 20",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1cgcr",
+        "text": "Huge",
+        "kind": "header"
+      },
+      {
+        "id": "cl_dqavef",
+        "text": "speed 20 feet",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library",
+    "declared": {
+      "ac": 20
+    }
+  },
+  "other_edition": {
+    "name": "Vault Warden",
+    "inline": "the warden",
+    "format": "2024",
+    "cr": 11,
+    "cr_str": "11",
+    "xp": 7200,
+    "challenge_rating": "11 (XP 7,200; PB +4)",
+    "type": "Construct",
+    "size": "Huge",
+    "alignment": "Unaligned",
+    "ac": 20,
+    "hp": 171,
+    "hp_formula": "18d12 + 54",
+    "pb": 4,
+    "speed": "20 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 8,
+      "CON": 17,
+      "INT": 6,
+      "WIS": 10,
+      "CHA": 4
+    },
+    "saves": {
+      "STR": 8,
+      "DEX": -1,
+      "CON": 7,
+      "INT": -2,
+      "WIS": 0,
+      "CHA": -3
+    },
+    "skills": "Athletics +8, Perception +4",
+    "senses": "darkvision 60 ft.; Passive Perception 14",
+    "languages": "Understands the languages of its creator but can't speak",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Fire Absorption",
+          "rules": true,
+          "text": "Whenever the warden is subjected to Fire damage, it takes no damage and instead regains a number of Hit Points equal to the Fire damage dealt."
+        },
+        {
+          "name": "Immutable Form",
+          "rules": true,
+          "text": "The warden can't shape-shift."
+        },
+        {
+          "name": "Siege Monster",
+          "rules": true,
+          "text": "The warden deals double damage to objects and structures."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The warden makes two Slam attacks. It can replace one attack with a use of Punish the Fallen."
+        },
+        {
+          "name": "Slam",
+          "text": "*Melee Attack Roll:* +8, reach 10 ft. 13 (2d8 + 4) Bludgeoning damage plus 10 (3d6) Fire damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Iron Shove (Recharge 5-6)",
+          "text": "*Constitution Saving Throw*: DC 16, each creature in a 30-foot Cone. *Failure:* 66 (12d10) Fire damage, and the target has the Prone condition. *Success:* Half damage only.",
+          "gate": "Recharge 5-6",
+          "imposes": "Prone"
+        },
+        {
+          "name": "Punish the Fallen",
+          "text": "*Strength Saving Throw:* DC 16, one creature within 30 feet that is Prone. *Failure:* 42 (12d6) Fire damage. *Success:* Half damage.",
+          "library": true,
+          "template": "exploiter",
+          "imposes": "Prone",
+          "requiresCondition": "Prone",
+          "boundKeys": [
+            "prone"
+          ],
+          "accepted_closest": true
+        }
+      ]
+    },
+    "lore": "Cast in the black-iron foundries of dead siege-smiths, a vault warden walks its assigned circuit forever, grinding down anything that crosses the gate or vault it was forged to keep.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-9-juggernaut",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+      "clauses": [
+        {
+          "id": "cl_6slhx",
+          "text": "a sentinel of black iron",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_10y3ng",
+          "text": "AC 20",
+          "kind": "header"
+        },
+        {
+          "id": "cl_1cgcr",
+          "text": "Huge",
+          "kind": "header"
+        },
+        {
+          "id": "cl_dqavef",
+          "text": "speed 20 feet",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Clay Golem / Stone Golem (CR 9-10)",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "gap_vetoed": "0 of 1",
+      "gap_missing_unstated": 0,
+      "signature": "library",
+      "declared": {
+        "ac": 20
+      }
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "immunities": "Fire, Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+  "selectedChallengeRating": "11",
+  "monsterName": "Vault Warden",
+  "caster": false
+}

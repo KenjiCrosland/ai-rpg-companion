@@ -1,0 +1,126 @@
+{
+  "name": "Bog Drowner",
+  "inline": "the drowner",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 78,
+  "hp_formula": "12d8 + 24",
+  "pb": 3,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 16,
+    "CON": 14,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 6,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +4, Stealth +9",
+  "senses": "blindsight 30 ft. (blind beyond this radius); Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drowner makes two Slam attacks. It can replace one attack with a use of Bog Slam."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 17 (4d6 + 3) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Bog Slam",
+        "text": "*Dexterity Saving Throw*: DC 13, one creature within 30 feet. *Failure:* 21 (6d6) Bludgeoning damage.",
+        "authored": true,
+        "clause": "is impossible to see until it is close enough to touch you",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "invisible until it touches you",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_1bcdxhd"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the drowner takes the Hide action."
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "Something drowned in this mire long ago, and the bog grew over it until it wore the mud as a body, wanting only a warm creature to press close and pull under.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mire-thing that is impossible to see until it is close enough to touch you",
+    "clauses": [
+      {
+        "id": "cl_1lcriq7",
+        "text": "a mire-thing",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1bcdxhd",
+        "text": "is impossible to see until it is close enough to touch you",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "is impossible to see until it is close enough to touch you",
+        "askShape": "condition",
+        "askMechanic": "disguise",
+        "askMechanicWhy": "impossible to see"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a mire-thing that is impossible to see until it is close enough to touch you",
+  "selectedChallengeRating": "5",
+  "monsterName": "Bog Drowner",
+  "caster": false
+}

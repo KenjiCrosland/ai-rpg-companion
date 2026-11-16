@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "a witch-fire haunt whose cold light drowns the drowned", "cr": 6, "rules": "2024",
+    "mech": "imagery on a fused compound: witch-fire is the folklore word for a light that does not burn — the row may deal Cold, and the call must say so" },
+  { "name": "", "description": "a grave-fire revenant that burns nothing and rots everything", "cr": 7, "rules": "2024",
+    "mech": "the 7th patch that never has to be written: a coined hyphen compound SPECTRAL_COMPOUNDS has never seen, paying Necrotic" },
+  { "name": "", "description": "a flame-lashing demon of the forge", "cr": 8, "rules": "2024",
+    "mech": "the other direction: a bare element word must still be PAID — the call may not call this imagery and a Fire name must deal Fire" },
+  { "name": "", "description": "a rime-wrought sentinel of the glacier", "cr": 6, "rules": "2024",
+    "mech": "literal, and paid: a Cold name on a Cold row — the gate must stay silent and name_element must not disturb it" }
+]

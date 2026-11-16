@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Vespera Vaunt",
+    "description": "a tiefling cutpurse who strikes from the dark with a shortsword",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "hold 3 + hold 5: a shortsword deals Piercing, and an on-hit extra takes the hit's own type (on-hit-type watches it)"
+  },
+  {
+    "name": "",
+    "description": "an imp rogue who picks locks for a devil",
+    "cr": "4",
+    "rules": "2024",
+    "mech": "hold 1: the imp keeps its wings, its Fiend type and its own rows, with the rogue layered on"
+  },
+  {
+    "name": "",
+    "description": "a herdmaster who commands a stampede of thunder-elk",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "fidelity: the stampede keys the trample nova, not a herding order; hybrid-needs-thrown watches the elk"
+  },
+  {
+    "name": "",
+    "description": "a battle-cleric of the storm who prays over her greatsword and casts blessings",
+    "cr": "8",
+    "rules": "2024",
+    "mech": "hold 4 root cause, the other way: a real caster WITH a weapon keeps the mind for the DC and the arm for the sword"
+  }
+]

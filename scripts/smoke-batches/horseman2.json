@@ -1,0 +1,4 @@
+[
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "same input, run A" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "same input, run B — under the FIXED capture these must differ" }
+]

@@ -1,0 +1,169 @@
+{
+  "name": "Plague Knell",
+  "inline": "the knell",
+  "format": "2024",
+  "cr": 3,
+  "cr_str": "3",
+  "xp": 700,
+  "challenge_rating": "3 (XP 700; PB +2)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 11,
+  "hp": 45,
+  "hp_formula": "10d8",
+  "pb": 2,
+  "speed": "5 ft., Fly 40 ft. (hover)",
+  "stats": {
+    "STR": 7,
+    "DEX": 13,
+    "CON": 10,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 17
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 3,
+    "CON": 0,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 3
+  },
+  "skills": "Perception +3, Stealth +5",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Common plus one other language",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The knell makes two Withering Touch attacks. It can replace one attack with a use of Lingering Brand."
+      },
+      {
+        "name": "Withering Touch",
+        "text": "*Melee Attack Roll:* +5, reach 5 ft. 19 (3d10 + 3) Necrotic damage.",
+        "weapon": null,
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Lingering Brand",
+        "text": "*Constitution Saving Throw:* DC 13, one creature within 60 feet. *Failure:* The target is branded: it takes 3 (1d6) Necrotic damage at the start of each of its turns until it uses its action to tear the brand away.",
+        "library": true,
+        "template": "delayed-brand",
+        "boundKeys": [
+          "mark"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "a chapel bell ringer's ghost that tolls for the dying"
+      },
+      {
+        "name": "Horrific Visage",
+        "text": "*Wisdom Saving Throw*: DC 13, each creature in a 60-foot Cone that can see the knell and isn't an Undead. *Failure:*  10 (2d6 + 3) Psychic damage, and the target has the Frightened condition until the start of the knell's next turn. *Success:*  The target is immune to this ghost's Horrific Visage for 24 hours.",
+        "rules": true,
+        "print": true
+      },
+      {
+        "name": "Possession (Recharge 6)",
+        "text": "*Charisma Saving Throw*: DC 13, one Humanoid the knell can see within 5 feet. *Failure:*  The target is possessed by the knell; the knell disappears, and the target has the Incapacitated condition and loses control of its body. The knell now controls the body, but the target retains awareness. The knell can't be targeted by any attack, spell, or other effect, except ones that specifically target Undead. The knell's game statistics are the same, except it uses the possessed target's Speed, as well as the target's Strength, Dexterity, and Constitution modifiers.\nThe possession lasts until the body drops to 0 Hit Points or the knell leaves as a Bonus Action. When the possession ends, the knell appears in an unoccupied space within 5 feet of the target, and the target is immune to this ghost's Possession for 24 hours. *Success:*  The target is immune to this ghost's Possession for 24 hours.",
+        "rules": true,
+        "print": true
+      },
+      {
+        "name": "Etherealness",
+        "text": "The knell casts the *Etherealness* spell, requiring no spell components and using Charisma as the spellcasting ability. The knell is visible on the Material Plane while on the Border Ethereal and vice versa, but it can't affect or be affected by anything on the other plane.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [],
+    "Traits": [
+      {
+        "name": "Faultless Tracker",
+        "text": "The knell knows the direction and distance to any creature it has damaged within the last 24 hours, as long as the two of them are on the same plane of existence.",
+        "library": true,
+        "template": "faultless-tracker",
+        "boundKeys": [
+          "follows",
+          "marked",
+          "its mark"
+        ],
+        "gmQuote": "tolls for the dying",
+        "expresses": "the toll that names the dying",
+        "bound": false
+      },
+      {
+        "name": "Ethereal Sight",
+        "text": "The knell can see 60 feet into the Ethereal Plane when it is on the Material Plane.",
+        "rules": true,
+        "print": true
+      },
+      {
+        "name": "Incorporeal Movement",
+        "text": "The knell can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Reactions": []
+  },
+  "lore": "A bell-ringer who died mid-pull, his last peal rung for a plague-victim who outlived him; now he tolls for whomever the bell names, unable to rest until every announced death arrives.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Ghost",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-2",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a chapel bell-ringer's ghost that tolls for the dying",
+    "clauses": [
+      {
+        "id": "cl_gvvyt8",
+        "text": "a chapel bell-ringer's ghost",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1svw2ov",
+        "text": "tolls for the dying",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "tolls for the dying",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "tolls"
+      }
+    ],
+    "cite": "composition after Doppelganger (CR 3) — the first-round-advantage opener",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Necrotic, Poison; Charmed, Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Acid, Bludgeoning, Cold, Fire, Lightning, Piercing, Slashing, Thunder",
+  "lint_findings": [],
+  "monsterDescription": "a chapel bell-ringer's ghost that tolls for the dying",
+  "selectedChallengeRating": "3",
+  "monsterName": "Plague Knell",
+  "caster": false
+}

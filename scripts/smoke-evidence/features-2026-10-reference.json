@@ -1,0 +1,668 @@
+{
+  "engine": "features-2026-10-2026-10-12T18-06-23",
+  "blocks": {
+    "1": {
+      "name": "Meshrin",
+      "cr": 8,
+      "ac": 14,
+      "hp": 136,
+      "attacks": [
+        {
+          "name": "Greatsword",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Tail Swipe",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Razor Sharp Claws",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Vicious Bite",
+          "bonus": 7,
+          "avg": 22
+        }
+      ],
+      "dcs": [
+        15
+      ],
+      "multiattack": 2,
+      "donor": "brute-5"
+    },
+    "2": {
+      "name": "Ferrous Bull",
+      "cr": 12,
+      "ac": 16,
+      "hp": 210,
+      "attacks": [
+        {
+          "name": "Gore",
+          "bonus": 10,
+          "avg": 42
+        },
+        {
+          "name": "Hooves",
+          "bonus": 10,
+          "avg": 42
+        }
+      ],
+      "dcs": [
+        18
+      ],
+      "multiattack": 2,
+      "donor": "brute-11-charger"
+    },
+    "3": {
+      "name": "Thornback Marauder",
+      "cr": 3,
+      "ac": 15,
+      "hp": 60,
+      "attacks": [
+        {
+          "name": "Mace",
+          "bonus": 5,
+          "avg": 12
+        },
+        {
+          "name": "Hurled Weapon",
+          "bonus": 5,
+          "avg": 7
+        }
+      ],
+      "dcs": [
+        12
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-8-hurler"
+    },
+    "4": {
+      "name": "Okhra the Hewer",
+      "cr": 13,
+      "ac": 18,
+      "hp": 180,
+      "attacks": [
+        {
+          "name": "Greataxe",
+          "bonus": 8,
+          "avg": 25
+        },
+        {
+          "name": "Tusked Bite",
+          "bonus": 8,
+          "avg": 21
+        }
+      ],
+      "dcs": [],
+      "multiattack": 3,
+      "donor": "skirmisher-13-skulker"
+    },
+    "5": {
+      "name": "Stonewake Sister",
+      "cr": 18,
+      "ac": 20,
+      "hp": 322,
+      "attacks": [
+        {
+          "name": "Longsword",
+          "bonus": 13,
+          "avg": 34
+        },
+        {
+          "name": "Crushing Headbutt",
+          "bonus": 13,
+          "avg": 34
+        }
+      ],
+      "dcs": [
+        21
+      ],
+      "multiattack": 2,
+      "donor": "defender-17-leader"
+    },
+    "6": {
+      "name": "Vell",
+      "cr": 5,
+      "ac": 15,
+      "hp": 93,
+      "attacks": [
+        {
+          "name": "Dagger",
+          "bonus": 7,
+          "avg": 17
+        },
+        {
+          "name": "Hand Crossbow",
+          "bonus": 7,
+          "avg": 13
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "skirmisher-3-skulker"
+    },
+    "7": {
+      "name": "Grask the Wallbreaker",
+      "cr": 8,
+      "ac": 17,
+      "hp": 135,
+      "attacks": [
+        {
+          "name": "Flail",
+          "bonus": 8,
+          "avg": 19
+        },
+        {
+          "name": "Shortbow",
+          "bonus": 8,
+          "avg": 19
+        },
+        {
+          "name": "Kick",
+          "bonus": 8,
+          "avg": 19
+        }
+      ],
+      "dcs": [
+        15
+      ],
+      "multiattack": 3,
+      "donor": "skirmisher-8-hurler"
+    },
+    "8": {
+      "name": "Grik",
+      "cr": 1,
+      "ac": 15,
+      "hp": 30,
+      "attacks": [
+        {
+          "name": "Spear",
+          "bonus": 4,
+          "avg": 5
+        },
+        {
+          "name": "Sling",
+          "bonus": 4,
+          "avg": 5
+        },
+        {
+          "name": "Nasty Bite",
+          "bonus": 4,
+          "avg": 5
+        },
+        {
+          "name": "Sling Stone",
+          "bonus": 4,
+          "avg": 5
+        }
+      ],
+      "dcs": [
+        12
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-8-hurler"
+    },
+    "9": {
+      "name": "Mireshell Tyrant",
+      "cr": 9,
+      "ac": 22,
+      "hp": 161,
+      "attacks": [
+        {
+          "name": "Bite",
+          "bonus": 8,
+          "avg": 49
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "brute-8-grappler"
+    },
+    "10": {
+      "name": "Quill of the Foundry",
+      "cr": 4,
+      "ac": 14,
+      "hp": 76,
+      "attacks": [
+        {
+          "name": "Beak",
+          "bonus": 5,
+          "avg": 12
+        }
+      ],
+      "dcs": [
+        13
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3-winged"
+    },
+    "11": {
+      "name": "Bogbound Sacrifice",
+      "cr": 6,
+      "ac": 14,
+      "hp": 112,
+      "attacks": [
+        {
+          "name": "Slam",
+          "bonus": 7,
+          "avg": 13
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "brute-5-grappler"
+    },
+    "12": {
+      "name": "Adamant Warden",
+      "cr": 11,
+      "ac": 18,
+      "hp": 171,
+      "attacks": [
+        {
+          "name": "Slam",
+          "bonus": 8,
+          "avg": 25
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "defender-7-warden"
+    },
+    "13": {
+      "name": "Ridgewaste",
+      "cr": 7,
+      "ac": 16,
+      "hp": 119,
+      "attacks": [
+        {
+          "name": "Longbow",
+          "bonus": 7,
+          "avg": 22
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "skirmisher-3-archer"
+    },
+    "14": {
+      "name": "Grummel Stonejaw",
+      "cr": 3,
+      "ac": 11,
+      "hp": 63,
+      "attacks": [
+        {
+          "name": "Club",
+          "bonus": 4,
+          "avg": 6
+        }
+      ],
+      "dcs": [
+        15
+      ],
+      "multiattack": 2,
+      "donor": "brute-17-regenerator"
+    },
+    "15": {
+      "name": "Kraken",
+      "cr": 24,
+      "ac": 18,
+      "hp": 481,
+      "attacks": [
+        {
+          "name": "Tentacle",
+          "bonus": 17,
+          "avg": 24
+        }
+      ],
+      "dcs": [
+        25
+      ],
+      "multiattack": 2,
+      "donor": "brute-21"
+    },
+    "16": {
+      "name": "Pit Fiend",
+      "cr": 20,
+      "ac": 21,
+      "hp": 337,
+      "attacks": [
+        {
+          "name": "Bite",
+          "bonus": 14,
+          "avg": 18
+        },
+        {
+          "name": "Fiery Mace",
+          "bonus": 14,
+          "avg": 22
+        },
+        {
+          "name": "Devilish Claw",
+          "bonus": 14,
+          "avg": 26
+        }
+      ],
+      "dcs": [
+        21
+      ],
+      "multiattack": 1,
+      "donor": "brute-21"
+    },
+    "17": {
+      "name": "Hydra",
+      "cr": 8,
+      "ac": 15,
+      "hp": 184,
+      "attacks": [
+        {
+          "name": "Bite",
+          "bonus": 8,
+          "avg": 10
+        }
+      ],
+      "dcs": [],
+      "multiattack": null,
+      "donor": "brute-5"
+    },
+    "18": {
+      "name": "Vampire",
+      "cr": 13,
+      "ac": 16,
+      "hp": 195,
+      "attacks": [
+        {
+          "name": "Grave Strike",
+          "bonus": 9,
+          "avg": 8
+        }
+      ],
+      "dcs": [
+        17
+      ],
+      "multiattack": 3,
+      "donor": "lurker-8"
+    },
+    "19": {
+      "name": "Dire Wolf",
+      "cr": 6,
+      "ac": 16,
+      "hp": 105,
+      "attacks": [
+        {
+          "name": "Bite",
+          "bonus": 7,
+          "avg": 22
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "skirmisher-3"
+    },
+    "20": {
+      "name": "Ogre",
+      "cr": 7,
+      "ac": 13,
+      "hp": 127,
+      "attacks": [
+        {
+          "name": "Slam",
+          "bonus": 7,
+          "avg": 22
+        },
+        {
+          "name": "Boulder",
+          "bonus": 7,
+          "avg": 22
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "brute-5"
+    },
+    "21": {
+      "name": "Brinebound Bride",
+      "cr": 3,
+      "ac": 14,
+      "hp": 52,
+      "attacks": [
+        {
+          "name": "Claw",
+          "bonus": 5,
+          "avg": 12
+        }
+      ],
+      "dcs": [
+        11,
+        13
+      ],
+      "multiattack": 0,
+      "donor": "lurker-1-phantom"
+    },
+    "22": {
+      "name": "Marrowdance",
+      "cr": 7,
+      "ac": 15,
+      "hp": 127,
+      "attacks": [
+        {
+          "name": "Claw",
+          "bonus": 6,
+          "avg": 10
+        }
+      ],
+      "dcs": [
+        14,
+        15
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3-mounted"
+    },
+    "23": {
+      "name": "Grandmother Ash",
+      "cr": 7,
+      "ac": 15,
+      "hp": 127,
+      "attacks": [
+        {
+          "name": "Nails",
+          "bonus": 6,
+          "avg": 21
+        }
+      ],
+      "dcs": [
+        13,
+        14,
+        15
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-3"
+    },
+    "24": {
+      "name": "Hobgoblin Warrior",
+      "cr": 3,
+      "ac": 15,
+      "hp": 60,
+      "attacks": [
+        {
+          "name": "Longsword",
+          "bonus": 5,
+          "avg": 12
+        },
+        {
+          "name": "Longbow",
+          "bonus": 5,
+          "avg": 12
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "defender-3-leader"
+    },
+    "25": {
+      "name": "Gorget Gnawer",
+      "cr": 16,
+      "ac": 18,
+      "hp": 263,
+      "attacks": [
+        {
+          "name": "Maw",
+          "bonus": 12,
+          "avg": 54
+        }
+      ],
+      "dcs": [
+        20
+      ],
+      "multiattack": 2,
+      "donor": "brute-15-grappler"
+    },
+    "26": {
+      "name": "Hollowsheaf",
+      "cr": 4,
+      "ac": 11,
+      "hp": 78,
+      "attacks": [
+        {
+          "name": "Straw Fingers",
+          "bonus": 5,
+          "avg": 27
+        }
+      ],
+      "dcs": [
+        13
+      ],
+      "multiattack": 0,
+      "donor": "lurker-2-trap"
+    },
+    "27": {
+      "name": "Kindly Blade",
+      "cr": 9,
+      "ac": 17,
+      "hp": 150,
+      "attacks": [
+        {
+          "name": "Rapier",
+          "bonus": 8,
+          "avg": 22
+        },
+        {
+          "name": "Long Stare",
+          "bonus": 8,
+          "avg": 17
+        }
+      ],
+      "dcs": [
+        15
+      ],
+      "multiattack": 3,
+      "donor": "skirmisher-8"
+    },
+    "28": {
+      "name": "Bellwether Keeper",
+      "cr": 10,
+      "ac": 14,
+      "hp": 180,
+      "attacks": [
+        {
+          "name": "Lantern",
+          "bonus": 7,
+          "avg": 17
+        }
+      ],
+      "dcs": [
+        15
+      ],
+      "multiattack": 2,
+      "donor": "lurker-5-phantom"
+    },
+    "29": {
+      "name": "Faceless Pilgrim",
+      "cr": 6,
+      "ac": 13,
+      "hp": 75,
+      "attacks": [
+        {
+          "name": "Grasp",
+          "bonus": 7,
+          "avg": 22
+        }
+      ],
+      "dcs": [
+        14
+      ],
+      "multiattack": 2,
+      "donor": "lurker-5-phantom"
+    },
+    "30": {
+      "name": "Dame Oriel Vance",
+      "cr": 7,
+      "ac": 15,
+      "hp": 130,
+      "attacks": [
+        {
+          "name": "Silvered Rapier",
+          "bonus": 6,
+          "avg": 21
+        },
+        {
+          "name": "Crossbow",
+          "bonus": 6,
+          "avg": 21
+        }
+      ],
+      "dcs": [],
+      "multiattack": 2,
+      "donor": "skirmisher-3-archer"
+    },
+    "31": {
+      "name": "Thessaly Brambleworth",
+      "cr": 4,
+      "ac": 15,
+      "hp": 65,
+      "attacks": [
+        {
+          "name": "Paring Knife",
+          "bonus": 6,
+          "avg": 13
+        },
+        {
+          "name": "Withering Ray",
+          "bonus": 6,
+          "avg": 13
+        }
+      ],
+      "dcs": [
+        14
+      ],
+      "multiattack": 2,
+      "donor": "caster-8-binder"
+    },
+    "32": {
+      "name": "Kobold",
+      "cr": 0.5,
+      "ac": 14,
+      "hp": 25,
+      "attacks": [
+        {
+          "name": "Dagger",
+          "bonus": 4,
+          "avg": 5
+        },
+        {
+          "name": "Spear",
+          "bonus": 4,
+          "avg": 5
+        }
+      ],
+      "dcs": [
+        12
+      ],
+      "multiattack": 2,
+      "donor": "skirmisher-8-hurler"
+    }
+  }
+}

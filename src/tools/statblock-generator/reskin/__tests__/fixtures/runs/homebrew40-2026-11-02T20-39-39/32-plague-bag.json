@@ -1,0 +1,130 @@
+{
+  "name": "Plague-Bag",
+  "inline": "the plague-bag",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Construct",
+  "size": "Small",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 93,
+  "hp_formula": "17d6 + 34",
+  "pb": 3,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 18,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 10
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 7,
+    "CON": 2,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 0
+  },
+  "skills": "Perception +4, Stealth +10",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The plague-bag makes two Clasp attacks. It can replace one attack with a use of Clinging Grasp."
+      },
+      {
+        "name": "Clasp",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Piercing damage plus 7 (2d6) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Clinging Grasp",
+        "text": "*Dexterity Saving Throw*: DC 15, one creature within 5 feet. *Failure:* The target has the Grappled condition (escape DC 12).",
+        "authored": true,
+        "clause": "has learned to walk",
+        "imposes": "Grappled",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "lurking strike from rafters and shadows",
+        "boundKeys": [],
+        "expressedQuote": "The target has the Grappled condition (escape DC 12).",
+        "clauseId": "cl_ii79fv"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the plague-bag takes the Hide action."
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "Left too long among the dead, a plague-doctor's satchel sprouted finger-boned legs and now stalks the sickhouse rafters, stuffing the dying into its own dark throat because a bag without a master still wants to be filled.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a plague-doctor's bag that has learned to walk",
+    "clauses": [
+      {
+        "id": "cl_bfm2y7",
+        "text": "a plague-doctor's bag",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_ii79fv",
+        "text": "has learned to walk",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "has learned to walk",
+        "askShape": "movement",
+        "askMechanic": "climb",
+        "askMechanicWhy": "has learned to walk"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [
+    "type-damage-affinity: Actions/Clasp: Necrotic damage on Construct — no official Construct deals Necrotic; re-theme the damage to the creature's substance (or the type itself is wrong)"
+  ],
+  "monsterDescription": "a plague-doctor's bag that has learned to walk",
+  "selectedChallengeRating": "6",
+  "monsterName": "Plague-Bag",
+  "caster": false
+}

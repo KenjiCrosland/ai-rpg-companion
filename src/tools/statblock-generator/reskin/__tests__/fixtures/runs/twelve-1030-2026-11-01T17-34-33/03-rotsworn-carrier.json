@@ -1,0 +1,141 @@
+{
+  "name": "Rotsworn Carrier",
+  "inline": "the carrier",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral Evil",
+  "ac": 14,
+  "hp": 119,
+  "hp_formula": "14d10 + 42",
+  "pb": 3,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -2
+  },
+  "skills": "Athletics +7, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The carrier makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 13 (2d8 + 4) Piercing damage plus 7 (2d6) Necrotic damage. If the target is a creature and doesn't already have a wasting wound, it is subjected to the following effect. *Constitution Saving Throw*: DC 14. *Failure:* The target receives a wasting wound. While wounded, the target loses 7 (2d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC 14 Wisdom (Medicine) check.",
+        "part": true,
+        "authored": true,
+        "clause": "a plague-bearer whose bite spreads a wasting sickness",
+        "boundKeys": [
+          "wound",
+          "rot"
+        ],
+        "riderTemplates": [
+          "affliction"
+        ],
+        "answersAlso": [
+          "will not heal"
+        ],
+        "clauseId": "cl_y2jsky",
+        "attacksPerRound": 2
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Rotsworn Aura",
+        "text": "*Constitution Saving Throw*: DC 14, any creature that starts its turn in a 10-foot Emanation originating from the carrier. *Failure:* The target has the Poisoned condition until the start of the carrier's next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "composed:zone:condition:poisoned",
+        "imposes": "Poisoned",
+        "boundKeys": [],
+        "freeRow": true,
+        "duration": "source_start",
+        "expresses": "thick hide weeping corruption",
+        "bound": false,
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "Once a living body, it was bloated and re-woven by a nameless rot that only wants to be carried from host to host, and it wears the sickness on its hide and in its jaws as both weapon and offspring.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a plague-bearer whose bite spreads a wasting sickness that will not heal",
+    "clauses": [
+      {
+        "id": "cl_y2jsky",
+        "text": "a plague-bearer whose bite spreads a wasting sickness",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "whose bite",
+        "askOften": "at_will",
+        "askOftenWhy": "a plague-bearer whose bite spreads a wasting sickness",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "spreads a wasting sickness"
+      },
+      {
+        "id": "cl_1juexlv",
+        "text": "will not heal",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "will not heal"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 1,
+    "free_row_templates": [
+      "composed:zone:condition:poisoned"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "will not heal -> Bite"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a plague-bearer whose bite spreads a wasting sickness that will not heal",
+  "selectedChallengeRating": "6",
+  "monsterName": "Rotsworn Carrier",
+  "caster": false
+}
