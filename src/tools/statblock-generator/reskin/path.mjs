@@ -479,7 +479,7 @@ export function bodyForClass(classKey, cr) {
 }
 
 /**
- * A BARE NAME WITH A CLASS IS A HUMANOID (owner's ruling, 2026-11-15).
+ * A PERSON WITH NO NAMED BODY IS A HUMANOID (owner's ruling, 2026-11-15; widened 2026-11-16).
  *
  * "Brother Halric" — a name alone, nothing else — came out seven ways in one day: three Humanoid,
  * two Undead, two Construct, the Construct carrying Immunity to Poison and the whole construct
@@ -487,8 +487,18 @@ export function bodyForClass(classKey, cr) {
  * cause is upstream of the sheet: a bare name is thin, so the identity call runs UNCONDITIONED
  * before routing and answers a creature type with nothing in the GM's words to go on.
  *
- * The scope is deliberately narrow — what was actually seen. The owner's ruling is broader, and
- * widening it to every class NPC with no body is a later choice once this is read on sheets.
+ * FIX E WIDENED IT BY ONE CONDITION: a class need no longer be named. "Old Marga", a name and
+ * nothing else, read `[path] class_npc — "Old Marga" (call)` on both runs and came out Medium Fey
+ * on one and Medium Plant on the other — the Plant being a spy with a shortsword, a hand crossbow,
+ * Cunning Action and blindsight. The path had already said she is a person: `dispatch` returns
+ * class_npc with no class only when the call says so AND the words are a proper name of three words
+ * or fewer. A person with no named body is a Humanoid.
+ *
+ * IT DOES NOT DECIDE WHO IS A PERSON. It fires only after the path call has answered class_npc,
+ * which is the point at which the engine builds a person's sheet whatever the type line says. A
+ * name that sounds like a monster is fine either way (the owner's ruling on "Old Scuttlesnape"):
+ * on class_npc the sheet is a person and the type is Humanoid, and a GM who means a monster adds a
+ * description to say so, which routes it elsewhere and leaves the call's type alone.
  *
  * "NOTHING BUT A NAME AND THE CLASS WORD" IS A MEASURE OF EMPTINESS, not a reading of meaning.
  * Drop the class receipt and the words of the typed name; if `significantWords` has nothing left,
@@ -504,11 +514,11 @@ export function bodyForClass(classKey, cr) {
  *
  * @returns {'Humanoid'|null} the type that should stand, or null to leave the call's answer alone
  */
-export function humanoidForABareNamedClass({
+export function humanoidForAPersonWithNoBody({
   path = null, print_body = null, species = null, class: cls = null, receipt = null,
   concept = '', name = '', callType = null, typeSource = null,
 } = {}) {
-  if (path !== 'class_npc' || print_body || species || !cls) return null;
+  if (path !== 'class_npc' || print_body || species) return null;
   if (!callType || /^Humanoid\b/i.test(String(callType))) return null;
   const strip = (text, phrase) => String(phrase ?? '').toLowerCase().split(/[^a-z']+/i)
     .filter((w) => w.length > 2)

@@ -1466,7 +1466,8 @@ async function generateStatblockEngine(edition) {
           conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
           const routed = routedRaw ? chooseLine(routedRaw.parsed, { text: routedRaw.text, rawText: routedRaw.rawText, menuRole: givenArchetype, path: conceptPath?.path ?? null }) : null; // the quote check reads the same rewritten text the model saw
           applyRoute(routed);
-          // A BARE NAME WITH A CLASS IS A HUMANOID (owner's ruling, 2026-11-15).
+          // A PERSON WITH NO NAMED BODY IS A HUMANOID (owner's ruling, 2026-11-15; widened by fix E
+          // on 2026-11-16, which dropped the requirement that a class be named).
           //
           // "Brother Halric" — a name alone — came out seven ways in one day: three Humanoid, two
           // Undead, two Construct. The Construct carried Immunity to Poison and the whole construct
@@ -1475,30 +1476,32 @@ async function generateStatblockEngine(edition) {
           // answers a creature type with nothing in the GM's words to go on; the type then drives
           // the immunities, the size and the rest.
           //
-          // So when the path says a person with a class and no named body, and the GM's words hold
-          // nothing but a name and the class word, the type is Humanoid.
+          // So when the path says a person with no named body, and the GM's words hold nothing but a
+          // name (and the class word, when there is one), the type is Humanoid. "Old Marga" read
+          // class_npc with NO class and came out Fey on one roll and Plant on the next; the path had
+          // already said she is a person.
           //
           // SETTLED HERE, not at the type line. The immunities are written by a pass that reads the
           // type, so renaming the header afterwards would leave them. This runs before the sheet is
           // built, so every later pass reads Humanoid. (On this path the second identity call is
           // SKIPPED — the expansion was that call — so there is no earlier window.)
           //
-          // "NOTHING BUT A NAME AND THE CLASS WORD" is a measure of emptiness, not a reading of
+          // "NOTHING BUT A NAME" is a measure of emptiness, not a reading of
           // meaning: drop the class receipt and the words of the typed name, and `significantWords`
           // — the file's existing definition of a concept too thin to read — has nothing left.
           // "Clockwork friar" keeps "clockwork", so the call's Construct stands. A type the GM's own
           // words name also stands, by the identity call's own `type_source` field.
           if (conceptPath?.path === 'class_npc') {
             try {
-              const { humanoidForABareNamedClass } = await import('./reskin/path.mjs');
-              const settled = humanoidForABareNamedClass({
+              const { humanoidForAPersonWithNoBody } = await import('./reskin/path.mjs');
+              const settled = humanoidForAPersonWithNoBody({
                 ...conceptPath, concept: userConcept, name: conceptProvidedName ?? '',
                 callType: resolvedType, typeSource: conceptTypeSource,
               });
               if (settled && settled !== resolvedType) {
-                logger.log('[concept] type settled:', `${resolvedType} -> ${settled} — the words are a name and the class word and nothing else, and a person with a class and no named body is a Humanoid (owner's ruling, 2026-11-15); ${typeStep ?? 'an earlier step'} had answered ${resolvedType}`);
+                logger.log('[concept] type settled:', `${resolvedType} -> ${settled} — the GM's words are a name${conceptPath.class ? ' and the class word' : ''} and nothing else, and a person with no named body is a Humanoid (owner's ruling, 2026-11-15, widened 2026-11-16); ${typeStep ?? 'an earlier step'} had answered ${resolvedType}`);
                 resolvedType = settled;
-                typeStep = 'fix A (a bare name with a class)';
+                typeStep = 'fix A/E (a person with no named body)';
               }
             } catch (e) {
               logger.warn('[concept] could not settle the type — the call\'s answer stands:', e?.message ?? e);

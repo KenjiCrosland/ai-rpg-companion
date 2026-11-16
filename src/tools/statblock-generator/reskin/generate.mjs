@@ -9688,6 +9688,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('class weapon:', `${secS}/"${e.name}" leaves with the shield — a ${cw.melee} is two-handed and print pairs a shield with no heavy melee weapon (0 of 329 gear lines)`);
         sweepDeadName(monster.sections, e.name, null, trace);
       }
+      // THE CLASS'S WEAPON LANDS ON ONE ROW (owner's fix F, 2026-11-16).
+      //
+      // Captain Vane shipped two rows named Longsword with different damage, under a Multiattack
+      // reading "two Longsword attacks": the Guard Captain's body already carries a Longsword, and
+      // this pass renamed its Javelin to a second one. Measured over 416 class-NPC sheets built
+      // with a stubbed model — 26 person bodies, 8 classes, 2 CRs — thirty-two carry two rows with
+      // one name, and they are all 16 on the Guard Captain and all 16 on the Bugbear Warrior. No
+      // other body does it. The Bugbear's monk ships two rows named Unarmed Strike.
+      //
+      // IF THE BODY ALREADY CARRIES THAT NAME, NOTHING IS RENAMED — the class's weapon is already
+      // on the sheet, so a second row bearing it can only be a duplicate. Otherwise exactly one row
+      // takes it, per slot: a melee weapon on one melee row, a ranged weapon on one ranged row.
+      //
+      // WHICH ROW: THE FIRST ELIGIBLE ONE IN SECTION ORDER. Print lists a body's primary attack
+      // first and its Multiattack cites that row, so renaming the first keeps the citation pointing
+      // at the row that was already primary, and the body's secondary weapon (the Guard Captain's
+      // Javelin, the Bugbear's second strike) keeps its own name and print's own numbers. Every
+      // edit in this pass happens after the guard below, so a skipped row is left exactly as print
+      // had it and no damage moves.
+      const nameOnSheet = new Set(Object.values(monster.sections ?? {}).flat()
+        .map((r) => String(r?.name ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase()).filter(Boolean));
+      const wName = (k) => (k === 'unarmed strike' ? 'Unarmed Strike' : titleOf(k)).toLowerCase();
+      const placedW = {
+        melee: !!(cw?.melee && nameOnSheet.has(wName(cw.melee))),
+        ranged: !!(cw?.ranged && nameOnSheet.has(wName(cw.ranged))),
+      };
+      if (cw && (placedW.melee || placedW.ranged)) {
+        trace('class weapon:', `${[placedW.melee && cw.melee, placedW.ranged && cw.ranged].filter(Boolean).map((k) => `"${wName(k)}"`).join(' and ')} already names a row on this body — no row is renamed to it (fix F: one name, one row)`);
+      }
       if (cw) for (const [secW, esW] of Object.entries(monster.sections ?? {})) for (const e of esW) {
         const t = String(e.text ?? ''); const hybrid = /Melee or Ranged Attack Roll/.test(t);
         const isMelee = (/Melee Attack Roll/.test(t) && !hybrid) || hybrid; // a HYBRID is the body's weapon too (the Gladiator's thrown Spear on a goliath berserker, critic B)
@@ -9719,6 +9748,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const have = e.weapon ?? weaponFor(String(e.name ?? '').replace(/ \(.*\)$/, ''));
         if (have === want || (want === 'unarmed strike' && !have && /^Unarmed Strike/i.test(e.name ?? ''))) continue;
         if (gmNamedW.has(have)) continue; // the GM typed this weapon — it stays (one rule with gmArmed)
+        // FIX F: one name, one row. The slot is taken either because the body already carried the
+        // class's weapon or because an earlier row has just been renamed to it.
+        const slotW = isMelee ? 'melee' : 'ranged';
+        if (placedW[slotW]) { trace('class weapon:', `${secW}/"${String(e.name ?? '').replace(/ \(.*\)$/, '')}" keeps its own name — "${wName(want)}" is already a row on this sheet (fix F: one name, one row)`); continue; }
+        placedW[slotW] = true;
         const props = WEAPONS[want] ?? null; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
         // the body's rider folds into the base: print's Assassin pays 5d6 Poison for its shortsword, a monk does not
         // A RIDER KEEPS BOTH HALVES OR LOSES BOTH (owner's fix 2, 2026-11-15). This regex took
