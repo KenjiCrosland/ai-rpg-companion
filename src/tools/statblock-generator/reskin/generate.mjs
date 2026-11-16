@@ -647,7 +647,21 @@ export function permanentSpeedZero(text) {
 // the sheet already covers is a second name for one mechanic. Both kits read it.
 const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]*?) action/g)].flatMap((mm) => [...String(mm[1]).matchAll(/\b(Dash|Disengage|Hide)\b/g)].map((x) => x[1])));
 
-const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
+// A CITED ABILITY TAKES ITS USAGE PARENTHETICAL WITH IT (owner's fix D, 2026-11-15).
+//
+// The Stone Golem shipped "It can replace one attack with  (Recharge 5-6)." — the only garbled
+// sentence in 107 sheets read that day. `deadName` arrives with its recharge suffix stripped (the
+// `bare` line below), so the fallback that removes the dead name from a Multiattack removed
+// "a use of Splintering Charge" and left the " (Recharge 5-6)" that followed it. The stump cleanup
+// added on 2026-10-23 wanted a clause ending at "with.", so a stump holding a parenthetical
+// slipped past it and shipped.
+//
+// Both halves are fixed: the name consumes its own usage parenthetical, and the objectless clause
+// is removed whole even if one is left behind by some other path.
+const USAGE_SUFFIX = '(?:\\s*\\((?:Recharge [\\d\u2013-]+|\\d\\/Day)\\))?';
+// EXPORTED so the rule can be tested (2026-11-15). It was module-local, and the stump it ships
+// when a cited ability leaves could only be found by reading a sheet after the fact.
+export const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
   // A NAME TWO ROWS SHARE IS NOT DEAD (the orc pin, 2026-10-13: the model named
@@ -683,7 +697,7 @@ const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
             .replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.')
             .replace(/attacks?,\s+(?=(?:one|two|three|four|five|six)\b[^,]*\.?$)/i, (m) => m.replace(/,\s+$/, ' and ')).trim();
         })();
-        row.text = merged ?? (re1.test(t0) ? t0.replace(re1, 'makes $1 $2 attacks') : re2.test(t0) ? t0.replace(re2, 'makes $1 $2 attacks') : t0.replace(new RegExp(`,?\\s*(?:and |or )?(?:a use of )?\\b${esc}\\b`, 'g'), '').replace(/\s{2,}/g, ' ').replace(/,\s*\./g, '.').replace(/ ,/g, ','));
+        row.text = merged ?? (re1.test(t0) ? t0.replace(re1, 'makes $1 $2 attacks') : re2.test(t0) ? t0.replace(re2, 'makes $1 $2 attacks') : t0.replace(new RegExp(`,?\\s*(?:and |or )?(?:a use of )?\\b${esc}\\b${USAGE_SUFFIX}`, 'g'), '').replace(/\s{2,}/g, ' ').replace(/,\s*\./g, '.').replace(/ ,/g, ','));
         // A REPLACEMENT CLAUSE WITHOUT ITS OBJECT IS NONSENSE (2026-10-23). The
         // fallback above strips the dead name out of the text, which on a
         // Multiattack leaves the stump "It can replace one attack with." — read
@@ -691,7 +705,7 @@ const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
         // rename and the sweep took only the name. A GM reads a sentence that
         // stops. If the clause has lost its object, the whole clause goes.
         row.text = String(row.text ?? '')
-          .replace(/\s*(?:It|The \w+) can replace (?:one|two|three) attacks? with(?:\s+a use of)?\s*\./gi, '')
+          .replace(/\s*(?:It|The \w+) can replace (?:one|two|three) attacks? with(?:\s+a use of)?\s*(?:\((?:Recharge [\d–-]+|\d\/Day)\)\s*)?\./gi, '')
           .replace(/\s{2,}/g, ' ').trim();
         if (row.text !== t0) traceFn('multiattack re-read —', `"${bare}" left; "${row.name}" now reads "${row.text.slice(0, 90)}"`);
         continue;

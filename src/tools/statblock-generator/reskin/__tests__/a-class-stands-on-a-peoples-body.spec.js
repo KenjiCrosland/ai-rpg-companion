@@ -36,9 +36,14 @@ describe('the fill, with a class and no species answered', () => {
     expect(decide(concept, { class: cls, class_receipt: receipt }).read.print_body).toBeNull();
   });
 
-  test('a body the call DID name is never overridden', () => {
-    const { read } = decide('kobold sorcerer', { print_body: 'Mage', print_body_receipt: 'sorcerer', relation: 'is', class: 'mage', class_receipt: 'sorcerer' });
-    expect(read.print_body).toBe('Mage');
+  // SUPERSEDED BY FIX C (2026-11-15). This read "a body the call DID name is never overridden",
+  // and the body it used as the example was the Mage — which is precisely the answer fix C now
+  // overrules, because a JOB yields to a PEOPLE. What survives of the original rule is that a
+  // MONSTER the call names still stands; that is the second case below and the limits in
+  // "a named people wins over a job block".
+  test('a MONSTER the call named is never overridden', () => {
+    const { read } = decide('kobold riding an owlbear', { print_body: 'Owlbear', print_body_receipt: 'owlbear', relation: 'is', class: 'mage', class_receipt: 'kobold' });
+    expect(read.print_body).toBe('Owlbear');
   });
 
   test('with no class answered the fill does not fire', () => {
@@ -114,5 +119,103 @@ describe('the mirror: the body is named and the class is missed (fix 3, 2026-11-
   test('a body that is not a declared people fills nothing', () => {
     const { read } = decide('ogre sorcerer', { assembly: 'twist', print_body: 'Ogre', print_body_receipt: 'ogre', relation: 'is' });
     expect(read.class).toBeNull();
+  });
+});
+
+describe('a named people wins over a job block (fix C, 2026-11-15)', () => {
+  // The path probe on "kobold sorcerer" read 9 of 10. On the miss the call answered the MAGE as
+  // the body: the class was right and the kobold was lost, about one roll in twenty. The receipt
+  // check cannot catch it — a receipt only has to be a SPAN of the GM's words, and "sorcerer" is
+  // a true span of "kobold sorcerer" that says nothing about the Mage.
+  const job = (body, receipt, concept, cls = 'mage') => decide(concept, { print_body: body, print_body_receipt: receipt, relation: 'is', class: cls, class_receipt: receipt });
+
+  test.each([
+    ['Mage', 'sorcerer', 'kobold sorcerer', 'Kobold Warrior'],
+    ['Priest', 'priest', 'goblin priest', 'Goblin Warrior'],
+    ['Assassin', 'assassin', 'goblin assassin', 'Goblin Warrior'],
+  ])('the call answered %s for "%s" — the people takes the body', (body, receipt, concept, want) => {
+    const { read, d } = job(body, receipt, concept);
+    expect(read.print_body).toBe(want);
+    expect(read.relation).toBe('is');
+    expect(d).toMatchObject({ path: 'class_npc', print_body: want });
+  });
+
+  test('the class the call gave is untouched when the body yields', () => {
+    expect(job('Mage', 'sorcerer', 'kobold sorcerer', 'rogue').read.class).toBe('rogue');
+  });
+
+  test('the receipt becomes the quote that names the PEOPLE, not the job', () => {
+    expect(job('Mage', 'sorcerer', 'kobold sorcerer').read.receipts.print_body).toMatch(/kobold/i);
+  });
+
+  test('a fill says so on the notes channel, not as a refusal', () => {
+    const { read } = job('Mage', 'sorcerer', 'kobold sorcerer');
+    expect(read.notes.join(' ')).toMatch(/job print types Humanoid/);
+    expect(read.refused.join(' ')).not.toMatch(/job print types Humanoid/);
+  });
+
+  // THE LIMITS.
+  test('no people in the head clause and the job stands', () => {
+    expect(job('Mage', 'sorcerer', 'a sorcerer who keeps kobolds').read.print_body).toBe('Mage');
+  });
+
+  test('two peoples in the words change nothing', () => {
+    expect(job('Mage', 'sorcerer', 'a goblin and a kobold, both sorcerers').read.print_body).toBe('Mage');
+  });
+
+  test('a MONSTER body does not yield', () => {
+    expect(job('Owlbear', 'kobold', 'kobold riding an owlbear').read.print_body).toBe('Owlbear');
+  });
+
+  test("a people's own body does not yield to itself", () => {
+    const { read } = job('Kobold Warrior', 'kobold', 'kobold sorcerer');
+    expect(read.print_body).toBe('Kobold Warrior');
+  });
+
+  test('relation "resembles" does not yield — only a body the creature IS', () => {
+    const { read } = decide('kobold sorcerer', { print_body: 'Mage', print_body_receipt: 'sorcerer', relation: 'resembles', class: 'mage', class_receipt: 'sorcerer' });
+    expect(read.print_body).toBe('Mage');
+  });
+});
+
+describe("the body is the species (fix B, 2026-11-15)", () => {
+  // Sheet 03 of the six: `class_npc — Kobold Warrior (is) — class mage — species lizardfolk`. It
+  // shipped Medium, with Hold Breath, Marsh Stride and a swim speed on top of the kobold's own
+  // Pack Tactics and Sunlight Sensitivity. The call had answered lizardfolk — its nearest kit for
+  // a scaled people — and the kit was applied although the body already said what it was.
+  test('a species answered beside a declared people is dropped', () => {
+    const { read, d } = decide('kobold sorcerer', {
+      print_body: 'Kobold Warrior', print_body_receipt: 'kobold', relation: 'is',
+      species: 'lizardfolk', species_receipt: 'kobold', class: 'mage', class_receipt: 'sorcerer',
+    });
+    expect(read.print_body).toBe('Kobold Warrior');
+    expect(read.species).toBeNull();
+    expect(read.receipts.species).toBeUndefined();
+    expect(d.species).toBeNull();
+    expect(read.notes.join(' ')).toMatch(/a people's own printed body is its species/);
+  });
+
+  test('it drops after fix C has moved the body to the people', () => {
+    const { read } = decide('kobold sorcerer', {
+      print_body: 'Mage', print_body_receipt: 'sorcerer', relation: 'is',
+      species: 'lizardfolk', species_receipt: 'kobold', class: 'mage', class_receipt: 'sorcerer',
+    });
+    expect(read.print_body).toBe('Kobold Warrior');
+    expect(read.species).toBeNull();
+  });
+
+  test('a species with NO body is kept — that is the case the kit exists for', () => {
+    const { read } = decide('lizardfolk monk', { species: 'lizardfolk', species_receipt: 'lizardfolk', class: 'monk', class_receipt: 'monk' });
+    expect(read.species).toBe('lizardfolk');
+    expect(read.print_body).toBeNull();
+  });
+
+  test('a species beside a MONSTER body is kept — only a declared people is the species', () => {
+    const { read } = decide('lizardfolk riding an owlbear', {
+      print_body: 'Owlbear', print_body_receipt: 'owlbear', relation: 'is',
+      species: 'lizardfolk', species_receipt: 'lizardfolk', class: 'ranger', class_receipt: 'ranger',
+    });
+    expect(read.print_body).toBe('Owlbear');
+    expect(read.species).toBe('lizardfolk');
   });
 });

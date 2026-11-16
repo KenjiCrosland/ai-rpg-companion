@@ -17,6 +17,7 @@ import printBlocks from '@/data/srd52-monsters.json';
 import srd51 from '@/data/srd-monsters.json';
 import { CLASSES } from './classes.mjs';
 import { SPECIES } from './species.mjs';
+import { significantWords } from './templates.mjs'; // the file's one definition of a concept too thin to read
 
 export const ASSEMBLIES = ['twist', 'class_npc', 'homebrew'];
 export const PATHS = ['exact', 'twist', 'class_npc', 'homebrew', 'blank'];
@@ -232,8 +233,12 @@ const shorter = (receipt, concept) => words(concept).length <= 3 || words(receip
 export function readPath(raw, { concept = '', edition = '2024' } = {}) {
   let p; try { p = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { p = null; }
   const refused = [];
-  if (!p || typeof p !== 'object') return { assembly: null, print_body: null, relation: null, species: null, class: null, receipts: {}, refused: ['the call returned no object'] };
-  const out = { assembly: null, print_body: null, relation: null, species: null, class: null, title: null, receipts: {}, refused };
+  // A FILL IS NOT A REFUSAL (trace 4, 2026-11-15). The two fills and the species drop push a
+  // line saying what they DID, and those rode the `refused` channel, so every class-on-a-people
+  // sheet's trace read `[path] refused:` above a path that had worked. Their own channel.
+  const notes = [];
+  if (!p || typeof p !== 'object') return { assembly: null, print_body: null, relation: null, species: null, class: null, receipts: {}, refused: ['the call returned no object'], notes: [] };
+  const out = { assembly: null, print_body: null, relation: null, species: null, class: null, title: null, receipts: {}, refused, notes };
   if (p.title != null && !/^null$/i.test(String(p.title)) && String(p.title).trim()) { if (isSpan(p.title, concept)) out.title = String(p.title).trim(); else refused.push(`title "${p.title}" is not a span of the GM's words`); }
   const a = String(p.assembly ?? '').toLowerCase();
   if (ASSEMBLIES.includes(a)) out.assembly = a; else refused.push(`assembly "${p.assembly}" is not twist|class_npc|homebrew`);
@@ -276,7 +281,33 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
       out.print_body = block.name;
       out.relation = 'is';
       out.receipts.print_body = rec;
-      refused.push(`species "${word}" has no kit, but print carries it as ${block.name} — the body stands so the people is not erased`);
+      notes.push(`species "${word}" has no kit, but print carries it as ${block.name} — the body stands so the people is not erased`);
+    }
+  }
+  // A NAMED PEOPLE WINS OVER A JOB BLOCK (owner's fix C, 2026-11-15). The fill below needs the
+  // call to have named NO body. On about one roll in twenty it names one — and the one it names
+  // is the job: "kobold sorcerer" came back `print_body: "Mage"`, so the class was right and the
+  // kobold was lost. The receipt check cannot catch it, because a receipt only has to be a SPAN
+  // of the GM's words: "sorcerer" is a true span of "kobold sorcerer" and says nothing about the
+  // Mage.
+  //
+  // So a JOB yields to a PEOPLE. A job block is print's own answer, not a list of ours: a block
+  // print types Humanoid that is not one of the declared peoples — the Mage, the Priest, the
+  // Assassin. Only a job yields. If the call named a MONSTER as the body it stands, because that
+  // is a real reading ("a kobold riding an owlbear"), and two peoples in the words change
+  // nothing. The class the call gave is untouched.
+  if (out.print_body && out.relation === 'is') {
+    const declaredSet = new Set([...FEY_PEOPLES, ...OFF_TYPE_PEOPLES].map((n) => n.toLowerCase()));
+    const isJob = isPersonBody(out.print_body) && !declaredSet.has(out.print_body.toLowerCase());
+    if (isJob) {
+      const inHeadP = namesInTheWords(headClause(concept), { edition, peoples: true }).filter((h) => declaredSet.has(h.name.toLowerCase()));
+      const inAllP = namesInTheWords(concept, { edition, peoples: true }).filter((h) => declaredSet.has(h.name.toLowerCase()));
+      if (inAllP.length === 1 && inHeadP.length === 1) {
+        const was = out.print_body;
+        out.print_body = inHeadP[0].name;
+        out.receipts.print_body = inHeadP[0].quote;
+        notes.push(`the call answered ${was}, a job print types Humanoid, but the head clause names the ${inHeadP[0].name}, a people — the people is the body and the job is what it does`);
+      }
     }
   }
   // A KOBOLD IS A KOBOLD FIRST, WITH MAGE FEATURES (owner's ruling C, 2026-11-15). The fill
@@ -308,7 +339,7 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
       out.print_body = inHead[0].name;
       out.relation = 'is';
       out.receipts.print_body = inHead[0].quote;
-      refused.push(`the head clause names the ${inHead[0].name}, a people — a ${String(p.class).trim()} who is visibly one stands on its printed body (owner's ruling, 2026-11-15)`);
+      notes.push(`the head clause names the ${inHead[0].name}, a people — a ${String(p.class).trim()} who is visibly one stands on its printed body (owner's ruling, 2026-11-15)`);
     }
   }
   // THE MIRROR OF RULING C: THE BODY IS NAMED AND THE CLASS IS MISSED (owner's fix 3,
@@ -339,7 +370,7 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
         out.class = hit[0].key;
         const headN = norm(headClause(concept));
         out.receipts.class = (hit[0].keys ?? []).find((k) => new RegExp(`\\b${String(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`, 'i').test(headN)) ?? hit[0].key;
-        refused.push(`the head clause names the ${out.class}'s "${out.receipts.class}" and the call named no class — a ${out.print_body} who is one stands on its own body with the class on top (owner's ruling, 2026-11-15)`);
+        notes.push(`the head clause names the ${out.class}'s "${out.receipts.class}" and the call named no class — a ${out.print_body} who is one stands on its own body with the class on top (owner's ruling, 2026-11-15)`);
       }
     }
   }
@@ -359,6 +390,25 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
     else if (!shorter(rc, concept)) refused.push(`class receipt "${rc}" is the whole concept`);
     else if (!saysTheClassItself && !isSpan(rc, headClause(concept))) refused.push(`class receipt "${rc}" names no class and is not in the head clause ("${headClause(concept)}")`);
     else { out.class = c; out.receipts.class = rc; }
+  }
+
+  // THE BODY IS THE SPECIES (owner's fix B, 2026-11-15). "Kobold sorcerer" shipped standing on
+  // the Kobold Warrior AND wearing the lizardfolk kit: Medium, Hold Breath, Marsh Stride and a
+  // swim speed, on top of the kobold's own Pack Tactics and Sunlight Sensitivity. The call had
+  // answered `species: "lizardfolk"` — its nearest kit for a scaled people — and the kit was
+  // applied although the body already said what the creature is.
+  //
+  // When the body is one of the declared peoples, that body IS the species, so a species kit on
+  // top of it can only contradict it. The species answer is dropped. A species with no body is
+  // untouched: that is the case the kit exists for.
+  if (out.species && out.print_body) {
+    const declaredSet2 = new Set([...FEY_PEOPLES, ...OFF_TYPE_PEOPLES].map((n) => n.toLowerCase()));
+    if (declaredSet2.has(String(out.print_body).toLowerCase())) {
+      const dropped = out.species;
+      out.species = null;
+      delete out.receipts.species;
+      notes.push(`species "${dropped}" is dropped — the body is the ${out.print_body}, and a people's own printed body is its species`);
+    }
   }
   return out;
 }
@@ -426,4 +476,42 @@ export function bodyForClass(classKey, cr) {
   if (!withCr.length) return null;
   if (!Number.isFinite(crN)) return withCr[0].name;
   return withCr.sort((a, b) => Math.abs(a.cr - crN) - Math.abs(b.cr - crN) || a.cr - b.cr)[0].name;
+}
+
+/**
+ * A BARE NAME WITH A CLASS IS A HUMANOID (owner's ruling, 2026-11-15).
+ *
+ * "Brother Halric" — a name alone, nothing else — came out seven ways in one day: three Humanoid,
+ * two Undead, two Construct, the Construct carrying Immunity to Poison and the whole construct
+ * condition package. Every roll took the same path, `class_npc — class cleric` with no body. The
+ * cause is upstream of the sheet: a bare name is thin, so the identity call runs UNCONDITIONED
+ * before routing and answers a creature type with nothing in the GM's words to go on.
+ *
+ * The scope is deliberately narrow — what was actually seen. The owner's ruling is broader, and
+ * widening it to every class NPC with no body is a later choice once this is read on sheets.
+ *
+ * "NOTHING BUT A NAME AND THE CLASS WORD" IS A MEASURE OF EMPTINESS, not a reading of meaning.
+ * Drop the class receipt and the words of the typed name; if `significantWords` has nothing left,
+ * the GM gave no material to type a creature from. "Clockwork friar" keeps "clockwork", so the
+ * call's Construct stands — and that emptiness IS the check for "the GM's words name the type",
+ * because a type word would be one of the words left over. The call's `type_source` field is NOT
+ * consulted: on 1 of 5 Brother Halric rolls the call answered `type_source: "user"` for a bare
+ * name, which the GM's words cannot support, and honouring that claim let the route's Undead
+ * through. A claim about the GM's words is validated against them, never taken on trust.
+ *
+ * Extracted rather than written inline: an inline guard in that file could not be called, and the
+ * last one that was turned out to have been dead for weeks.
+ *
+ * @returns {'Humanoid'|null} the type that should stand, or null to leave the call's answer alone
+ */
+export function humanoidForABareNamedClass({
+  path = null, print_body = null, species = null, class: cls = null, receipt = null,
+  concept = '', name = '', callType = null, typeSource = null,
+} = {}) {
+  if (path !== 'class_npc' || print_body || species || !cls) return null;
+  if (!callType || /^Humanoid\b/i.test(String(callType))) return null;
+  const strip = (text, phrase) => String(phrase ?? '').toLowerCase().split(/[^a-z']+/i)
+    .filter((w) => w.length > 2)
+    .reduce((acc, w) => acc.replace(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi'), ' '), String(text ?? ''));
+  return significantWords(strip(strip(concept, receipt), name)).length === 0 ? 'Humanoid' : null;
 }

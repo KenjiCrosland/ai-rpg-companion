@@ -1107,6 +1107,10 @@ async function generateStatblockEngine(edition) {
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
   let resolvedType = randomSeed?.creature_type ?? null;
+  // WHICH STEP SET THE TYPE (trace 2, 2026-11-15). Three can — the identity call, the route,
+  // and fix A — and `[concept] resolve:` printed only the final answer, so a Construct could not
+  // be traced to its author. Recorded, not decided here.
+  let typeStep = null;
   let conceptTypeSource = null; // the identity call's own answer: did the GM's words name the type? (replaces a regex over the GM's words — owner, 2026-10-18)
   // The resolve/synthesis call runs for USER-PICKED archetypes too (owner
   // call, 2026-08-04): those generations previously skipped it entirely and
@@ -1188,7 +1192,7 @@ async function generateStatblockEngine(edition) {
     if (blank && parsed?.synthesis) { synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis); synthesisGuidance = buildSynthesisGuidance(randomSeed); }
     if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) conceptLore = parsed.lore.trim();
     // the route decides the type from substance; the prose only fills a gap
-    if (!resolvedType && typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
+    if (!resolvedType && typeof parsed?.creature_type === 'string') { resolvedType = parsed.creature_type; typeStep = blank ? 'the blank-roll synthesis' : 'the identity call'; }
     if (/^(?:user|inferred)$/i.test(String(parsed?.type_source ?? ''))) conceptTypeSource = String(parsed.type_source).toLowerCase();
     if (Array.isArray(parsed?.themes)) {
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
@@ -1325,7 +1329,7 @@ async function generateStatblockEngine(edition) {
       conceptHolds = route.holds ?? null; // the GM's own undoing, as the route call read it
       conceptHoldShape = route.hold_shape ?? null; // the one answer every hold door reads (2026-11-11)
       conceptAskedMechanic = route.askedMechanic ?? null;
-      if (route.resolvedType) resolvedType = route.resolvedType;
+      if (route.resolvedType) { resolvedType = route.resolvedType; typeStep = 'the route call'; }
       logger.log('[route]', `${route.line}${route.role && route.role !== route.archetype ? ` (${route.role})` : ''} type=${resolvedType ?? '?'} mechanics=${route.mechanics.join(', ') || 'none'} — ${route.notes.join(' | ')}`);
     } else {
       // never-fail: the user's role, else a random plain line — drawn from the
@@ -1368,6 +1372,7 @@ async function generateStatblockEngine(edition) {
               const rawP = await generateGptResponse(buildPathPrompt(pathFields), validatePathResponse, 2);
               const read = readPath(rawP, { concept: `${pathFields.name} ${pathFields.concept}`.trim(), edition });
               for (const r of read.refused) logger.log('[path] refused:', r);
+              for (const n of read.notes ?? []) logger.log('[path] filled:', n); // a fill is not a refusal (trace 4)
               return dispatchPath(pathFields, read);
             } catch (e) { logger.warn('[path] call failed:', e?.message ?? e); return dispatchPath(pathFields, null); }
           };
@@ -1437,7 +1442,16 @@ async function generateStatblockEngine(edition) {
               readProse(parseGenerationResponse(rawX), { blank: false });
               const parts = [userConcept, conceptIdentity, conceptHouse ? `its body is ${conceptHouse}` : null, conceptAttackMode, conceptSignature]
                 .map((x) => String(x ?? '').trim()).filter(Boolean);
-              if (parts.length > 1) { routeText = parts.join(' — '); logger.log('[concept] thin concept expanded before routing:', routeText.slice(0, 300)); }
+              if (parts.length > 1) {
+                routeText = parts.join(' — ');
+                logger.log('[concept] thin concept expanded before routing:', routeText.slice(0, 300));
+                // THE PARTS, UNCUT (trace 1, 2026-11-15). The joined line is cut at 300
+                // characters and the body material sits past the cut, so the one field that
+                // explains a Construct was never in the trace. Each on its own short line.
+                logger.log('[concept] expansion answered:', `type=${resolvedType ?? '?'} (type_source=${conceptTypeSource ?? '?'}) material=${conceptHouse ?? '—'} size=${conceptSize ?? '—'} mind=${conceptMind ?? '—'}`);
+                logger.log('[concept] expansion attack mode:', conceptAttackMode || '—');
+                logger.log('[concept] expansion signature:', conceptSignature || '—');
+              }
               else logger.log('[concept] expansion added nothing — routing on the words as typed');
             } catch (e) {
               // NEVER-FAIL: a failed expansion falls back to today's order, not to nothing.
@@ -1452,6 +1466,44 @@ async function generateStatblockEngine(edition) {
           conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
           const routed = routedRaw ? chooseLine(routedRaw.parsed, { text: routedRaw.text, rawText: routedRaw.rawText, menuRole: givenArchetype, path: conceptPath?.path ?? null }) : null; // the quote check reads the same rewritten text the model saw
           applyRoute(routed);
+          // A BARE NAME WITH A CLASS IS A HUMANOID (owner's ruling, 2026-11-15).
+          //
+          // "Brother Halric" — a name alone — came out seven ways in one day: three Humanoid, two
+          // Undead, two Construct. The Construct carried Immunity to Poison and the whole construct
+          // condition package. Every roll took the same path: `class_npc — class cleric` with no
+          // body. A bare name is thin, so the identity call runs UNCONDITIONED before routing and
+          // answers a creature type with nothing in the GM's words to go on; the type then drives
+          // the immunities, the size and the rest.
+          //
+          // So when the path says a person with a class and no named body, and the GM's words hold
+          // nothing but a name and the class word, the type is Humanoid.
+          //
+          // SETTLED HERE, not at the type line. The immunities are written by a pass that reads the
+          // type, so renaming the header afterwards would leave them. This runs before the sheet is
+          // built, so every later pass reads Humanoid. (On this path the second identity call is
+          // SKIPPED — the expansion was that call — so there is no earlier window.)
+          //
+          // "NOTHING BUT A NAME AND THE CLASS WORD" is a measure of emptiness, not a reading of
+          // meaning: drop the class receipt and the words of the typed name, and `significantWords`
+          // — the file's existing definition of a concept too thin to read — has nothing left.
+          // "Clockwork friar" keeps "clockwork", so the call's Construct stands. A type the GM's own
+          // words name also stands, by the identity call's own `type_source` field.
+          if (conceptPath?.path === 'class_npc') {
+            try {
+              const { humanoidForABareNamedClass } = await import('./reskin/path.mjs');
+              const settled = humanoidForABareNamedClass({
+                ...conceptPath, concept: userConcept, name: conceptProvidedName ?? '',
+                callType: resolvedType, typeSource: conceptTypeSource,
+              });
+              if (settled && settled !== resolvedType) {
+                logger.log('[concept] type settled:', `${resolvedType} -> ${settled} — the words are a name and the class word and nothing else, and a person with a class and no named body is a Humanoid (owner's ruling, 2026-11-15); ${typeStep ?? 'an earlier step'} had answered ${resolvedType}`);
+                resolvedType = settled;
+                typeStep = 'fix A (a bare name with a class)';
+              }
+            } catch (e) {
+              logger.warn('[concept] could not settle the type — the call\'s answer stands:', e?.message ?? e);
+            }
+          }
           if (!crFromUser) {
             // a print creature with no CR set is its own CR (the Goblin Boss read 4 from the route, print says 1); otherwise the route's read; only a blank form keeps the roll
             const { printHeadCr } = await import('./reskin/generate.mjs');
@@ -1472,7 +1524,7 @@ async function generateStatblockEngine(edition) {
           } catch (e) {
             logger.warn('[concept] identity call failed — the routed line ships without prose:', e?.message ?? e);
           }
-          logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
+          logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'} typeFrom=${typeStep ?? 'unset'}`
             + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
             + ` style=${conceptStyle ?? '—'}`
             + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
