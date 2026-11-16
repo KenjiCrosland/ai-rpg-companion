@@ -20,7 +20,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildTape, takeAnswer, unusedAnswers } from '../../../../../scripts/lib/tape.mjs';
+import { buildTape, takeAnswer, unusedAnswers, decide, describeMiss, formatMiss, familyOf, FAMILY_NAMES, MISS_BODY } from '../../../../../scripts/lib/tape.mjs';
 
 const DIR = path.resolve(__dirname, 'fixtures/recordings');
 const recordings = () => (fs.existsSync(DIR) ? fs.readdirSync(DIR) : [])
@@ -96,5 +96,117 @@ describe('the committed recordings are replayable', () => {
       // in one edition may carry the other under `other_edition`.
       expect(r.sheet.sections ?? r.sheet.actions ?? r.sheet.other_edition).toBeTruthy();
     }
+  });
+});
+
+/**
+ * ROUTING A CALL (2026-11-16). Three modes, and the decision is always one of three words.
+ *
+ *   strict        a hit is served, a miss FAILS. What proves a refactor.
+ *   pass-through  a miss goes LIVE, so a prompt change can be tried without paying for a forty.
+ *   live-from F   everything before the F call is served; F and everything after go live even
+ *                 where the prompt is unchanged, so one step can be re-rolled on a frozen sheet.
+ */
+describe('where a call\'s answer comes from', () => {
+  const AUDIT = 'You are auditing a D&D 2024-format monster statblock for MECHANICAL defects.';
+  const FIT = "A monster's signature ability has been described in plain words. Pour it into ONE of the printed shapes.";
+  const tape = () => buildTape([{ prompt: AUDIT, response: 'a' }, { prompt: FIT, response: 'b' }]);
+
+  test('the call is recognised by the line its builder opens with', () => {
+    expect(familyOf(AUDIT)).toBe('audit');
+    expect(familyOf(FIT)).toBe('fit');
+    expect(familyOf('Something no builder writes')).toBe('unknown');
+    expect(FAMILY_NAMES).toContain('audit');
+  });
+
+  test('strict: a hit is served from the tape, a miss fails', () => {
+    expect(decide({ mode: 'strict', prompt: FIT, tape: tape() })).toMatchObject({ use: 'tape', family: 'fit' });
+    expect(decide({ mode: 'strict', prompt: 'unrecorded', tape: tape() })).toMatchObject({ use: 'miss' });
+  });
+
+  test('pass-through: a hit is served, a miss goes live', () => {
+    expect(decide({ mode: 'pass-through', prompt: FIT, tape: tape() })).toMatchObject({ use: 'tape' });
+    expect(decide({ mode: 'pass-through', prompt: 'unrecorded', tape: tape() })).toMatchObject({ use: 'live' });
+  });
+
+  describe('live-from: both sides of the named call', () => {
+    test('BEFORE it, a recorded call is served from the tape', () => {
+      expect(decide({ mode: 'live-from', liveFrom: 'audit', prompt: FIT, tape: tape() })).toMatchObject({ use: 'tape', family: 'fit' });
+    });
+
+    test('the named call itself goes live, and latches', () => {
+      const d = decide({ mode: 'live-from', liveFrom: 'audit', prompt: AUDIT, tape: tape() });
+      expect(d).toMatchObject({ use: 'live', family: 'audit', flips: true });
+    });
+
+    test('AFTER it, every call goes live even when the tape has its answer', () => {
+      // the latch is the caller's: once the named family has been seen, nothing is served
+      expect(decide({ mode: 'live-from', liveFrom: 'audit', prompt: FIT, tape: tape(), afterNamed: true }))
+        .toMatchObject({ use: 'live', family: 'fit' });
+    });
+
+    test('before the named call, an unrecorded prompt is still a miss — the frozen half must be exact', () => {
+      expect(decide({ mode: 'live-from', liveFrom: 'audit', prompt: 'unrecorded', tape: tape() })).toMatchObject({ use: 'miss' });
+    });
+  });
+
+  test('a miss is answered with a 200 that cannot open the circuit breaker', () => {
+    // ai-client records a PROVIDER failure on a non-2xx, an error-shaped body, or a thrown fetch,
+    // and three of those open a breaker PERSISTED in localStorage. A 500 therefore stamped
+    // `degraded: true` on every later sheet and made 17 sheets of a forty differ for a reason
+    // unrelated to the code under test. So a miss fails the caller's VALIDATION instead.
+    const body = JSON.parse(MISS_BODY);
+    expect(body.error).toBeUndefined();              // not an error-shaped body
+    expect(body.choices[0].message.content).toContain('__replay_miss'); // content that fails validation
+  });
+});
+
+describe('naming the difference', () => {
+  const AUDIT = ['You are auditing a D&D 2024-format monster statblock for MECHANICAL defects.',
+    'Deterministic checks have already run.', 'ROWS:', '- Bite: 7 (1d8 + 3) Piercing damage.'].join('\n');
+  const calls = [
+    { prompt: "A monster's signature ability has been described in plain words. Pour it in.", response: 'x' },
+    { prompt: AUDIT, response: 'y' },
+  ];
+
+  test('it names the call by its builder and the first line that differs', () => {
+    const changed = AUDIT.replace('MECHANICAL', 'STRUCTURAL');
+    const d = describeMiss(changed, calls);
+    expect(d.family).toBe('audit');
+    expect(d.builder).toBe('buildAuditPrompt');
+    expect(d.line).toBe(1);
+    expect(d.recorded.at).toContain('MECHANICAL');
+    expect(d.live.at).toContain('STRUCTURAL');
+  });
+
+  test('the nearest recorded prompt is the same call, not whichever shares a word', () => {
+    const changed = AUDIT.replace('1d8 + 3', '1d10 + 3');
+    const d = describeMiss(changed, calls);
+    expect(d.nearestIsSameFamily).toBe(true);
+    expect(d.nearest).toBe(AUDIT);
+    expect(d.line).toBe(4);                           // the row line, not the header
+    expect(d.recorded.before).toBe('ROWS:');          // a line of context either side
+    expect(d.live.at).toContain('1d10');
+  });
+
+  test('the printed report shows both sides with context', () => {
+    const out = formatMiss(AUDIT.replace('MECHANICAL', 'STRUCTURAL'), calls);
+    expect(out).toMatch(/REPLAY MISS — the audit call \(buildAuditPrompt\)/);
+    expect(out).toMatch(/-\s+1 \|.*MECHANICAL/);
+    expect(out).toMatch(/\+\s+1 \|.*STRUCTURAL/);
+    expect(out).toMatch(/characters shared/);
+  });
+
+  test('a prompt of a family this generation never recorded says so rather than guessing', () => {
+    const d = describeMiss('You are generating creature intelligence data for a custom D&D 5e statblock.', calls);
+    expect(d.family).toBe('enrichment');
+    expect(d.nearestIsSameFamily).toBe(false);
+  });
+
+  test('it never throws with no recorded calls at all', () => {
+    const d = describeMiss(AUDIT, []);
+    expect(d.nearest).toBeNull();
+    expect(d.summary).toContain('no prompt to compare');
+    expect(() => formatMiss(AUDIT, [])).not.toThrow();
   });
 });
