@@ -194,9 +194,12 @@ const run = async () => {
         } catch { post = undefined; }
       }
       const res = await route.fetch(post ? { postData: post } : undefined);
-      let body = await res.text();
+      const asAnswered = await res.text();
+      let body = asAnswered;
       if (arm?.answer && arm.call === familyOf(prompt)) { body = arm.answer(body); armedAnswers += 1; }
-      callLog.push({ prompt, response: body });
+      // RECORD WHAT THE MODEL SAID, not what the arm turned it into. The fix-kinds arm empties the
+      // findings before the page sees them, and they are the whole measurement.
+      callLog.push({ prompt, response: asAnswered });
       wentLive += 1;
       await route.fulfill({ response: res, body });
     } catch (e) {

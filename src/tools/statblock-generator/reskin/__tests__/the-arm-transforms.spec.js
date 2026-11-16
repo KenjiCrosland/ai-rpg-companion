@@ -97,9 +97,12 @@ describe('the audit answer transforms', () => {
       const arm = ARMS[name];
       expect(typeof arm.why).toBe('string');
       if (arm.prompt || arm.answer) expect(typeof arm.call).toBe('string');
-      // an arm that rewrites a PROMPT must go live: the tape has no answer for a prompt it never saw
+      // an arm that rewrites a PROMPT must go live: the tape has no answer for a prompt it never
+      // saw. An arm that rewrites only an ANSWER must not, or it would pay for calls it is
+      // transforming anyway. An arm may do BOTH — the fix-kinds arm asks the audit a new question
+      // live and then empties the findings so the engine applies nothing.
       if (arm.prompt) expect(arm.live).toBe(true);
-      if (arm.answer) expect(arm.live).toBe(false);
+      if (arm.answer && !arm.prompt) expect(arm.live).toBe(false);
     }
   });
 });

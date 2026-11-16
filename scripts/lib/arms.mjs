@@ -66,6 +66,45 @@ export const dropLookAgain = (prompt) => {
   return text.replace(`${LOOK_AGAIN} `, '').replace(LOOK_AGAIN, '');
 };
 
+
+/**
+ * THE CLOSED LIST OF FIXES (owner's ruling, 2026-11-16). A fix is deterministic, hybrid or a drop:
+ * the model is not relied on to write a fix alone. The audit must therefore NAME the fix, because
+ * its seven principles do not map one to one onto repairs — one principle covers several.
+ *
+ * Part 1 only measures which fix the audit would choose. Nothing is applied: this arm is paired
+ * with the None answer transform, so the engine sees no findings and the sheets equal the None
+ * arm's. What is being measured is how much of the work is deterministic, how much is `clarify`,
+ * and whether the model uses the list sensibly at all.
+ */
+export const FIX_FIELD = `
+
+EVERY FINDING MUST ALSO NAME ITS FIX, from this closed list, with the one parameter that fix needs.
+Choose the narrowest fix that resolves the issue you described. Add two keys to each finding:
+
+  "fix": one of
+    "rename"        the NAME is wrong; the rules text stays byte for byte.
+                    "fix_param": the replacement name.
+    "fill_number"   ONE quantity is missing (a bonus, Temporary Hit Points, a distance, a number of
+                    uses). "fix_param": which quantity is missing, in two or three words.
+    "add_duration"  an imposed state never says when it ends.
+                    "fix_param": the clause, e.g. "until the end of its next turn".
+    "swap_stat"     the saving throw's ability contradicts what the save represents; the DC stays.
+                    "fix_param": the ability it should be, e.g. "Dexterity".
+    "delete_span"   the span you quoted should simply be removed, and nothing put in its place.
+                    "fix_param": null.
+    "reformat"      the row's existing parts are right but rendered in the wrong form; no content
+                    changes. "fix_param": null.
+    "drop"          the row cites something that is not on the sheet, or cannot be run, and no fix
+                    above reaches it. "fix_param": null.
+    "clarify"       the row needs words rewritten to make sense, and no fix above reaches it.
+                    "fix_param": null.
+    "none"          an observation; nothing on the row should change. "fix_param": null.
+
+Do not invent a fix name outside this list. If the issue needs new prose written, that is "clarify".`;
+
+export const askForFix = (prompt) => `${dropLookAgain(prompt)}${FIX_FIELD}`;
+
 export const ARMS = {
   /** the sheet as the engine built it — the baseline every other arm is measured against */
   none: { call: 'audit', answer: emptyFindings, live: false,
@@ -78,6 +117,13 @@ export const ARMS = {
   /** the prompt, with the audit re-rolled live */
   'no-look-again': { call: 'audit', prompt: dropLookAgain, live: true,
     why: 'a live audit whose prompt drops the one "look again" sentence' },
+  /**
+   * PART 1 OF THE TYPED FIXES: a live audit asked to name its fix from the closed list, with its
+   * answer then EMPTIED before the page sees it. The findings are measured; none is applied, so
+   * these sheets equal the None arm's and nothing about the engine is being tested here.
+   */
+  'fix-kinds': { call: 'audit', prompt: askForFix, answer: emptyFindings, live: true,
+    why: 'a live audit asked to name each finding\'s fix, with the findings then emptied so nothing is applied' },
 };
 
 export const ARM_NAMES = Object.keys(ARMS);
