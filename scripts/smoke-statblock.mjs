@@ -28,6 +28,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { buildTape, takeAnswer, unusedAnswers, decide, formatMiss, familyOf, MISS_BODY, FAMILY_NAMES } from './lib/tape.mjs';
+import { ARMS, ARM_NAMES } from './lib/arms.mjs';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:5173';
 const GEN_TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 240_000);
@@ -70,7 +71,19 @@ const recording = args.includes('--record');
 //   live-from F   everything before the F call is served; F and everything after go live even
 //                 where the prompt is unchanged, so one step can be re-rolled on a frozen sheet.
 // Both live modes write a NEW recording folder; the tape they were given is never overwritten.
-const liveFrom = args.includes('--live-from') ? String(args[args.indexOf('--live-from') + 1] ?? '') : null;
+// AN EXPERIMENT ARM (2026-11-16) applies one of two plain functions from ./lib/arms.mjs to ONE
+// named call: a rewrite of the outgoing prompt, or a rewrite of the answer before the page sees it.
+// Nothing in src/ changes. An arm that rewrites an ANSWER needs no model: it serves the tape and
+// transforms what it serves, so the run is deterministic. An arm that rewrites a PROMPT must go
+// live from that call, because the tape has no answer for a prompt it never saw.
+const armName = args.includes('--arm') ? String(args[args.indexOf('--arm') + 1] ?? '') : null;
+if (armName && !ARM_NAMES.includes(armName)) {
+  console.error(`--arm takes one arm name; got "${armName}".\nKnown arms: ${ARM_NAMES.join(', ')}`);
+  process.exit(2);
+}
+const arm = armName ? ARMS[armName] : null;
+const liveFrom = args.includes('--live-from') ? String(args[args.indexOf('--live-from') + 1] ?? '')
+  : (arm?.live ? arm.call : null);
 const mode = liveFrom ? 'live-from' : args.includes('--pass-through') ? 'pass-through' : 'strict';
 const rolls = Math.max(1, Number(args.includes('--rolls') ? args[args.indexOf('--rolls') + 1] : 1) || 1);
 if (liveFrom && !FAMILY_NAMES.includes(liveFrom)) {
@@ -113,7 +126,7 @@ if (replayDir && rolls > 1) {
 const flagKeys = new Set((replayDir ? replayCases.map((c) => c.input) : JSON.parse(fs.readFileSync(batchPath, 'utf8'))).flatMap((e) => Object.keys(e?.flags ?? {})));
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-const outDir = path.resolve('smoke-out', `${batchName}-${stamp}`);
+const outDir = path.resolve('smoke-out', `${armName ? `arm-${armName}` : batchName}-${stamp}`);
 const recDir = path.resolve(RECORDINGS, replayDir ? `${path.basename(replayDir)}-${mode}${liveFrom ? `-${liveFrom}` : ''}-${stamp}` : `${batchName}-${stamp}`);
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -162,14 +175,27 @@ const run = async () => {
     } catch { return ''; }
   };
   let fromTape = 0; let wentLive = 0; let afterNamed = false; let reqSeen = null;
-  const goLive = async (route, prompt) => {
+  let armedPrompts = 0; let armedAnswers = 0; let missFamilies = {}; let enrichmentSuppressed = 0;
+  const goLive = async (route, prompt, req = null) => {
     // THE ENRICHMENT CALL CAN OUTLIVE THE RUN. It is fired after the save and not awaited by the
     // app, so one can still be in flight when the browser closes — and `route.fetch` then throws
     // "Request context disposed", which killed a 15-sheet run at the very end. A call that arrives
     // after the page is gone is nothing to report: there is no sheet left for it to affect.
     try {
-      const res = await route.fetch();
-      const body = await res.text();
+      // a rewritten prompt is sent as rewritten: the request body carries it in place of the
+      // original user turn
+      let post;
+      if (req) {
+        try {
+          const b = req.postDataJSON();
+          const msgs = (b?.messages ?? []).map((m) => m);
+          for (let k = msgs.length - 1; k >= 0; k -= 1) if (msgs[k]?.role === 'user') { msgs[k] = { ...msgs[k], content: prompt }; break; }
+          post = JSON.stringify({ ...b, messages: msgs });
+        } catch { post = undefined; }
+      }
+      const res = await route.fetch(post ? { postData: post } : undefined);
+      let body = await res.text();
+      if (arm?.answer && arm.call === familyOf(prompt)) { body = arm.answer(body); armedAnswers += 1; }
       callLog.push({ prompt, response: body });
       wentLive += 1;
       await route.fulfill({ response: res, body });
@@ -187,19 +213,46 @@ const run = async () => {
       // cut, every answer on it was given under different instructions.
       if (!reqSeen) reqSeen = shapeOf(req);
       if (!replayDir) { await goLive(route, prompt); return; }
-      const d = decide({ mode, liveFrom, prompt, tape: served, afterNamed });
+      // ENRICHMENT DOES NOT RUN IN A REPLAY (2026-11-16). It is fired after the save, is not
+      // awaited by the app, and writes to its OWN localStorage key ('creature-intelligence') — it
+      // cannot touch the sheet under test. Its prompt embeds the finished sheet, so the moment an
+      // experiment changes a sheet the call misses the tape, and the harness then waited 20 seconds
+      // per sheet for a write that was never coming: twelve wasted minutes an arm.
+      //
+      // So it is answered instantly, offline, with a body that fails its validator. The call fails
+      // the way it already fails on a flaky network, which the page treats as non-fatal, and no
+      // miss is counted because nothing was asked of the tape.
+      if (familyOf(prompt) === 'enrichment') {
+        enrichmentSuppressed += 1;
+        await route.fulfill({ status: 200, contentType: 'application/json', body: MISS_BODY });
+        return;
+      }
+      // THE ARM'S PROMPT REWRITE, if this is its call. The transformed text is what goes to the
+      // model and what the new recording stores, because it is what was actually asked.
+      const armed = arm?.prompt && arm.call === familyOf(prompt) ? arm.prompt(prompt) : prompt;
+      if (armed !== prompt) armedPrompts += 1;
+      const d = decide({ mode, liveFrom, prompt: armed, tape: served, afterNamed });
       if (d.flips) afterNamed = true;
       if (d.use === 'tape') {
         fromTape += 1;
-        await route.fulfill({ status: 200, contentType: 'application/json', body: takeAnswer(served, prompt) });
+        // THE ARM'S ANSWER REWRITE, if this is its call: the page is handed the transformed answer
+        // and cannot tell the difference.
+        let body = takeAnswer(served, armed);
+        if (arm?.answer && arm.call === familyOf(armed)) { body = arm.answer(body); armedAnswers += 1; }
+        // a tape-served call goes in the log too, so an arm's own record is EVERYTHING the page was
+        // told — not only what came off the network. Without this an arm whose answers all come
+        // from the tape has no record of the answer it actually transformed.
+        callLog.push({ prompt: armed, response: body });
+        await route.fulfill({ status: 200, contentType: 'application/json', body });
         return;
       }
-      if (d.use === 'live') { await goLive(route, prompt); return; }
+      if (d.use === 'live') { await goLive(route, armed, req); return; }
       // A MISS. Loud, named by its builder, and answered with a 200 so it can never open the
       // circuit breaker (see MISS_BODY): the call fails validation instead of looking like a
       // provider outage.
       missCount += 1;
-      if (!replayMiss) replayMiss = prompt;
+      const mf = familyOf(armed); missFamilies[mf] = (missFamilies[mf] ?? 0) + 1;
+      if (!replayMiss) replayMiss = armed;
       await route.fulfill({ status: 200, contentType: 'application/json', body: MISS_BODY });
     });
   }
@@ -233,7 +286,7 @@ const run = async () => {
     // that rolls its whole creature; none is worth harness work. But a replay that always ends
     // "3 did NOT reproduce" teaches everyone to ignore its last line, so they are skipped by name
     // with their reason and counted separately. The live modes still run them.
-    if (replayDir && mode === 'strict' && replayCases[i]?.replay?.skip) {
+    if (replayDir && (mode === 'strict' || arm) && replayCases[i]?.replay?.skip) {
       const why = replayCases[i].replay.why ?? 'marked not replayable';
       console.log(`SKIPPED — ${why}`);
       replaySkipped += 1;
@@ -248,7 +301,7 @@ const run = async () => {
     callLog = [];
     replayMiss = null;
     missCount = 0;
-    fromTape = 0; wentLive = 0; afterNamed = false; reqSeen = null;
+    fromTape = 0; wentLive = 0; afterNamed = false; reqSeen = null; armedPrompts = 0; armedAnswers = 0; missFamilies = {}; enrichmentSuppressed = 0;
     if (replayDir) {
       // one queue per distinct prompt, in the order recorded
       served = buildTape(replayCases[i]?.calls ?? []);
@@ -368,13 +421,15 @@ const run = async () => {
     // blocks ("Failed to enrich ... Failed to fetch"), which read like a
     // product failure until an isolated run came back clean. Wait (bounded)
     // for its localStorage write before navigating; never fail the run on it.
-    if (status === 'ok') {
+    if (status === 'ok' && !replayDir) {
       await page.waitForFunction((known) => {
         const ci = JSON.parse(localStorage.getItem('creature-intelligence') || '{}');
         const m = JSON.parse(localStorage.getItem('monsters') || '{}');
         const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(JSON.stringify(x))).map((x) => x?.name);
         return fresh.length && fresh.every((nm) => nm in ci);
       }, namesBefore, { timeout: 20_000 }).catch(() => lines.push('(enrichment did not settle within 20s — moving on)'));
+    } else if (replayDir) {
+      lines.push(`[harness] enrichment not run (${enrichmentSuppressed} request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet`);
     }
     // EDITION CONVERSION (entry.convert: true): the tab flip is the one
     // advertised path only mocked tests had touched. Flip to the other
@@ -440,7 +495,17 @@ const run = async () => {
     }
     // A LIVE MODE WRITES A NEW RECORDING. The tape it was given is never overwritten, so a
     // pass-through run or a re-roll is itself replayable afterwards.
-    if (replayDir && mode !== 'strict') {
+    // AN ARM'S OWN CALLS go in the RUN folder, which is gitignored — an experiment's tape stays
+    // out of the repo unless a handoff names it (owner's addition to the standing order,
+    // 2026-11-16). It is what the per-confidence counts are read from for a live arm, since a
+    // trace records a finding's entry but not its confidence.
+    if (replayDir && arm) {
+      const f = path.join(outDir, 'calls.json');
+      const all = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
+      all[Number(n)] = callLog;
+      fs.writeFileSync(f, JSON.stringify(all));
+    }
+    if (replayDir && mode !== 'strict' && !arm) {
       fs.mkdirSync(recDir, { recursive: true });
       const roll = replayCases[i]?.roll ? `-roll${replayCases[i].roll}` : '';
       fs.writeFileSync(path.join(recDir, `${n}-${slug(monster?.name ?? label)}${roll}.json`),
@@ -451,8 +516,8 @@ const run = async () => {
       const unserved = unusedAnswers(served);
       // ONLY STRICT COMPARES THE SHEET. In a live mode the sheet is MEANT to differ — that is what
       // re-rolling a step is for — so comparing it would report the instrument working as a failure.
-      if (mode !== 'strict') {
-        lines.push(`[harness] ${mode}: the sheet is not compared with the recording — the point is that it may differ`);
+      if (mode !== 'strict' || arm) {
+        lines.push(`[harness] ${arm ? `arm ${armName}` : mode}: the sheet is not compared with the recording — the point is that it may differ`);
       } else if (replayMiss) {
         replayFailures += 1;
         // THE WHOLE PROMPT, to a file. 400 characters of a 4,000-character prompt is not enough
@@ -472,8 +537,9 @@ const run = async () => {
       } else {
         lines.push(`[harness] replay identical to ${replayCases[i].file}${unserved ? ` — ${unserved} recorded answer(s) unused` : ''}`);
       }
-      if (missCount) lines.push(`[harness] ${missCount} prompt(s) had no recorded answer during this entry`);
-      if (mode !== 'strict') lines.push(`[harness] ${fromTape} call(s) from the tape, ${wentLive} live${liveFrom ? ` (live from the ${liveFrom} call onward)` : ''}`);
+      if (missCount) lines.push(`[harness] ${missCount} prompt(s) had no recorded answer during this entry: ${Object.entries(missFamilies).map(([k, v]) => `${k} x${v}`).join(', ')}`);
+      if (arm) lines.push(`[harness] arm "${armName}": ${arm.why} — ${armedPrompts} prompt(s) rewritten, ${armedAnswers} answer(s) rewritten`);
+      if (mode !== 'strict' || arm) lines.push(`[harness] ${fromTape} call(s) from the tape, ${wentLive} live${liveFrom ? ` (live from the ${liveFrom} call onward)` : ''}`);
       // WHAT THE TAPE WAS CUT AGAINST. The key is the user turn only, so a changed system turn or
       // model is invisible to it — and every answer on the tape was given under the old ones.
       const was = replayCases[i]?.request;
@@ -591,7 +657,8 @@ const run = async () => {
   if (replayDir) {
     const attempted = results.length - replaySkipped;
     const skipNote = replaySkipped ? `, ${replaySkipped} skipped (not replayable)` : '';
-    if (mode !== 'strict') console.log(`REPLAY (${mode}${liveFrom ? ` ${liveFrom}` : ''}): ${attempted} generation(s) run; sheets not compared — the new recording is in ${path.relative(process.cwd(), recDir)}`);
+    if (arm) console.log(`ARM "${armName}" (${arm.why}): ${attempted} generation(s)${skipNote}; sheets not compared with the tape — that is the point`);
+    else if (mode !== 'strict') console.log(`REPLAY (${mode}${liveFrom ? ` ${liveFrom}` : ''}): ${attempted} generation(s) run; sheets not compared — the new recording is in ${path.relative(process.cwd(), recDir)}`);
     else console.log(replayFailures
       ? `REPLAY: ${replayFailures} of ${attempted} did NOT reproduce${skipNote} — see the [harness] lines above`
       : `REPLAY: ${attempted} of ${attempted} reproduced EXACTLY${skipNote}`);

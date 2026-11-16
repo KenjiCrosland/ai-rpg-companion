@@ -149,10 +149,6 @@
   "monsterName": "Owlbear",
   "caster": false
  },
- "replay": {
-  "skip": true,
-  "why": "a post-save enrichment call, outside generation, mutates the saved sheet; its timing is a race"
- },
  "request": {
   "model": "deepseek-flash",
   "system": null,
