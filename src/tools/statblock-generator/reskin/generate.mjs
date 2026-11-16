@@ -647,6 +647,59 @@ export function permanentSpeedZero(text) {
 // the sheet already covers is a second name for one mechanic. Both kits read it.
 const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]*?) action/g)].flatMap((mm) => [...String(mm[1]).matchAll(/\b(Dash|Disengage|Hide)\b/g)].map((x) => x[1])));
 
+/**
+ * A SHEET IS NEVER LEFT WITH NOTHING TO ROLL (the Vigilant Warden, 2026-11-16).
+ *
+ * On a CLOSED path (twist, class NPC) the Actions are closed too: a row carrying an attack that no
+ * stage claimed — not print's, not a part, feature, kit, library, template, authored row, the GM's
+ * weapon or a rules row — is chassis filler and leaves. That is right, and it is why a chassis
+ * hybrid stopped riding beside print's own weapons.
+ *
+ * It took the LAST attack row off "a guard captain turned paladin": print canon dropped the chassis
+ * Longsword, a pass narrowed the Javelin to melee SAYING IT WAS KEEPING IT ("the only attack on the
+ * sheet — … rather than leaving a sheet with nothing to attack with"), the anatomy pass renamed it
+ * "Slam", and this sweep then removed it for having no provenance. Two passes disagreed and this
+ * one went last. Measured live at CR 4: 8 of 20 sheets across four prompts shipped a Multiattack
+ * with nothing to roll, plain "a paladin" and plain "a fighter" among them.
+ *
+ * Scoped to a row carrying an ATTACK ROLL, so a caster whose rows are all saving throws is
+ * untouched — it never had an attack to roll.
+ *
+ * Extracted rather than left inline so it can be fed the collapsed roll's own input.
+ */
+export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}) => {
+  const esAct = sections.Actions ?? [];
+  for (let i = esAct.length - 1; i >= 0; i -= 1) {
+    const e = esAct[i];
+    if (/^Multiattack/.test(e.name ?? '') || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules) continue;
+    if (!/Attack Roll|Saving Throw/.test(e.text ?? '')) continue;
+    if (/Attack Roll/.test(e.text ?? '')
+        && !Object.values(sections).flat().some((o) => o !== e && /Attack Roll/.test(o.text ?? ''))) {
+      traceFn('print canon: chassis row STAYS —', `Actions/"${e.name}" has no provenance, but it is the only attack roll on the sheet — a sheet is never left with nothing to roll`);
+      continue;
+    }
+    traceFn('print canon: chassis row leaves —', `Actions/"${e.name}" — the ${pcName} prints no row for it and no path stage claimed it`);
+    esAct.splice(i, 1);
+    sweepDeadName(sections, e.name, null, traceFn);
+  }
+};
+
+/**
+ * A MULTIATTACK WITH NOTHING TO ROLL DOES NOT SHIP (owner's last guard, 2026-11-16).
+ *
+ * A NET, not the fix: the cause found on the Vigilant Warden is fixed in
+ * `closedPathFillerLeaves`, and this catches the same shape arriving by a route nobody has found
+ * yet. It fails the way an unrenamed entry does, so the user is told to try again rather than handed
+ * a sheet that cannot attack. A sheet with ONE attack row and a Multiattack naming it is correct and
+ * passes; a sheet with no Multiattack at all is not this bug.
+ */
+export const assertSomethingToRoll = (sections) => {
+  const rows = Object.values(sections ?? {}).flat();
+  if (rows.some((e) => /^Multiattack/.test(String(e.name ?? ''))) && !rows.some((e) => /Attack Roll/.test(String(e.text ?? '')))) {
+    throw new Error('a Multiattack with no attack row on the sheet — failing loudly per spec');
+  }
+};
+
 // A CITED ABILITY TAKES ITS USAGE PARENTHETICAL WITH IT (owner's fix D, 2026-11-15).
 //
 // The Stone Golem shipped "It can replace one attack with  (Recharge 5-6)." — the only garbled
@@ -9321,16 +9374,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // Melee or Ranged) sat in neither rename loop — print's Hobgoblin Warrior has no hybrid — and rode
         // beside print's Longsword and Longbow. A row with no provenance (not print's, not a part, feature,
         // kit, seat, repair or the GM's weapon) is chassis filler and leaves; the Multiattack is swept.
-        if (closedPath) {
-          const esAct = sections.Actions ?? [];
-          for (let i = esAct.length - 1; i >= 0; i -= 1) {
-            const e = esAct[i];
-            if (/^Multiattack/.test(e.name ?? '') || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules) continue;
-            if (!/Attack Roll|Saving Throw/.test(e.text ?? '')) continue;
-            trace('print canon: chassis row leaves —', `Actions/"${e.name}" — the ${pc.name} prints no row for it and no path stage claimed it`);
-            esAct.splice(i, 1); sweepDeadName(sections, e.name, null, trace);
-          }
-        }
+        if (closedPath) closedPathFillerLeaves(sections, pc.name, trace);
         for (const secC of printBody ? ['Bonus Actions', 'Reactions', ...(pc.addsSeat && scaled.style ? [] : ['Traits'])] : []) { // a named seat that stood down at the route is the plain chassis — its trait leaves too ("Winged Dive" on the Owlbear, third roll) // the seat's trait leaves with its bonus action ("Woodland Prowler" on the Owlbear, "Scuttle" on the kobold — critic form-ten 2026-10-01); a seat the user named keeps both
           if (!isClassNpc && (pc.rulesRows ?? []).some((r) => r.section === secC)) continue; // on a class body every section is read: print's own rows carry their flag
           const esC = sections[secC] ?? [];
@@ -11986,6 +12030,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
   advantageReachable(monster.sections, trace); // and a conditional Advantage with no imposer is a dead CLAUSE
   riderPayoffReachable(monster.sections, trace); // and so is a welded payoff rider's "if the target already has…"
+  // A MULTIATTACK WITH NOTHING TO ROLL DOES NOT SHIP (owner's last guard, 2026-11-16).
+  //
+  // This is a NET, not the fix: the cause found on the Vigilant Warden is fixed above, and this
+  // catches the same shape arriving by a route nobody has found yet. It fails the way an unrenamed
+  // entry does, so the user is told to try again rather than handed a sheet that cannot attack.
+  //
+  // A sheet with ONE attack row and a Multiattack naming it is correct and passes. A sheet with no
+  // Multiattack at all is not this bug.
+  assertSomethingToRoll(monster.sections);
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }
