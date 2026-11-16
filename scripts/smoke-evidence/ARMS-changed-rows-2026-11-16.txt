@@ -1,0 +1,229 @@
+
+=== per arm, across 38 replayable sheets ===
+
+arm            findings  high  med  low  on model row  not  unclass  audits w/ findings  repair calls  engine rounds  rows changed  removed  added  renamed  damage moved  scan hits
+none           0         0     0    0    0             0    0        0 of 38             4             5              0             0        0      0        0             0        
+today          95        30    45   20   44            31   20       36 of 38            29            — (no trace)   10            4        4      0        5             0        
+high           30        30    0    0    12            10   8        24 of 38            10            5              4             2        2      0        0             0        
+no-look-again  79        27    39   13   31            24   24       33 of 38            21            5              8             6        6      0        1             0        
+
+(rows changed/removed/added and damage moved are against the None arm's sheet; the None row is therefore zero by definition)
+
+
+=== every row that differs from the None arm ===
+
+--- sheet 1 · Dire Wolf · row "Crusted Wake"
+    none          : A creature starts its turn within 5 feet of the wolf, rime crusts the ground around that creature, reducing its Speed by 10 feet until the end of its turn.
+    today         : *Constitution Saving Throw*: DC 13, one creature within 5 feet. *Failure:* 6 (1d12) Cold damage.
+                    ^ finding [medium] principle 1: The Speed reduction lands automatically at the start of a creature's turn with no save, no counterplay, and no stated way to avoid or end it early, but the row states no 
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+--- sheet 5 · Air Elemental · row "Echo of the Stolen Chorus"
+    none          : Whenever it is struck by a creature, the wound releases the loudest stolen voice it holds as a shrieking echo, and until the end of the elemental's next turn, any creature that dealt it damage has Disadvantage on its next attack roll as the scream claws at its nerves. The voice is spent and lost from the chorus.
+    today         : When a creature deals damage to the air elemental, the wound releases the loudest stolen voice as a shrieking echo; that creature has Disadvantage on attack rolls until the end of the air elemental's next turn.
+                    ^ finding [medium] principle 2: The trigger fires when the elemental is struck, but the disadvantaged roll is 'its next attack roll' without specifying that it must fall within the duration, so a creatu
+    high          : (unchanged)
+    no-look-again : When a creature strikes the air elemental with a melee attack and is within 10 feet of it, the wound releases a shrieking echo: that creature has the Deafened condition and Disadvantage on attack rolls until the end of the elemental's next turn.
+                    ^ finding [medium] principle 2: The trait grants Disadvantage to 'any creature that dealt it damage' but the trigger is 'struck by a creature', so it is ambiguous whether this applies to every creature 
+
+--- sheet 8 · Orchard Ram-Golem · row "Trample (Recharge 5-6)"
+    none          : The ram-golem moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Dexterity Saving Throw*: DC 16. *Failure:* 27 (6d8) Thunder damage, and the target has the Prone condition. *Success:* Half damage only.
+    today         : *Dexterity Saving Throw*: DC 16, one creature within 30 feet. *Failure:* 28 (8d6) Thunder damage, and the target is pushed up to 10 feet straight away from the ram-golem, and the target has the Prone condition. *Success:* Half damage only.
+                    ^ finding [medium] principle 6: Trample is a charge-through attack labeled as such, but its text delivers only a move-and-save with Thunder damage and Prone, giving no collision, shove, or wall-shatteri
+    high          : (unchanged)
+    no-look-again : *Dexterity Saving Throw*: DC 16, each creature in a 20-foot Emanation originating from the ram-golem. *Failure:* 38 (11d6) Thunder damage, and the target has the Prone condition. *Success:* Half damage only.
+                    ^ finding [medium] principle 3: The row is named for a charging shoulder-charge (the claimed 'shouldering through walls') but the text only lets the golem pass through creatures' spaces, never through w
+
+--- sheet 12 · Swarmshear · row "Multiattack"
+    none          : The swarmshear makes three Talons attacks. It can replace one attack with a use of Swarmwright's Command.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : The swarmshear makes three Talons attacks. It can replace one attack with a use of Virulent Exhalation.
+
+--- sheet 12 · Swarmshear · row "Swarmwright's Command"
+    none          : *Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Poisoned condition until the end of its next turn.
+    today         : *Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 35 (10d6) Poison damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.
+                    ^ finding [high] principle 4: Save phrasing is missing the standard 'Failure:' structure used elsewhere in the block; the published 2024 format is 'Failure: The target has the Poisoned condition until
+    high          : *Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* Failure: The target has the Poisoned condition until the end of its next turn.
+                    ^ finding [high] principle 4: Save phrasing is missing the standard 'Failure:' structure used elsewhere in the block; the published 2024 format is 'Failure: The target has the Poisoned condition until
+    no-look-again : (removed)
+                    ^ finding [high] principle 3: The name promises the creature summons or directs a retinue/swarm, but the text is only a poison cone with no summoning, ally-direction, or retinue mechanic anywhere in t
+
+--- sheet 12 · Swarmshear · row "Virulent Exhalation"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : *Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Poisoned condition until the end of its next turn.
+
+--- sheet 13 · Purple Worm · row "Churning Armoury"
+    none          : At the start of each of the purple worm's turns, each creature inside the purple worm takes 22 (5d8) Acid damage, and the purple worm gains Temporary Hit Points equal to half the damage dealt.
+    today         : When a creature inside the purple worm deals damage to it, the attacker takes 22 (5d8) Slashing damage.
+                    ^ finding [high] principle 3: The name promises a gullet lined with swallowed blades and mail, but the rules deal only Acid damage and never express any blades, mail, or slicing effect.
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+--- sheet 17 · Pit Fiend · row "Chain of Broken Oaths"
+    none          : When a creature dies within 10 feet of the pit fiend, the pit fiend gains Temporary Hit Points, and until the end of its next turn its Bite attacks deal an extra 14 (4d6) Fire damage.
+    today         : When a creature dies within 10 feet of the pit fiend, the pit fiend gains Temporary Hit Points equal to, and until the end of its next turn its Bite attacks deal an extra 14 (4d6) Fire damage.
+                    ^ finding [high] principle 2: The trait grants Temporary Hit Points without stating an amount, so the GM cannot adjudicate the benefit.
+    high          : When a creature dies within 10 feet of the pit fiend, the pit fiend gains Temporary Hit Points equal to, and until the end of its next turn its Bite attacks deal an extra 14 (4d6) Fire damage.
+                    ^ finding [high] principle 2: The trait grants Temporary Hit Points without stating an amount, so the GM cannot adjudicate the benefit.
+    no-look-again : (unchanged)
+
+--- sheet 20 · Trench Leviathan · row "Abyssal Roar (Recharge 5-6)"
+    none          : (the row is not on this sheet)
+    today         : *Constitution Saving Throw*: DC 24, each creature in a 60-foot Cone. *Failure:* 78 (12d12) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.
+    high          : *Constitution Saving Throw*: DC 24, each creature in a 60-foot Cone. *Failure:* 78 (12d12) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.
+    no-look-again : (unchanged)
+
+--- sheet 20 · Trench Leviathan · row "Drowning Song (Recharge 5-6)"
+    none          : *Constitution Saving Throw*: DC 24, each creature in a 60-foot Cone. *Failure:* 78 (12d12) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.
+    today         : (removed)
+                    ^ finding [high] principle 3: The name evokes drowning or suffocation, but the entry deals Thunder damage and Deafens — nothing in it drowns, suffocates, or impedes breathing.
+    high          : (removed)
+                    ^ finding [high] principle 3: The name evokes drowning or suffocation, but the entry deals Thunder damage and Deafens — nothing in it drowns, suffocates, or impedes breathing.
+    no-look-again : (unchanged)
+
+--- sheet 20 · Trench Leviathan · row "Fathom Chorus"
+    none          : *Constitution Saving Throw*: DC 24, each creature in a 30-foot Emanation originating from the leviathan. *Failure:* The target has the Poisoned condition until the end of its next turn.
+    today         : (removed)
+                    ^ finding [high] principle 1: This is the creature's signature action, yet it deals no damage and imposes only a short Poisoned (disadvantage on attacks and checks) — a dead payload not worth a Multia
+    high          : (unchanged)
+    no-look-again : (removed)
+                    ^ finding [medium] principle 3: The name promises a sonic or song-based effect, but the entry imposes only the Poisoned condition with no thunder, psychic, or charm-like resonance; name and effect descr
+
+--- sheet 20 · Trench Leviathan · row "Fathom Miasma"
+    none          : (the row is not on this sheet)
+    today         : *Constitution Saving Throw*: DC 24, each creature in a 30-foot Emanation originating from the leviathan. *Failure:* The target has the Poisoned condition until the end of its next turn.
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+--- sheet 20 · Trench Leviathan · row "Miasmal Wake"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : *Constitution Saving Throw*: DC 24, each creature in a 30-foot Emanation originating from the leviathan. *Failure:* The target has the Poisoned condition until the end of its next turn.
+
+--- sheet 20 · Trench Leviathan · row "Multiattack"
+    none          : The leviathan makes two Coils attacks. It can replace one attack with a use of Fathom Chorus.
+    today         : The leviathan makes two Coils attacks. It can replace one attack with a use of Fathom Miasma.
+    high          : (unchanged)
+    no-look-again : The leviathan makes two Coils attacks. It can replace one attack with a use of Miasmal Wake.
+
+--- sheet 20 · Trench Leviathan · row "Swell Surge"
+    none          : *Strength Saving Throw*: DC 24, each creature within 10 feet of the leviathan. *Failure:* The target has the Prone condition.
+    today         : (removed)
+                    ^ finding [medium] principle 3: The name suggests swelling water or a surge, but the effect is a plain Strength save that knocks creatures Prone with no water, wave, or surge described — name and text d
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+--- sheet 20 · Trench Leviathan · row "Tidal Slam"
+    none          : (the row is not on this sheet)
+    today         : *Strength Saving Throw*: DC 24, each creature within 10 feet of the leviathan. *Failure:* The target has the Prone condition.
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+--- sheet 23 · Vashka the Red · row "Dress the Line"
+    none          : Once per turn, when a creature within 5 feet of Vashka that can hear her is hit by an attack roll, that creature gains a + bonus to its AC until the start of Vashka's next turn, provided it is standing shoulder-to-shoulder with Vashka or another ally.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : A creature within 5 feet of Vashka that can hear her is hit by an attack roll, that creature gains a +2 bonus to its AC until the start of Vashka's next turn.
+                    ^ finding [high] principle 2: The AC bonus has no number, so the GM cannot adjudicate the trait.
+
+--- sheet 23 · Vashka the Red · row "Shield Wall"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : While Vashka is standing shoulder-to-shoulder with an ally, Vashka has a +2 bonus to AC against attacks that come from the side of her ally.
+
+--- sheet 23 · Vashka the Red · row "Shield-Locked"
+    none          : While Vashka is standing shoulder-to-shoulder with an ally, Vashka has a +2 bonus to AC against attacks that come from the side of her ally.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : (removed)
+                    ^ finding [medium] principle 3: The name promises a shield mechanic that the text never delivers, and 'the side of her ally' names no adjudicable direction.
+
+--- sheet 24 · Scythe-Brood Horror · row "Broodscreech Terror"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : *Wisdom Saving Throw:* DC 15, each creature of the scythe-brood horror's choice in a 30-foot Emanation originating from the scythe-brood horror that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's terror for 24 hours.
+
+--- sheet 24 · Scythe-Brood Horror · row "Horrid Display"
+    none          : *Wisdom Saving Throw:* DC 15, each creature of the scythe-brood horror's choice in a 30-foot Emanation originating from the scythe-brood horror that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's terror for 24 hours.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : (removed)
+                    ^ finding [high] principle 3: The engine stand-in name is generic and does not express this creature's scythe-brood horror concept.
+
+--- sheet 24 · Scythe-Brood Horror · row "Multiattack"
+    none          : The scythe-brood horror makes two attacks, using Spitting Maw or Brood-Limb Pin in any combination. It can replace one attack with a use of Horrid Display.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : The scythe-brood horror makes two attacks, using Spitting Maw or Brood-Limb Pin in any combination. It can replace one attack with a use of Broodscreech Terror.
+
+--- sheet 26 · Grendhilde the Marsh Witch · row "Fenwater Binding"
+    none          : *Constitution Saving Throw*: DC 14, one creature within 30 feet. *Failure:* 19 (3d12) Bludgeoning damage.
+    today         : (removed)
+                    ^ finding [high] principle 1: An action named 'Binding' that only deals damage imposes no Grappled/Restrained/immobilized state and offers no escape — the name promises a binding the text never delive
+    high          : (removed)
+                    ^ finding [high] principle 1: An action named 'Binding' that only deals damage imposes no Grappled/Restrained/immobilized state and offers no escape — the name promises a binding the text never delive
+    no-look-again : (removed)
+                    ^ finding [high] principle 6: A row named 'Fenwater Binding' that promises a binding or restraining effect delivers only damage, with no condition, so the fiction's threat is absent.
+
+--- sheet 26 · Grendhilde the Marsh Witch · row "Fenwater Blast"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : *Constitution Saving Throw*: DC 14, one creature within 30 feet. *Failure:* 19 (3d12) Bludgeoning damage.
+
+--- sheet 26 · Grendhilde the Marsh Witch · row "Fenwater Lash"
+    none          : (the row is not on this sheet)
+    today         : *Constitution Saving Throw*: DC 14, one creature within 30 feet. *Failure:* 19 (3d12) Bludgeoning damage.
+    high          : *Constitution Saving Throw*: DC 14, one creature within 30 feet. *Failure:* 19 (3d12) Bludgeoning damage.
+    no-look-again : (unchanged)
+
+--- sheet 26 · Grendhilde the Marsh Witch · row "Multiattack"
+    none          : Grendhilde makes three Arcane Burst attacks. It can replace one attack with a use of Fenwater Binding.
+    today         : Grendhilde makes three Arcane Burst attacks. It can replace one attack with a use of Fenwater Lash.
+                    ^ finding [low] principle 3: The Multiattack refers to Grendhilde in the third person as 'It' rather than the named referent used elsewhere, and more importantly lines up against a marsh-witch fictio
+    high          : Grendhilde makes three Arcane Burst attacks. It can replace one attack with a use of Fenwater Lash.
+    no-look-again : Grendhilde makes three Arcane Burst attacks. It can replace one attack with a use of Fenwater Blast.
+
+--- sheet 27 · Unanswered Templar · row "Shoulder Square"
+    none          : While the templar is standing on ground he has not moved from since the start of his last turn, attack rolls made against the templar have Disadvantage, and the templar can't be moved against his will from that spot.
+    today         : While the templar has not moved from his space since the start of his last turn, attack rolls made against the templar have Disadvantage, and the templar can't be moved against his will from that space. This ends immediately when the templar moves, is moved, or is knocked Prone.
+                    ^ finding [high] principle 2: The trigger is an unactionable, hard-to-track state: it requires the GM to remember the templar's position at the start of last turn and whether he has moved since, with 
+    high          : While the templar has not moved from his space since the start of his last turn, attack rolls made against the templar have Disadvantage, and the templar can't be moved against his will from that space. This ends immediately when the templar moves, is moved, or is knocked Prone.
+                    ^ finding [high] principle 2: The trigger is an unactionable, hard-to-track state: it requires the GM to remember the templar's position at the start of last turn and whether he has moved since, with 
+    no-look-again : (unchanged)
+
+--- sheet 29 · Unblessed Bell Swarm · row "Dolorous Toll"
+    none          : (the row is not on this sheet)
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : Once on each of the swarm's turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 17. *Failure:* The target has the Stunned condition until the end of its next turn.
+
+--- sheet 29 · Unblessed Bell Swarm · row "Tolling Rot"
+    none          : Once on each of the swarm's turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 17. *Failure:* The target has the Stunned condition until the end of its next turn.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : (removed)
+                    ^ finding [high] principle 2: The trait references 'this attack' but is not attached to any attack, so it is never triggered and cannot be adjudicated.
+
+--- sheet 31 · Thunderhead Drake · row "Stormfront Sense"
+    none          : While the thunderhead drake is airborne and above every enemy within sight, the drake has Advantage on Perception checks, and creatures that can hear it have Disadvantage on Perception checks made to track it through the storm it brings.
+    today         : (unchanged)
+    high          : (unchanged)
+    no-look-again : While the thunderhead drake is airborne and above every enemy within sight, the drake has Advantage on Perception checks, and each creature within 60 feet of it that can hear it has Disadvantage on Perception checks made to track it.
+                    ^ finding [medium] principle 2: The disadvantage clause has no range or area, so a GM cannot determine which creatures are affected and the trait is not adjudicable as written.
+
+--- sheet 35 · Well-Drowned · row "Drowning Hymn"
+    none          : *Strength Saving Throw*: DC 13, each creature in a 60-foot Emanation originating from the well-drowned. *Failure:* The target is pulled up to 15 feet straight toward the well-drowned, and the target has the Frightened condition until the end of its next turn.
+    today         : *Strength Saving Throw*: DC 13, each creature in a 60-foot Emanation originating from the well-drowned. *Failure:* 24 (7d6) Cold damage, and the target is pulled up to 15 feet straight toward the well-drowned, and the target has the Frightened condition until the end of its next turn.
+                    ^ finding [medium] principle 1: Frightened carries no written exit clause here, and because the pull drags every target toward the well-drowned the usual 'escape line of sight' exit is unavailable the m
+    high          : (unchanged)
+    no-look-again : (unchanged)
+
+31 row(s) differ from the None arm across the 38 sheets.
