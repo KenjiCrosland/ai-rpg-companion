@@ -10569,5 +10569,93 @@
     "head": true
    }
   ]
+ },
+ "ee1e6316532a": {
+  "concept": "Grik",
+  "clauses": [
+   {
+    "id": "cl_1br71",
+    "text": "Grik",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "19889b46f2b1": {
+  "concept": "Dame Oriel",
+  "clauses": [
+   {
+    "id": "cl_sdy0oy",
+    "text": "Dame Oriel",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "64695fe826ab": {
+  "concept": "Old Scuttlesnape",
+  "clauses": [
+   {
+    "id": "cl_136vuza",
+    "text": "Old Scuttlesnape",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "162f3c2577a2": {
+  "concept": "Grimjaw",
+  "clauses": [
+   {
+    "id": "cl_waci1d",
+    "text": "Grimjaw",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "19bbeebae4c1": {
+  "concept": "bugbear monk",
+  "clauses": [
+   {
+    "id": "cl_1nc0mvr",
+    "text": "bugbear monk",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "d61ef9f2c88b": {
+  "concept": "bugbear fighter",
+  "clauses": [
+   {
+    "id": "cl_1a7edvp",
+    "text": "bugbear fighter",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "be7f46bfe6e0": {
+  "concept": "a guard captain turned paladin",
+  "clauses": [
+   {
+    "id": "cl_1ctg6c5",
+    "text": "a guard captain turned paladin",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "3f7b1de20aa2": {
+  "concept": "Ancient Gold Dragon",
+  "clauses": [
+   {
+    "id": "cl_qfp8wb",
+    "text": "Ancient Gold Dragon",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }

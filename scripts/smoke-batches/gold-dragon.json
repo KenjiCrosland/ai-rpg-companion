@@ -1,0 +1,17 @@
+[
+ {
+  "canary": "fills the slot the 2026-11-16 timeout left (sheet 19 of the forty)",
+  "name": "Ancient Gold Dragon",
+  "description": "",
+  "cr": "24",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "generates at all; print's own dragon"
+ }
+]

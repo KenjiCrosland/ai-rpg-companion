@@ -88,5 +88,80 @@
    "statblock-frame-model": ""
   },
   "green": "fix A does NOT fire"
+ },
+ {
+  "canary": "fix E \u2014 a bare name with NO class word",
+  "name": "Grik",
+  "description": "",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "a person's sheet must be typed Humanoid"
+ },
+ {
+  "canary": "fix E \u2014 a bare name with NO class word",
+  "name": "Dame Oriel",
+  "description": "",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "a person's sheet must be typed Humanoid"
+ },
+ {
+  "canary": "fix E \u2014 the name that read Fey once and Plant once",
+  "name": "Old Marga",
+  "description": "",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "a person's sheet must be typed Humanoid"
+ },
+ {
+  "canary": "fix E \u2014 a name that SOUNDS like a monster (owner's ruling: either path is fine)",
+  "name": "Old Scuttlesnape",
+  "description": "",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "class_npc -> Humanoid, or homebrew -> the call's type; never a person's sheet under another type"
+ },
+ {
+  "canary": "fix E \u2014 a name that SOUNDS like a monster (owner's ruling: either path is fine)",
+  "name": "Grimjaw",
+  "description": "",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "class_npc -> Humanoid, or homebrew -> the call's type; never a person's sheet under another type"
  }
 ]
