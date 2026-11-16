@@ -1,0 +1,92 @@
+[
+ {
+  "canary": "fix A \u2014 a person's Name alone, no print match",
+  "name": "Captain Vane",
+  "description": "",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid; the trace says fix A settled it"
+ },
+ {
+  "canary": "fix A \u2014 a person's Name alone, no print match",
+  "name": "Sister Ilse",
+  "description": "",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid; the trace says fix A settled it"
+ },
+ {
+  "canary": "fix A \u2014 a person's Name alone, no print match",
+  "name": "Old Marga",
+  "description": "",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid; the trace says fix A settled it"
+ },
+ {
+  "canary": "CONTROL \u2014 a word is left, so the call's type stands",
+  "name": "",
+  "description": "clockwork friar",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "fix A does NOT fire; the call's type stands"
+ },
+ {
+  "canary": "CONTROL \u2014 the GM's own words name the type",
+  "name": "",
+  "description": "an undead priest",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Undead; fix A does NOT fire"
+ },
+ {
+  "canary": "CONTROL \u2014 not a bare name at all",
+  "name": "",
+  "description": "a marsh witch who curses trespassers",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "fix A does NOT fire"
+ }
+]

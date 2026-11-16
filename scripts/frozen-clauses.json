@@ -10515,5 +10515,59 @@
     "head": true
    }
   ]
+ },
+ "6a14d65da32b": {
+  "concept": "Captain Vane",
+  "clauses": [
+   {
+    "id": "cl_kfu4im",
+    "text": "Captain Vane",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "c94b3d4e8b4d": {
+  "concept": "Sister Ilse",
+  "clauses": [
+   {
+    "id": "cl_1jktz5d",
+    "text": "Sister Ilse",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "2ee074733e21": {
+  "concept": "Old Marga",
+  "clauses": [
+   {
+    "id": "cl_xlcke7",
+    "text": "Old Marga",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "f9ed253e8998": {
+  "concept": "clockwork friar",
+  "clauses": [
+   {
+    "id": "cl_7uao5p",
+    "text": "clockwork friar",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "b1825d16c073": {
+  "concept": "an undead priest",
+  "clauses": [
+   {
+    "id": "cl_lxngsv",
+    "text": "an undead priest",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
