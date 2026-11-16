@@ -1,0 +1,297 @@
+{
+ "input": {
+  "name": "",
+  "description": "a mud-caked bog hound that drags fishermen under",
+  "cr": "1",
+  "rules": "2014",
+  "canary": "SPINE 1 · homebrew one-liner"
+ },
+ "request": {
+  "system": "You are an assistant Game Master.",
+  "model": "deepseek-flash"
+ },
+ "takenNames": [
+  "Dire Wolf"
+ ],
+ "calls": [
+  {
+   "prompt": "You are auditing a D&D 2024-format monster statblock for MECHANICAL defects.\nDeterministic checks (math, DCs, damage bands, known formatting rules) have\nalready run — do NOT re-check arithmetic, CR calibration, or damage budgets.\nYour job is the judgment layer: defects of adjudicability, counterplay, and\ninternal consistency that pattern-matching cannot catch.\n\nA defect is anything that would cost a GM or a player at the table: an effect\nthat cannot be adjudicated, a state with no rules-legal response — and equally a\nrow that is not worth its action, cannot be run in the time a turn allows, or does\nnot make practical sense for the creature it is on. A row can be perfectly correct\nand still be a defect, because a GM who cannot use it got nothing.\n\n\n\nWHERE THESE ROWS CAME FROM — this changes what a finding on each is worth:\n- THE BODY'S OWN ROW — ours, from the donor catalog: Actions/Multiattack, Actions/Bite\n- THE BODY'S CATALOG ROW — ours, from the template catalog: Actions/Drag Prone\n- WRITTEN FOR THIS CREATURE — ours, authored for this sheet: Traits/Mud-Caked Hide\n\n- The OFFICIAL rows are Wizards of the Coast's own text, copied word for word from the published\n  Monster Manual with only this sheet's numbers filled in. They are the STANDARD you judge the other\n  rows against, and they are NOT under review. Do not flag their wording, their phrasing, their\n  RULES, their counterplay, a missing escape DC or duration or limit, how long they take to resolve,\n  or whether they are fun. If a published row seems to lack an exit or a cap, that is how the game is\n  written — you are not auditing the Monster Manual, and a published row is what a good row looks\n  like.\n  The ONE thing worth reporting on an official row is a reference to something THIS block does not\n  have: its own grapple, or a row it names that no entry here carries. That means OUR assembly broke\n  a published row, and it is the most valuable finding you can make.\n- THE BODY'S rows are ours, shared with every creature built on this body.\n  Judge their soundness as you would any row — but a defect there is fixed once in the catalog, not\n  on this sheet, so report it plainly and do not suggest sheet-specific prose for it.\n- The rows WRITTEN FOR THIS CREATURE are where a fix will act. Judge them hardest, against all seven\n  principles.\nAudit against these principles. 1-4 are correctness; 5-7 are whether the block\nis any good at a table, and the owner's bar is both:\n\n1. COUNTERPLAY. Every imposed state has a rules-legal path out, written in the\n   entry: an escape DC, a repeat save, a fixed duration, a breakable object, or\n   an interior-escape clause. This covers conditions (Grappled, Restrained),\n   AND any removal from play (swallowed, banished, teleported away, trapped in\n   another space). Frequency gates (1/Day, Recharge, \"only while Bloodied\") do\n   NOT count as counterplay — they limit how often, not whether the target has\n   agency once affected. An attack-roll-only effect that removes a creature\n   from play with no save and no escape is a defect regardless of gating.\n\n2. ADJUDICABILITY. Every effect answers: when does it happen (trigger, timing,\n   or action cost), where does it apply (area, range, or target), and when does\n   it end (duration or end condition). An aura with no area, a save effect with\n   no range, a trait that describes an activity with no action cost, a\n   condition with no duration — each is a defect. Also flag any effect whose\n   resolution requires information the block does not provide (a referenced\n   zone, object, or state that nothing defines or creates — e.g. spores that\n   are never applied, a minion that is never created, \"its arrival point\" with\n   no arrival mechanic). An entry with a name but NO rules text at all is\n   always a defect.\n\n3. SELF-CONSISTENCY. Entries must not contradict the block or themselves:\n   abilities keyed to movement modes the creature lacks, conditions applied to\n   targets immune to them by the block's own rider (e.g. Poisoned applied by a\n   Poison-immune creature's aura is fine; a rider that only functions against\n   Poisoned targets when nothing in the block applies Poisoned is not), riders\n   referencing a state no entry creates. The monster referring to itself by a\n   name that is not its own is a defect (referent inconsistency). So is an\n   entry whose NAME promises a mechanic its text never delivers — a \"Steam\n   Shroud\" that creates no obscurement, a \"Reassemble\" with no disassembly\n   anywhere in the block, a \"Spine Shot\" that only hides. Swarm or colony\n   mechanics (occupying other creatures' spaces, dispersing into components)\n   on a creature not typed as a swarm are the same class of defect. So is\n   a creature TYPE its content contradicts — a \"Giant\" that is a bodiless\n   planar shade, a \"Beast\" with innate spellcasting and telepathy — and\n   anatomy its components contradict (chitinous claws and insect scuttling\n   on a swarm of Tiny Humanoids; a \"Fin Slash\" on a creature that flies\n   but cannot swim; damage types with no shared physical cause on one\n   body, like Radiant tendrils plus Poison spore clouds).\n\n4. FORMAT INTEGRITY. Entry text contains only statblock language. Flag any\n   design/meta vocabulary (\"save-based action\", \"2024\", \"condition names\",\n   \"as written\", schema or instruction fragments), orphaned sentences detached\n   from their entry, stray characters, or UI text. ALSO flag garbled or\n   ungrammatical text: doubled words (\"the swarm swarm\"), broken or\n   half-deleted sentences, or subject-verb disagreements. Do NOT report\n   capitalization of any kind — not a lowercase word starting a sentence, not a\n   capitalized word mid-sentence. A deterministic pass fixes those before ship\n   and your findings are capped, so a capitalization report costs a slot a real\n   defect needed. Also flag 2014-format save phrasing (\"must succeed on a DC X ... saving throw or\").\n\n5. TABLE USABILITY. An entry a GM cannot resolve in ~10 seconds mid-combat is\n   a defect: nested conditional branches, multi-clause parentheticals defining\n   novel procedures, or effects requiring the GM to track state the block gives\n   no way to track. Length alone is not the test — a long but linear entry is\n   fine; a short entry with three branching conditions is not.\n\n6. WORTH THE ACTION. A row has to be worth choosing on its turn, or worth having\n   as a passive. Flag a dead payload — a row named for an element that deals no\n   damage of it, a \"molten\" reaction that deals nothing, a save that imposes a\n   condition the target already has. Flag an effect not worth its cost: Prone for\n   the movement it costs to stand, a nuisance where the row's own fiction promises\n   a threat. Say what it LACKS — the payload, the duration, the teeth — never a\n   number and never a comparison to its CR.\n\n7. PRACTICAL SENSE. A row has to be something this creature could plausibly do,\n   as written. Flag a mechanic the body cannot perform — tar that pulls a creature\n   15 feet, a lunge rendered as a cone, a hoof rider on a creature with claws.\n   Flag an effect on terrain or a state that is already so: difficult terrain\n   created where the ground is already difficult, a Speed reduction on a target\n   that is Restrained and already at Speed 0. Flag a name and a text that describe\n   two different abilities.\n\nCALIBRATION — these are NOT defects. Do not flag:\n- A pull or push written \"straight toward\" or \"straight away from\" the creature in\n  a Cone, Line or Emanation. That is the published books' own wording for forced\n  movement in an area; the direction is the line between the creature and each target.\n- A trait imposing a recurring save WITH timing and area stated (the Stench\n  pattern) or triggered on death (Death Burst pattern).\n- An attack absent from the Multiattack line — a creature may always use a\n  single named attack instead of Multiattack.\n- Repeatable single-target hard CC with a save (official precedent: Ghoul,\n  Lich). Only flag hard CC (Stunned/Paralyzed/Petrified/Unconscious) that is\n  BOTH ungated AND area-targeting AND carries dice damage in the same clause.\n- Ally-referencing abilities on an apparently solo monster (known, parked).\n- Conditional or qualified resistances, \"if available\" reuse of Recharge\n  actions, additive Multiattack riders.\n- A Prone or Grappled condition with no duration: those conditions carry\n  their own exit (standing up; the escape DC). Never suggest adding a\n  duration to them.\n- Anything you suspect is a balance problem. Balance is out of scope — the\n  chassis owns it. If your reasoning contains \"too strong,\" \"too weak,\" or a\n  comparison to CR, discard the finding.\n\nTHE STATBLOCK:\n## Bog Hound\n*Medium Beast, Unaligned*\n\n**AC** 11 &nbsp;&nbsp; **Initiative** -1 (9)\n**HP** 22 (3d8 + 9)\n**Speed** 30 ft., Swim 30 ft.\n\n| Stat | Score | Mod | Save |\n|:---:|:---:|:---:|:---:|\n| STR | 12 | +1 | +3 |\n| DEX | 8 | -1 | -1 |\n| CON | 16 | +3 | +3 |\n| INT | 4 | -3 | -3 |\n| WIS | 15 | +2 | +2 |\n| CHA | 10 | +0 | +0 |\n\n**Skills** Athletics +3, Perception +4\n**Senses** darkvision 60 ft.; Passive Perception 14\n**Languages** None\n**CR** 1 (XP 200; PB +2)\n\n### Traits\n\n***Mud-Caked Hide.*** While the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in.\n\n### Actions\n\n***Multiattack.*** The bog hound makes two Bite attacks. It can replace one attack with a use of Drag Prone.\n\n***Bite.*** *Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.\n\n***Drag Prone.*** *Strength Saving Throw:* DC 13, each creature in a 15-foot Cone. *Failure:* The target is pushed up to 15 feet away from the bog hound and has the Prone condition.\n\nALSO check the TYPE line (\"type_correction\"): if the creature's content\nplainly contradicts its type — a \"Giant\" that is a bodiless mist or\nplanar shade, a \"Construct\" that is a living spore-bearing fungus — give\nthe correct type (one of: Aberration, Beast, Celestial, Construct,\nDragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze,\nPlant, Undead); otherwise null. Correct CLEAR contradictions of\nsubstance, AND types the content never expresses at all — an \"Elemental\"\nwhose body and abilities could belong to any animal is a Monstrosity or\nBeast. One authentic trait does not outweigh the suite: if MOST of the\nabilities express a different type (necrotic magic, Animate Dead, and\nlife-siphoning on an \"Elemental\" that merely burrows), correct to the\ntype the majority expresses. Never retype on theme or mood alone.\n\nALSO grade the monster's NAME (\"name_grade\"): A-F on evocativeness, fit\nfor this creature's type and abilities, and catchiness. A = could sit in\nthe Monster Manual as-is; B = solid, no reason to change; C = serviceable\nbut generic or forgettable; D = wrong register or a flat attack\ndescription; F = absurd or misleading. FIT is judged against\nwhat the creature IS — its nature, substance, and story: a psychic\ntelepath named for swamp muck, or a fire creature named like a frost\nspirit, caps at C regardless of how good the name sounds. A name that\nis merely a summary of its attack routine also caps at C — names carry\nwhat a creature IS, not what it does. FIT is judged against\nwhat the creature IS — its nature, substance, and story: a psychic\ntelepath named for swamp muck, or a fire creature named like a frost\nspirit, caps at C regardless of how good the name sounds. A name that\nis merely a summary of its attack routine also caps at C — names carry\nwhat a creature IS, not what it does. A or B keeps the current\nname — C or lower means it will be replaced. Grade the name, not your\nability to invent a different one.\n\nFor principle 4 findings ONLY (garbled text, wrong words, grammar,\ndoubled words, circular phrases), you may ALSO provide a \"rewrite\": the\nminimal replacement for the quoted span that repairs the text. Rules for\nrewrites: change as few words as possible; NEVER change any number, DC,\ndamage type, condition name, or game term; never add or remove mechanics.\nThe rewrite must BE the replacement text, never a description of the\nedit — to delete the span outright, return \"\" (the empty string) as the\nrewrite. A rewrite containing editing language (\"replace this sentence\nwith...\") is discarded unapplied.\nA rewrite fixes prose, not rules. Findings from other principles never\ncarry a rewrite.\n\nTHE SPAN IS A HANDLE, NOT A CITATION. Quote the PART of the entry that is wrong — the clause, the\nphrase, the missing-trigger sentence — because the span is what tells a repair where to work. A span\nthat is the entry's whole text says only \"something here\", and a fix handed that returns the same row\nreworded. If what is wrong is the entry entire, say so in the issue and quote the one clause that\nshows it best.\n\nAn entry's NAME can also be the defect. Flag it under principle 3 and\nprovide a \"rename\" when the name and the mechanics disagree:\n- the name promises a mechanic the text never delivers (\"Choir Silence\"\n  that deafens nobody, a \"Reassemble\" with no disassembly)\n- the name describes the wrong sense or medium for its effect (a \"Glare\"\n  that deafens, a \"Breath\" that is a thrown rock)\n- the name's ADJECTIVE promises an energy the entry never deals (a\n  \"Burning Claw\" dealing only Slashing burns nothing — it is a \"Claw\"; a\n  \"Freezing Coil\" with no Cold anywhere is a \"Coil\"). The published books never do\n  this: every energy-adjective name in the corpus deals the implied type,\n  imposes its condition, or casts a spell that carries it — spell echoes\n  are the one exemption\n- the name is invented syllables rather than words (\"Thul-eg Strike\") —\n  coined words belong to the creature's own name, never to entries\nThe rename must be plain English in this creature's register, must\ndescribe what the entry ACTUALLY does, must not duplicate another entry's\nname, and must never include a use-limit parenthetical — the engine\nappends \"(Recharge 5-6)\" and \"(1/Day)\" itself. Never rename Multiattack,\nSpellcasting, or Legendary Resistance.\n\nOUTPUT: JSON only, no markdown fences. Report at most 6 findings.\n{ \"name_grade\": \"A-F\",\n  \"type_correction\": null,\n  \"element_claims\": [],\n  \"findings\": [ { \"principle\": <1-7>, \"section\": \"<section name>\",\n  \"entry\": \"<entry name>\", \"span\": \"<exact quoted text, verbatim>\",\n  \"issue\": \"<one sentence>\", \"suggestion\": \"<one sentence, direction not prose>\",\n  \"rewrite\": \"<optional, principle 4 only: the repaired span>\",\n  \"rename\": \"<optional, name-defect findings only: the replacement entry name>\",\n  \"confidence\": \"high|medium|low\" } ] }\nAn empty findings array is a correct and common output. Do not manufacture\nfindings to appear thorough. Every span must be verbatim text from the block —\nif you cannot quote it, the finding does not exist.\n\nELEMENT CLAIMS. These rows were allowed onto the sheet because they were said to\nexpress one of this creature's distinctive features. For EACH, quote the words of\nTHAT ROW'S TEXT which carry the feature, or null if the row does not carry it.\n- \"Mud-Caked Hide\" claims: mud-caked hide camouflaged as the riverbank\n\nAnswer in \"element_claims\": [ { \"entry\": \"<the row name>\", \"quote\": \"<exact words from that row's text, verbatim — or null>\" } ]\n- The quote MUST be copied verbatim from that row's text. Never quote the row's NAME.\n- A row carries the feature only if its RULES do. A name that sounds like the feature is not the feature, and damage of a plausible type is not on its own.\n- If the row would read the same for a creature without this feature at all, answer null.\n- But PART of the feature is enough. If any clause of the row's rules carries any part of it — a condition it imposes, a trigger, a movement, a damage type the feature specifically calls for — quote that clause.\n\nRESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored and correct by construction — never flag them. The model-written parts are the entry NAMES, the TRAIT texts, and ONE signature action; your entire value is there:\n1. Garbled rules language (\"attacks hit the target's AC with advantage\" is not adjudicable — supply the rewrite).\n2. Semantic contradictions (an Invisible creature targeted by \"one creature that can see it\"; a sword trait granting immunity to being Blinded).\n3. Name-content mismatches (a \"Gaze\" that throws things; an \"of the Fallen\" attack dealing plain Piercing — propose a rename).\n4. Misspelled entry names (\"Withdrawl\").\n5. Doubled or contradictory limiters (\"only once per turn\" plus \"while active, can't use it again\").\n6. REDUNDANT RULES — list each benefit the block grants; if a model-written trait duplicates one the chassis already grants (two entries both giving Disadvantage on Opportunity Attacks), or a clause is made dead by another entry (a trait converting damage a row already deals), flag it and supply a rewrite trimming the duplicate clause.\n7. STAT-FICTION MISMATCH — a save whose STAT contradicts what the save represents (a Strength save to shake off a scent-lock, a Charisma save to dodge a falling rock). Propose the stat the fiction demands; the DC never changes.\nA typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.",
+   "response": "{\"id\":\"9601baf8-7fb2-435d-8804-04b0a2048509\",\"object\":\"chat.completion\",\"created\":1794861998,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"name_grade\\\": \\\"C\\\",\\n  \\\"type_correction\\\": null,\\n  \\\"element_claims\\\": [\\n    {\\n      \\\"entry\\\": \\\"Mud-Caked Hide\\\",\\n      \\\"quote\\\": \\\"indistinguishable from the mud or riverbank it lies in\\\"\\n    }\\n  ],\\n  \\\"findings\\\": [\\n    {\\n      \\\"principle\\\": 2,\\n      \\\"section\\\": \\\"Traits\\\",\\n      \\\"entry\\\": \\\"Mud-Caked Hide\\\",\\n      \\\"span\\\": \\\"While the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in.\\\",\\n      \\\"issue\\\": \\\"The camouflage trait states no action or check to detect the hidden hound, leaving a GM with no way to adjudicate whether a party notices it.\\\",\\n      \\\"suggestion\\\": \\\"Add how an observer discovers the disguised hound (e.g., a Perception check against a DC) or note that it uses the Hide action.\\\",\\n      \\\"confidence\\\": \\\"medium\\\"\\n    },\\n    {\\n      \\\"principle\\\": 1,\\n      \\\"section\\\": \\\"Actions\\\",\\n      \\\"entry\\\": \\\"Drag Prone\\\",\\n      \\\"span\\\": \\\"each creature in a 15-foot Cone\\\",\\n      \\\"issue\\\": \\\"Drag Prone forces the save and pushes/prones targets in an area despite the name and Multiattack usage implying a drag of a grappled creature, giving no tie to its own Grappled target and no counterplay relationship.\\\",\\n      \\\"suggestion\\\": \\\"Rework Drag Prone so it drags a creature the hound has Grappled (or otherwise grounds its cone-drag in a state the block creates).\\\",\\n      \\\"rename\\\": \\\"Sodden Shove\\\",\\n      \\\"confidence\\\": \\\"low\\\"\\n    }\\n  ]\\n}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":4348,\"completion_tokens\":354,\"total_tokens\":4702,\"prompt_tokens_details\":{\"cached_tokens\":4096},\"prompt_cache_hit_tokens\":4096,\"prompt_cache_miss_tokens\":252},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+  },
+  {
+   "prompt": "You are generating creature intelligence data for a custom D&D 5e statblock.\nAnalyze the statblock below and produce a JSON object with these fields.\n\nIMPORTANT: Use lowercase field names in the JSON output.\n\nField: \"description\" (string, 2 sentences)\nSentence 1: Physical appearance — what players SEE. Be specific and visual.\nSentence 2: Behavioral identity — what this creature IS as a story character.\nUse the statblock's abilities, type, and flavor to infer behavior.\nIf INT is 5 or below, the creature is instinct-driven — say so.\nIf INT is 6+, describe its personality and approach.\n\nField: \"signature\" (string, 1 sentence)\nThe single most important tactical fact about this creature. What makes\nfighting it different from fighting anything else? Lead with the ability\nthat defines the encounter.\n\nField: \"abilities\" (array of strings)\nOne line per ability from the statblock. Name, brief mechanical summary.\nInclude actions, reactions, traits, legendary actions, lair actions.\nSkip passive senses and basic movement unless unusual.\n\nField: \"tactical_identity\" (string, 1-2 sentences)\nHow this creature fights as a whole. What's its strategy? What combo\ndoes it try to execute? What role does it play in a group?\n\nField: \"encounter_hooks\" (array of 2-3 strings)\nWhat makes THIS creature's fight interesting for players. Reference\nspecific abilities, weaknesses, and tactical choices the party faces.\n\nField: \"preferred_tones\" (array of 2-4 strings)\nWhich encounter tones fit this creature, ordered by priority. Choose\nfrom ONLY these 12 values:\n  interrupted_activity, quiet_tension, triggered_mistake,\n  already_in_motion, something_wrong, standoff, false_hospitality,\n  desperate_plea, hidden_predator, wrong_enemy, ticking_clock, aftermath\n\nRules:\n- INT 5 or below: ONLY use interrupted_activity, already_in_motion,\n  triggered_mistake, quiet_tension\n- Shapechangers/disguise: MUST include false_hospitality or hidden_predator\n- Social creatures (INT 10+, languages): include at least one social tone\n  (standoff, false_hospitality, desperate_plea)\n\nField: \"retreat\" (string or null)\nHow the creature behaves when losing. Null for mindless/fight-to-death.\nIf the statblock has escape abilities (teleport, fly, invisibility,\nburrow, gaseous form), describe the escape method and threshold.\nIf the creature is undead, construct, or has no escape ability, null.\n\nField: \"social\" (string or null)\nWhat the creature wants from a non-violent approach. Null for INT 5\nor below, or creatures that cannot/will not communicate.\nIf INT 6+, describe what it wants and how it negotiates.\nCheck Languages — \"understands but cannot speak\" means limited or\nno social interaction.\n\nABILITY FLAVOR CHECK:\nRead the flavor text of every ability, not just the mechanics. If any\nability implies the creature is cursed, trapped, compelled, or seeking\nhelp, this MUST inform the social and retreat fields — even if INT is\nlow or the creature cannot speak.\n\nA creature that mechanically forces others to \"free it from its bell\"\nhas a social identity: it wants release. A creature that \"cannot stop\nringing even if it wanted to\" is tragic, not mindless.\n\nAlignment matters: neutral or good-aligned creatures with compulsion\nabilities are victims, not villains. The social field should reflect\nwhat they want (freedom, death, silence) even if they can't articulate it.\n\nField: \"aftermath_hooks\" (array of 2-3 strings)\nCreature-specific aftermath material. Each hook should be:\n- A physical object with an unexplained detail, OR\n- A post-combat mechanic (rejuvenation, return, escape), OR\n- A connection to the wider world (factions, settlements, other creatures)\nNo generic fantasy (\"ancient relic,\" \"mysterious artifact\").\n\nExpected JSON format:\n{\n  \"name\": \"Creature Name\",\n  \"description\": \"Two sentences here.\",\n  \"signature\": \"One sentence here.\",\n  \"abilities\": [\"Ability 1: details\", \"Ability 2: details\"],\n  \"tactical_identity\": \"One to two sentences here.\",\n  \"encounter_hooks\": [\"Hook 1\", \"Hook 2\", \"Hook 3\"],\n  \"preferred_tones\": [\"tone1\", \"tone2\", \"tone3\"],\n  \"retreat\": \"Description or null\",\n  \"social\": \"Description or null\",\n  \"aftermath_hooks\": [\"Hook 1\", \"Hook 2\", \"Hook 3\"]\n}\n\nReturn ONLY the JSON object. No markdown, no explanation.\n\nSTATBLOCK:\nNAME: Bog Hound\nTYPE: Medium beast, unaligned\nCR: 1 (200 XP)\n\nABILITY SCORES:\nSTR 12 (+1), DEX 8 (-1), CON 16 (+3), INT 4 (-3), WIS 15 (+2), CHA 10 (+0)\n\nAC: 11 (natural armor)\nHP: 22 (3d8 + 9)\nSpeed: 30 ft., swim 30 ft.\nSenses: darkvision 60 ft., passive Perception 14\nLanguages: None\n\nSaving Throws: STR +3\nSkills: Athletics +3, Perception +4\n\nTRAITS:\nMud-Caked Hide: While the bog hound remains motionless in mud or on a riverbank, a creature must succeed on a Wisdom (Perception) check against DC 13 to notice the bog hound; on a failure, the bog hound has advantage on its next attack roll against that creature before the start of its next turn.\n\nACTIONS:\nMultiattack: The bog hound makes two Bite attacks. It can replace one attack with a use of Drag prone.\nBite: Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage. If the target is a Large or smaller creature, it is grappled (escape DC 11). While grappled, the target is restrained.\nDrag Prone: Each creature in a 15-foot cone must make a DC 13 Strength saving throw. On a failed save, the target is pushed up to 15 feet away from the bog hound and is knocked prone.\n",
+   "response": "{\"id\":\"9bd68753-4d51-4f88-9bba-b3004cafd2c4\",\"object\":\"chat.completion\",\"created\":1794861997,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"name\\\": \\\"Bog Hound\\\",\\n  \\\"description\\\": \\\"A low-slung, mud-slicked brute the color of wet clay, its hide so caked with river silt that only its yellow eyes betray it before it strikes. It is a patient ambush predator that hauls prey into deeper water to drown and consume it.\\\",\\n  \\\"signature\\\": \\\"Its Mud-Caked Hide lets it lie motionless and invisible in the mud, granting advantage on a surprise strike that begins a grapple into drowning water.\\\",\\n  \\\"abilities\\\": [\\n    \\\"Mud-Caked Hide: While motionless in mud or on a riverbank, creatures must beat a DC 13 Perception check to spot it; on a failure, it gains advantage on its next attack against them.\\\",\\n    \\\"Multiattack: Makes two Bite attacks, or one Bite and one Drag Prone.\\\",\\n    \\\"Bite: +3 to hit, 5 (1d8+1) piercing; Large or smaller targets are grappled (escape DC 11) and restrained while grappled.\\\",\\n    \\\"Drag Prone: 15-ft cone, DC 13 Strength save; failure pushes targets up to 15 ft. away and knocks them prone.\\\"\\n  ],\\n  \\\"tactical_identity\\\": \\\"It waits in mud or shallows until prey wanders close, then lunges to grapple and drag its victim toward deep water, using Drag Prone to scatter rescuers and keep the pack from forming a line.\\\",\\n  \\\"encounter_hooks\\\": [\\n    \\\"The party must cross a muddy ford or riverbank where the hound is indistinguishable from the terrain; a failed Perception check means the fight starts with a PC grappled and restrained.\\\",\\n    \\\"Rescuing a grappled ally is complicated by Drag Prone, which shoves would-be rescuers prone and away from the hound's victim.\\\",\\n    \\\"The hound tries to drag its restrained prey into deep water; the party faces a ticking clock to break the grapple before the victim drowns.\\\"\\n  ],\\n  \\\"preferred_tones\\\": [\\\"hidden_predator\\\", \\\"already_in_motion\\\", \\\"quiet_tension\\\"],\\n  \\\"retreat\\\": null,\\n  \\\"social\\\": null,\\n  \\\"aftermath_hooks\\\": [\\n    \\\"The hound's mud-caked hide conceals a collar of rusted iron links stamped with a river-town sigil, hinting it was once someone's guard beast.\\\",\\n    \\\"Its den is a hollow under the bank lined with the bones of deer, fish, and at least one humanoid hand still wearing a copper ring.\\\",\\n    \\\"If driven off rather than killed, the hound retreats to a deeper oxbow and returns to the same ford within a day, having learned the party's scent.\\\"\\n  ]\\n}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":1397,\"completion_tokens\":573,\"total_tokens\":1970,\"prompt_tokens_details\":{\"cached_tokens\":1024},\"prompt_cache_hit_tokens\":1024,\"prompt_cache_miss_tokens\":373},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+  },
+  {
+   "prompt": "You are REPAIRING one ability of a D&D monster. The sheet below is finished, and one row on it does not work at a table. Rewrite that ONE row into the closed forms below, keeping what makes it interesting. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.\n\nTHE CREATURE: Bog Hound (the bog hound), CR 1.\nTHE SHEET AS IT STANDS (every other row stays exactly as it is; never name a row that is not on it):\nActions / Multiattack: The bog hound makes two Bite attacks. It can replace one attack with a use of Drag Prone.\nActions / Bite: *Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.\nActions / Drag Prone: *Strength Saving Throw:* DC 13, each creature in a 15-foot Cone. *Failure:* The target is pushed up to 15 feet away from the bog hound and has the Prone condition.\nTraits / Mud-Caked Hide: While the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in.\n\nTHE ROW TO REPAIR — it is called **\"Mud-Caked Hide\"** and currently reads:\nWhile the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in.\n\nWHAT IS WRONG WITH IT:\n- The camouflage trait states no action or check to detect the hidden hound, leaving a GM with no way to adjudicate whether a party notices it. — Add how an observer discovers the disguised hound (e.g., a Perception check against a DC) or note that it uses the Hide action. (about: \"While the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in.\")\n\nWHAT KIND OF DEFECT THAT IS — this decides the shape of the repair, not just its words:\n- ADJUDICABILITY. Name the thing the GM cannot find: the trigger and its timing, which check or save is rolled, the direction forced movement goes, where a target lands. Add the missing fact; change nothing else.\n\nKEEP THE NAME \"Mud-Caked Hide\" EXACTLY. Keep the idea — this row exists because it was a nice surprise on this creature, and a GM who likes it should still get it. Change only what makes it unrunnable.\n\nTHREE TESTS YOUR REPAIR MUST PASS:\n1. SOUND. Everything a GM needs is on the row. No bonus, radius, duration or amount that the GM would have to work out from somewhere else — if a number is needed, use the form's token and let the engine write it.\n2. THE ACTION ECONOMY. The row costs something real. A trait that hands out a free attack whenever a condition is met, with no action and no limit, is the defect this test exists to catch — if an effect should fire often, gate it (a recharge, once per turn, or the creature's action).\n3. NOT A DEAD ROW. It must be worth choosing on the creature's turn, or worth having as a passive. A row a GM would never pick is as bad as one they cannot run.\n\nIT IS a trait, so the repaired row goes in the \"traits\" array. Write exactly one row there and leave every other array empty. If the row's SHAPE is itself the defect — a trait that reads like a reaction, an action that should be a passive — answer in the array that shape belongs to instead, and the engine moves the row to where that form lives.\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps \"Mud-Caked Hide\" and must not take any other: \"Multiattack\", \"Bite\", \"Drag Prone\".\n\nTHE FORMS\n- save (a curse, a breath, a shove, a gaze): { \"clause\", \"name\", \"stat\": one of Strength/Dexterity/Constitution/Intelligence/Wisdom/Charisma, \"target\": \"one creature within N feet\" | \"each creature in a N-foot Cone|Sphere|Line|Emanation\", \"damage\": true|false, \"type\": one of the damage types or null, \"condition\": one of the conditions or null, \"movement\": \"pushed up to N feet\"|\"pulled up to N feet\"|null, \"success\": \"half\"|\"none\", \"recharge\": true|false }.\n- trait (a passive, a style, a resource — it costs the creature NOTHING; never write \"uses its Reaction\" here, that is the reaction form below): { \"clause\", \"name\", \"trigger\": a when/while/if clause or null, \"effect\": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, \"imposes\": one of Blinded/Charmed/Deafened/Frightened/Grappled/Paralyzed/Poisoned/Prone/Restrained/Stunned or null, \"condition_relation\": one of inflicts/requires/immune/self/none, \"acts\": the name of another creature or object this row makes act, or null, \"heals\": true if it restores this creature Hit Points every round for free, \"mechanics\": how many separate things a table must do, \"quantities\": how many numbers the row promises, \"passive_effect\": one of ability/bonus/protection/threat/limitation/none }.\n- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, \"1/Day\", or \"Recharge 5-6\"): \"restores hit points to the faithful\" and \"after minutes\" are not rows a table can run.\n- {dmg} IS DAMAGE AND {dc} IS A SAVE DC. Never write {dmg} where a COUNT belongs — a number of uses, attacks or legendary actions is a plain small integer you write yourself (\"can take 3 legendary actions\"), because a GM cannot take 4d6 of anything. If a row should be limited, say so with its limit (\"1/Day\", \"Recharge 5-6\") and not with a number in the sentence.\n- NEVER PROMISE A LIST YOU DO NOT WRITE. \"choosing from the options below\", \"one of the following\" and \"as listed below\" each require the options to follow IN THIS SAME row's text; a row that promises them and stops is a dead row a GM cannot run.\n- reaction: { \"clause\", \"name\", \"trigger\": one sentence, \"response\": one sentence, same tokens, \"imposes\": one of Blinded/Charmed/Deafened/Frightened/Grappled/Paralyzed/Poisoned/Prone/Restrained/Stunned or null, \"condition_relation\": one of inflicts/requires/immune/self/none, \"acts\": the name of another creature or object this row makes act, or null, \"heals\": true if it restores this creature Hit Points every round for free, \"mechanics\": how many separate things a table must do, \"quantities\": how many numbers the row promises }.\n- \"acts\" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises \"a spore-puppet\" needs a spore-puppet on the sheet.)\n- \"heals\" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.\n- \"quantities\" ON A TRAIT OR REACTION: how many separate NUMBERS the row needs a table to know — every damage amount, every distance or area size, every bonus or penalty. Count them and answer the number. Then WRITE every one of them: {dmg} for damage the engine should fill, {dc} for a save DC, and a literal number for a distance or an area (\"a 15-foot Emanation\", \"within 30 feet\"). A row that promises a number and does not write it cannot be run at a table and is refused — \"gains Temporary Hit Points\" with no amount, \"an Emanation\" with no size, \"deals extra Fire damage\" with no amount. If the row needs no numbers at all, answer 0. A BONUS YOU ONLY DESCRIBE IS STILL A NUMBER: \"deals extra Fire damage\", \"gains Temporary Hit Points\", \"is fiercer while Bloodied\" each need an amount a table can read, so COUNT them. If you cannot give the amount as {dmg}, do not promise it.\n- \"mechanics\" ON A TRAIT OR REACTION: how many separate things the row makes a table do — count them, and answer the number. One row, one mechanic: a row that turns a blow back AND steps in front of an ally is two, a row that hides it AND heals it is two. Write the one that matters and leave the other out; we take only rows that answer 1.\n- \"imposes\" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.\n- \"passive_effect\" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's \"Patience\", which said it \"waits motionless on its perch, watching its prey, without taking any action\").\n- \"condition_relation\" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: \"a creature that has the Prone condition\", \"a creature it is grappling\") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for \"imposes\" too). A word that merely DESCRIBES is not the condition: \"a frightening ruin\", \"a horrifying stench\", \"a paralysing cold\" are prose, not rules — answer none unless the row names the condition as a game effect.\n- A clause that is speech goes to \"unplaced\" with \"where\": \"languages\"; pure lore goes to \"unplaced\" with \"where\": \"description\". Never invent a clause the creator did not type. Never write \"the bog hound\" if Bog Hound is a person; write \"the bog hound\".\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n- THIS BODY HOLDS BY GRIP — it seizes what its jaws or claws already reach. A row that pulls, hauls or drags a creature toward it from beyond that reach is not something this body can do.\n\nTHE SAVE'S STAT. Published monsters pair a save with the stat whose faculty the effect attacks, and the same pairings are held to here:\n- the row deals damage — Dexterity, or Constitution. Not Strength and not Wisdom, whatever condition rides along with the damage.\n- the row's whole effect is moving the target, a shove or a pull or a haul — Strength.\n- the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.\n- the row does none of those — whichever stat its own fiction asks for.\n\nAnswer with ONE JSON object in exactly this shape — the row INSIDE its array. Never a bare row object, and never a key that is not one of these four: \"action\", \"actions\", \"row\" and \"ability\" are not keys here.\n{ \"attacks\": [], \"saves\": [ ... ], \"traits\": [ ... ], \"reactions\": [ ... ], \"crossRef\": null, \"unplaced\": [] }\n\nAn answer with every array empty leaves the faulty row on the sheet word for word, which is the worst outcome available here — there is no ready-made row to fall back on. Repair it into one of these forms.",
+   "response": "{\"id\":\"11535f38-02e9-4b83-8287-2b0320fd3b48\",\"object\":\"chat.completion\",\"created\":1794862001,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{ \\\"attacks\\\": [], \\\"saves\\\": [], \\\"traits\\\": [ { \\\"clause\\\": \\\"While the bog hound remains motionless in mud or along a riverbank, it is indistinguishable from its surroundings.\\\", \\\"name\\\": \\\"Mud-Caked Hide\\\", \\\"trigger\\\": \\\"While the bog hound remains motionless\\\", \\\"effect\\\": \\\"It is indistinguishable from the terrain it lies in; a creature can notice it only by taking the Search action and succeeding on a Wisdom (Perception) check against {dc}.\\\", \\\"imposes\\\": null, \\\"condition_relation\\\": \\\"none\\\", \\\"acts\\\": null, \\\"heals\\\": false, \\\"mechanics\\\": 1, \\\"quantities\\\": 1, \\\"passive_effect\\\": \\\"ability\\\" } ], \\\"reactions\\\": [], \\\"crossRef\\\": null, \\\"unplaced\\\": [] }\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":2977,\"completion_tokens\":175,\"total_tokens\":3152,\"prompt_tokens_details\":{\"cached_tokens\":128},\"prompt_cache_hit_tokens\":128,\"prompt_cache_miss_tokens\":2849},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+  },
+  {
+   "prompt": "You are converting D&D statblock entries from 2024 (5.5e) phrasing to CLASSIC 2014 (5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.\n- \"*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.\" becomes \"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.\" (Ranged attacks likewise, keeping the range.)\n- \"*<Ability> Saving Throw*: DC n, <targets>. *Failure:* <damage>. *Success:* Half damage only.\" becomes \"<targets> must make a DC n <Ability> saving throw, taking <damage> on a failed save, or half as much damage on a successful one.\" Condition-only saves become \"must succeed on a DC n <Ability> saving throw or <be/become condition>\".\n- Reactions: \"*Trigger:* <event>. *Response:* <effect>.\" becomes \"When <event>, <the creature does the effect>.\"\n- \"Advantage\"/\"Disadvantage\" become lowercase \"advantage\"/\"disadvantage\" in prose (\"if the attack roll had Advantage\" becomes \"if the attack had advantage\"). Spell-list labels: \"At Will:\" becomes \"At will:\", \"1/Day Each:\" becomes \"1/day each:\", \"3/Day Each:\" becomes \"3/day each:\". These four words were the 2024 vocabulary most often left standing (sweep 2026-10-18).\n- Conditions, damage types, and game terms go lowercase in prose: \"is knocked prone\", \"frightened\", \"slashing damage\", \"hit points\". Never \"has the X condition\" — write \"is stunned\". Never \"Attack Roll:\", never \"*Failure:*\"/\"*Success:*\"/\"*Trigger:*\" markers.\n- 2024-only vocabulary must be translated: \"Bloodied\" becomes \"has half of its hit points or fewer\"; \"each creature in a 5-foot Emanation originating from it\" becomes \"each creature within 5 feet of it\"; an \"N-foot-radius Emanation\" becomes an \"N-foot-radius sphere\". Area shapes go lowercase: \"15-foot cone\", \"the cone\".\n- Spellcasting stays an ACTION in the MotM 2022 form (the Multiattack replacement clause requires it): \"The <creature> casts one of the following spells, requiring no material components and using <Ability> as the spellcasting ability (spell save DC n):\" — spell names lowercase italic (*bestow curse*), frequency labels \"At will:\" and \"1/day each:\", and \"(level 5 version)\" becomes \"(cast at 5th level)\". Never the 2014-core innate-trait wording.\n- An attack made with a spell, curse, conjured or spectral effect converts as \"Melee Spell Attack:\" / \"Ranged Spell Attack:\" (2014 distinguishes them); a physical weapon or body part is a \"Weapon Attack\".\n- Multiattack in 2014 form: \"makes two attacks: one with its X and one with its Y\" or \"makes two melee attacks\" — never \"in any combination\". A replacement clause drops the scaffold letters: \"It can replace one attack with a use of Curse of Arrears or its Spellcasting.\"\n- On a SWARM, melee attacks print \"reach 0 ft., one target in the swarm's space\".\n- A Bonus Actions entry's text begins \"As a bonus action, the <creature> ...\" in 2014 voice.\n- A save with damage AND a condition: if the source has a *Success:* Half clause, write \"...taking 24 (7d6) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also frightened of the <creature> until the end of its next turn.\" If the source has NO Success clause, write the or-form: \"must succeed on a DC n <Ability> saving throw or take 24 (7d6) fire damage and be frightened of the <creature> until the end of its next turn.\" NEVER drop the source's half-on-success. A fear/charm effect always names its source.\n- An aura is \"each ally within 10 feet of it\" / \"each creature within 10 feet of it\" — never \"sphere originating from\".\n- \"its AC increases by 2\" becomes \"it gains a +2 bonus to AC\".\n- The creature's short name is lowercase mid-sentence (\"the tollkeeper\"); capitalized only where any noun would be.\n\nTHE MONSTER: Bog Hound.\nENTRIES TO CONVERT (grouped by section):\n{\n  \"Actions\": [\n    {\n      \"name\": \"Multiattack\",\n      \"text\": \"The bog hound makes two Bite attacks. It can replace one attack with a use of Drag Prone.\"\n    },\n    {\n      \"name\": \"Bite\",\n      \"text\": \"*Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.\"\n    },\n    {\n      \"name\": \"Drag Prone\",\n      \"text\": \"*Strength Saving Throw:* DC 13, each creature in a 15-foot Cone. *Failure:* The target is pushed up to 15 feet away from the bog hound and has the Prone condition.\"\n    }\n  ],\n  \"Traits\": [\n    {\n      \"name\": \"Mud-Caked Hide\",\n      \"text\": \"While the bog hound remains motionless, it is indistinguishable from the terrain it lies in; a creature can notice it only by taking the Search action and succeeding on a Wisdom (Perception) check against DC 13.\"\n    }\n  ]\n}\n\nReturn ONLY a JSON object with the SAME sections, SAME entry order, SAME entry names, and converted texts — no markdown fences, no commentary:\n{\"Traits\": [{\"name\": \"...\", \"text\": \"...\"}], ...}",
+   "response": "{\"id\":\"2f1b135c-eb07-4f2c-b0b5-94b5684627da\",\"object\":\"chat.completion\",\"created\":1794862003,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"Actions\\\":[{\\\"name\\\":\\\"Multiattack\\\",\\\"text\\\":\\\"The bog hound makes two Bite attacks. It can replace one attack with a use of Drag Prone.\\\"},{\\\"name\\\":\\\"Bite\\\",\\\"text\\\":\\\"Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage. If the target is a Large or smaller creature, it is grappled (escape DC 11). While grappled, the target is restrained.\\\"},{\\\"name\\\":\\\"Drag Prone\\\",\\\"text\\\":\\\"Each creature in a 15-foot cone must make a DC 13 Strength saving throw, or the target is pushed up to 15 feet away from the bog hound and is knocked prone.\\\"}],\\\"Traits\\\":[{\\\"name\\\":\\\"Mud-Caked Hide\\\",\\\"text\\\":\\\"While the bog hound remains motionless, it is indistinguishable from the terrain it lies in; a creature can notice it only by taking the Search action and succeeding on a Wisdom (Perception) check against DC 13.\\\"}]}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":1343,\"completion_tokens\":215,\"total_tokens\":1558,\"prompt_tokens_details\":{\"cached_tokens\":1024},\"prompt_cache_hit_tokens\":1024,\"prompt_cache_miss_tokens\":319},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+  }
+ ],
+ "sheet": {
+  "name": "Bog Hound",
+  "inline": "the bog hound",
+  "type_and_alignment": "Medium beast, unaligned",
+  "armor_class": "11 (natural armor)",
+  "hit_points": "22 (3d8 + 9)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 12 (+1), DEX 8 (-1), CON 16 (+3), INT 4 (-3), WIS 15 (+2), CHA 10 (+0)",
+  "saving_throws": "STR +3",
+  "skills": "Athletics +3, Perception +4",
+  "senses": "darkvision 60 ft., passive Perception 14",
+  "languages": "None",
+  "challenge_rating": "1 (200 XP)",
+  "proficiency_bonus": "+2",
+  "abilities": [
+   {
+    "name": "Mud-Caked Hide",
+    "description": "While the bog hound remains motionless, it is indistinguishable from the terrain it lies in; a creature can notice it only by taking the Search action and succeeding on a Wisdom (Perception) check against DC 13."
+   }
+  ],
+  "actions": [
+   {
+    "name": "Multiattack",
+    "description": "The bog hound makes two Bite attacks. It can replace one attack with a use of Drag prone."
+   },
+   {
+    "name": "Bite",
+    "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage. If the target is a Large or smaller creature, it is grappled (escape DC 11). While grappled, the target is restrained.",
+    "imposes": [
+     "Grappled",
+     "Restrained"
+    ]
+   },
+   {
+    "name": "Drag Prone",
+    "description": "Each creature in a 15-foot cone must make a DC 13 Strength saving throw. On a failed save, the target is pushed up to 15 feet away from the bog hound and is knocked prone.",
+    "imposes": "Prone"
+   }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "auto",
+  "generation": {
+   "path": "reskin",
+   "mind_tiers": {
+    "tiers": {
+     "INT": "feeble",
+     "WIS": "capable",
+     "CHA": "ordinary"
+    },
+    "moved": {
+     "WIS": 15,
+     "CHA": 10
+    },
+    "held": [
+     "INT: the call read this creature as bestial, and the card's 4 is already that dim"
+    ]
+   },
+   "hold_shape": "grip",
+   "pipeline": {
+    "path": "homebrew",
+    "print_body": null,
+    "relation": null,
+    "class": null,
+    "species": null,
+    "by": "call"
+   },
+   "donor": "brute-5-grappler",
+   "archetype": "brute",
+   "holds": true,
+   "creatureOnly": false,
+   "unplaced": [],
+   "userConcept": "a mud-caked bog hound that drags fishermen under",
+   "clauses": [
+    {
+     "id": "cl_q9h7bu",
+     "text": "a mud-caked bog hound",
+     "kind": "descriptive",
+     "head": true
+    },
+    {
+     "id": "cl_1noqc7c",
+     "text": "drags fishermen under",
+     "kind": "mechanical",
+     "askWhen": "on_hit",
+     "askWhenWhy": "drags",
+     "askShape": "condition",
+     "askMechanic": "grapple",
+     "askMechanicWhy": "drags fishermen under"
+    }
+   ],
+   "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+   "free_rows": 1,
+   "free_row_templates": [
+    "false-appearance"
+   ],
+   "decoration_rows": 0,
+   "expressed_rows": 1,
+   "audit_dismissed_on_print": [],
+   "signature_rows": 2,
+   "seed_rows": 0,
+   "signature": "library"
+  },
+  "other_edition": {
+   "name": "Bog Hound",
+   "inline": "the bog hound",
+   "format": "2024",
+   "cr": 1,
+   "cr_str": "1",
+   "xp": 200,
+   "challenge_rating": "1 (XP 200; PB +2)",
+   "type": "Beast",
+   "size": "Medium",
+   "alignment": "Unaligned",
+   "ac": 11,
+   "hp": 22,
+   "hp_formula": "3d8 + 9",
+   "pb": 2,
+   "speed": "30 ft., Swim 30 ft.",
+   "stats": {
+    "STR": 12,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 15,
+    "CHA": 10
+   },
+   "saves": {
+    "STR": 3,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 2,
+    "CHA": 0
+   },
+   "skills": "Athletics +3, Perception +4",
+   "senses": "darkvision 60 ft.; Passive Perception 14",
+   "languages": "None",
+   "initiative_bonus": -1,
+   "initiative_score": 9,
+   "sections": {
+    "Actions": [
+     {
+      "name": "Multiattack",
+      "text": "The bog hound makes two Bite attacks. It can replace one attack with a use of Drag Prone."
+     },
+     {
+      "name": "Bite",
+      "imposes": [
+       "Grappled",
+       "Restrained"
+      ],
+      "text": "*Melee Attack Roll:* +3, reach 5 ft. 5 (1d8 + 1) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 11). While Grappled, the target has the Restrained condition.",
+      "clause": "drags fishermen under",
+      "answersAlso": [
+       "drags fishermen under"
+      ],
+      "weapon": null,
+      "clauseId": "cl_1noqc7c",
+      "attacksPerRound": 2
+     },
+     {
+      "name": "Drag Prone",
+      "text": "*Strength Saving Throw:* DC 13, each creature in a 15-foot Cone. *Failure:* The target is pushed up to 15 feet away from the bog hound and has the Prone condition.",
+      "library": true,
+      "template": "push-prone",
+      "imposes": "Prone",
+      "boundKeys": [],
+      "gmQuote": "drags fishermen under",
+      "widened": true
+     }
+    ],
+    "Bonus Actions": [],
+    "Traits": [
+     {
+      "name": "Mud-Caked Hide",
+      "text": "While the bog hound remains motionless, it is indistinguishable from the terrain it lies in; a creature can notice it only by taking the Search action and succeeding on a Wisdom (Perception) check against DC 13.",
+      "library": true,
+      "template": "false-appearance",
+      "boundKeys": [
+       "still"
+      ],
+      "freeRow": true,
+      "expresses": "mud-caked hide camouflaged as the riverbank",
+      "bound": false,
+      "expressedQuote": "indistinguishable from the mud or riverbank it lies in",
+      "conditionRelation": "none",
+      "freeRowRepaired": true
+     }
+    ]
+   },
+   "lore": "Born in the choked shallows where drowned fishermen are buried in silt, a bog hound is a hunger that learned to wear the riverbank as a coat, and it wants only to add another body to the mud.",
+   "inline_kind": "kind",
+   "generation": {
+    "path": "reskin",
+    "mind_tiers": {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "moved": {
+      "WIS": 15,
+      "CHA": 10
+     },
+     "held": [
+      "INT: the call read this creature as bestial, and the card's 4 is already that dim"
+     ]
+    },
+    "hold_shape": "grip",
+    "pipeline": {
+     "path": "homebrew",
+     "print_body": null,
+     "relation": null,
+     "class": null,
+     "species": null,
+     "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a mud-caked bog hound that drags fishermen under",
+    "clauses": [
+     {
+      "id": "cl_q9h7bu",
+      "text": "a mud-caked bog hound",
+      "kind": "descriptive",
+      "head": true
+     },
+     {
+      "id": "cl_1noqc7c",
+      "text": "drags fishermen under",
+      "kind": "mechanical",
+      "askWhen": "on_hit",
+      "askWhenWhy": "drags",
+      "askShape": "condition",
+      "askMechanic": "grapple",
+      "askMechanicWhy": "drags fishermen under"
+     }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+     "false-appearance"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "audit_dismissed_on_print": [],
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+   },
+   "archetype": "brute",
+   "archetype_source": "auto",
+   "lint_findings": []
+  },
+  "monsterDescription": "a mud-caked bog hound that drags fishermen under",
+  "selectedChallengeRating": "1",
+  "monsterName": "Bog Hound",
+  "caster": false
+ }
+}
