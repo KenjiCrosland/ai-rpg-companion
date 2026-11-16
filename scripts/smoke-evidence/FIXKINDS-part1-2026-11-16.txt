@@ -1,0 +1,341 @@
+# Part 1 — every finding the audit returned when asked to name its fix (2026-11-16)
+#
+# `origin` is the SHEET'S OWN per-row flags, which are exact: print/rules, template/library,
+# freeRow (a row beyond the chassis no template wrote), or chassis (no flags at all).
+# template-refused means the template was refused and the call's own text shipped under its
+# name — the owner's category 1 — which the trace says and the flags cannot.
+# "renamed since" means the audit named a row that is not on the finished sheet under that
+#   name: the audit reads the sheet MID-PIPELINE, and a later pass renames rows.
+#
+# Run: scripts/smoke-statblock.mjs --replay <tape> --arm fix-kinds   38 sheets, 0 threw, 0 timed out.
+
+origins: chassis 51, model-written 13, template 5, print 3, template-refused 3, renamed since 3
+fixes:   clarify 46, (unlabelled) 14, rename 6, none 4, add_duration 3, delete_span 2, fill_number 2, reformat 1
+
+HIGH findings only, origin x fix:
+   chassis            clarify        6
+   chassis            rename         2
+   chassis            add_duration   2
+   renamed since      clarify        2
+   template           clarify        1
+   print              clarify        1
+   model-written      add_duration   1
+   chassis            delete_span    1
+   chassis            (unlabelled)   1
+   model-written      fill_number    1
+   chassis            fill_number    1
+   template-refused   clarify        1
+
+sheet 01 | Crusted Wake                         | model-written     | medium | clarify       | —
+          issue: The frost-rimed trait spends its whole payload on a 10-foot Speed reduction that the wolf's own 50-foot Speed and Pack Tactics make irrelevant — a nuisance where the frost fiction promises a threat (slick, biting cold).
+          span : "reducing its Speed by 10 feet until the end of its turn"
+
+sheet 01 | Crusted Wake                         | model-written     | medium | clarify       | —
+          issue: The trigger is checked at the start of each creature's turn but gives no guidance for creatures that enter the 5-foot radius mid-turn or start there and move away — the GM must track every creature's position relative to the wolf at an off-turn moment, which is state the block gives no way to track.
+          span : "A creature starts its turn within 5 feet of the wolf"
+
+sheet 02 | Mud-Caked Hide                       | chassis           | medium | clarify       | —
+          issue: Nothing states what action staying motionless costs or how a creature detects the hound (Perception check DC, Search action), so a GM cannot adjudicate who notices it or when hiding begins.
+          span : "While the bog hound remains motionless, it is indistinguishable from the mud or riverbank it lies in."
+
+sheet 03 | Learned to Climb                     | chassis           | high   | clarify       | —
+          issue: The jump targets a space occupied by another creature; a non-swarm creature cannot legally enter or share an occupied space, so the move to the destination is not a rules-legal move and the action has no valid landing.
+          span : "The owlbear spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures."
+
+sheet 04 | Grave Knell                          | template          | high   | clarify       | —
+          issue: Grave Knell never states whether it costs an action, a Bonus Action, or is only usable via Multiattack, so a GM cannot tell when the bell-ringer is allowed to ring it.
+          span : "Constitution Saving Throw: DC 13, one creature within 30 feet."
+
+sheet 04 | Horrific Visage                      | print             | high   | clarify       | —
+          issue: The block names a 'ghost' here (and again in Possession) but the creature is the chapel bell-ringer; the monster refers to itself by a name that is not its own.
+          span : "The target is immune to this ghost's Horrific Visage for 24 hours."
+
+sheet 05 | Echo of the Stolen Chorus            | model-written     | high   | add_duration  | until the end of the attacker's ne
+          issue: The disadvantage is scheduled to end at the end of the elemental's next turn, but the trigger is being struck by any creature on any turn, so an echo released on the elemental's own turn ends before the affected attacker ever makes an attack roll, leaving the benefit with no legal window to apply.
+          span : "until the end of the elemental's next turn"
+
+sheet 05 | Echo of the Stolen Chorus            | model-written     | medium | clarify       | —
+          issue: The trait has no defined trigger window for which prior attackers count, and assumes each attacker has a 'next attack roll' to spend, so a GM cannot determine who is affected or when the penalty resolves.
+          span : "any creature that dealt it damage has Disadvantage on its next attack roll"
+
+sheet 05 | Echo of the Stolen Chorus            | model-written     | medium | clarify       | —
+          issue: The trait references a 'chorus' whose membership is never defined and a finite stock of voices, but nothing on the sheet tracks how many voices the elemental holds or what happens when the chorus is empty.
+          span : "The voice is spent and lost from the chorus."
+
+sheet 06 | Entomb                               | chassis           | medium | clarify       | —
+          issue: The entombed creature is sealed under rubble with Blinded and Restrained, yet the only escape named is damaging the pit for 15+ in a turn — an entombed creature with Total Cover against outside effects cannot be damaged or aided by allies, and no carve-out lets the target act, so it has no rules-legal path out of its own accord while the pit lives.
+          span : "has Total Cover against attacks and other effects outside the scree pit"
+
+sheet 06 | Entomb                               | chassis           | low    | clarify       | —
+          issue: The release clause puts the target Prone when it exits, but the creature has no way to remove the Prone condition from itself; the only Prone-clearing reference is the death clause, so this reads as the pit dropping a grappled victim face-down with no cause.
+          span : "and the target exits Prone in an unoccupied space within 5 feet of the scree pit"
+
+sheet 06 | Stone Flood                          | chassis           | low    | none          | —
+          issue: The cone's own point of origin is the pit, so a creature anywhere in a 30-foot cone pulled straight toward the pit moves inward along the cone's axis — fine for targets on the axis, but the name promises a flood of rubble that buries and pins, while the mechanics only drag inward and knock Prone; the seized/dragged-under fiction the row was chosen for is delivered only as forced movement, not as the pit taking hold of prey.
+          span : "The target is pulled up to 10 feet straight toward the scree pit"
+
+sheet 07 | Multiple Heads                       | chassis           | high   | delete_span   | —
+          issue: The Multiattack-style sentence is misplaced inside the Multiple Heads trait, describing action usage rather than head regrowth, and reads as orphaned content from the Actions section.
+          span : "the hydra makes as many Bite attacks as it has heads."
+
+sheet 07 | Multiple Heads                       | chassis           | low    | clarify       | —
+          issue: Lowercase sentence start is a deterministic-fix formatting artifact; the sentence itself is fine but attached mid-paragraph to the damage-trigger clause without a break.
+          span : "the hydra dies if all its heads are dead."
+
+sheet 07 | Caustic Vapor (Recharge 5-6)         | chassis           | low    | none          | —
+          issue: This is a catalog row shared across the body, so report plainly: the effect is fine but the entry name 'Caustic Vapor' promises an acidic vapor cloud that blinds by chemical means, which matches; no defect there. The real judgment issue is that Blinded has a stated end, so counterplay exists. No finding.
+          span : "the target has the Blinded condition until the end of its next turn"
+
+sheet 08 | Trample                              | template          | medium | (unlabelled)  | —
+          issue: Targets are defined only by space-entry with no resolution point, so a creature can be left inside the golem's space with no rules-based exit; the row creates a state (overlapping the golem) that nothing in the block resolves.
+          span : "Each creature whose space it enters is targeted once by the following effect."
+
+sheet 08 | Trample                              | template          | low    | (unlabelled)  | —
+          issue: The move is described inside an action but its trigger is left dangling ('Each creature whose space it enters is targeted once'), giving the GM no clear sequencing for what happens mid-move versus at the end.
+          span : "The ram-golem moves up to its Speed without provoking Opportunity Attacks"
+
+sheet 09 | Multiattack                          | chassis           | high   | clarify       | —
+          issue: The sentence begins mid-clause with a lowercase fragment detached from its subject, reading as an orphaned clause rather than a complete statblock sentence.
+          span : "the stone golem makes two attacks"
+
+sheet 10 | Drowning Chord                       | chassis           | medium | (unlabelled)  | —
+          issue: The Charmed rider dictates the target's movement but grants no repeat save, and Charmed alone does not stop it from attacking the choir, so the compelled-movement effect has no rules-legal way for the target to break free while it lasts.
+          span : "it must move toward the choir by the safest available route on its turn"
+
+sheet 10 | Grave-Chill Voice                    | chassis           | medium | (unlabelled)  | —
+          issue: The name promises a chilling/cold or voice-mediated effect, but the attack is a melee reach 5 ft. strike dealing Bludgeoning plus Necrotic — nothing is cold, and nothing is vocal or ranged.
+          span : "Grave-Chill Voice"
+
+sheet 10 | Drowning Chord                       | chassis           | high   | (unlabelled)  | —
+          issue: The success clause grants immunity to "this creature's lure," but no lure entry exists in the block, leaving the reference unresolved.
+          span : "The target is immune to this creature's lure for 24 hours."
+
+sheet 10 | Drowning Chord                       | chassis           | medium | (unlabelled)  | —
+          issue: The Charmed payload does not prevent the target from attacking the choir, so the action's only teeth — forced movement and no Reactions — leave the row without a real threat against a hostile target.
+          span : "The target has the Charmed condition until the start of the choir's next turn"
+
+sheet 11 | Beguile                              | chassis           | high   | clarify       | —
+          issue: Orphaned lowercase sentence fragment beginning mid-thought with a lowercase 'the' after a period, reading as a stray clause rather than statblock prose.
+          span : "the vampire can't take this action again until the start of its next turn."
+
+sheet 12 | Swarmwright's Command                | chassis           | high   | rename        | Blighted Swarm
+          issue: The name promises a swarming or minion-summoning command, but the entry only applies Poisoned with no swarm, ally, or creation mechanic behind it.
+          span : "The target has the Poisoned condition until the end of its next turn."
+
+sheet 12 | Plague Aura                          | template-refused  | medium | clarify       | —
+          issue: The aura applies Poisoned based on where a creature starts its turn, but its emanation moves with the swarmshear and gives a creature no written way to leave or avoid the aura before its save resolve, leaving affected targets no in-entry agency beyond the initial save.
+          span : "The target has the Poisoned condition until the start of its next turn."
+
+sheet 12 | Retinue Dive                         | chassis           | low    | clarify       | —
+          issue: The name and flight-based dive promise a plunging swarm attack, but the row is a flyby that functions whether or not the creature descends, and the multi-target pass does not visibly connect to the swarmshear's swarm nature.
+          span : "The swarmshear flies up to its Speed without provoking Opportunity Attacks."
+
+sheet 13 | Churning Armoury                     | model-written     | medium | clarify       | —
+          issue: Swallowed creatures are Blinded and Restrained and cannot be removed from play, but the trait also damages 'each creature inside' with no distinction from Swallow's swallowing mechanic and duplicates the swallowed creature's Acid damage without stating whether it stacks with Swallow's own start-of-turn Acid damage.
+          span : "each creature inside the purple worm takes 22 (5d8) Acid damage, and the purple worm gains Temporary Hit Points equal to half the damage dealt"
+
+sheet 13 | Churning Armoury                     | model-written     | medium | clarify       | —
+          issue: The name 'Churning Armoury' promises a store of swallowed blades and mail that grinds the gullet's contents, but the text only deals Acid damage and grants Temporary Hit Points — the armoury is never expressed mechanically.
+          span : "gains Temporary Hit Points equal to half the damage dealt"
+
+sheet 13 | Multiattack                          | chassis           | low    | none          | —
+          issue: The Multiattack row opens with a lowercase word, which is a capitalization matter that the deterministic pass fixes; the row is otherwise consistent with the creature's two attacks and is not itself a defect.
+          span : "the purple worm makes one Bite attack and one Tail Stinger attack"
+
+sheet 14 | Rimewake                             | chassis           | high   | add_duration  | until the end of its next turn
+          issue: The Difficult Terrain is created at the start of each of the creature's turns but never says when it ends or clears, so the GM cannot adjudicate a persistent or accumulating frost patch.
+          span : "At the start of each of its turns, the ground in a 15-foot Emanation of the glacier-heart coats in rime and becomes Difficult Terrain"
+
+sheet 14 | Rimewake                             | chassis           | medium | clarify       | —
+          issue: The trait requires the GM to track a per-creature frozen-area membership and a halved Speed carried to the end of the target's next turn, state the block gives no way to mark or track across turns.
+          span : "a creature that begins its turn in that frozen area takes 16 (3d10) Cold damage and has its Speed halved until the end of its next turn"
+
+sheet 15 | Ruined Eye, Wary Ear                 | renamed since     | high   | clarify       | —
+          issue: The trait invents a 'blind left flank' facing state with no rules for determining a creature's facing, so the GM cannot adjudicate when an attack originates from it.
+          span : "the first such attack each round alerts the dragon, which pivots to face the attacker, and any further attacks against it from that flank that round are made with Disadvantage"
+
+sheet 15 | Ruined Eye, Wary Ear                 | renamed since     | high   | clarify       | —
+          issue: No rule in the block or the game defines a creature's left flank, so 'from its blind left flank' cannot be adjudicated against creature positions.
+          span : "While a creature makes an attack against the red dragon from its blind left flank, that attack is made with Advantage"
+
+sheet 15 | Multiattack                          | chassis           | medium | clarify       | —
+          issue: The sentence begins lowercase, an orphaned fragment detached from its entry's capitalization.
+          span : "the red dragon makes three Rend attacks"
+
+sheet 15 | Commanding Presence                  | chassis           | medium | clarify       | —
+          issue: The sentence begins lowercase, an orphaned fragment.
+          span : "the red dragon can't take this action again until the start of its next turn"
+
+sheet 16 | Seize the Unforged                   | chassis           | low    | (unlabelled)  | —
+          issue: The escape DC is given, but the entry never states the size or condition limit of who it can grapple, and more importantly the Multiattack allows Seize the Unforged to replace a Fist attack on a target that could be up to 10 feet away with no stated reach beyond 'within 10 feet,' which is fine, but the grapple has no stated movement restriction tying the target to the king's space or reach, leaving the Grappled condition's standard effect ambiguous as to whether it applies at range.
+          span : "The target has the Grappled condition (escape DC 20)."
+
+sheet 17 | Chain of Broken Oaths                | model-written     | high   | fill_number   | Temporary Hit Points amount
+          issue: The number of Temporary Hit Points is never given, so the GM cannot adjudicate the trigger.
+          span : "the pit fiend gains Temporary Hit Points"
+
+sheet 18 | Eldritch Burst                       | chassis           | medium | (unlabelled)  | —
+          issue: The statblock brands itself a sun-lich but every energy outlet is Force, Cold, Necrotic, Piercing, and Lightning; the Throne-Sun Volley fires plain Piercing with only a Restrain, delivering nothing solar, and the title's sun claim is only carried by the (renamed) recharge row.
+          span : "Force damage"
+
+sheet 18 | Throne-Sun Volley                    | chassis           | medium | (unlabelled)  | —
+          issue: Neither a throne nor a sun is present in the effect: the attack is a piercing line attack that restrains, with no radiant or light mechanic to back the name.
+          span : "Throne-Sun Volley"
+
+sheet 18 | Eldritch Burst                       | chassis           | low    | (unlabelled)  | —
+          issue: The archlich's at-will option deals generic Force damage with no rider and no interaction with its other abilities, leaving a plain ranged/melee strike to compete unfavorably with the Restrain and Paralyze branches of Multiattack.
+          span : "31 (4d12 + 5) Force damage"
+
+sheet 18 | Shrieking Halo                       | chassis           | medium | (unlabelled)  | —
+          issue: A shrieking halo is atmospherically sonic but mechanically imposes a truth-telling compulsion on all within 15 feet — a name/content mismatch of sense and effect.
+          span : "can't speak a deliberate lie"
+
+sheet 20 | Bone-Ringing Coils                   | template          | medium | clarify       | —
+          issue: This trait references 'this attack' with no attack defined within it and is triggered as though it were an attack, but it is a trait, so the trigger never resolves cleanly.
+          span : "Once on each of the leviathan's turns when it hits with this attack, the target is subjected to the following effect."
+
+sheet 20 | Fathom Chorus                        | chassis           | low    | clarify       | —
+          issue: A signature Constitution-save action that only imposes Poisoned for one turn is a dead payload on an action the Multiattack trades away, and Poisoned carries no teeth against this creature's own Coils.
+          span : "The target has the Poisoned condition until the end of its next turn."
+
+sheet 20 | Swell Surge                          | chassis           | low    | clarify       | —
+          issue: Prone is a nuisance against creatures that will simply stand on their turn, and the strength of a 24-DC shove is spent forcing a condition that costs nothing here.
+          span : "*Failure:* The target has the Prone condition."
+
+sheet 21 | Multiattack                          | print             | low    | reformat      | —
+          issue: The sentence's subject is not capitalized and the creature is referred to by lowercase species noun rather than its name, which reads as a broken sentence start.
+          span : "the owlbear makes two Rend attacks."
+
+sheet 23 | Dress the Line                       | chassis           | high   | fill_number   | AC bonus amount
+          issue: The AC bonus is blank, so the trigger resolves to no defined quantity and the GM cannot adjudicate the effect.
+          span : "gains a + bonus to its AC"
+
+sheet 23 | Dress the Line                       | chassis           | medium | clarify       | —
+          issue: As a once-per-turn reaction usable on other creatures' turns, the bonus can expire immediately at the start of Vashka's own turn or persist through an enemy's turn depending on initiative order, leaving the GM without a coherent window for the benefit.
+          span : "until the start of Vashka's next turn"
+
+sheet 23 | Shield-Locked                        | chassis           | high   | clarify       | —
+          issue: Nothing in the block defines what counts as an attack 'from the side' of an ally, so whether the +2 AC applies cannot be adjudicated at the table.
+          span : "attacks that come from the side of her ally"
+
+sheet 24 | Spitting Maw                         | chassis           | medium | rename        | Gnashing Maw
+          issue: A maw that spits should be a ranged attack, but the entry is Melee reach 10 ft., so the name promises a delivery the text does not perform.
+          span : "Spitting Maw"
+
+sheet 24 | Horrid Display                       | template          | medium | rename        | Scythe-Brood Terror Display
+          issue: The generic stand-in name does not evoke this acid-shelled scythe brood horror's own body and biology.
+          span : "Horrid Display"
+
+sheet 25 | Ward Bond                            | chassis           | medium | clarify       | —
+          issue: Ward Bond and Interpose both describe guarding a ward, but Interpose's trigger is 'a creature within 5 feet of the iron sentinel that it guards' — nothing defines which creature the sentinel 'guards', creating a second undefined referent alongside the ward.
+          span : "half of any damage the ward takes (round up) is transferred to the iron sentinel"
+
+sheet 25 | Stand Fast                           | chassis           | low    | clarify       | —
+          issue: As a 2/Day action the row competes with the Multiattack for the turn but delivers only Temporary HP and AC, and grants no repositioning or damage — a defensive action that spends the sentinel's whole attack turn.
+          span : "targets itself or one creature it can see within 60 feet"
+
+sheet 26 | Fenwater Binding                     | chassis           | high   | rename        | Fenwater Burst
+          issue: The name promises a binding/restraining effect, but the text only deals Bludgeoning damage with no Grappled, Restrained, or other binding mechanic.
+          span : "Fenwater Binding"
+
+sheet 26 | Fenwater Binding                     | chassis           | medium | clarify       | —
+          issue: As the signature action it is a bare save-for-damage with no imposed condition, no lingering effect, and no battlefield control, so the 'Binding' fiction delivers no teeth and the row is a dead payload on its own turn.
+          span : "Failure: 19 (3d12) Bludgeoning damage."
+
+sheet 27 | Shoulder Square                      | model-written     | medium | clarify       | —
+          issue: The trait keys off 'ground' the block never defines as a state the GM can track or adjudicate (what counts as ground, and whether the templar has 'moved from' it), so its Disadvantage and immovability clause can't be reliably resolved at the table.
+          span : "standing on ground he has not moved from since the start of his last turn"
+
+sheet 27 | Shield Bash                          | print             | low    | clarify       | —
+          issue: The templar itself is Medium, so its own shield bash can never knock down a creature of its own size or larger, making the size gate read as an arbitrary failure of the creature's signature shove rather than a plausible limitation.
+          span : "If the target is a Medium or smaller creature, it has the Prone condition."
+
+sheet 28 | Gloaming Shift                       | chassis           | medium | delete_span   | —
+          issue: The trait creates a smear of gloom that no entry defines, uses, or removes, so it requires tracking a zone with no rules attached.
+          span : "leaving a smear of deepening gloom in the space he left"
+
+sheet 28 | Gloaming Shift                       | chassis           | medium | clarify       | —
+          issue: The teleport has no action cost stated in the trait, so a GM cannot tell whether it is free, a bonus action, or part of hiding.
+          span : "can teleport up to 30 feet to an unoccupied space he can see that is in dim light or darkness"
+
+sheet 28 | Gloaming Shift                       | chassis           | high   | clarify       | —
+          issue: The statblock refers to Ilvareth as 'he' here while the rest of the block uses 'Ilvareth' or 'it', a referent/person inconsistency.
+          span : "he can see"
+
+sheet 28 | Immunities                           | renamed since     | medium | clarify       | —
+          issue: The Immunities line carries a nested parenthetical that is a design annotation rather than a condition or resistance, and Charmed under a (with Mind Blank) rider is not a condition immunity the sheet states as a standing property.
+          span : "Charmed ((with Mind Blank))"
+
+sheet 28 | Shadow Step                          | chassis           | low    | clarify       | —
+          issue: Shadow Step has no shadow, darkness, or line-of-sight restriction, so it is a strictly better unrestricted teleport than the creature's own Gloaming Shift and reads as an anonymous generic blink that does not match the creature's shadow-stepping fiction.
+          span : "Ilvareth teleports up to 60 feet to an unoccupied space it can see."
+
+sheet 29 | Tolling Rot                          | template-refused  | high   | clarify       | —
+          issue: The trait references 'this attack' but is a trait with no attack of its own, so there is no referent defining which hit triggers it.
+          span : "when it hits with this attack"
+
+sheet 30 | Reliquary Swallow                    | chassis           | low    | none          | —
+          issue: The action saves against the target's Dexterity but nothing states whether this is a save-only effect or requires an attack; the header reads like attack language on a save-based action.
+          span : "Melee Attack Roll:"
+
+sheet 31 | Stormfront Sense                     | model-written     | medium | clarify       | —
+          issue: The trait imposes Disadvantage on creatures hearing the drake 'through the storm it brings', but nothing in the block creates a storm, so the triggering condition and the reason for the penalty are undefined.
+          span : "while the thunderhead drake is airborne and above every enemy within sight"
+
+sheet 34 | Skull Standard's Din                 | chassis           | high   | clarify       | —
+          issue: The trait grants Disadvantage on Opportunity Attacks made against Krennik, which Running Pass already grants outright, making the Din clause redundant against Krennik himself.
+          span : "any enemy that starts its turn within 30 feet of Krennik and can see the standard has Disadvantage on Opportunity Attacks made against Krennik or his mount"
+
+sheet 34 | Skull Standard's Din                 | chassis           | medium | clarify       | —
+          issue: The block never defines the standard as a visible object/area, so a GM cannot adjudicate who can see it or where it is.
+          span : "can see the standard"
+
+sheet 34 | Skull Standard's Din                 | chassis           | low    | rename        | Skull Standard's Aura
+          issue: The trait is the only fear/charge-affecting trait authored for this creature, yet its name promises a roar/din (audible command) while its text is purely a visual sight-condition and never relates to sound or herding fear.
+          span : "can see the standard"
+
+sheet 34 | Skull Standard Cry                   | chassis           | medium | clarify       | —
+          issue: Refers to 'this creature's terror', a named fear effect the block never creates or defines, so the immunity has no referent.
+          span : "The target is immune to this creature's terror for 24 hours."
+
+sheet 35 | Drowning Hymn                        | model-written     | medium | (unlabelled)  | —
+          issue: The Hymn pulls the target toward the creature but applies no Grappled or Restrained, so nothing stops it walking straight back out on its own turn — the lure has no hold.
+          span : "The target is pulled up to 15 feet straight toward the well-drowned, and the target has the Frightened condition until the end of its next turn."
+
+sheet 35 | Drowning Hymn                        | model-written     | low    | (unlabelled)  | —
+          issue: Frightened's only teeth are barred approach and Disadvantage while the source is in sight — but the target is being dragged toward the well-drowned and Frightened does not block that movement, so the condition is a nuisance tag on a pull, not a threat.
+          span : "the target has the Frightened condition until the end of its next turn"
+
+sheet 35 | Drowning Hymn                        | model-written     | medium | rename        | Drowning Pull
+          issue: The name promises a sung compulsion that draws victims down, but the text is a silent Strength save pull-and-frighten with no voice, hearing, or lure mechanic — the name and the rules describe different abilities.
+          span : "Drowning Hymn"
+
+sheet 37 | Barbarian Rage                       | chassis           | high   | add_duration  | for 1 minute, until it is Incapaci
+          issue: The rage has no stated end condition or duration, so the GM cannot tell when the bonus damage and Advantage stop applying.
+          span : "it can enter a rage as a Bonus Action, while raging,"
+
+sheet 37 | Terror Roar                          | chassis           | medium | clarify       | —
+          issue: The entry gives a target and a DC but never states the timing or trigger for the save (no action cost or trigger clause), so the GM cannot tell when it is invoked.
+          span : "*Wisdom Saving Throw*: DC 15, one creature within 30 feet."
+
+sheet 37 | Terror Roar                          | chassis           | medium | clarify       | —
+          issue: Frightened with no rider beyond its own effects and ending before the target's next action gives a Recharge 5-6 signature row almost no teeth; the roar threatens but does not materially change the fight.
+          span : "The target has the Frightened condition until the end of its next turn."
+
+sheet 38 | Closing Blade                        | template-refused  | medium | clarify       | —
+          issue: The trait gives the creature no way to know or track which creatures it damaged within 24 hours; a GM cannot adjudicate the condition mid-combat without unstated bookkeeping.
+          span : "While the champion is moving toward a creature it has damaged within the last 24 hours"
+
+sheet 39 | Find the Angle                       | chassis           | medium | clarify       | —
+          issue: The trait's trigger is a Handaxe hit at melee reach, so the mobility/footwork fantasy it names is delivered by the axe, not the shortsword-at-close-quarters feature it was claimed to express, and the name promises an angling mechanic the text never implements.
+          span : "When Orrin hits a creature within 5 feet of it with a Handaxe attack, Orrin can move up to 10 feet without provoking an Opportunity Attack from that creature."
+
+sheet 39 | Shortsword                           | chassis           | medium | clarify       | —
+          issue: The Shortsword is a strictly weaker replacement in the Multiattack chain than the Handaxe it displaces — less damage and no Advantage rider — so it is never worth choosing.
+          span : "7 (1d6 + 4) Piercing damage."
+
+sheet 40 | Seeping Wrappings                    | chassis           | medium | (unlabelled)  | —
+          issue: The trait's name promises soiled grave-wrappings seeping toxin, but the rules never express that feature: it only inflicts Poisoned, which the feature does not carry (null element claim), and the name overpromises an ooze/contact mechanic the text never delivers.
+          span : "has the Poisoned condition until the end of its next turn"
+
+78 findings across 35 sheets.
