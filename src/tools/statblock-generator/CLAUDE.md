@@ -26,6 +26,11 @@ hold sheets back waiting for a review.
 **When a new blocks file lands, delete the previous round's** unless it is a milestone. Git
 history keeps it.
 
+**A `CHECK-*` file goes when its blocks file goes**, in the same deletion commit, unless
+something outside the folder names it (owner's ruling, 2026-11-16). The checker's output is
+the reading of one run's sheets; once those sheets are out of the folder it has nothing left
+to describe.
+
 **A milestone is named, never assumed.** The owner or the reviewer names it in a handoff — a
 release forty run as a gate, a sheet the owner judged good, sheets a parked item still rests
 on.
