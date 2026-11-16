@@ -10657,5 +10657,38 @@
     "head": true
    }
   ]
+ },
+ "ba0850a08be2": {
+  "concept": "a paladin",
+  "clauses": [
+   {
+    "id": "cl_1xhob1g",
+    "text": "a paladin",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "eca93f9a98d7": {
+  "concept": "Sir Aldric — a paladin of the dawn",
+  "clauses": [
+   {
+    "id": "cl_17y0su3",
+    "text": "Sir Aldric — a paladin of the dawn",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "da9f27150693": {
+  "concept": "a fighter",
+  "clauses": [
+   {
+    "id": "cl_1whodmm",
+    "text": "a fighter",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }

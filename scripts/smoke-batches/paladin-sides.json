@@ -1,0 +1,92 @@
+[
+ {
+  "canary": "either side of the body that fails \u2014 CR 3, roll 1 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "either side of the body that fails \u2014 CR 3, roll 2 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "either side of the body that fails \u2014 CR 3, roll 3 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "either side of the body that fails \u2014 CR 5, roll 1 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "either side of the body that fails \u2014 CR 5, roll 2 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "either side of the body that fails \u2014 CR 5, roll 3 of 3",
+  "name": "",
+  "description": "a paladin",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ }
+]

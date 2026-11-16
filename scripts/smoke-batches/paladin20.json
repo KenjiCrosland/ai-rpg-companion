@@ -1,0 +1,302 @@
+[
+ {
+  "canary": "blocker measurement \u2014 roll 1 of 5: count the attack rows",
+  "name": "",
+  "description": "a paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 2 of 5: count the attack rows",
+  "name": "",
+  "description": "a paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 3 of 5: count the attack rows",
+  "name": "",
+  "description": "a paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 4 of 5: count the attack rows",
+  "name": "",
+  "description": "a paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 5 of 5: count the attack rows",
+  "name": "",
+  "description": "a paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 1 of 5: count the attack rows",
+  "name": "Sir Aldric",
+  "description": "a paladin of the dawn",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 2 of 5: count the attack rows",
+  "name": "Sir Aldric",
+  "description": "a paladin of the dawn",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 3 of 5: count the attack rows",
+  "name": "Sir Aldric",
+  "description": "a paladin of the dawn",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 4 of 5: count the attack rows",
+  "name": "Sir Aldric",
+  "description": "a paladin of the dawn",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 5 of 5: count the attack rows",
+  "name": "Sir Aldric",
+  "description": "a paladin of the dawn",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 1 of 5: count the attack rows",
+  "name": "",
+  "description": "a fighter",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 2 of 5: count the attack rows",
+  "name": "",
+  "description": "a fighter",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 3 of 5: count the attack rows",
+  "name": "",
+  "description": "a fighter",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 4 of 5: count the attack rows",
+  "name": "",
+  "description": "a fighter",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 5 of 5: count the attack rows",
+  "name": "",
+  "description": "a fighter",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 1 of 5: count the attack rows",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 2 of 5: count the attack rows",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 3 of 5: count the attack rows",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 4 of 5: count the attack rows",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ },
+ {
+  "canary": "blocker measurement \u2014 roll 5 of 5: count the attack rows",
+  "name": "",
+  "description": "a guard captain turned paladin",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "at least one attack row, and the Multiattack names a row that exists"
+ }
+]
