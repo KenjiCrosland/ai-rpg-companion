@@ -1,0 +1,32 @@
+[
+ {
+  "canary": "harness check \u2014 a printed monster, exact path",
+  "name": "Owlbear",
+  "description": "",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "records and replays"
+ },
+ {
+  "canary": "harness check \u2014 an invented sheet, several calls",
+  "name": "",
+  "description": "a marsh witch who curses trespassers",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "records and replays"
+ }
+]

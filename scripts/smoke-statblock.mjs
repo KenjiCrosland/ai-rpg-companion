@@ -27,6 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { buildTape, takeAnswer, unusedAnswers } from './lib/tape.mjs';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:5173';
 const GEN_TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 240_000);
@@ -48,22 +49,52 @@ const onlyIdx = (() => {
   }
   return n;
 })();
-const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx)) ?? 'batch';
+// RECORD AND REPLAY (2026-11-16). A forty costs twenty minutes and a different roll every time,
+// so a refactor's effect cannot be told from the model's variance. Recorded once and replayed,
+// the same inputs give the same sheet and any difference is the code's.
+//
+// WHERE IT RECORDS. Every model call in this tool crosses ONE function — `generateGptResponse`
+// in src/util/ai-client.mjs: the eight inside `generateReskin` arrive through the `callLLM` it is
+// handed (`(prompt, validate) => generateGptResponse(prompt, validate, 3)`,
+// StatblockGenerator.vue:1736) and the identity, route and path calls are made directly. Nothing
+// under the tool calls `fetch` itself. So this intercepts the HTTP request that function issues,
+// one level below it: the same boundary, and NO product code changes to record or replay.
+//
+// RECORD AND REPLAY SHARE THIS DRIVER on purpose. If one ran in a browser and the other under
+// node, a mismatch could be the environment; here it cannot.
+const replayDir = args.includes('--replay') ? path.resolve(args[args.indexOf('--replay') + 1] ?? '') : null;
+const recording = args.includes('--record');
+const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx) && a !== (replayDir ? args[args.indexOf('--replay') + 1] : null)) ?? 'batch';
 let goldenFailures = 0;
+let replayFailures = 0;
 
+const RECORDINGS = path.resolve('src/tools/statblock-generator/reskin/__tests__/fixtures/recordings');
+// IN REPLAY THE RECORDING IS THE INPUT, not a batch file — so the inputs cannot drift from the
+// prompts that were recorded against them.
+let replayCases = [];
+if (replayDir) {
+  if (!fs.existsSync(replayDir)) { console.error(`No recording at ${replayDir}`); process.exit(1); }
+  replayCases = fs.readdirSync(replayDir).filter((f) => /^\d+-.*\.json$/.test(f)).sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+    .map((f) => ({ file: f, ...JSON.parse(fs.readFileSync(path.join(replayDir, f), 'utf8')) }));
+  console.log(`replaying ${replayCases.length} recorded generation(s) from ${path.relative(process.cwd(), replayDir)} — no network`);
+}
 const batchPath = path.resolve('scripts/smoke-batches', `${batchName}.json`);
-if (!fs.existsSync(batchPath)) {
+if (!replayDir && !fs.existsSync(batchPath)) {
   console.error(`No batch file at ${batchPath}\nAvailable: ${fs.existsSync('scripts/smoke-batches') ? fs.readdirSync('scripts/smoke-batches').join(', ') : '(none yet)'}`);
   process.exit(1);
 }
-let entries = JSON.parse(fs.readFileSync(batchPath, 'utf8'));
-if (onlyIdx) entries = [entries[onlyIdx - 1]];
+let entries = replayDir ? replayCases.map((c) => c.input) : JSON.parse(fs.readFileSync(batchPath, 'utf8'));
+// `--only` SLICES THE RECORDING TOO. It sliced `entries` alone at first, so the Nth entry was
+// served the FIRST recording's answers and missed every prompt — a harness fault that reads
+// exactly like a real replay failure.
+if (onlyIdx) { entries = [entries[onlyIdx - 1]]; if (replayDir) replayCases = [replayCases[onlyIdx - 1]]; }
 // the union of every flag key this batch sets, cleared before each entry (see below). Read
 // from the WHOLE file, not the --only slice, so a single-entry run starts just as clean.
-const flagKeys = new Set(JSON.parse(fs.readFileSync(batchPath, 'utf8')).flatMap((e) => Object.keys(e?.flags ?? {})));
+const flagKeys = new Set((replayDir ? replayCases.map((c) => c.input) : JSON.parse(fs.readFileSync(batchPath, 'utf8'))).flatMap((e) => Object.keys(e?.flags ?? {})));
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const outDir = path.resolve('smoke-out', `${batchName}-${stamp}`);
+const recDir = path.resolve(RECORDINGS, `${batchName}-${stamp}`);
 fs.mkdirSync(outDir, { recursive: true });
 
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
@@ -84,6 +115,44 @@ const run = async () => {
   let genFailed = null; // a THROWN generation never saves — without this the run waited out the full timeout on it (the gmAsked ReferenceError read as six "timeouts", 2026-10-18)
   // A PAGE ERROR CARRIES THE STACK. The console text of a caught-and-logged
   // failure usually does not, and a stochastic throw cannot be found without one.
+  // THE ONE BOUNDARY. `prompt` is the user turn of the request `generateGptResponse` sends; the
+  // RAW response body is recorded and replayed byte for byte, so nothing is re-encoded between
+  // the two runs.
+  //
+  // KEYED ON THE PROMPT TEXT, NOT ON ORDER, because the page issues the route and path calls in
+  // parallel (`Promise.all`) and their arrival order is not stable. A prompt that legitimately
+  // repeats keeps a queue of its answers and they are served in the order they were recorded.
+  let callLog = [];          // record mode: what this generation asked and was told
+  let served = null;         // replay mode: prompt text -> queue of raw response bodies
+  let replayMiss = null;     // replay mode: the first prompt with no recorded answer
+  let missCount = 0;         // …and how many there were in all, including any after the sheet was saved
+  const promptOf = (req) => {
+    try {
+      const body = req.postDataJSON();
+      const msgs = Array.isArray(body?.messages) ? body.messages : [];
+      const user = [...msgs].reverse().find((m) => m?.role === 'user');
+      return String(user?.content ?? '');
+    } catch { return ''; }
+  };
+  if (recording || replayDir) {
+    await page.route('**/api/ai/**', async (route) => {
+      const prompt = promptOf(route.request());
+      if (replayDir) {
+        const answer = takeAnswer(served, prompt);
+        if (answer !== null) { await route.fulfill({ status: 200, contentType: 'application/json', body: answer }); return; }
+        // FAILS LOUDLY AND NAMES THE PROMPT. A behaviour change shows itself here, and that is
+        // what this is for.
+        missCount += 1;
+        if (!replayMiss) replayMiss = prompt;
+        await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'no recorded answer for this prompt' }) });
+        return;
+      }
+      const res = await route.fetch();
+      const body = await res.text();
+      callLog.push({ prompt, response: body });
+      await route.fulfill({ response: res, body });
+    });
+  }
   page.on('pageerror', (err) => { lines.push(`[pageerror] ${err?.stack ?? err?.message ?? err}`); });
   page.on('console', (msg) => {
     const t = msg.text();
@@ -111,12 +180,46 @@ const run = async () => {
     process.stdout.write(`[${n}/${entries.length}] CR ${entry.cr} — ${String(label).slice(0, 56)}… `);
     lines = [];
     const t0 = Date.now();
+    callLog = [];
+    replayMiss = null;
+    missCount = 0;
+    if (replayDir) {
+      // one queue per distinct prompt, in the order recorded
+      served = buildTape(replayCases[i]?.calls ?? []);
+    }
 
     // Google-Fonts <link>s keep `load` pending in headless — domcontentloaded
     // the page may not come up after a stalled block (the features run died on the entry
     // after a 411 s stall, "waiting for locator('#monsterName')", 2026-10-19): one retry
     const open = async () => { await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForSelector('#monsterName', { timeout: 30_000 }); };
     try { await open(); } catch { lines.push('[harness] the page did not come up — retrying once'); await page.waitForTimeout(5_000); await open(); }
+    // A GENERATION'S PROMPTS DEPEND ON WHAT IS ALREADY SAVED (found by this harness, 2026-11-16).
+    // Two prompts carry `NAMES ALREADY TAKEN — never reuse or closely echo any: …`, built from the
+    // names in the user's own collection (StatblockGenerator.vue:1733, capped at 40). So the same
+    // inputs give a DIFFERENT prompt depending on what the browser has stored: the two-entry
+    // recording replayed exactly as a pair and never on its own, because run second the marsh witch
+    // was told "Owlbear" was taken and run alone she was told nothing.
+    //
+    // That is a real hidden input, so the recording carries it and replay restores it. A minimal
+    // collection is enough — the page reads nothing from these but `.name`.
+    // THE CIRCUIT BREAKER IS PERSISTED IN localStorage ('ai-breaker-open-until'), and a replay
+    // miss answers with a 500, which is a provider failure: three of them open the breaker and
+    // every later sheet is stamped `degraded: true` — differing from its recording for a reason
+    // that has nothing to do with the code under test. Cleared per entry so one entry's miss
+    // cannot reach the next. (Must run AFTER the page is open: on about:blank it throws.)
+    if (replayDir || recording) await page.evaluate(() => localStorage.removeItem('ai-breaker-open-until'));
+    const takenNow = () => page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('monsters') || '{}'))
+      .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean));
+    let takenNames = [];
+    if (replayDir) {
+      const want = replayCases[i]?.takenNames ?? [];
+      await page.evaluate((names) => localStorage.setItem('monsters', JSON.stringify({ Replay: names.map((n) => ({ name: n })) })), want);
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#monsterName', { timeout: 30_000 });
+      lines.push(`[harness] restored ${want.length} taken name(s) the recording carried`);
+    } else if (recording) {
+      takenNames = await takenNow();
+    }
     const before = await savedCount(page);
     // identity, not name: five runs of one concept can all be named "Brass
     // Bull", and a name-set diff then reports the INPUT as the new monster
@@ -263,6 +366,34 @@ const run = async () => {
       const fresh = all.filter((x) => !seen.has(JSON.stringify(x)));
       return fresh.length ? fresh[fresh.length - 1] : null;   // no new block => null, never the previous one
     }, namesBefore);
+    if (recording) {
+      fs.mkdirSync(recDir, { recursive: true });
+      fs.writeFileSync(path.join(recDir, `${n}-${slug(monster?.name ?? label)}.json`),
+        JSON.stringify({ input: entry, takenNames, calls: callLog, sheet: monster }, null, 1));
+      lines.push(`[harness] recorded ${callLog.length} model call(s)`);
+    }
+    if (replayDir) {
+      const want = replayCases[i]?.sheet ?? null;
+      const unserved = unusedAnswers(served);
+      if (replayMiss) {
+        replayFailures += 1;
+        // THE WHOLE PROMPT, to a file. 400 characters of a 4,000-character prompt is not enough
+        // to see which clause moved, and that is the only question a miss asks.
+        const missFile = path.join(outDir, `${n}-REPLAY-MISS.txt`);
+        const recordedPrompts = (replayCases[i]?.calls ?? []).map((c, k) => `--- recorded prompt ${k + 1} ---\n${c.prompt}`);
+        fs.writeFileSync(missFile, [`--- the prompt with no recorded answer ---`, replayMiss, '', ...recordedPrompts].join('\n'));
+        lines.push(`[harness] REPLAY MISS — no recorded answer for this prompt (full text in ${path.basename(missFile)}):\n${replayMiss.slice(0, 400)}`);
+        console.log('REPLAY MISS');
+      } else if (JSON.stringify(want) !== JSON.stringify(monster)) {
+        replayFailures += 1;
+        const diffKey = Object.keys({ ...(want ?? {}), ...(monster ?? {}) }).filter((k) => JSON.stringify(want?.[k]) !== JSON.stringify(monster?.[k]));
+        lines.push(`[harness] REPLAY DIFFERS from ${replayCases[i].file} — fields: ${diffKey.join(', ') || '(shape)'}`);
+        console.log(`REPLAY DIFFERS (${diffKey.slice(0, 4).join(', ')})`);
+      } else {
+        lines.push(`[harness] replay identical to ${replayCases[i].file}${unserved ? ` — ${unserved} recorded answer(s) unused` : ''}`);
+      }
+      if (missCount) lines.push(`[harness] ${missCount} prompt(s) had no recorded answer during this entry`);
+    }
 
     // GOLDENS (critic, v2 blind read 2026-09-21: "freeze the v1 winners — if a
     // build can't reproduce the bishop's peal and the keeper's lure on those
@@ -363,6 +494,10 @@ const run = async () => {
     `# Smoke: ${batchName} (${stamp})\n\n${summary}\n\n---\n\n${results.map((r) => r.md).join('\n---\n\n')}`);
 
   console.log(`\n${summary}\n\nWrote ${results.length} block(s) to ${outDir}\n  all.md  — everything in one file`);
+  if (recording) console.log(`recorded ${results.length} generation(s) to ${path.relative(process.cwd(), recDir)}`);
+  if (replayDir) console.log(replayFailures
+    ? `REPLAY: ${replayFailures} of ${results.length} did NOT reproduce — see the [harness] lines above`
+    : `REPLAY: all ${results.length} sheets reproduced EXACTLY`);
 };
 
-run().then(() => { if (goldenFailures) { console.log(`${goldenFailures} golden(s) FAILED`); process.exit(2); } }).catch((e) => { console.error(e); process.exit(1); });
+run().then(() => { if (goldenFailures) { console.log(`${goldenFailures} golden(s) FAILED`); process.exit(2); } if (replayFailures) process.exit(3); }).catch((e) => { console.error(e); process.exit(1); });
