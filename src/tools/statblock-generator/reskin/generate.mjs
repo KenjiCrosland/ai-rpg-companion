@@ -12,7 +12,7 @@ import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
+import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
@@ -37,6 +37,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENI
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
+import { routeFinding } from './typed-fixes.mjs'; // the audit names the fix; this applies the two that act
 import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -10770,6 +10771,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // picked the template — and the audit already reads every row and already
       // proposes renames, so the question is a field on a call we were making
       // anyway. No extra round trip.
+      // the two facts the typed fixes need, and nothing else of this function's
+      const auditGmWords = significantWords(String(options.userConcept ?? concept ?? ''));
+      const auditSpanOf = (f) => { const m = /\(about: "([^"]*)"\)/.exec(String(f.message ?? '')); return f.span ?? (m ? m[1] : null); };
       const elementClaims = Object.values(monster.sections ?? {}).flat()
         .filter((e) => e.expresses && e.freeRow)
         .map((e) => ({ entry: String(e.name ?? '').replace(/ \(.*\)$/, ''), element: e.expresses }));
@@ -11042,9 +11046,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             trace('audit finding on the body:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" [${row.template ?? row.library ?? row.seed ?? 'chassis'}] — ${String(f.message ?? '').slice(0, 90)}. a catalog row: the fix belongs in ${row.template || row.library || row.seed ? 'the template' : 'the donor'}, once, for every creature on this body`);
             continue;
           }
-          const seen = freeFlagged.find((x) => x.row === row);
-          if (seen) { seen.problems.push(f.message); if (f.principle) seen.principles.push(f.principle); continue; }
-          freeFlagged.push({ sec, row, problems: [f.message], principles: f.principle ? [f.principle] : [] });
+          // TYPED FIXES (owner's ruling, 2026-11-16). The audit names the KIND of fix; the engine
+          // applies the two that act — rename and add_duration — and logs the rest. The one-row
+          // re-authoring call further down is no longer reached from a finding: it re-authored a row
+          // from nothing into a closed form with a damage field, and across the tapes added damage to
+          // ten rows, a condition to six, and turned three passive traits into saves.
+          const typed = routeFinding({ row, finding: { ...f, span: auditSpanOf(f) }, gmWords: auditGmWords });
+          trace('typed fix:', `${sec}/"${String(row.name ?? '').replace(/ \(.*\)$/, '')}" [${typed.origin}] ${String(f.confidence ?? 'no-confidence')} ${typed.kind} — ${typed.outcome}: ${typed.reason}`);
+          if (typed.outcome === 'acted') {
+            const at = (monster.sections[sec] ?? []).indexOf(row);
+            if (at >= 0) monster.sections[sec][at] = typed.row;
+          }
         }
         // AN ATTACK ROW HAS NO FORM TO BE REPAIRED INTO, so it is not sent (2026-11-10). This
         // path calls formsSpec with attackCap 0 — deliberately, because the engine prices every

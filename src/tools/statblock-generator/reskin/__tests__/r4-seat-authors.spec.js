@@ -342,13 +342,17 @@ describe('the audit may rewrite a row the model wrote, and only such a row', () 
   }, 30000);
 });
 
-// A FLAGGED FREE ROW IS REPAIRED, NOT EVICTED (owner's ruling, 2026-11-05). The audit's
-// own rewrite actuator fires only for principle 4 (copy-editing), so the defects measured
-// on free rows over the 2026-11-05 sweep and homebrew40 — an AC bonus the GM cannot
-// compute, a trait granting an unlimited free attack — were never offered one and shipped
-// as flagged. The repair sends the row back through the AUTHORING FORMS, where the model
-// writes no numbers, so an uncomputable bonus cannot survive the round trip.
-describe('the audit faults a free row and the row is re-authored, never dropped', () => {
+// A FINDING ON A FREE ROW IS TYPED, NOT RE-AUTHORED (owner's ruling, 2026-11-16).
+//
+// This describe previously asserted the opposite — that an audit finding sent the row back through
+// the AUTHORING FORMS and the sheet took the re-authored text. That was the 2026-11-05 ruling and it
+// has been replaced. Measured across the tapes, the one-row re-authoring call added damage to ten
+// rows that had none, a condition to six, and turned three passive traits into saves; the owner's
+// read of a forty scored five of its ten changed sheets Worse against three Better.
+//
+// The audit now NAMES the kind of fix and the engine applies the two that act. The re-authoring
+// call is no longer reached from a finding, and these tests assert that it is not.
+describe('a finding on a free row is typed, and the re-authoring call is not made', () => {
   const seatIdea = 'Her lacquered line holds: while she stands beside an ally neither of them can be shoved, and the pair are harder to hit.';
   const drive = ({ findings, fix }) => run({
     concept: 'Vashka the Red, a knight who fights in formation', cr: 1, archetype: 'skirmisher', name: 'Vashka the Red', type: 'Humanoid',
@@ -362,70 +366,34 @@ describe('the audit faults a free row and the row is re-authored, never dropped'
   const AC_FINDING = [{ entry: 'Lacquered Line', section: 'Traits', principle: 2, confidence: 'high',
     issue: 'The block never states the numeric bonus to AC', span: 'moved against their will' }];
 
-  test('the repair call fires, keeps the name, and takes the re-authored text', async () => {
-    const { rows, trace } = await drive({ findings: AC_FINDING,
-      // the repair the forms can actually express: no AC number exists as a token, so a
-      // sound answer trades the uncomputable bonus for something the engine can state.
-      // This is the round trip doing the work — not an instruction to be careful.
-      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them has Resistance to Bludgeoning damage', imposes: null, condition_relation: 'none', passive_effect: 'protection' }] } });
-    expect(trace).toMatch(/row repair: "Lacquered Line" \[free row\]/);
-    expect(trace).toMatch(/free row repaired:/);
-    const row = rows.find((r) => r.name === 'Lacquered Line');
-    expect(row).toBeTruthy();                                  // repaired, never evicted — the owner's ruling
-    expect(row.freeRow).toBe(true);
-    expect(row.freeRowRepaired).toBe(true);
-    expect(row.text).toMatch(/Resistance to Bludgeoning damage/);
-    expect(row.text).not.toMatch(/same bonus to AC/);           // the uncomputable number is gone
+  test('a high finding with no fix is logged, and the row is untouched', async () => {
+    const { rows, trace } = await drive({ findings: AC_FINDING });
+    expect(trace).toMatch(/typed fix:.*"Lacquered Line" \[model\] high unlabelled — logged: the finding carries no fix/);
+    expect(trace).not.toMatch(/row repair:/);
+    expect(trace).not.toMatch(/free row repaired:/);
+    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? '')).text).toMatch(/moved against their will/);
   }, 30000);
 
-  test('a repair carrying an unsubstituted token is refused and the standing row keeps its place', async () => {
-    const { rows, trace } = await drive({ findings: AC_FINDING,
-      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them gains a {bonus} bonus to AC', imposes: null, condition_relation: 'none', passive_effect: 'protection' }] } });
-    expect(trace).toMatch(/free row repair declined:.*\{bonus\}/);
-    const row = rows.find((r) => r.name === 'Lacquered Line');
-    expect(row).toBeTruthy();                                  // still there: a flagged row beats no row
-    expect(row.text).not.toMatch(/\{bonus\}/);
-    expect(row.freeRowRepaired).toBeUndefined();
+  test('a high finding of a logged kind is logged, and the row is untouched', async () => {
+    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], fix: 'fill_number', fix_param: 'the AC bonus' }] });
+    expect(trace).toMatch(/typed fix:.*fill_number — logged: fill_number is logged, not applied/);
+    expect(trace).not.toMatch(/row repair:/);
+    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? '')).text).toMatch(/moved against their will/);
   }, 30000);
 
-  test('an empty answer is declined, and the row survives', async () => {
-    const { rows, trace } = await drive({ findings: AC_FINDING, fix: {} });
-    expect(trace).toMatch(/free row repair declined:.*held no row of any kind/);
-    expect(rows.find((r) => r.name === 'Lacquered Line')).toBeTruthy();
+  test('a high rename acts, and the rules text does not move', async () => {
+    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], fix: 'rename', fix_param: 'Shield-Wall Brace' }] });
+    expect(trace).toMatch(/typed fix:.*rename — acted/);
+    const renamed = rows.find((r) => /^Shield-Wall Brace/.test(r.name ?? ''));
+    expect(renamed).toBeTruthy();
+    expect(renamed.text).toMatch(/moved against their will/);
+    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeUndefined();
   }, 30000);
 
-  // THE SHAPE IS OFTEN THE DEFECT (sweep 2026-11-05T21-20-56: 6 of 7 calls declined with
-  // "wrote no row of the kind this row is"). Vashka's `The Wall Holds` sat in Traits and
-  // read "When an ally within 5 feet is hit by an attack, Vashka interposes his shield …
-  // as a reaction" — and the audit's complaint was that shape. Asked for a trait, the
-  // call answered with a reaction, and the first cut threw it away.
-  test('a repair that answers with another kind is taken, and the row moves to its section', async () => {
-    const { m, rows, trace } = await drive({ findings: AC_FINDING,
-      // the reaction form takes `response`, not `effect` — the parser named that itself
-      // when the first fixture got it wrong, which is the trace this change added
-      fix: { reactions: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'When an ally within 5 feet of Vashka is hit by an attack', response: 'Vashka interposes her shield and the attacker has Disadvantage on that attack roll', imposes: null, condition_relation: 'none' }] } });
-    expect(trace).toMatch(/free row moved:.*Traits -> Reactions/);
-    expect(trace).toMatch(/free row repaired:/);
-    expect((m.sections.Traits ?? []).some((e) => e.name === 'Lacquered Line')).toBe(false);
-    expect((m.sections.Reactions ?? []).some((e) => e.name === 'Lacquered Line')).toBe(true);
-    const row = rows.find((r) => r.name === 'Lacquered Line');
-    expect(row.freeRowRepaired).toBe(true);           // repaired and relocated, never dropped
-  }, 30000);
-
-  // A PARSER REFUSAL IS NAMED. `parseAuthorResponse` drops a trait whose effect reads
-  // like a save; the first cut reported that identically to an empty answer, which is how
-  // the kind bug above stayed invisible for a whole forty.
-  test('a refusal from the parser is traced with its reason', async () => {
-    const { rows, trace } = await drive({ findings: AC_FINDING,
-      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them has Advantage on saving throws against being moved', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] } });
-    expect(trace).toMatch(/free row repair declined:.*a trait is not a save/);
-    expect(rows.find((r) => r.name === 'Lacquered Line')).toBeTruthy();
-  }, 30000);
-
-  test('no call is made when the audit faults nothing on a free row', async () => {
-    const { trace, prompts } = await drive({ findings: [], fix: null });
-    expect(prompts.filter((q) => q.startsWith('You are REPAIRING one ability'))).toHaveLength(0);
-    expect(trace).not.toMatch(/free row repair/);
+  test('a medium finding of a kind that acts does not act', async () => {
+    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], confidence: 'medium', fix: 'rename', fix_param: 'Shield-Wall Brace' }] });
+    expect(trace).toMatch(/typed fix:.*medium rename — logged: medium confidence — only high acts/);
+    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeTruthy();
   }, 30000);
 });
 

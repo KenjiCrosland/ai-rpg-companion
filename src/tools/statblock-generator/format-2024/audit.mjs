@@ -284,7 +284,23 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
   "rewrite": "<optional, principle 4 only: the repaired span>",
   "rename": "<optional, name-defect findings only: the replacement entry name>",
-  "confidence": "high|medium|low" } ] }
+  "confidence": "high|medium|low",
+  "fix": "rename|add_duration|fix_reference|delete_span|fill_number|reformat|clarify|none",
+  "fix_param": "<the one thing that fix needs, or null>" } ] }
+THE FIX NAMES WHAT SHOULD BE DONE, and the engine does it — you do not write the repair. Choose the
+NARROWEST fix that resolves the issue you described:
+  rename         the NAME is wrong and the rules text is right. fix_param: the replacement name.
+  add_duration   an imposed state never says when it ends. fix_param: one of
+                 "target_end" (until the end of its next turn), "target_start",
+                 "source_end" (until the end of the creature's next turn), "source_start".
+  fix_reference  the row names something that is not on the sheet. fix_param: null.
+  delete_span    the span you quoted should be removed and nothing put in its place. fix_param: null.
+  fill_number    one quantity is missing — a bonus, Temporary Hit Points, a distance, uses.
+                 fix_param: which quantity, in two or three words.
+  reformat       the parts are right and rendered in the wrong form; no content changes. null.
+  clarify        the row needs prose rewritten and no fix above reaches it. fix_param: null.
+  none           an observation; nothing on the row should change. fix_param: null.
+Do not invent a fix outside this list.
 An empty findings array is a correct and common output. Do not manufacture
 findings to appear thorough. Every span must be verbatim text from the block —
 if you cannot quote it, the finding does not exist.${elementClaims.length ? `
@@ -308,7 +324,7 @@ RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored a
 5. Doubled or contradictory limiters ("only once per turn" plus "while active, can't use it again").
 6. REDUNDANT RULES — list each benefit the block grants; if a model-written trait duplicates one the chassis already grants (two entries both giving Disadvantage on Opportunity Attacks), or a clause is made dead by another entry (a trait converting damage a row already deals), flag it and supply a rewrite trimming the duplicate clause.
 7. STAT-FICTION MISMATCH — a save whose STAT contradicts what the save represents (a Strength save to shake off a scent-lock, a Charisma save to dodge a falling rock). Propose the stat the fiction demands; the DC never changes.
-A typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
+The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
 }
 
 // THE ELEMENT CLAIMS PASS THROUGH, SHAPE-CHECKED ONLY (2026-10-22). The engine
@@ -556,6 +572,13 @@ export function verifyAuditFindings(monster, raw) {
       principle,
       confidence,
       message: `${f.issue}${f.suggestion ? ` — ${f.suggestion}` : ''} (about: "${f.span}")`,
+      // THE FIX THE AUDIT NAMED (owner's ruling, 2026-11-16). The engine applies the two kinds
+      // that act and logs the rest; without these keys every finding arrived unlabelled and
+      // nothing could act. Both are conditional, so a finding without them keeps today's shape —
+      // a spec asserts that shape exactly. The SPAN is not added here: it already rides inside
+      // `message` as `(about: "…")`, and generate.mjs reads it from there.
+      ...(f.fix ? { fix: String(f.fix).trim() } : {}),
+      ...(f.fix_param != null && String(f.fix_param).trim() ? { fix_param: String(f.fix_param).trim() } : {}),
       loc: { section, entry: entry.name },
       ...(rewrite != null ? { span: f.span, rewrite } : {}),
       ...(rename ? { rename } : {}),
