@@ -2603,6 +2603,24 @@ export function labelFeatureRows(sections, trace = () => {}) {
   }
 }
 
+/**
+ * THE INLINE AT A SENTENCE START is capitalized ("…turn. the troll has 1 Exhaustion level" — the
+ * critic's audit 2026-10-0x). Idempotent: capitalizing a capital is a no-op.
+ *
+ * Extracted and ALSO RUN BEFORE THE AUDIT (2026-11-16). It used to run only here, some 760 lines
+ * after the audit call, so the audit was shown "Multiattack. the owlbear makes two Rend attacks"
+ * and faulted the lowercase start on three sheets of the baseline forty — findings about a defect
+ * the finished sheet does not have, in every arm. Running it earlier costs nothing and buys back
+ * about three high findings a forty.
+ */
+export const capitaliseInlineAtSentenceStart = (sections, inline) => {
+  const inl = String(inline ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!inl) return;
+  for (const es of Object.values(sections ?? {})) for (const e of es ?? []) {
+    if (e?.text) e.text = e.text.replace(new RegExp(`(^|[.!?]\\s+|\\*\\s+)${inl}\\b`, 'g'), (m0, pre) => `${pre}${String(inline).charAt(0).toUpperCase()}${String(inline).slice(1)}`);
+  }
+};
+
 export async function generateReskin(options, callLLM) {
   // ONE NETWORK-CLASS RETRY (2026-09-20; the never-fail asymmetry's real
   // face): ai-client retries malformed JSON but EXITS on providerError, so
@@ -10789,6 +10807,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // picked the template — and the audit already reads every row and already
       // proposes renames, so the question is a field on a call we were making
       // anyway. No extra round trip.
+      // THE AUDIT READS THE CAPITALISED SHEET (2026-11-16). This pass ran only at the end, so the
+      // audit saw lowercase sentence starts and faulted three rows of the baseline forty for a
+      // defect no finished sheet has. It is idempotent, so running it here changes nothing but
+      // what the audit is shown.
+      capitaliseInlineAtSentenceStart(monster.sections, inline);
       // the two facts the typed fixes need, and nothing else of this function's
       const auditGmWords = significantWords(String(options.userConcept ?? concept ?? ''));
       const auditSpanOf = (f) => { const m = /\(about: "([^"]*)"\)/.exec(String(f.message ?? '')); return f.span ?? (m ? m[1] : null); };
@@ -11536,7 +11559,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     monster.languages = kept && !/^(the languages of its creator|its creator's languages)$/i.test(kept) ? kept.charAt(0).toUpperCase() + kept.slice(1) : 'Common'; trace('languages by voice:', `a caster speaks — "${monster.languages}"`);
   }
   // THE INLINE AT A SENTENCE START is capitalized ("…turn. the troll has 1 Exhaustion level" — critic's audit 2026-10-02)
-  { const inl = String(inline ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); if (inl) for (const es of Object.values(monster.sections ?? {})) for (const e of es) if (e.text) e.text = e.text.replace(new RegExp(`(^|[.!?]\\s+|\\*\\s+)${inl}\\b`, 'g'), (m0, pre) => `${pre}${inline.charAt(0).toUpperCase()}${inline.slice(1)}`); }
+  capitaliseInlineAtSentenceStart(monster.sections, inline);
   // TWO ROWS, ONE TEXT: a drawn seed identical to a chassis row is the same ability twice (the Glass Widow's Reflect Step
   // and the library's Blink Step, both "teleports up to 120 feet" — the audit renamed the second instead of dropping it,
   // sweep 2026-10-04). The later non-print row leaves; a print row never does.
