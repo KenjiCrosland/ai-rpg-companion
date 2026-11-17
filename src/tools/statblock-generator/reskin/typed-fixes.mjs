@@ -19,11 +19,15 @@
  * facts it needs, and returns the row or a refusal with its reason.
  */
 import { DURATIONS, durationClause, durationFormOf } from './templates.mjs';
-import { significantWords } from './templates.mjs';
 
 /** The closed list. `acts` is the whole difference; the rest are labels that count. */
 export const FIX_KINDS = {
-  rename: { acts: true },
+  // RENAME IS NOT APPLIED HERE (2026-11-17). The engine already had a rename path — the audit's own
+  // loop, which carries the claims, weapon and part-name guards and the confidence policy the
+  // owner's hand-score set on 11 November — and a finding carrying `rename` never reached this
+  // route anyway. Two places a name could change is one too many, so this one logs and the older
+  // loop keeps the job, with its GM-word guard widened to every row.
+  rename: { acts: false },
   add_duration: { acts: true },
   fix_reference: { acts: false },
   delete_span: { acts: false },
@@ -90,33 +94,6 @@ export const onlyTheAllowedThingMoved = (before, after, allow) => {
 };
 
 /**
- * RENAME. The audit supplies the name; the rules text stays byte for byte.
- *
- * THE GM-WORD GUARD: a rename may not remove a word the GM typed. The Trench Leviathan's
- * "Drowning Song" is the case — the GM typed "song", the audit renamed it away, and the sheet lost
- * a word of the request. If the old name carries a significant word of the request and the new one
- * does not, the rename is refused.
- */
-export const applyRename = (row, finding, { gmWords = [] } = {}) => {
-  const to = String(finding?.fix_param ?? finding?.rename ?? '').trim();
-  if (!to) return { row, outcome: 'refused', reason: 'the rename named no replacement' };
-  if (bareName(to).toLowerCase() === bareName(row.name).toLowerCase()) {
-    return { row, outcome: 'refused', reason: 'the replacement name is the name it already has' };
-  }
-  const words = new Set(gmWords.map((w) => String(w).toLowerCase()));
-  const inOld = significantWords(bareName(row.name)).filter((w) => words.has(w));
-  const kept = significantWords(bareName(to)).map((w) => w.toLowerCase());
-  const lost = inOld.filter((w) => !kept.includes(w));
-  if (lost.length) {
-    return { row, outcome: 'refused', reason: `the rename drops "${lost.join('", "')}", which the GM typed` };
-  }
-  const after = { ...row, name: `${bareName(to)}${gate(row.name)}` };
-  const bad = onlyTheAllowedThingMoved(row, after, 'name');
-  if (bad) return { row, outcome: 'refused', reason: bad };
-  return { row: after, outcome: 'acted', reason: `"${bareName(row.name)}" -> "${bareName(to)}"` };
-};
-
-/**
  * ADD_DURATION. One clause saying when an imposed state ends, appended to the sentence that imposes
  * it. The audit picks from the engine's own duration vocabulary — the same four forms the fit call
  * fills — and the engine renders and appends it.
@@ -178,6 +155,6 @@ export const routeFinding = ({ row, finding, gmWords = [] } = {}) => {
   if (!FIX_KINDS[kind].acts) return log('logged', `${kind} is logged, not applied`);
   if (conf !== 'high') return log('logged', `${conf || 'no'} confidence — only high acts`);
 
-  const applied = kind === 'rename' ? applyRename(row, finding, { gmWords }) : applyAddDuration(row, finding);
+  const applied = applyAddDuration(row, finding);
   return { ...applied, kind, origin };
 };

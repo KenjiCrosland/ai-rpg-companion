@@ -9,7 +9,7 @@
  * nothing into a closed form with a damage field, and across the tapes it added damage to ten rows
  * that had none, a condition to six, and turned three passive traits into saves.
  */
-import { routeFinding, applyRename, applyAddDuration, onlyTheAllowedThingMoved, rowOrigin, FIX_NAMES } from '../typed-fixes.mjs';
+import { routeFinding, applyAddDuration, onlyTheAllowedThingMoved, rowOrigin, FIX_NAMES } from '../typed-fixes.mjs';
 import { DURATIONS, durationClause } from '../templates.mjs';
 
 /** Rimewake, from sheet 14 of the baseline tape: a model-written row whose state never ends */
@@ -121,16 +121,21 @@ describe('routing', () => {
 
   test('a high finding of a kind that acts, acts', () => {
     expect(routeFinding({ row: rimewake(), finding: high({ fix: 'add_duration', fix_param: 'target_end' }) }).outcome).toBe('acted');
-    expect(routeFinding({ row: rimewake(), finding: high({ fix: 'rename', fix_param: 'Rimewake Hold' }) }).outcome).toBe('acted');
+  });
+
+  test('rename is logged here — the audit\'s own loop owns renaming', () => {
+    const r = routeFinding({ row: rimewake(), finding: high({ fix: 'rename', fix_param: 'Rimewake Hold' }) });
+    expect(r.outcome).toBe('logged');
+    expect(r.row.name).toBe('Rimewake');
   });
 
   test.each(['medium', 'low', '', undefined])('a %s-confidence finding does not act', (confidence) => {
-    const r = routeFinding({ row: rimewake(), finding: { fix: 'rename', fix_param: 'Rimewake Hold', confidence } });
+    const r = routeFinding({ row: rimewake(), finding: { fix: 'add_duration', fix_param: 'target_end', span: SPAN, confidence } });
     expect(r.outcome).toBe('logged');
     expect(r.reason).toMatch(/only high acts/);
   });
 
-  test.each(['fix_reference', 'delete_span', 'fill_number', 'reformat', 'clarify', 'none'])('%s is logged, not applied', (fix) => {
+  test.each(['fix_reference', 'delete_span', 'fill_number', 'reformat', 'clarify', 'none', 'rename'])('%s is logged, not applied', (fix) => {
     const r = routeFinding({ row: rimewake(), finding: high({ fix }) });
     expect(r.outcome).toBe('logged');
     expect(r.row).toEqual(rimewake());
@@ -150,45 +155,17 @@ describe('routing', () => {
   test.each([['print', 'print'], ['printNamed', 'print'], ['rules', 'print'], ['template', 'body'], ['library', 'body']])
   ('a finding on a %s row is classified and traced, not fixed here', (flag, origin) => {
     const row = { name: 'Rimewake', text: rimewake().text, [flag]: true };
-    const r = routeFinding({ row, finding: high({ fix: 'rename', fix_param: 'Other' }) });
+    const r = routeFinding({ row, finding: high({ fix: 'add_duration', fix_param: 'target_end' }) });
     expect(r.outcome).toBe('logged');
     expect(rowOrigin(row)).toBe(origin);
   });
 
   test('no row of that name is logged, not an error', () => {
-    expect(routeFinding({ row: null, finding: high({ fix: 'rename' }) }).outcome).toBe('logged');
+    expect(routeFinding({ row: null, finding: high({ fix: 'add_duration' }) }).outcome).toBe('logged');
   });
 });
 
-describe('the rename guard', () => {
-  // The Trench Leviathan's "Drowning Song": the GM typed "song", and the audit renamed it away.
-  const song = () => ({ name: 'Drowning Song', text: 'Each creature within 30 feet makes a DC 17 Constitution Saving Throw.', authored: true });
-
-  test('a rename that drops a word of the request is refused', () => {
-    const r = applyRename(song(), { fix_param: 'Drowning Chord' }, { gmWords: ['drowning', 'song'] });
-    expect(r.outcome).toBe('refused');
-    expect(r.reason).toMatch(/drops "song", which the GM typed/);
-    expect(r.row).toEqual(song());
-  });
-
-  test('a rename that keeps it is applied', () => {
-    const r = applyRename(song(), { fix_param: 'Drowning Song of the Deep' }, { gmWords: ['drowning', 'song'] });
-    expect(r.outcome).toBe('acted');
-    expect(r.row.name).toBe('Drowning Song of the Deep');
-    expect(r.row.text).toBe(song().text);
-  });
-
-  test('a word the GM never typed is not guarded', () => {
-    expect(applyRename(song(), { fix_param: 'Crushing Depths' }, { gmWords: ['leviathan'] }).outcome).toBe('acted');
-  });
-
-  test('the use-limit suffix is kept across a rename', () => {
-    const r = applyRename({ ...song(), name: 'Drowning Song (Recharge 5-6)' }, { fix_param: 'Drowning Song of the Deep' }, { gmWords: ['song'] });
-    expect(r.row.name).toBe('Drowning Song of the Deep (Recharge 5-6)');
-  });
-
-  test('a rename to the name it already has is refused', () => {
-    expect(applyRename(song(), { fix_param: 'Drowning Song' }, {}).reason).toMatch(/already has/);
-    expect(applyRename(song(), { fix_param: '' }, {}).reason).toMatch(/named no replacement/);
-  });
-});
+// THE RENAME GUARD IS TESTED WHERE RENAMING HAPPENS. A finding carrying `rename` never reached
+// this route — the audit's own rename loop takes it, and that loop carries the claims, weapon and
+// part-name guards — so rename logs here and the guard is exercised in r4-seat-authors.spec.js
+// against a built sheet.

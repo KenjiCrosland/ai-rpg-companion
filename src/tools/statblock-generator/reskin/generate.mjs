@@ -10971,10 +10971,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // "Smoldering Stumps" was renamed "Searing Body", dropping the GM's
           // "stumps". The element it named is the GM's text in the same sense, so
           // it guards the name the same way.
+          // AND THE GUARD COVERS EVERY ROW, not only one bound to a clause (2026-11-17). It read the
+          // row's own `clause`/`expresses` and nothing else, so a CHASSIS row the model had renamed
+          // was unprotected: the Trench Leviathan's "Drowning Song" became "Abyssal Roar" and took
+          // the GM's own "song" with it. The request's words guard every name the same way.
           const cl = String(row?.clause ?? row?.expresses ?? '');
-          if (cl) {
+          {
             const wordsOf = (x) => String(x).toLowerCase().match(/[a-z]{4,}/g) ?? [];
-            const gmWords = new Set(wordsOf(cl));
+            const gmWords = new Set([...wordsOf(cl), ...auditGmWords.filter((w) => w.length >= 4)]);
             const kept = new Set(wordsOf(f.rename));
             const lost = [...new Set(wordsOf(bare))].filter((w) => gmWords.has(w) && !kept.has(w));
             if (lost.length) {

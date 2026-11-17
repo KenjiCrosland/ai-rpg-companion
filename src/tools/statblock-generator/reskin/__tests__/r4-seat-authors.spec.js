@@ -381,18 +381,18 @@ describe('a finding on a free row is typed, and the re-authoring call is not mad
     expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? '')).text).toMatch(/moved against their will/);
   }, 30000);
 
-  test('a high rename acts, and the rules text does not move', async () => {
+  // RENAME IS NOT THIS ROUTE'S JOB (2026-11-17). A finding carrying `rename` never reached it —
+  // the audit's own loop takes those — so the typed route logs the kind, and the GM-word guard is
+  // tested against the renaming path at the end of this file.
+  test('a high rename is logged here, and the row keeps its name', async () => {
     const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], fix: 'rename', fix_param: 'Shield-Wall Brace' }] });
-    expect(trace).toMatch(/typed fix:.*rename — acted/);
-    const renamed = rows.find((r) => /^Shield-Wall Brace/.test(r.name ?? ''));
-    expect(renamed).toBeTruthy();
-    expect(renamed.text).toMatch(/moved against their will/);
-    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeUndefined();
+    expect(trace).not.toMatch(/typed fix:.*rename — acted/);
+    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeTruthy();
   }, 30000);
 
   test('a medium finding of a kind that acts does not act', async () => {
-    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], confidence: 'medium', fix: 'rename', fix_param: 'Shield-Wall Brace' }] });
-    expect(trace).toMatch(/typed fix:.*medium rename — logged: medium confidence — only high acts/);
+    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], confidence: 'medium', fix: 'add_duration', fix_param: 'target_end' }] });
+    expect(trace).toMatch(/typed fix:.*medium add_duration — logged: medium confidence — only high acts/);
     expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeTruthy();
   }, 30000);
 });
@@ -474,4 +474,41 @@ describe('the repair reaches an authored row that is not a free row', () => {
     expect(src).toMatch(/!\(row\.freeRow \|\| row\.authored\)/);
     expect(src).toMatch(/\[\$\{t\.row\.freeRow \? 'free row' : 'authored'\}\]/);
   });
+});
+
+/**
+ * THE RENAME GUARD, THROUGH THE PATH THAT RENAMES (2026-11-17).
+ *
+ * A rename may not take a word of the GM's request with it. The guard existed but read only the
+ * row's own `clause`/`expresses`, so a CHASSIS row the model had renamed was unprotected: on the
+ * replay the Trench Leviathan's "Drowning Song" became "Abyssal Roar" and the GM's own "song" went
+ * with it. It now reads the request's words too, and guards every row.
+ *
+ * Tested here rather than against the typed route, because a finding carrying `rename` never
+ * reaches that route — the audit's own loop takes it, and that loop carries the claims, weapon and
+ * part-name guards as well.
+ */
+describe('a rename may not drop a word the GM typed', () => {
+  const drive = (rename) => run({
+    concept: 'a leviathan whose drowning song pulls ships under', cr: 5, archetype: 'brute',
+    name: 'Trench Leviathan', type: 'Monstrosity',
+    ideas: { trait: { idea: 'Its song drowns the crew where they stand.', section: 'trait', trigger: 'always', effect: 'threat' } },
+    fit: { ...REFUSED, missing: 'a song that drowns' },
+    seatRow: { traits: [{ clause: 'whose drowning song pulls ships under', name: 'Drowning Song', trigger: 'While the leviathan is not Incapacitated', effect: 'each creature that can hear it is pulled 10 feet toward it', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] },
+    audit: { findings: [{ entry: 'Drowning Song', section: 'Traits', principle: 1, confidence: 'high',
+      issue: 'the name promises a song the row does not deliver', span: 'pulled 10 feet toward it', rename }] },
+  });
+
+  test('a rename that drops "song" is refused and the row keeps its name', async () => {
+    const { rows, trace } = await drive('Abyssal Roar');
+    expect(trace).toMatch(/audit rename blocked —.*would drop the GM's own word/);
+    expect(rows.find((r) => /^Drowning Song/.test(r.name ?? ''))).toBeTruthy();
+    expect(rows.find((r) => /^Abyssal Roar/.test(r.name ?? ''))).toBeUndefined();
+  }, 30000);
+
+  test('a rename that keeps "song" is applied', async () => {
+    const { rows, trace } = await drive('Drowning Song of the Deep');
+    expect(trace).toMatch(/audit rename: "Drowning Song" -> "Drowning Song of the Deep"/);
+    expect(rows.find((r) => /^Drowning Song of the Deep/.test(r.name ?? ''))).toBeTruthy();
+  }, 30000);
 });
