@@ -62,28 +62,30 @@ describe('add_duration does only its own thing', () => {
 
   test('the clause itself is accepted as the parameter, and nothing else is', () => {
     expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'until the end of its next turn' }).outcome).toBe('acted');
-    expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'for one hour' }).reason).toMatch(/not one of the engine's duration forms/);
+    expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'for one hour' }))
+      .toMatchObject({ outcome: 'refused', code: 'not_a_duration_form' });
   });
 
   test('it is refused on a row the model did not write', () => {
-    for (const [flag, word] of [['print', 'print'], ['template', 'body'], ['library', 'body']]) {
+    for (const [flag, origin] of [['print', 'print'], ['template', 'body'], ['library', 'body']]) {
       const r = applyAddDuration({ ...rimewake(), authored: false, [flag]: true }, { span: SPAN, fix_param: 'target_end' });
-      expect(r.outcome).toBe('refused');
-      expect(r.reason).toContain(word);
+      expect(r).toMatchObject({ outcome: 'refused', code: 'not_a_model_row' });
+      expect(rowOrigin({ ...rimewake(), authored: false, [flag]: true })).toBe(origin);
     }
   });
 
   test('it is refused when the quoted sentence is not found exactly once', () => {
     const twice = { ...rimewake(), text: `${SPAN} ${SPAN}` };
-    expect(applyAddDuration(twice, { span: SPAN, fix_param: 'target_end' }).reason).toMatch(/appears 2 times/);
-    expect(applyAddDuration(rimewake(), { span: 'a sentence the row does not carry', fix_param: 'target_end' }).reason).toMatch(/appears 0 times/);
+    expect(applyAddDuration(twice, { span: SPAN, fix_param: 'target_end' }))
+      .toMatchObject({ outcome: 'refused', code: 'span_not_once' });
+    expect(applyAddDuration(rimewake(), { span: 'a sentence the row does not carry', fix_param: 'target_end' }))
+      .toMatchObject({ outcome: 'refused', code: 'span_not_once' });
   });
 
   test('it is refused when the sentence already says when the state ends', () => {
     const already = { ...rimewake(), text: `The ground is Difficult Terrain. ${SPAN.replace(/\.$/, '')} until the end of its next turn.` };
     const r = applyAddDuration(already, { span: `${SPAN.replace(/\.$/, '')} until the end of its next turn.`, fix_param: 'target_end' });
-    expect(r.outcome).toBe('refused');
-    expect(r.reason).toMatch(/already says when the state ends/);
+    expect(r).toMatchObject({ outcome: 'refused', code: 'already_ends' });
   });
 });
 
@@ -131,8 +133,7 @@ describe('routing', () => {
 
   test.each(['medium', 'low', '', undefined])('a %s-confidence finding does not act', (confidence) => {
     const r = routeFinding({ row: rimewake(), finding: { fix: 'add_duration', fix_param: 'target_end', span: SPAN, confidence } });
-    expect(r.outcome).toBe('logged');
-    expect(r.reason).toMatch(/only high acts/);
+    expect(r).toMatchObject({ outcome: 'logged', code: 'not_high_confidence', kind: 'add_duration' });
   });
 
   test.each(['fix_reference', 'delete_span', 'fill_number', 'reformat', 'clarify', 'none', 'rename'])('%s is logged, not applied', (fix) => {
@@ -143,12 +144,12 @@ describe('routing', () => {
 
   test('a finding with no fix is logged as unlabelled', () => {
     const r = routeFinding({ row: rimewake(), finding: high({}) });
-    expect(r).toMatchObject({ outcome: 'logged', kind: 'unlabelled' });
-    expect(r.reason).toMatch(/carries no fix/);
+    expect(r).toMatchObject({ outcome: 'logged', code: 'no_fix_named', kind: 'unlabelled' });
   });
 
   test('a fix name outside the list is logged, never guessed at', () => {
-    expect(routeFinding({ row: rimewake(), finding: high({ fix: 'substitute_noun' }) }).reason).toMatch(/is not one of the fixes/);
+    expect(routeFinding({ row: rimewake(), finding: high({ fix: 'substitute_noun' }) }))
+      .toMatchObject({ outcome: 'logged', code: 'unknown_fix', kind: 'substitute_noun' });
     expect(FIX_NAMES).not.toContain('substitute_noun');
   });
 

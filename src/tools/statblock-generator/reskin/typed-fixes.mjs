@@ -103,25 +103,25 @@ export const onlyTheAllowedThingMoved = (before, after, allow) => {
  */
 export const applyAddDuration = (row, finding) => {
   if (rowOrigin(row) !== 'model') {
-    return { row, outcome: 'refused', reason: `the row is ${rowOrigin(row)}, and a duration is added only to a row the model wrote` };
+    return { row, outcome: 'refused', code: 'not_a_model_row', reason: `the row is ${rowOrigin(row)}, and a duration is added only to a row the model wrote` };
   }
   const span = String(finding?.span ?? '').trim();
-  if (!span) return { row, outcome: 'refused', reason: 'the finding quoted no span' };
+  if (!span) return { row, outcome: 'refused', code: 'no_span', reason: 'the finding quoted no span' };
   const text = String(row.text ?? '');
   const at = text.split(span).length - 1;
-  if (at !== 1) return { row, outcome: 'refused', reason: `the quoted sentence appears ${at} times in the row, not once` };
-  if (durationFormOf(span)) return { row, outcome: 'refused', reason: 'the quoted sentence already says when the state ends' };
+  if (at !== 1) return { row, outcome: 'refused', code: 'span_not_once', reason: `the quoted sentence appears ${at} times in the row, not once` };
+  if (durationFormOf(span)) return { row, outcome: 'refused', code: 'already_ends', reason: 'the quoted sentence already says when the state ends' };
   // the parameter is a form name, or the clause itself — accept either, and nothing else
   const param = String(finding?.fix_param ?? '').trim();
   const form = DURATIONS.includes(param) ? param : DURATIONS.find((f) => durationClause(f) === param) ?? durationFormOf(param);
   const clause = durationClause(form);
   if (!clause) {
-    return { row, outcome: 'refused', reason: `"${param}" is not one of the engine's duration forms (${DURATIONS.join(', ')})` };
+    return { row, outcome: 'refused', code: 'not_a_duration_form', reason: `"${param}" is not one of the engine's duration forms (${DURATIONS.join(', ')})` };
   }
   const withClause = span.replace(/\s*\.?\s*$/, '') + ` ${clause}.`;
   const after = { ...row, text: text.replace(span, withClause) };
   const bad = onlyTheAllowedThingMoved(row, after, 'duration');
-  if (bad) return { row, outcome: 'refused', reason: bad };
+  if (bad) return { row, outcome: 'refused', code: 'more_than_the_duration_moved', reason: bad };
   // EXACTLY ONE CLAUSE WAS INSERTED, and nothing else: take the clause back out of the result and
   // it must be the row it started as. This replaces a weaker rule that asked whether the original
   // text was a PREFIX of the result — which is only ever true when the quoted span sits at the END
@@ -129,9 +129,9 @@ export const applyAddDuration = (row, finding) => {
   // live run (Echo of the Stolen Chorus) and my own tests missed it by quoting an end-of-row span.
   const undone = String(after.text).replace(` ${clause}.`, '.').replace(/\s{2,}/g, ' ');
   if (undone.replace(/\s*\.\s*$/, '') !== String(text).replace(/\s*\.\s*$/, '')) {
-    return { row, outcome: 'refused', reason: 'the result is not the original row with one clause added' };
+    return { row, outcome: 'refused', code: 'not_one_clause_added', reason: 'the result is not the original row with one clause added' };
   }
-  return { row: after, outcome: 'acted', reason: `${form}: "${clause}" appended to the sentence that imposes it` };
+  return { row: after, outcome: 'acted', code: 'duration_appended', reason: `${form}: "${clause}" appended to the sentence that imposes it` };
 };
 
 /**
@@ -145,15 +145,15 @@ export const routeFinding = ({ row, finding, gmWords = [] } = {}) => {
   const kind = String(finding?.fix ?? '') || null;
   const conf = String(finding?.confidence ?? '').toLowerCase();
   const origin = rowOrigin(row);
-  const log = (outcome, reason) => ({ row, outcome, kind: kind ?? 'unlabelled', origin, reason });
+  const log = (outcome, code, reason) => ({ row, outcome, code, kind: kind ?? 'unlabelled', origin, reason });
 
-  if (!row) return log('logged', 'no row of that name on the sheet');
-  if (origin === 'print') return log('logged', "a printed row — classified and traced, not fixed here");
-  if (origin === 'body') return log('logged', "the body's row — a catalog queue, fixed once for every creature on that body");
-  if (!kind) return log('logged', 'the finding carries no fix');
-  if (!FIX_NAMES.includes(kind)) return log('logged', `"${kind}" is not one of the fixes`);
-  if (!FIX_KINDS[kind].acts) return log('logged', `${kind} is logged, not applied`);
-  if (conf !== 'high') return log('logged', `${conf || 'no'} confidence — only high acts`);
+  if (!row) return log('logged', 'no_such_row', 'no row of that name on the sheet');
+  if (origin === 'print') return log('logged', 'print_row', "a printed row — classified and traced, not fixed here");
+  if (origin === 'body') return log('logged', 'body_row', "the body's row — a catalog queue, fixed once for every creature on that body");
+  if (!kind) return log('logged', 'no_fix_named', 'the finding carries no fix');
+  if (!FIX_NAMES.includes(kind)) return log('logged', 'unknown_fix', `"${kind}" is not one of the fixes`);
+  if (!FIX_KINDS[kind].acts) return log('logged', 'kind_does_not_act', `${kind} is logged, not applied`);
+  if (conf !== 'high') return log('logged', 'not_high_confidence', `${conf || 'no'} confidence — only high acts`);
 
   const applied = applyAddDuration(row, finding);
   return { ...applied, kind, origin };
