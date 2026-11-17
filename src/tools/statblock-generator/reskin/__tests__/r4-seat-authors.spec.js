@@ -301,7 +301,15 @@ describe('the branch itself', () => {
 // more. The mechanical defects on free rows that prompted the ruling (an AC bonus the
 // GM cannot compute; a trait granting an unlimited free attack) are principles 1-2 and
 // carry no rewrite by design, so they are NOT fixed by this gate.
-describe('the audit may rewrite a row the model wrote, and only such a row', () => {
+// A REWRITE IS LOGGED, NEVER SPLICED (owner's ruling, 2026-11-17).
+//
+// This describe asserted the opposite: that a principle-4 finding's rewrite was spliced into a
+// model-written row. The ruling is that a fix is deterministic, hybrid or a drop, and the splice is
+// the last place the model wrote one alone. The code's own note puts it at about one row per two
+// forties, and on the replay one of its two splices left Swarmwright's Command reading
+// "Failure: Failure: The target has the Poisoned condition" — which the repair used to overwrite
+// afterwards and, with the repair gone, ships.
+describe('a rewrite is logged and the row is left alone', () => {
   const seatIdea = 'The frost-rimed hide sheds a crawling rime, so while the wolf is within reach of a creature that creature is slowed by the cold.';
   const driveWithAudit = (findings) => run({
     concept: 'Dire Wolf with a frost-rimed hide', cr: 1, archetype: 'skirmisher', name: 'Dire Wolf', type: 'Beast',
@@ -311,34 +319,23 @@ describe('the audit may rewrite a row the model wrote, and only such a row', () 
     audit: { findings },
   });
 
-  test('a seat-authored row takes the rewrite', async () => {
+  it('a seat-authored row keeps its own text, and the rewrite is traced', async () => {
     const { rows, trace } = await driveWithAudit([
-      // principle 4 is the ONLY principle whose rewrite the actuator carries
-      // (audit.mjs: the judgment layer's best work is copy-editing fill seams).
-      // A mechanical finding offers no rewrite by design — see the note below.
       { entry: 'Crawling Rime', section: 'Traits', principle: 4, confidence: 'high', issue: 'awkward seam',
         span: 'at the start of its turn', rewrite: 'at the start of each of its turns' },
     ]);
-    const row = rows.find((r) => r.name === 'Crawling Rime');
-    expect(row.authoredSeat).toBe(true);            // the stamp production writes, not a fixture flag
-    expect(row.text).toMatch(/at the start of each of its turns/);
-    expect(trace).toMatch(/audit rewrite:/);
-    expect(trace).not.toMatch(/audit rewrite blocked/);
+    expect(trace).toMatch(/audit rewrite logged:.*Crawling Rime/);
+    expect(trace).not.toMatch(/audit rewrite:/);
+    const row = rows.find((r) => /^Crawling Rime/.test(r.name ?? ''));
+    if (row) expect(row.text).toMatch(/at the start of its turn/);
   }, 30000);
 
-  test('a chassis row on the same sheet still refuses it, and says which kind it is', async () => {
-    const { rows, trace } = await driveWithAudit([
-      // principle 4 is the ONLY principle whose rewrite the actuator carries
-      // (audit.mjs: the judgment layer's best work is copy-editing fill seams).
-      // A mechanical finding offers no rewrite by design — see the note below.
+  it('and no row on the sheet takes the rewrite, whatever wrote it', async () => {
+    const { rows } = await driveWithAudit([
       { entry: 'Crawling Rime', section: 'Traits', principle: 4, confidence: 'high', issue: 'awkward seam',
         span: 'at the start of its turn', rewrite: 'at the start of each of its turns' },
     ]);
-    // every row that is NOT model-written must be untouched by a rewrite; the seat's is
-    const protectedRows = rows.filter((r) => !r.authored && !r.authoredSeat && !/^Multiattack/.test(r.name ?? ''));
-    expect(protectedRows.length).toBeGreaterThan(0);
-    expect(trace).toMatch(/audit rewrite:.*Crawling Rime/);
-    expect(protectedRows.some((r) => /at the start of each of its turns/.test(String(r.text ?? '')))).toBe(false);
+    expect(rows.some((r) => /at the start of each of its turns/.test(String(r.text ?? '')))).toBe(false);
   }, 30000);
 });
 

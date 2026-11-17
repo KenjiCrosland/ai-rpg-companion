@@ -237,17 +237,6 @@ what a creature IS, not what it does. A or B keeps the current
 name — C or lower means it will be replaced. Grade the name, not your
 ability to invent a different one.
 
-For principle 4 findings ONLY (garbled text, wrong words, grammar,
-doubled words, circular phrases), you may ALSO provide a "rewrite": the
-minimal replacement for the quoted span that repairs the text. Rules for
-rewrites: change as few words as possible; NEVER change any number, DC,
-damage type, condition name, or game term; never add or remove mechanics.
-The rewrite must BE the replacement text, never a description of the
-edit — to delete the span outright, return "" (the empty string) as the
-rewrite. A rewrite containing editing language ("replace this sentence
-with...") is discarded unapplied.
-A rewrite fixes prose, not rules. Findings from other principles never
-carry a rewrite.
 
 THE SPAN IS A HANDLE, NOT A CITATION. Quote the PART of the entry that is wrong — the clause, the
 phrase, the missing-trigger sentence — because the span is what tells a repair where to work. A span
@@ -282,7 +271,6 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "findings": [ { "principle": <1-7>, "section": "<section name>",
   "entry": "<entry name>", "span": "<exact quoted text, verbatim>",
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
-  "rewrite": "<optional, principle 4 only: the repaired span>",
   "rename": "<optional, name-defect findings only: the replacement entry name>",
   "confidence": "high|medium|low",
   "fix": "rename|add_duration|fix_reference|delete_span|fill_number|reformat|clarify|none",

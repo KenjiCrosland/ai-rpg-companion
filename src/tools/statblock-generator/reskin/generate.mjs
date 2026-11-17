@@ -10884,6 +10884,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // shield provide" — a GM cannot compute). So this is worth ~1 row per two
         // forties, not the ~10 it first looked like; the honest number is here so
         // the next reader does not re-derive it.
+        // A REWRITE IS LOGGED, NEVER SPLICED (owner's ruling, 2026-11-17). This is the last place
+        // the model writes a fix alone, and the ruling is that it does not: a fix is deterministic,
+        // hybrid or a drop. Its own note above puts the splice at about one row per TWO forties,
+        // and the two it made on the replay were a comma mended (fine, but it moved the sentence an
+        // add_duration finding had quoted, so that fix then found its span zero times) and
+        // Swarmwright's Command left reading "Failure: Failure: The target has the Poisoned
+        // condition" — which the repair used to overwrite afterwards and, with the repair gone,
+        // ships. Across every recording the audit offered 11 rewrites, 5 on rows the model wrote.
+        if (entry) {
+          trace('audit rewrite logged:', `${f.loc.entry}: "${String(f.span).slice(0, 50)}" -> "${f.rewrite ? String(f.rewrite).slice(0, 50) : '(deleted)'}" — not applied; a fix is deterministic, hybrid or a drop`);
+          continue;
+        }
         const modelWritten = !!(entry && (entry.model || entry.authored || entry.authoredSeat));
         if (entry && !modelWritten) {
           trace('audit rewrite blocked —', `"${f.loc.entry}" is engine-authored (${entry.print || entry.printNamed ? "print's own row" : entry.template || entry.library || entry.seed || entry.kit ? 'priced catalog composition' : 'chassis text'}); only a row the model wrote may be rewritten`);
