@@ -283,6 +283,27 @@ const imposesFromRelation = (condition, relation) => {
   return relation === 'inflicts' ? condition : null;
 };
 
+/**
+ * A {dmg} THAT DEALS NOTHING IS NOT A MECHANIC, and is dropped ("granting it {dmg} or a defensive
+ * benefit" — Meshrin, step 7 twelve). The token stands only where damage is dealt or taken, or
+ * where it names a quantity this engine prices.
+ *
+ * ONE DEFINITION, used both here as an answer is parsed and by the landing in generate.mjs. They
+ * were two copies with different verb lists, and only the second was widened: the parse still
+ * stripped "gains {dmg} Temporary Hit Points" before the landing could keep it or the refusal
+ * could see it, so neither row the widening was written for was ever reached.
+ *
+ * `gains` keeps the token because Temporary Hit Points are a quantity this engine already prices.
+ * It cannot match inside "regains": the alternation is anchored with \b and that word has no
+ * boundary there.
+ */
+export const stripUnplacedDmg = (eff) => String(eff ?? '')
+  .replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|gains?|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : ''))
+  .replace(/\s{2,}/g, ' ');
+
+/** A {dmg} written as a BONUS is a number this engine cannot price — it prices damage. */
+export const dmgWrittenAsABonus = (text) => /[+＋]\s*\{dmg\}|\{dmg\}\s*bonus/i.test(String(text ?? ''));
+
 export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
@@ -315,9 +336,9 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a damage-taken trigger with no frequency is permanent resistance phrased as a reaction (the hag's Cloud of Ash fired on every instance of damage — critic's step-5 read): once per turn
   const perTurn = (trig, eff = '') => (trig && /\b(?:takes? damage|would take damage|is hit|is damaged|is struck|is attacked)\b/i.test(trig) && /\{dmg\}|resistance|regains?|heals?|teleports?|dissolves?|moves?/i.test(eff) && !/\b(?:once per|the first time|on (?:its|her|his|their) turn|each turn|per round)\b/i.test(trig) ? `Once per turn, ${trig.replace(/^./, (c) => c.toLowerCase())}` : trig); // the hag's ash-cloud resistance is a resource; the bull's adamantine immunity is a rule
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
-  const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
+  const scrubDmg = stripUnplacedDmg; // ONE rule, shared with the landing in generate.mjs
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, quantities: Number.isFinite(Number(t?.quantities)) ? Number(t.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, quantities: Number.isFinite(Number(t?.quantities)) ? Number(t.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), rawEffect: clean(t?.effect), /* the answer BEFORE the strip — the bonus refusal has to see a token the strip would remove (2026-11-17) */ flavor: str(t?.flavor, 160) || null,
     // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
     // "this only describes the creature" is an answer and we act on it. The field
     // absent means the call failed or is an older shape, and a failed call never
@@ -418,7 +439,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // reason: a trait is not a save. 1 of 523 authored rows in the saved runs, and it is
   // that row, so the widening refuses the defect and nothing else.
   const traitIsSave = (t) => /saving throw|\bon a (?:failed|successful) save\b|\bfails? the save\b|\bsucceeds? on the save\b/i.test(`${t.trigger ?? ''} ${t.effect}`);
-  const dmgAsBonus = (t) => /[+＋]\s*\{dmg\}|\{dmg\}\s*bonus/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`);
+  const dmgAsBonus = (t) => dmgWrittenAsABonus(`${t.trigger ?? ''} ${t.rawEffect ?? t.effect ?? ''}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
   // computed separately from the test and had drifted: every refusal that was not

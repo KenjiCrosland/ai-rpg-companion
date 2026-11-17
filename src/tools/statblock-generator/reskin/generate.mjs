@@ -38,6 +38,7 @@ import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the va
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { routeFinding } from './typed-fixes.mjs'; // the audit names the fix; this applies the two that act
+import { stripUnplacedDmg } from './author.mjs'; // one strip rule, shared with the parse
 import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -4096,18 +4097,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     if (kind === 'trait') {
       const t = f;
-      // A STRIPPED TOKEN MUST NOT LEAVE A HOLE (2026-11-16). This drops a `{dmg}` that does not
-      // stand where damage is dealt or taken — right for "immune to anything {dmg}" (the Vault
-      // Bull) — but it dropped the token and left the words around it: "gains {dmg} Temporary Hit
-      // Points" shipped as "gains Temporary Hit Points", a promise a table cannot read. Two rows
-      // across every recording, about one a forty, and the repair used to half-cover them.
-      //
-      // `gains` joins the verbs that KEEP the token, because Temporary Hit Points are a quantity
-      // this engine already prices — the same number it prices damage with. It cannot match inside
-      // "regains": the alternation is anchored with \b and that word has no boundary there.
-      // A `{dmg}` the engine CANNOT price — one used as a bonus — is refused upstream in
-      // author.mjs rather than stripped here, because the row is unrunnable either way.
-      const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|gains?|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
+      // ONE STRIP RULE, imported rather than copied: this was a second copy of the parse's rule
+      // with a different verb list, and widening only this one meant neither row it was written
+      // for was ever reached — the parse had already stripped the token.
+      const dmgTok = stripUnplacedDmg;
       const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024', { properNouns: ownNouns() });
       return { name: t.name, text, authored: true, clause: t.clause, ...(t.heals ? { heals: true } : {}), ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.condition_relation ? { conditionRelation: t.condition_relation } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
     }
