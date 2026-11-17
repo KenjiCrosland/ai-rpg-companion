@@ -168,7 +168,18 @@ const SAVE_STAT_RULES = `THE SAVE'S STAT. Published monsters pair a save with th
 //
 // `SAVE_STAT_RULES` above outlived it: `buildSeatPrompt` shares it, and it is the one copy.
 
-export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [] }) {
+/**
+ * ONE MORE TRY, WITH THE REASON (owner's ruling, 2026-11-17).
+ *
+ * `refusedBefore` is `{ why, answer }` — the engine's own words for why the first answer was
+ * refused, and the answer itself. It is APPENDED, so an absent `refusedBefore` leaves this prompt
+ * byte for byte what it was and the tape still reproduces every sheet up to the point a row is
+ * refused.
+ *
+ * It states the reason. It does not tell the call to get past a check: the second answer faces the
+ * same parser and the same gates, and may still be refused, or declined.
+ */
+export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [], refusedBefore = null }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -191,7 +202,23 @@ ${ENVELOPE({ attacks: '[]', answered: true, unplaced: '[]' })}
 
 IF THE ABILITY CANNOT BE WRITTEN AS ONE OF THESE FORMS — it is speech, or lore, or it needs a second row beside it to make sense — answer with every array empty and say where it belongs in "unplaced". That is a real answer and costs nothing: the sheet has a ready-made ability to fall back on, and a row that does not work at a table is worse than one that is merely close.${clause ? `
 
-BEFORE YOU ANSWER, ONE LAST LOOK AT THE SHEET. Which row on it already does "${clause}"? If there is one — a bite that grapples and holds, a swallow, a tongue that reels — name it in "answered" with every form array empty, and write nothing. The sheet is not missing an ability in that case, and a second row for the same mechanic is the defect this question exists to catch.` : ''}`;
+BEFORE YOU ANSWER, ONE LAST LOOK AT THE SHEET. Which row on it already does "${clause}"? If there is one — a bite that grapples and holds, a swallow, a tongue that reels — name it in "answered" with every form array empty, and write nothing. The sheet is not missing an ability in that case, and a second row for the same mechanic is the defect this question exists to catch.` : ''}${refusedBefore ? `
+
+YOUR FIRST ANSWER WAS REFUSED. This is the second and last ask for this ability.
+
+WHAT YOU WROTE:
+${String(refusedBefore.answer ?? '').slice(0, 1200)}
+
+WHY IT WAS REFUSED: ${String(refusedBefore.why ?? '').slice(0, 400)}
+
+Write the ability again, in a form that does not have that fault. Keep what the ability DOES — the
+fiction and the mechanic are not the problem — and change only what the reason names. The same
+checks run on this answer, so an answer that repeats the fault is refused and the creature ships
+without the ability.
+
+If the ability genuinely cannot be written as one of these forms, say so the way this prompt
+already describes: name where it belongs instead of writing a row. That is an answer, and it is
+better than a row that cannot be run.` : ''}`;
 }
 
 const CONDITION_RELATIONS = ['inflicts', 'requires', 'immune', 'self', 'none'];

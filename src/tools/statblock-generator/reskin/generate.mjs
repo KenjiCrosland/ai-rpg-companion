@@ -6472,9 +6472,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // so there is no finished sheet on which a free row could fit.
           if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
           else {
+            // THE SEAT GETS ONE MORE TRY, WITH THE REASON (owner's ruling, 2026-11-17).
+            //
+            // A third of what this call writes is refused — 14 of 44 on the baseline tape — and
+            // nothing was asked a second time, so the sheet simply went one row shorter. Four of the
+            // fourteen are one wrong form (a saving throw written inside a trait) and two are a
+            // number promised and not written: the reason says what to write, so saying it back is
+            // the whole fix.
+            //
+            // WHAT HOLDS IT IN:
+            //   one more try, never two
+            //   nothing is loosened — the second answer faces the same parser and the same gates
+            //   the FIRST ask is byte for byte what it was, so the tape reproduces every sheet up
+            //     to the point a row is refused
+            //   a DECLINE is an answer: if the call says where the clause belongs, or the sheet
+            //     already answers it, the seat stays empty and it is not asked again
+            //
+            // It is not the end-of-line repair that was deleted. That re-authored FINISHED rows
+            // with no check on what it added; this runs where the row is written, before the sheet
+            // is priced and budgeted, and its answer faces every gate the first answer faced.
+            const askSeat = async (refusedBefore) => {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
+            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) , ...(refusedBefore ? { refusedBefore } : {})}), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            const refuse = (why) => ({ refused: why, raw: rawS });
             // THE SEAT READS `answered` TOO (2026-11-11). The envelope has always asked the call to
             // say when a row already on the sheet carries the clause, and `parseAuthorResponse`
             // has always returned it — but only the REPAIR path read it, and the repair runs last.
@@ -6503,7 +6524,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // Restrained on Slam, Entomb AND the authored Pitfall Snare: a
             // `duplicate-mechanic` FAIL the checker had always failed. The set comes from
             // `conditionsImposedTwice`, the same definition the menu filter uses, read off
-            // the rows' declared `imposes` records. The nearest template stands in, which
+            // the rows' declared `imposes` records, which
             // is where this seat was headed anyway.
             const thirdCond = form && (form.kind === 'save' ? form.f.condition : form.f.imposes);
             // A BONUS ACTION DOES NOT DENY A TURN (the critic's hottest sheet, gate forty
@@ -6511,7 +6532,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // action, every turn, no limit, at CR 7 — an action-economy miss the value check
             // cannot see because it prices damage, not tempo. Both halves are DECLARED: the
             // condition is a validated enum on the call's own save form, and the section is
-            // the seat's own placement. Print: 0 of 329. The nearest template stands in.
+            // the seat's own placement. Print: 0 of 329.
             // A SIGNATURE ROW DOES NOT RE-IMPOSE THE ATTACK'S OWN CONDITION (owner's read of
             // gate-b-engulf, 2026-11-10: "Drowning drag isn't necessary if there's a bite. We don't
             // need to answer with a row"). Closing the GM's grapple clause upstream removed the
@@ -6525,7 +6546,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // imposes. Both halves declared — the call's validated enum on its own form, and the
             // rows' `imposes` through the shared `imposedConditions` reader. A save row that
             // grapples, or a second condition the attack does not carry, is untouched, so the
-            // free-row budget is not narrowed in general. The nearest template stands in.
+            // free-row budget is not narrowed in general.
             const dupOfAttack = form && (() => {
               const cond = String((form.kind === 'save' ? form.f.condition : form.f.imposes) ?? '');
               if (!cond) return null;
@@ -6534,14 +6555,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const denies = form && form.section === 'Bonus Actions' && TURN_DENIAL.includes(String(form.kind === 'save' ? form.f.condition : form.f.imposes));
             if (stoodDown) {
               trace('seat stands down:', `${seat} — "${String(idea?.clause ?? '').slice(0, 60)}" is already carried by a row on this sheet; no second row is written for it`);
+              return { declined: 'the sheet already answers that clause' };
             } else if (denies) {
-              trace('seat authoring refused:', `${seat} — the authored row imposes ${form.kind === 'save' ? form.f.condition : form.f.imposes} as a bonus action, and no printed block denies a turn from a Bonus Action (0 of 329); the nearest template stands in`);
+              trace('seat authoring refused:', `${seat} — the authored row imposes ${form.kind === 'save' ? form.f.condition : form.f.imposes} as a bonus action, and no printed block denies a turn from a Bonus Action (0 of 329)`);
+              return refuse('the row imposes a turn-denying condition from a Bonus Action, which no printed block does');
             } else if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
-              trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329); the nearest template stands in`);
+              trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329)`);
+              return refuse('the row imposes a condition two rows on this sheet already impose');
             } else if (dupOfAttack) {
               trace('seat authoring refused:', `${seat} — the authored row re-imposes ${dupOfAttack}, which this sheet's own attack row already applies; that fiction belongs in the attack's rider and the nearest template stands in`);
+              return refuse("the row re-imposes a condition this sheet's own attack already applies");
             } else if (!form) {
-              trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);
+              trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}`);
+              // A STATED REASON COMES FIRST. The parser sets BOTH `refused` (it wrote a row and the
+              // row has a fault) and `unplaced` (where the clause then folded to) — the real traces
+              // read `(refused: "…" — a trait is not a save) (it belongs in the description)`. My
+              // first cut checked `unplaced` first and so read every one of those as a decline,
+              // swallowing exactly the refusals whose reason says what to write.
+              if ((wrote?.refused ?? []).length) return refuse(wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; '));
+              // THE CALL MAY DECLINE, and a decline is an answer: it named where the clause belongs
+              // and wrote no row to fault. That is its judgement, and it is not asked again.
+              if ((wrote?.unplaced ?? []).length) return { declined: `it belongs in the ${wrote.unplaced[0].where}` };
+              return refuse(`you wrote no ${seatKind}`);
             } else {
               const row = authoredRow(form.kind, form.f);
               // THE ENGINE DOES NOT REWRITE AN AUTHORED SENTENCE (the critic's top line,
@@ -6636,15 +6671,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const needS = (dangS || slotS || actS || stateS || contraS || countS || listS || riderS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
-              if (countS) trace('seat authoring refused:', `${seat} — the authored row writes dice where a COUNT belongs ("${String(countS).trim()}"); a number of uses is an integer, and a GM cannot take 4d6 legendary actions; the nearest template stands in`);
-              else if (listS) trace('seat authoring refused:', `${seat} — the authored row promises ${listS} and the sheet carries none, so it is a dead row a GM cannot run; the nearest template stands in`);
-              else if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
-              else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
-              else if (riderS) trace('seat authoring refused:', `${seat} - the idea is a condition on a hit (re-seated ${idea.reseated}) and the authored row imposes ${riderS} as a TRAIT; a condition imposed on a hit rides the attack row with its escape DC, never a trait (owner's ruling) - the nearest template stands in`);
-              else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
-              else if (stateS) trace('seat authoring refused:', `${seat} — the authored row keys on "${stateS}" and never says what it means; a GM has no threshold to read (print writes Bloodied or 0 Hit Points, or defines the state in the row). The nearest template stands in`);
-              else if (contraS) trace('seat authoring refused:', `${seat} — the authored row heals the creature, and "${contraS.name}" on this sheet says "${String(contraS.sentence).slice(0, 60)}"; the two cannot both be true. The nearest template stands in`);
-              else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
+              if (countS) { trace('seat authoring refused:', `${seat} — the authored row writes dice where a COUNT belongs ("${String(countS).trim()}"); a number of uses is an integer, and a GM cannot take 4d6 legendary actions`); return refuse('the row writes dice where a count of uses belongs'); }
+              else if (listS) { trace('seat authoring refused:', `${seat} — the authored row promises ${listS} and the sheet carries none, so it is a dead row a GM cannot run`); return refuse('the row promises something the sheet carries none of'); }
+              else if (dangS) { trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference)`); return refuse('the row cites a row that is not on this sheet'); }
+              else if (slotS) { trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright`); return refuse('the row still carries a slot this engine never substitutes'); }
+              else if (riderS) { trace('seat authoring refused:', `${seat} - the idea is a condition on a hit (re-seated ${idea.reseated}) and the authored row imposes ${riderS} as a TRAIT; a condition imposed on a hit rides the attack row with its escape DC, never a trait (owner's ruling)`); return refuse('a condition imposed on a hit rides the attack row, never a trait'); }
+              else if (unmetS) { trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2)`); return refuse('the row needs its target to have a condition no row on this sheet imposes'); }
+              else if (stateS) { trace('seat authoring refused:', `${seat} — the authored row keys on "${stateS}" and never says what it means; a GM has no threshold to read (print writes Bloodied or 0 Hit Points, or defines the state in the row)`); return refuse('the row keys on a state it never defines'); }
+              else if (contraS) { trace('seat authoring refused:', `${seat} — the authored row heals the creature, and "${contraS.name}" on this sheet says "${String(contraS.sentence).slice(0, 60)}"; the two cannot both be true`); return refuse('the row heals the creature, and another row on this sheet says it cannot'); }
+              else if (actS) { trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3)`); return refuse('the row makes something act that is not a row on this sheet'); }
               else if (!slotS && !unmetS && !actS && !stateS && !contraS && !countS && !listS && !riderS) {
                 // THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). The free-row
                 // budget exists for pleasant surprises; a row written to answer something the
@@ -6684,9 +6719,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 // 9 authored rows with 0 refusals and no way to know which. The seventh
                 // "declared then not carried" this sprint; traced rather than guessed at.
                 trace('authored row numbers:', `"${row.name}" — the call declared ${form.f?.quantities ?? '(unanswered)'} number(s) promised`);
-                return authoredSeatShape;
+                return { landed: authoredSeatShape };
               }
             }
+            };
+            // ONE MORE TRY, NEVER TWO.
+            let seatTry = await askSeat(null);
+            if (seatTry?.refused) {
+              trace('seat asked again:', `${seat} — the first answer was refused (${String(seatTry.refused).slice(0, 110)}); asking once more with the reason`);
+              const second = await askSeat({ why: seatTry.refused, answer: seatTry.raw });
+              if (second?.landed) {
+                trace('seat landed on the second try:', `${seat} — "${String(second.landed.row?.name ?? '')}" after "${String(seatTry.refused).slice(0, 80)}"`);
+                seatTry = second;
+              } else {
+                trace('seat refused twice:', `${seat} — first: ${String(seatTry.refused).slice(0, 90)}; second: ${String(second?.refused ?? second?.declined ?? 'no answer').slice(0, 90)}; the seat stays empty`);
+                if (second?.declined) seatTry = second;
+              }
+            }
+            if (seatTry?.landed) return seatTry.landed;
           }
         }
         // A NEAREST THAT TURNS THE CLAUSE AROUND IS NOT USED (the critic's §3, homebrew40
