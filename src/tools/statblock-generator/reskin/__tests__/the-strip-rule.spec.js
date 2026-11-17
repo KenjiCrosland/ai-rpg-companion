@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseAuthorResponse, stripUnplacedDmg, dmgWrittenAsABonus } from '../author.mjs';
 
-const TAPE = path.resolve(__dirname, 'fixtures/recordings/sweep-2026-11-16T19-31-43');
+const TAPE = path.resolve(__dirname, 'fixtures/recordings/baseline-2026-11-17');
 const seatAnswer = (sheet, carrying) => {
   const f = fs.readdirSync(TAPE).find((x) => x.startsWith(`${sheet}-`) && x.endsWith('.json'));
   for (const c of JSON.parse(fs.readFileSync(path.join(TAPE, f), 'utf8')).calls) {
