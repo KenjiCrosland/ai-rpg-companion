@@ -37,7 +37,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENI
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
-import { routeFinding, renameDropsAGmWord } from './typed-fixes.mjs'; // the audit names the fix; this applies the two that act
+import { routeFinding, renameDropsAGmWord, formatFinding } from './typed-fixes.mjs'; // the audit names the defect; nothing here acts on it
 import { stripUnplacedDmg } from './author.mjs'; // one strip rule, shared with the parse
 import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
@@ -11036,33 +11036,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the selection, rather than rework the authoring refusal to demand an economy.
           // Every existing refusal still stands (print, template, library, kit, chassis),
           // and the cap of 2 rows a sheet is unchanged.
-          // A FINDING THE FIX CANNOT REACH IS CLASSIFIED, NOT DROPPED (item R0's routing half).
-          // Only a free/authored row can be repaired on this sheet, so a finding on print's row or on
-          // the body's is skipped here — and it used to be skipped SILENTLY, which is why the funnel
-          // measured 164 drops with nothing to say about them. Each kind is now named, and the next
-          // twelve can count them: print findings are either the audit arguing with WotC or OUR paste
-          // breaking print's row (the valuable kind); the body's rows are a catalog queue, fixed once
-          // for every creature on that body, never per sheet.
+          // EVERY FINDING IS LOGGED WITH ITS DEFECT (owner's ruling, 2026-11-17). Nothing acts: the
+          // audit names WHAT IS WRONG with the row from a closed list, and the label is the gauge for
+          // the later change to how abilities are written — it gives the count before and after.
+          //
+          // Every origin is logged, not just the rows a fix could once reach. `clarify` used to be 86%
+          // of what the audit asked for and said only that a row needed rewriting; the defect names it,
+          // and a print or catalog finding is as worth counting as a model-written one. A print finding
+          // is still RECORDED on the sheet as dismissed, because it is either the audit arguing with
+          // published text or our own paste having broken print's row, and the checker lists those.
           if (!row) continue;
+          const found = routeFinding({ row, finding: { ...f, span: auditSpanOf(f) } });
+          trace('audit defect:', formatFinding({ section: sec, name: String(row.name ?? '').replace(/ \(.*\)$/, ''), entry: found }));
           if (row.print || row.printNamed) {
-            auditDismissedOnPrint.push({ section: sec, row: String(row.name ?? ''), message: String(f.message ?? ''), ...(f.principle ? { principle: f.principle } : {}) });
-            trace('audit finding on print:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" — ${String(f.message ?? '').slice(0, 90)}. print's row is the standard, so this is either the audit arguing with published text or OUR paste having broken it; no sheet-level fix runs`);
-            continue;
-          }
-          if (!(row.freeRow || row.authored)) {
-            trace('audit finding on the body:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" [${row.template ?? row.library ?? row.seed ?? 'chassis'}] — ${String(f.message ?? '').slice(0, 90)}. a catalog row: the fix belongs in ${row.template || row.library || row.seed ? 'the template' : 'the donor'}, once, for every creature on this body`);
-            continue;
-          }
-          // TYPED FIXES (owner's ruling, 2026-11-16). The audit names the KIND of fix; the engine
-          // applies the two that act — rename and add_duration — and logs the rest. The one-row
-          // re-authoring call further down is no longer reached from a finding: it re-authored a row
-          // from nothing into a closed form with a damage field, and across the tapes added damage to
-          // ten rows, a condition to six, and turned three passive traits into saves.
-          const typed = routeFinding({ row, finding: { ...f, span: auditSpanOf(f) }, gmWords: auditGmWords });
-          trace('typed fix:', `${sec}/"${String(row.name ?? '').replace(/ \(.*\)$/, '')}" [${typed.origin}] ${String(f.confidence ?? 'no-confidence')} ${typed.kind} — ${typed.outcome}: ${typed.reason}`);
-          if (typed.outcome === 'acted') {
-            const at = (monster.sections[sec] ?? []).indexOf(row);
-            if (at >= 0) monster.sections[sec][at] = typed.row;
+            auditDismissedOnPrint.push({ section: sec, row: String(row.name ?? ''), message: String(f.message ?? ''), defect: found.defect, ...(f.principle ? { principle: f.principle } : {}) });
           }
         }
         // stamped whether or not anything was dismissed: an ABSENT field means a sheet generated

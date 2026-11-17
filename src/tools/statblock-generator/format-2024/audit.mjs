@@ -273,22 +273,23 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
   "rename": "<optional, name-defect findings only: the replacement entry name>",
   "confidence": "high|medium|low",
-  "fix": "rename|add_duration|fix_reference|delete_span|fill_number|reformat|clarify|none",
-  "fix_param": "<the one thing that fix needs, or null>" } ] }
-THE FIX NAMES WHAT SHOULD BE DONE, and the engine does it — you do not write the repair. Choose the
-NARROWEST fix that resolves the issue you described:
-  rename         the NAME is wrong and the rules text is right. fix_param: the replacement name.
-  add_duration   an imposed state never says when it ends. fix_param: one of
-                 "target_end" (until the end of its next turn), "target_start",
-                 "source_end" (until the end of the creature's next turn), "source_start".
-  fix_reference  the row names something that is not on the sheet. fix_param: null.
-  delete_span    the span you quoted should be removed and nothing put in its place. fix_param: null.
-  fill_number    one quantity is missing — a bonus, Temporary Hit Points, a distance, uses.
-                 fix_param: which quantity, in two or three words.
-  reformat       the parts are right and rendered in the wrong form; no content changes. null.
-  clarify        the row needs prose rewritten and no fix above reaches it. fix_param: null.
-  none           an observation; nothing on the row should change. fix_param: null.
-Do not invent a fix outside this list.
+  "defect": "misnamed|untrackable|open_ended|dead_reference|wording|weak|other" } ] }
+NAME THE DEFECT, do not prescribe a repair. You are saying WHAT IS WRONG with the row, in one word
+from this list. Choose the one that names the thing you described in "issue":
+  misnamed       the name promises something the rules text does not do.
+  untrackable    the trigger or condition rests on something the table cannot check: which way a
+                 creature is facing, where it stood on an earlier turn, what it did further back
+                 than this round, or an area nothing on the sheet defines.
+  open_ended     a state with no end and no escape, or an ability with no stated cost and no
+                 stated timing.
+  dead_reference the row names an attack, creature, feature or condition that is not on the sheet.
+  wording        grammar, format or a pronoun. The rule itself is clear.
+  weak           the row runs exactly as written, and you judge it underpowered or outclassed by
+                 something else the creature can do.
+  other          none of the above describes it.
+Pick the defect that is the ROOT of the issue. A row whose name is wrong AND whose state never ends
+is "misnamed" only if the name is what you wrote the finding about. Do not invent a word outside
+this list; if none fits, answer "other" and the issue sentence carries the rest.
 An empty findings array is a correct and common output. Do not manufacture
 findings to appear thorough. Every span must be verbatim text from the block —
 if you cannot quote it, the finding does not exist.${elementClaims.length ? `
@@ -565,8 +566,9 @@ export function verifyAuditFindings(monster, raw) {
       // nothing could act. Both are conditional, so a finding without them keeps today's shape —
       // a spec asserts that shape exactly. The SPAN is not added here: it already rides inside
       // `message` as `(about: "…")`, and generate.mjs reads it from there.
-      ...(f.fix ? { fix: String(f.fix).trim() } : {}),
-      ...(f.fix_param != null && String(f.fix_param).trim() ? { fix_param: String(f.fix_param).trim() } : {}),
+      // the DEFECT's name, carried conditionally like every other optional field: an older answer
+      // (or an older tape) has none, and absent is not the same fact as "other" (2026-11-17)
+      ...(f.defect ? { defect: String(f.defect).trim() } : {}),
       loc: { section, entry: entry.name },
       ...(rewrite != null ? { span: f.span, rewrite } : {}),
       ...(rename ? { rename } : {}),

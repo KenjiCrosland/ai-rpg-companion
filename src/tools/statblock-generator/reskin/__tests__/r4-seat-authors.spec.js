@@ -339,58 +339,66 @@ describe('a rewrite is logged and the row is left alone', () => {
   }, 30000);
 });
 
-// A FINDING ON A FREE ROW IS TYPED, NOT RE-AUTHORED (owner's ruling, 2026-11-16).
+// A FINDING IS LOGGED WITH ITS DEFECT, AND THE ROW IS NOT TOUCHED (owner's ruling, 2026-11-17).
 //
-// This describe previously asserted the opposite — that an audit finding sent the row back through
-// the AUTHORING FORMS and the sheet took the re-authored text. That was the 2026-11-05 ruling and it
-// has been replaced. Measured across the tapes, the one-row re-authoring call added damage to ten
-// rows that had none, a condition to six, and turned three passive traits into saves; the owner's
-// read of a forty scored five of its ten changed sheets Worse against three Better.
+// This describe has now asserted three different behaviours in three weeks, which is the honest
+// record of the decision. On 2026-11-05 an audit finding sent the row back through the AUTHORING
+// FORMS and the sheet took the re-authored text. On 2026-11-16 the audit named a KIND of fix and
+// the engine applied the two that could act. Today the audit names the DEFECT and nothing acts:
+// the one-row repair was deleted (unreachable, and it had added damage to ten rows that had none,
+// a condition to six, and turned three passive traits into saves), and `add_duration` went with it
+// (named six times across two runs, acted on none).
 //
-// The audit now NAMES the kind of fix and the engine applies the two that act. The re-authoring
-// call is no longer reached from a finding, and these tests assert that it is not.
-describe('a finding on a free row is typed, and the re-authoring call is not made', () => {
+// These run through the whole engine, so they are the proof that nothing at the end of the line
+// rewrites a row — whatever the defect, whatever the confidence.
+describe('a finding is logged with its defect, and the row is not touched', () => {
   const seatIdea = 'Her lacquered line holds: while she stands beside an ally neither of them can be shoved, and the pair are harder to hit.';
-  const drive = ({ findings, fix }) => run({
+  const drive = ({ findings }) => run({
     concept: 'Vashka the Red, a knight who fights in formation', cr: 1, archetype: 'skirmisher', name: 'Vashka the Red', type: 'Humanoid',
     ideas: { trait: { idea: seatIdea, section: 'trait', trigger: 'always', effect: 'threat' } },
     fit: { ...REFUSED, missing: 'a passive that rewards standing beside an ally' },
-    seatRow: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'neither can be moved against their will', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] },
+    seatRow: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'neither Vashka nor that ally can be moved against their will', imposes: null, condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 1, passive_effect: 'defense' }] },
     audit: { findings },
-    freeRowFix: fix,
   });
-  // the real finding, from sweep 23-vashka-the-red: principle 2, so NO rewrite is offered
+  // the real finding, from sweep 23-vashka-the-red: the block never states the bonus it promises
   const AC_FINDING = [{ entry: 'Lacquered Line', section: 'Traits', principle: 2, confidence: 'high',
     issue: 'The block never states the numeric bonus to AC', span: 'moved against their will' }];
+  const theRow = (rows) => rows.find((r) => /^Lacquered Line/.test(r.name ?? ''));
 
-  test('a high finding with no fix is logged, and the row is untouched', async () => {
+  test('a finding with no defect named is logged as other, and the row is untouched', async () => {
     const { rows, trace } = await drive({ findings: AC_FINDING });
-    expect(trace).toMatch(/typed fix:.*"Lacquered Line" \[model\] high unlabelled — logged: the finding carries no fix/);
+    expect(trace).toMatch(/audit defect:.*"Lacquered Line" \[model-written\] high other/);
     expect(trace).not.toMatch(/row repair:/);
     expect(trace).not.toMatch(/free row repaired:/);
-    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? '')).text).toMatch(/moved against their will/);
+    expect(theRow(rows).text).toMatch(/moved against their will/);
   }, 30000);
 
-  test('a high finding of a logged kind is logged, and the row is untouched', async () => {
-    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], fix: 'fill_number', fix_param: 'the AC bonus' }] });
-    expect(trace).toMatch(/typed fix:.*fill_number — logged: fill_number is logged, not applied/);
-    expect(trace).not.toMatch(/row repair:/);
-    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? '')).text).toMatch(/moved against their will/);
+  test('the log carries the issue in full and the quoted span', async () => {
+    const { trace } = await drive({ findings: [{ ...AC_FINDING[0], defect: 'open_ended' }] });
+    expect(trace).toMatch(/audit defect:.*open_ended — The block never states the numeric bonus to AC/);
+    expect(trace).toContain('(about: "moved against their will")');
   }, 30000);
+
+  test.each(['misnamed', 'untrackable', 'open_ended', 'dead_reference', 'wording', 'weak', 'other'])(
+    'a high %s finding changes nothing on the sheet', async (defect) => {
+      const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], defect }] });
+      expect(trace).toMatch(new RegExp(`audit defect:.*high ${defect}`));
+      expect(trace).not.toMatch(/row repair:|free row repaired:/);
+      expect(theRow(rows).text).toMatch(/neither Vashka nor that ally can be moved against their will/);
+    }, 30000);
 
   // RENAME IS NOT THIS ROUTE'S JOB (2026-11-17). A finding carrying `rename` never reached it —
-  // the audit's own loop takes those — so the typed route logs the kind, and the GM-word guard is
-  // tested against the renaming path at the end of this file.
-  test('a high rename is logged here, and the row keeps its name', async () => {
-    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], fix: 'rename', fix_param: 'Shield-Wall Brace' }] });
-    expect(trace).not.toMatch(/typed fix:.*rename — acted/);
-    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeTruthy();
+  // the audit's own loop takes those — and the GM-word guard is tested against the renaming path
+  // at the end of this file.
+  test('a rename still runs from the rename field, through the older loop', async () => {
+    const { rows } = await drive({ findings: [{ ...AC_FINDING[0], defect: 'misnamed', rename: 'Shield-Wall Brace' }] });
+    expect(theRow(rows) ?? rows.find((r) => /Shield-Wall Brace/.test(r.name ?? ''))).toBeTruthy();
   }, 30000);
 
-  test('a medium finding of a kind that acts does not act', async () => {
-    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], confidence: 'medium', fix: 'add_duration', fix_param: 'target_end' }] });
-    expect(trace).toMatch(/typed fix:.*medium add_duration — logged: medium confidence — only high acts/);
-    expect(rows.find((r) => /^Lacquered Line/.test(r.name ?? ''))).toBeTruthy();
+  test('a defect outside the list is logged as other, and says what the audit called it', async () => {
+    const { rows, trace } = await drive({ findings: [{ ...AC_FINDING[0], defect: 'substitute_noun' }] });
+    expect(trace).toMatch(/audit defect:.*high other \(the audit said "substitute_noun"\)/);
+    expect(theRow(rows).text).toMatch(/moved against their will/);
   }, 30000);
 });
 
@@ -469,12 +477,12 @@ describe('a fix reaches an authored row that is not a free row', () => {
     }
   });
 
-  it('the pipeline uses that predicate to decide which findings a fix may reach', () => {
-    const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'generate.mjs'), 'utf8');
-    expect(src).toMatch(/!\(row\.freeRow \|\| row\.authored\)/);
-    // the second assertion here read the trace of the one-row repair call, deleted 2026-11-17.
-    // The predicate outlived it: it is now what sends a finding to the typed fixes instead of
-    // naming it a catalog queue.
+  it('the engine reads that predicate where it names a row\'s origin', () => {
+    // it moved out of generate.mjs on 2026-11-17: the branch that skipped a catalog finding is
+    // gone — every finding is logged now — and the predicate lives in `rowOrigin`, which is what
+    // the log prints and what this file's first three cases exercise directly.
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'typed-fixes.mjs'), 'utf8');
+    expect(src).toMatch(/row\.freeRow \|\| row\.authored/);
   });
 });
 

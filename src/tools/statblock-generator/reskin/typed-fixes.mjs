@@ -1,162 +1,106 @@
 /**
- * TYPED FIXES FOR AUDIT FINDINGS (owner's ruling, 2026-11-16).
+ * WHAT KIND OF DEFECT THE AUDIT FOUND (owner's ruling, 2026-11-17).
  *
- * A fix is deterministic, hybrid or a drop. The model is not relied on to write a fix alone: the
- * audit NAMES the kind of fix from a closed list and supplies its one parameter, and the engine
- * writes the change and checks it. The one-row re-authoring call — which re-authored a row from
- * nothing into a closed form with a damage field, and whose own prompt called leaving the row alone
- * "the worst outcome available" — is no longer reached from an audit finding.
+ * NOTHING HERE ACTS. The audit reads a finished sheet and names what is wrong with the row from a
+ * closed list; the engine logs it with the row's origin and the quoted span, and changes nothing.
+ * The label is a GAUGE, not an instruction: it gives the count before the change to how abilities
+ * are written, and the count after.
  *
- * WHY THESE TWO KINDS ACT AND THE REST ARE LOGGED. The reviewer read the 31 high findings on the
- * baseline tape against the row each points at. Twelve were defects the engine had already made
- * before the audit read the row; four needed a rule redesigned; two were the audit misreading sound
- * wording. Of the fixes that looked available, noun substitution and span deletion did not survive
- * contact with the rows they would touch — two of four delete_span candidates were the audit being
- * wrong and one would have removed a limit. What is left is a name that does not fit its row, and a
- * state that never ends.
+ * WHY NOTHING ACTS AT THE END OF THE LINE. Two things acted here and both are gone.
  *
- * Nothing here reads generateReskin's locals: every function takes a row, a finding and the few
- * facts it needs, and returns the row or a refusal with its reason.
+ *   the one-row repair   deleted 2026-11-17. Across the tapes it added damage to ten rows, a
+ *                        condition to six, and turned three passive traits into saves; on the arms
+ *                        round it made five rows worse for the three it improved.
+ *   add_duration         deleted with this commit. It was named six times across two runs and acted
+ *                        on NONE of them, rightly each time — four were medium confidence and the
+ *                        two high ones quoted a span that was not a whole sentence, so appending a
+ *                        clause there would have produced "…of the weapon's type until the end of
+ *                        its next turn., and it has advantage…". Four of 65 clarify findings plus
+ *                        those four is too few, and too often quoted mid-sentence, to earn a second
+ *                        appending fix.
+ *
+ * A row the model wrote badly is fixed where the row is WRITTEN. That is a later handoff.
+ *
+ * RENAMING IS NOT HERE AND NEVER WAS. The audit's own loop takes a finding carrying `rename`, with
+ * the claims, weapon and part-name guards and the GM-word guard. This module only ever logged it.
+ *
+ * Nothing here reads generateReskin's locals: every function takes a row and a finding and returns
+ * a log entry.
  */
-import { DURATIONS, durationClause, durationFormOf } from './templates.mjs';
-
-/** The closed list. `acts` is the whole difference; the rest are labels that count. */
-export const FIX_KINDS = {
-  // RENAME IS NOT APPLIED HERE (2026-11-17). The engine already had a rename path — the audit's own
-  // loop, which carries the claims, weapon and part-name guards and the confidence policy the
-  // owner's hand-score set on 11 November — and a finding carrying `rename` never reached this
-  // route anyway. Two places a name could change is one too many, so this one logs and the older
-  // loop keeps the job, with its GM-word guard widened to every row.
-  rename: { acts: false },
-  add_duration: { acts: true },
-  fix_reference: { acts: false },
-  delete_span: { acts: false },
-  fill_number: { acts: false },
-  reformat: { acts: false },
-  clarify: { acts: false },
-  none: { acts: false },
-};
-export const FIX_NAMES = Object.keys(FIX_KINDS);
 
 /**
- * WHERE THE ROW CAME FROM, by the engine's own test (generate.mjs:11041). `freeRow || authored` is
- * what it means by a row the model wrote, and it is what decides whether add_duration may act.
+ * The closed list the audit answers from. `clarify` used to stand for all of this — it said a row
+ * needed rewriting and not what was wrong with it, and it was 86% of everything the audit asked
+ * for, so it could not be acted on or even counted usefully.
+ */
+export const DEFECTS = {
+  misnamed: 'the name promises something the rules text does not do',
+  untrackable: 'the trigger or condition rests on something the table cannot check: facing, a remembered position, history beyond the round, a zone nothing on the sheet defines',
+  open_ended: 'a state with no end and no escape, or an ability with no stated cost or timing',
+  dead_reference: 'the row names an attack, creature, feature or condition that is not on the sheet',
+  wording: 'grammar, format or pronoun. The rule itself is clear',
+  weak: 'the row runs as written, and the audit thinks it underpowered or outclassed',
+  other: 'none of the above describes it — the issue sentence carries the rest, and a run where this passes one finding in six means the list needs re-cutting',
+};
+export const DEFECT_NAMES = Object.keys(DEFECTS);
+
+/**
+ * WHERE THE ROW CAME FROM, in the four values the log reports.
+ *
+ * `freeRow || authored` is the engine's own test for a row the model wrote (generate.mjs). A row
+ * marked `accepted_closest` is its own case: the fit call refused every template and the engine
+ * seated the nearest shape anyway, so the row does something its name was never about — the
+ * Owlbear's "Learned to Climb" on a pounce. Counting those as model-written hides the one defect
+ * class that has a known cause and a fix already queued.
  */
 export const rowOrigin = (row) => {
   if (!row) return 'missing';
   if (row.print || row.printNamed || row.rules) return 'print';
+  if (row.accepted_closest) return 'closest';
   if (row.freeRow || row.authored) return 'model';
-  return 'body';
+  return 'catalog';
 };
 
-const bareName = (n) => String(n ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)$/, '').trim();
-const gate = (n) => { const m = / (\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\))$/.exec(String(n ?? '')); return m ? ` ${m[1]}` : ''; };
-
-/**
- * THE ONE CHECK, used after every fix that acts.
- *
- * The row's dice, damage types, conditions, save ability, DC, area and form must be what they were,
- * apart from the one thing the fix allows. If anything else moved, the caller keeps the original
- * row and traces why. This exists because the step it replaces added damage to ten rows, a
- * condition to six, and turned three passive traits into saves.
- */
-const DICE = /\d+d\d+(?:\s*[+-]\s*\d+)?/g;
-const DAMAGE_TYPES = /\b(Acid|Bludgeoning|Cold|Fire|Force|Lightning|Necrotic|Piercing|Poison|Psychic|Radiant|Slashing|Thunder)\b/g;
-const CONDITIONS = /\b(Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious|Exhaustion)\b/g;
-const SAVE_ABILITY = /\b(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw\b/g;
-const DC = /\bDC\s*\d+\b/g;
-const AREA = /\b\d+-foot\b|\bwithin \d+ feet\b|\brange \d+\/\d+\b|\breach \d+ ft\.|\bEmanation\b|\bCone\b|\bLine\b|\bCube\b|\bSphere\b/g;
-const FORM = /(Melee or Ranged Attack Roll|Melee Attack Roll|Ranged Attack Roll|Saving Throw|Trigger:|Response:)/g;
-
-const shapeOf = (text) => ({
-  dice: (String(text).match(DICE) ?? []).join('|'),
-  damage: (String(text).match(DAMAGE_TYPES) ?? []).sort().join('|'),
-  conditions: (String(text).match(CONDITIONS) ?? []).sort().join('|'),
-  save: (String(text).match(SAVE_ABILITY) ?? []).join('|'),
-  dc: (String(text).match(DC) ?? []).join('|'),
-  area: (String(text).match(AREA) ?? []).join('|'),
-  form: (String(text).match(FORM) ?? []).join('|'),
-});
-
-/**
- * @param allow 'name' — the text must be byte for byte what it was
- *              'duration' — one end clause may have been appended, nothing else
- * @returns null when the change is within what the fix allows, or the reason it is not
- */
-export const onlyTheAllowedThingMoved = (before, after, allow) => {
-  if (allow === 'name') {
-    return String(before.text) === String(after.text) ? null : 'the rules text changed, and a rename may not touch it';
-  }
-  const a = shapeOf(before.text); const b = shapeOf(after.text);
-  for (const k of Object.keys(a)) if (a[k] !== b[k]) return `the row's ${k} changed (${a[k] || 'none'} -> ${b[k] || 'none'})`;
-  if (bareName(before.name) !== bareName(after.name)) return 'the name changed, and only a rename may do that';
-  return null;
+/** How the log names each origin, so a reader needs no key. */
+export const ORIGIN_WORDS = {
+  model: 'model-written',
+  catalog: 'catalog',
+  print: 'print',
+  closest: "a refused template's stand-in",
+  missing: 'no such row',
 };
 
 /**
- * ADD_DURATION. One clause saying when an imposed state ends, appended to the sentence that imposes
- * it. The audit picks from the engine's own duration vocabulary — the same four forms the fit call
- * fills — and the engine renders and appends it.
+ * ONE ANSWER PER FINDING, and the row is returned UNCHANGED every time.
  *
- * Refused when the row is not free or authored, when the quoted sentence is not found exactly once,
- * or when that sentence already says when the state ends.
+ * A defect outside the list is logged as `other` rather than refused: the list is the owner's and a
+ * value it does not cover is a fact about the list, which is why `other` passing one finding in six
+ * is the signal to re-cut it.
  */
-export const applyAddDuration = (row, finding) => {
-  if (rowOrigin(row) !== 'model') {
-    return { row, outcome: 'refused', code: 'not_a_model_row', reason: `the row is ${rowOrigin(row)}, and a duration is added only to a row the model wrote` };
-  }
-  const span = String(finding?.span ?? '').trim();
-  if (!span) return { row, outcome: 'refused', code: 'no_span', reason: 'the finding quoted no span' };
-  const text = String(row.text ?? '');
-  const at = text.split(span).length - 1;
-  if (at !== 1) return { row, outcome: 'refused', code: 'span_not_once', reason: `the quoted sentence appears ${at} times in the row, not once` };
-  if (durationFormOf(span)) return { row, outcome: 'refused', code: 'already_ends', reason: 'the quoted sentence already says when the state ends' };
-  // the parameter is a form name, or the clause itself — accept either, and nothing else
-  const param = String(finding?.fix_param ?? '').trim();
-  const form = DURATIONS.includes(param) ? param : DURATIONS.find((f) => durationClause(f) === param) ?? durationFormOf(param);
-  const clause = durationClause(form);
-  if (!clause) {
-    return { row, outcome: 'refused', code: 'not_a_duration_form', reason: `"${param}" is not one of the engine's duration forms (${DURATIONS.join(', ')})` };
-  }
-  const withClause = span.replace(/\s*\.?\s*$/, '') + ` ${clause}.`;
-  const after = { ...row, text: text.replace(span, withClause) };
-  const bad = onlyTheAllowedThingMoved(row, after, 'duration');
-  if (bad) return { row, outcome: 'refused', code: 'more_than_the_duration_moved', reason: bad };
-  // EXACTLY ONE CLAUSE WAS INSERTED, and nothing else: take the clause back out of the result and
-  // it must be the row it started as. This replaces a weaker rule that asked whether the original
-  // text was a PREFIX of the result — which is only ever true when the quoted span sits at the END
-  // of the row, so a mid-row span was refused however correct it was. It cost a real fix on the
-  // live run (Echo of the Stolen Chorus) and my own tests missed it by quoting an end-of-row span.
-  const undone = String(after.text).replace(` ${clause}.`, '.').replace(/\s{2,}/g, ' ');
-  if (undone.replace(/\s*\.\s*$/, '') !== String(text).replace(/\s*\.\s*$/, '')) {
-    return { row, outcome: 'refused', code: 'not_one_clause_added', reason: 'the result is not the original row with one clause added' };
-  }
-  return { row: after, outcome: 'acted', code: 'duration_appended', reason: `${form}: "${clause}" appended to the sentence that imposes it` };
+export const routeFinding = ({ row, finding } = {}) => {
+  const named = String(finding?.defect ?? '').trim();
+  const defect = DEFECT_NAMES.includes(named) ? named : 'other';
+  return {
+    row,
+    outcome: 'logged',
+    defect,
+    declared: named || null,            // what the audit actually said, even when it is not on the list
+    origin: rowOrigin(row),
+    confidence: String(finding?.confidence ?? '').toLowerCase() || 'none',
+    // THE SPAN IS PRINTED ONCE. The engine's finding normaliser appends the quoted span to
+    // `message` as `(about: "…")`, so reading the issue off it and then printing `span` beside it
+    // said the same sentence twice — and these spans run to 150 characters.
+    issue: String(finding?.issue ?? finding?.message ?? '').replace(/\s*\(about: "[\s\S]*"\)\s*$/, '').trim(),
+    span: String(finding?.span ?? ''),
+  };
 };
 
-/**
- * THE ROUTING. One answer per finding, and the row is returned unchanged unless a fix acted.
- *
- * Only HIGH findings act: this is what removes the exception that kept a finding "whatever its
- * confidence label" on a row a fix could reach. Medium and low are logged, and so is every kind
- * that does not act, a finding with no fix at all, and any finding on a printed or body row.
- */
-export const routeFinding = ({ row, finding, gmWords = [] } = {}) => {
-  const kind = String(finding?.fix ?? '') || null;
-  const conf = String(finding?.confidence ?? '').toLowerCase();
-  const origin = rowOrigin(row);
-  const log = (outcome, code, reason) => ({ row, outcome, code, kind: kind ?? 'unlabelled', origin, reason });
-
-  if (!row) return log('logged', 'no_such_row', 'no row of that name on the sheet');
-  if (origin === 'print') return log('logged', 'print_row', "a printed row — classified and traced, not fixed here");
-  if (origin === 'body') return log('logged', 'body_row', "the body's row — a catalog queue, fixed once for every creature on that body");
-  if (!kind) return log('logged', 'no_fix_named', 'the finding carries no fix');
-  if (!FIX_NAMES.includes(kind)) return log('logged', 'unknown_fix', `"${kind}" is not one of the fixes`);
-  if (!FIX_KINDS[kind].acts) return log('logged', 'kind_does_not_act', `${kind} is logged, not applied`);
-  if (conf !== 'high') return log('logged', 'not_high_confidence', `${conf || 'no'} confidence — only high acts`);
-
-  const applied = applyAddDuration(row, finding);
-  return { ...applied, kind, origin };
+/** The log line, with everything needed to read it without the tape beside you. */
+export const formatFinding = ({ sheet = '', section = '', name = '', entry }) => {
+  const e = entry;
+  return `${sheet ? `${sheet} ` : ''}${section}/"${name}" [${ORIGIN_WORDS[e.origin] ?? e.origin}] ${e.confidence} ${e.defect}`
+    + `${e.declared && e.declared !== e.defect ? ` (the audit said "${e.declared}")` : ''}`
+    + ` — ${e.issue}${e.span ? ` (about: "${e.span}")` : ''}`;
 };
 
 /**

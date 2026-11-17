@@ -1,218 +1,168 @@
 /**
- * TYPED FIXES FOR AUDIT FINDINGS (owner's ruling, 2026-11-16).
+ * THE AUDIT NAMES THE DEFECT, AND NOTHING ACTS ON IT (owner's ruling, 2026-11-17).
  *
- * A fix is deterministic, hybrid or a drop: the audit NAMES the kind from a closed list and gives
- * its one parameter, and the engine writes the change and checks it. Two kinds act — a name that
- * does not fit its row, and a state that never ends — and the rest are logged as labels that count.
+ * `clarify` said a row needed rewriting and not what was wrong with it, and it was 86% of
+ * everything the audit asked for on the forty — so it could neither be acted on nor counted. The
+ * audit now answers one word from a closed list, and the engine LOGS it: the label is the gauge for
+ * the later change to how abilities are written, giving the count before and the count after.
  *
- * This replaces the one-row re-authoring call for audit findings. That call re-authored a row from
- * nothing into a closed form with a damage field, and across the tapes it added damage to ten rows
- * that had none, a condition to six, and turned three passive traits into saves.
+ * Two things used to act here and both are gone. The one-row repair was deleted on 2026-11-17
+ * (unreachable, and it had made five rows worse for three it improved). `add_duration` goes with
+ * this commit: named six times across two runs, acted on none, rightly each time — four were medium
+ * confidence and the two high ones quoted a span that was not a whole sentence.
+ *
+ * Renaming is untouched and is not tested here: a finding carrying `rename` is taken by the audit's
+ * own loop, with the claims, weapon, part-name and GM-word guards. The guard's test lives in
+ * `r4-seat-authors.spec.js`, against the path that actually renames.
+ *
+ * These tests read RETURN VALUES. None reads a prompt's wording.
  */
-import { routeFinding, applyAddDuration, onlyTheAllowedThingMoved, rowOrigin, renameDropsAGmWord, FIX_NAMES } from '../typed-fixes.mjs';
-import { DURATIONS, durationClause } from '../templates.mjs';
+import { routeFinding, rowOrigin, renameDropsAGmWord, formatFinding, DEFECT_NAMES, DEFECTS, ORIGIN_WORDS } from '../typed-fixes.mjs';
 
-/** Rimewake, from sheet 14 of the baseline tape: a model-written row whose state never ends */
-const rimewake = () => ({
-  name: 'Rimewake', authored: true,
-  text: 'The ground within 10 feet of the creature becomes Difficult Terrain. A creature that starts its turn there has the Restrained condition.',
+const ROW = 'Rimewake';
+const TEXT = 'Rime crusts the ground around the wolf. A creature that starts its turn within 5 feet has the Restrained condition.';
+const SPAN = 'A creature that starts its turn within 5 feet has the Restrained condition.';
+const rimewake = (over = {}) => ({ name: ROW, authored: true, text: TEXT, ...over });
+const finding = (over = {}) => ({ confidence: 'high', issue: 'the state never ends', span: SPAN, ...over });
+
+describe('the closed list is the owner\'s, and every value is described', () => {
+  test('it is exactly the seven the ruling names', () => {
+    expect(DEFECT_NAMES).toEqual(['misnamed', 'untrackable', 'open_ended', 'dead_reference', 'wording', 'weak', 'other']);
+  });
+
+  test('each one says what it means, so the log needs no key', () => {
+    for (const d of DEFECT_NAMES) expect(DEFECTS[d].length).toBeGreaterThan(20);
+  });
 });
-const SPAN = 'A creature that starts its turn there has the Restrained condition.';
 
-describe('add_duration does only its own thing', () => {
-  test('one end clause is added and nothing else moves', () => {
+describe('every defect is logged, and the row comes back unchanged', () => {
+  test.each(DEFECT_NAMES)('%s returns the row untouched and a log entry with that label', (defect) => {
     const before = rimewake();
-    const { row, outcome } = applyAddDuration(before, { span: SPAN, fix_param: 'target_end' });
-    expect(outcome).toBe('acted');
-    expect(row.text).toBe('The ground within 10 feet of the creature becomes Difficult Terrain. A creature that starts its turn there has the Restrained condition until the end of its next turn.');
-    expect(row.name).toBe(before.name);
-    // the dice, damage, conditions, save, DC, area and form are all what they were
-    expect(onlyTheAllowedThingMoved(before, row, 'duration')).toBeNull();
+    const r = routeFinding({ row: before, finding: finding({ defect }) });
+    expect(r).toMatchObject({ outcome: 'logged', defect });
+    expect(r.row).toBe(before);              // the same object, not a copy
+    expect(r.row.text).toBe(TEXT);           // and its text did not move
   });
 
-  test.each(DURATIONS)('it renders the engine\'s own "%s" clause', (form) => {
-    const { row, outcome } = applyAddDuration(rimewake(), { span: SPAN, fix_param: form });
-    expect(outcome).toBe('acted');
-    expect(row.text).toContain(durationClause(form));
+  test('a label outside the list is logged as other, and what the audit said is kept', () => {
+    const r = routeFinding({ row: rimewake(), finding: finding({ defect: 'substitute_noun' }) });
+    expect(r).toMatchObject({ outcome: 'logged', defect: 'other', declared: 'substitute_noun' });
+    expect(DEFECT_NAMES).not.toContain('substitute_noun');
   });
 
-  // THE SPAN IS NOT ALWAYS THE LAST SENTENCE. The first version of the check asked whether the
-  // original text was a PREFIX of the result, which can only be true when the quoted span sits at
-  // the end of the row — so a mid-row span was refused however correct it was. It cost a real fix
-  // on the live run (Echo of the Stolen Chorus) and these tests missed it by quoting an end-of-row
-  // span every time.
-  test('a span in the MIDDLE of the row is added to, and the rest is left alone', () => {
-    const row = { name: 'Echo of the Stolen Chorus', authored: true,
-      text: 'The first creature to hit the elemental each turn has Disadvantage on its next attack roll. The elemental then moves up to 10 feet without provoking Opportunity Attacks.' };
-    const span = 'The first creature to hit the elemental each turn has Disadvantage on its next attack roll.';
-    const { row: after, outcome } = applyAddDuration(row, { span, fix_param: 'target_end' });
-    expect(outcome).toBe('acted');
-    expect(after.text).toBe('The first creature to hit the elemental each turn has Disadvantage on its next attack roll until the end of its next turn. The elemental then moves up to 10 feet without provoking Opportunity Attacks.');
-    // the sentence AFTER the span is untouched
-    expect(after.text).toContain('moves up to 10 feet without provoking Opportunity Attacks.');
+  test('a finding with no defect at all is logged as other, with nothing claimed about it', () => {
+    const r = routeFinding({ row: rimewake(), finding: finding({}) });
+    expect(r).toMatchObject({ outcome: 'logged', defect: 'other', declared: null });
   });
 
-  test('the result must be the original with exactly one clause added', () => {
-    // a row whose span appears to be edited beyond the clause is refused even when the shape holds
-    const row = { name: 'R', authored: true, text: 'A creature is Restrained. It then stands.' };
-    const r = applyAddDuration(row, { span: 'A creature is Restrained.', fix_param: 'target_end' });
-    expect(r.outcome).toBe('acted');
-    expect(r.row.text).toBe('A creature is Restrained until the end of its next turn. It then stands.');
+  test('the entry carries the issue and the span, which the last log left out', () => {
+    const r = routeFinding({ row: rimewake(), finding: finding({ defect: 'open_ended' }) });
+    expect(r.issue).toBe('the state never ends');
+    expect(r.span).toBe(SPAN);
+    expect(r.confidence).toBe('high');
   });
 
-  test('the clause itself is accepted as the parameter, and nothing else is', () => {
-    expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'until the end of its next turn' }).outcome).toBe('acted');
-    expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'for one hour' }))
-      .toMatchObject({ outcome: 'refused', code: 'not_a_duration_form' });
+  test('a finding whose issue arrives as `message` is read all the same', () => {
+    const r = routeFinding({ row: rimewake(), finding: { defect: 'wording', message: 'its pronoun is wrong' } });
+    expect(r.issue).toBe('its pronoun is wrong');
+    expect(r.confidence).toBe('none');       // absent is not low
   });
 
-  test('it is refused on a row the model did not write', () => {
-    for (const [flag, origin] of [['print', 'print'], ['template', 'body'], ['library', 'body']]) {
-      const r = applyAddDuration({ ...rimewake(), authored: false, [flag]: true }, { span: SPAN, fix_param: 'target_end' });
-      expect(r).toMatchObject({ outcome: 'refused', code: 'not_a_model_row' });
-      expect(rowOrigin({ ...rimewake(), authored: false, [flag]: true })).toBe(origin);
+  test('NOTHING acts, whatever the confidence — there is no outcome but logged', () => {
+    for (const confidence of ['high', 'medium', 'low', '', undefined]) {
+      for (const defect of DEFECT_NAMES) {
+        expect(routeFinding({ row: rimewake(), finding: { defect, confidence, span: SPAN } }).outcome).toBe('logged');
+      }
     }
   });
-
-  test('it is refused when the quoted sentence is not found exactly once', () => {
-    const twice = { ...rimewake(), text: `${SPAN} ${SPAN}` };
-    expect(applyAddDuration(twice, { span: SPAN, fix_param: 'target_end' }))
-      .toMatchObject({ outcome: 'refused', code: 'span_not_once' });
-    expect(applyAddDuration(rimewake(), { span: 'a sentence the row does not carry', fix_param: 'target_end' }))
-      .toMatchObject({ outcome: 'refused', code: 'span_not_once' });
-  });
-
-  test('it is refused when the sentence already says when the state ends', () => {
-    const already = { ...rimewake(), text: `The ground is Difficult Terrain. ${SPAN.replace(/\.$/, '')} until the end of its next turn.` };
-    const r = applyAddDuration(already, { span: `${SPAN.replace(/\.$/, '')} until the end of its next turn.`, fix_param: 'target_end' });
-    expect(r).toMatchObject({ outcome: 'refused', code: 'already_ends' });
-  });
 });
 
-describe('the check refuses anything extra', () => {
-  const before = rimewake();
+describe('the row\'s origin has four values, and a refused template\'s stand-in is its own', () => {
   test.each([
-    ['dice', 'and takes 7 (2d6) damage'],
-    ['a damage type', 'and takes Fire damage'],
-    ['a condition', 'and has the Prone condition'],
-    ['a save', 'Dexterity Saving Throw: DC 13'],
-    ['an area', 'each creature within 30 feet'],
-  ])('a change that adds %s is refused', (_what, added) => {
-    const after = { ...before, text: `${before.text} ${added}` };
-    expect(onlyTheAllowedThingMoved(before, after, 'duration')).toBeTruthy();
+    ['model', { authored: true }],
+    ['model', { freeRow: true }],
+    ['print', { print: true }],
+    ['print', { printNamed: true }],
+    ['print', { rules: true }],
+    ['catalog', { template: 'fear-aura' }],
+    ['catalog', { library: true }],
+    ['catalog', {}],
+    ['closest', { accepted_closest: true, authored: true }],
+  ])('%s', (origin, flags) => {
+    expect(rowOrigin({ name: ROW, text: TEXT, ...flags })).toBe(origin);
   });
 
-  test('a rename may not touch the rules text at all', () => {
-    expect(onlyTheAllowedThingMoved(before, { ...before, name: 'Other' }, 'name')).toBeNull();
-    expect(onlyTheAllowedThingMoved(before, { ...before, name: 'Other', text: `${before.text} extra.` }, 'name'))
-      .toMatch(/the rules text changed/);
+  test('a stand-in is NOT counted as model-written, which is the point of the fourth value', () => {
+    // the fit call refused every template and the engine seated the nearest shape anyway, so the
+    // row does something its name was never about — the Owlbear's "Learned to Climb" on a pounce
+    expect(rowOrigin({ accepted_closest: true, authored: true })).not.toBe('model');
+    expect(routeFinding({ row: rimewake({ accepted_closest: true }), finding: finding({ defect: 'misnamed' }) }).origin).toBe('closest');
   });
 
-  test('a duration fix may not change the name', () => {
-    expect(onlyTheAllowedThingMoved(before, { ...before, name: 'Other' }, 'duration')).toMatch(/the name changed/);
+  test('no row of that name is its own answer, not an origin', () => {
+    expect(rowOrigin(null)).toBe('missing');
+    expect(routeFinding({ row: null, finding: finding({ defect: 'dead_reference' }) }).origin).toBe('missing');
   });
 
-  test('and the original row is what comes back when it is refused', () => {
-    const r = applyAddDuration(before, { span: SPAN, fix_param: 'for one hour' });
-    expect(r.row).toBe(before);
-  });
-});
-
-describe('routing', () => {
-  const high = (over) => ({ confidence: 'high', span: SPAN, ...over });
-
-  test('a high finding of a kind that acts, acts', () => {
-    expect(routeFinding({ row: rimewake(), finding: high({ fix: 'add_duration', fix_param: 'target_end' }) }).outcome).toBe('acted');
-  });
-
-  test('rename is logged here — the audit\'s own loop owns renaming', () => {
-    const r = routeFinding({ row: rimewake(), finding: high({ fix: 'rename', fix_param: 'Rimewake Hold' }) });
-    expect(r.outcome).toBe('logged');
-    expect(r.row.name).toBe('Rimewake');
-  });
-
-  test.each(['medium', 'low', '', undefined])('a %s-confidence finding does not act', (confidence) => {
-    const r = routeFinding({ row: rimewake(), finding: { fix: 'add_duration', fix_param: 'target_end', span: SPAN, confidence } });
-    expect(r).toMatchObject({ outcome: 'logged', code: 'not_high_confidence', kind: 'add_duration' });
-  });
-
-  test.each(['fix_reference', 'delete_span', 'fill_number', 'reformat', 'clarify', 'none', 'rename'])('%s is logged, not applied', (fix) => {
-    const r = routeFinding({ row: rimewake(), finding: high({ fix }) });
-    expect(r.outcome).toBe('logged');
-    expect(r.row).toEqual(rimewake());
-  });
-
-  test('a finding with no fix is logged as unlabelled', () => {
-    const r = routeFinding({ row: rimewake(), finding: high({}) });
-    expect(r).toMatchObject({ outcome: 'logged', code: 'no_fix_named', kind: 'unlabelled' });
-  });
-
-  test('a fix name outside the list is logged, never guessed at', () => {
-    expect(routeFinding({ row: rimewake(), finding: high({ fix: 'substitute_noun' }) }))
-      .toMatchObject({ outcome: 'logged', code: 'unknown_fix', kind: 'substitute_noun' });
-    expect(FIX_NAMES).not.toContain('substitute_noun');
-  });
-
-  test.each([['print', 'print'], ['printNamed', 'print'], ['rules', 'print'], ['template', 'body'], ['library', 'body']])
-  ('a finding on a %s row is classified and traced, not fixed here', (flag, origin) => {
-    const row = { name: 'Rimewake', text: rimewake().text, [flag]: true };
-    const r = routeFinding({ row, finding: high({ fix: 'add_duration', fix_param: 'target_end' }) });
-    expect(r.outcome).toBe('logged');
-    expect(rowOrigin(row)).toBe(origin);
-  });
-
-  test('no row of that name is logged, not an error', () => {
-    expect(routeFinding({ row: null, finding: high({ fix: 'add_duration' }) }).outcome).toBe('logged');
+  test('every origin has a word the log prints', () => {
+    for (const o of ['model', 'catalog', 'print', 'closest', 'missing']) expect(ORIGIN_WORDS[o]).toBeTruthy();
   });
 });
 
-// THE RENAME GUARD IS TESTED WHERE RENAMING HAPPENS. A finding carrying `rename` never reached
-// this route — the audit's own rename loop takes it, and that loop carries the claims, weapon and
-// part-name guards — so rename logs here and the guard is exercised in r4-seat-authors.spec.js
-// against a built sheet.
+describe('the log line reads alone', () => {
+  test('it carries the row, its origin, the confidence, the defect, the issue and the span', () => {
+    const entry = routeFinding({ row: rimewake(), finding: finding({ defect: 'open_ended' }) });
+    const line = formatFinding({ section: 'Traits', name: ROW, entry });
+    expect(line).toContain('Traits/"Rimewake"');
+    expect(line).toContain('[model-written]');
+    expect(line).toContain('high');
+    expect(line).toContain('open_ended');
+    expect(line).toContain('the state never ends');          // the issue IN FULL, not clipped
+    expect(line).toContain(`(about: "${SPAN}")`);
+  });
 
-/**
- * THE GM-WORD GUARD ON A RENAME (widened and then exempted, 2026-11-17).
- *
- * The audit renames a row whose name promises what its text does not deliver, and that is usually
- * right. It is wrong when the name is built from the GM's own words — the Trench Leviathan's
- * "Drowning Song" became "Abyssal Roar" and the request's "song" went with it.
- *
- * And the widened rule was too blunt in one place, which is the exemption below.
- */
-describe('a rename may not drop a word the GM typed', () => {
-  const gm = ['drowning', 'song', 'ships', 'under'];
+  test('a label outside the list says so, so `other` can be re-cut from the log', () => {
+    const entry = routeFinding({ row: rimewake(), finding: finding({ defect: 'substitute_noun' }) });
+    expect(formatFinding({ section: 'Traits', name: ROW, entry })).toContain('the audit said "substitute_noun"');
+  });
 
-  test('it names the words that would be lost', () => {
-    expect(renameDropsAGmWord({}, 'Drowning Song', 'Abyssal Roar', gm)).toEqual(['drowning', 'song']);
+  test('a finding with no span prints no empty parenthetical', () => {
+    const entry = routeFinding({ row: rimewake(), finding: { defect: 'weak', issue: 'outclassed by its own Bite' } });
+    expect(formatFinding({ section: 'Actions', name: ROW, entry })).not.toContain('(about:');
+  });
+});
+
+describe('the GM-word guard is unchanged, and still belongs to the rename loop', () => {
+  test('a rename dropping a word the GM typed names the words it would lose', () => {
+    expect(renameDropsAGmWord({ name: 'Drowning Song' }, 'Drowning Song', 'Abyssal Roar', ['drowning', 'song'])).toEqual(['drowning', 'song']);
   });
 
   test('a rename that keeps the word is free to proceed', () => {
-    expect(renameDropsAGmWord({}, 'Drowning Song', 'Drowning Song of the Deep', gm)).toEqual([]);
+    expect(renameDropsAGmWord({ name: 'Drowning Song' }, 'Drowning Song', 'Drowning Chorus', ['drowning', 'song'])).toEqual(['song']);
+    expect(renameDropsAGmWord({ name: 'Drowning Song' }, 'Drowning Song', 'Song of Drowning', ['drowning', 'song'])).toEqual([]);
   });
 
-  test('a word the GM never typed is not guarded', () => {
-    expect(renameDropsAGmWord({}, 'Crushing Grip', 'Vice Hold', gm)).toEqual([]);
+  test("a refused template's stand-in is exempt — the Owlbear keeps being renamed", () => {
+    expect(renameDropsAGmWord({ accepted_closest: true }, 'Learned to Climb', 'Crashing Pounce', ['learned', 'climb'])).toEqual([]);
+  });
+});
+
+describe('the span is printed once, not twice', () => {
+  test("an issue read off `message` drops the normaliser's own parenthetical", () => {
+    // the engine's finding normaliser appends the span to `message`; printing `span` beside it
+    // said the same 150-character sentence twice
+    const r = routeFinding({
+      row: { name: 'R', authored: true, text: 'x' },
+      finding: { defect: 'open_ended', span: 'the target is Restrained', confidence: 'high',
+        message: 'the state never ends (about: "the target is Restrained")' },
+    });
+    expect(r.issue).toBe('the state never ends');
+    const line = formatFinding({ section: 'Traits', name: 'R', entry: r });
+    expect(line.match(/the target is Restrained/g) ?? []).toHaveLength(1);
   });
 
-  test('short words are not guarded — they are not the request\'s substance', () => {
-    expect(renameDropsAGmWord({}, 'Song of Woe', 'Dirge', ['of', 'woe'])).toEqual([]);
-  });
-
-  // THE EXEMPTION. The Owlbear's "Learned to Climb" is the `leap` template landing as its closest
-  // after the fit call refused it, and the row is a pounce — a jump, a Dexterity save, Slashing
-  // damage and Prone. Keeping that name because it quotes the request kept a label on the wrong
-  // thing, and the sheet shipped "It can replace one attack with a use of Learned to Climb."
-  test("a refused template's stand-in is exempt, and may lose the words", () => {
-    expect(renameDropsAGmWord({ accepted_closest: true }, 'Learned to Climb', 'Crashing Pounce', ['learned', 'climb']))
-      .toEqual([]);
-    // the same row without the mark is still guarded
-    expect(renameDropsAGmWord({}, 'Learned to Climb', 'Crashing Pounce', ['learned', 'climb']))
-      .toEqual(['learned', 'climb']);
-  });
-
-  test('it never throws on missing arguments', () => {
-    expect(renameDropsAGmWord(null, 'A Name', 'Another', [])).toEqual([]);
-    expect(renameDropsAGmWord({}, null, null, gm)).toEqual([]);
+  test('an issue that carries no parenthetical is untouched', () => {
+    const r = routeFinding({ row: { name: 'R', authored: true }, finding: { defect: 'weak', issue: 'outclassed (plainly) by its Bite' } });
+    expect(r.issue).toBe('outclassed (plainly) by its Bite');
   });
 });
