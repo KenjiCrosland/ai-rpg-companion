@@ -109,7 +109,7 @@ describe('the body answers a blow as a reaction', () => {
 // now go to it as sentences: the route call's own hold-shape enum, and each row's declared family.
 describe('the authoring call is told what the body is', () => {
   const { declaredBodyFacts } = require('@/tools/statblock-generator/reskin/templates.mjs');
-  const { buildSeatPrompt, buildRepairPrompt, buildFreeRowFixPrompt } = require('@/tools/statblock-generator/reskin/author.mjs');
+  const { buildSeatPrompt, buildRepairPrompt } = require('@/tools/statblock-generator/reskin/author.mjs');
   const searing = { name: 'Searing Hide', template: 'heated-body', text: 'A creature that touches it or hits it with a melee attack while within 5 feet of it takes 7 (2d6) Fire damage.' };
   const bite = { name: 'Bite', imposes: ['Grappled'], text: '*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Piercing damage.' };
 
@@ -135,12 +135,12 @@ describe('the authoring call is told what the body is', () => {
     expect(declaredBodyFacts({ sections: { Reactions: [{ name: 'Riposte', template: 'riposte', text: 'x' }] } }).join(' ')).toMatch(/ANSWERS A CREATURE THAT HITS OR MISSES IT.*"Riposte"/);
   });
 
-  test('all three authoring prompts carry them, and say nothing when there are none', () => {
+  // two prompts now, not three: `buildFreeRowFixPrompt` was deleted 2026-11-17 with its repair
+  test('both authoring prompts carry them, and say nothing when there are none', () => {
     const facts = declaredBodyFacts({ sections: { Traits: [searing] }, holdShape: 'grip' });
     const built = [
       buildSeatPrompt({ name: 'X', inline: 'Large Beast', cr: 5, sheet: 'S', idea: 'i', kind: 'a reaction', bodyFacts: facts }),
       buildRepairPrompt({ name: 'X', inline: 'Large Beast', clauses: [{ text: 'c' }], cr: 5, sheet: 'S', bodyFacts: facts }),
-      buildFreeRowFixPrompt({ name: 'X', inline: 'Large Beast', cr: 5, sheet: 'S', row: { name: 'R', text: 't' }, bodyFacts: facts }),
     ];
     for (const p of built) { expect(p).toMatch(/WHAT THIS BODY IS/); expect(p).toMatch(/HOLDS BY GRIP/); }
     expect(buildSeatPrompt({ name: 'X', inline: 'y', cr: 5, sheet: 'S', idea: 'i' })).not.toMatch(/WHAT THIS BODY IS/);

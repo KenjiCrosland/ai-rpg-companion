@@ -30,7 +30,10 @@ export const CALL_FAMILIES = [
   { name: 'seat', builder: 'buildSeatPrompt', file: 'reskin/author.mjs', head: 'You are writing ONE ability for a D&D monster' },
   { name: 'audit', builder: 'buildAuditPrompt', file: 'format-2024/audit.mjs', head: 'You are auditing a D&D' },
   { name: 'repair', builder: 'buildRepairPrompt', file: 'reskin/author.mjs', head: 'You are repairing the ABILITIES' },
-  { name: 'free-row-fix', builder: 'buildFreeRowFixPrompt', file: 'reskin/author.mjs', head: 'You are REPAIRING one ability' },
+  // KEPT SO AN OLDER TAPE STILL READS. The builder was deleted on 2026-11-17 with the repair that
+  // called it; three recordings from 2026-11-16 still carry 11 of these calls each, and a family
+  // dropped from this list would make them report `unknown` instead of naming what they are.
+  { name: 'free-row-fix', builder: 'buildFreeRowFixPrompt (deleted 2026-11-17)', file: 'reskin/author.mjs', head: 'You are REPAIRING one ability' },
   { name: 'legacy', builder: 'fromLegacyModel', file: 'reskin/generate.mjs', head: 'You are converting D&D statblock entries' },
   { name: 'enrichment', builder: 'buildEnrichmentPrompt', file: 'util/statblock-enrichment.mjs', head: 'You are generating creature intelligence data' },
 ];

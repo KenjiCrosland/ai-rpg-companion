@@ -160,73 +160,13 @@ const SAVE_STAT_RULES = `THE SAVE'S STAT. Published monsters pair a save with th
 - the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.
 - the row does none of those — whichever stat its own fiction asks for.`;
 
-/**
- * WHAT KIND OF DEFECT THIS IS, AND WHAT THAT MEANS FOR THE REPAIR (item R(a), 2026-11-12).
- *
- * The owner hand-scored 33 findings the audit's gate had dropped and sorted the ones worth acting on
- * into five kinds: a name promising what the text lacks (6), two or three mechanics in one row (5), a
- * missing trigger/direction/check (6), a dead row not worth its action (3), a counterplay gap (2).
- * Each wants a DIFFERENT repair — a two-in-one is split, a dead row gains its payload — and the fix
- * call was handed the complaint as prose with no instruction, so its answer was usually a reword.
- *
- * The audit already answers which principle it judged under, so the class is declared, not inferred.
- */
-const REPAIR_BY_PRINCIPLE = {
-  1: 'COUNTERPLAY. Give the imposed state a way out, written on the row: an escape DC, a repeat save, or an end the GM can see arrive. Do not shorten the effect to dodge the problem.',
-  2: 'ADJUDICABILITY. Name the thing the GM cannot find: the trigger and its timing, which check or save is rolled, the direction forced movement goes, where a target lands. Add the missing fact; change nothing else.',
-  3: 'CONSISTENCY. Either the name or the text is wrong about what this row does. Prefer keeping the NAME and making the text deliver what it promises; if the name promises something this creature should not do, the text stands and the name is what changes.',
-  4: 'WORDING. A copy-edit only: the rules do not move.',
-  5: 'TABLE USABILITY. Too much is happening in one row. SPLIT it: keep the one mechanic the row is named for, in one sentence a GM resolves at once, and drop the rest — not a shorter version of all of it.',
-  6: 'WORTH THE ACTION. The row is not worth choosing. Give it the payload it lacks — damage of its own element, a condition that matters, a real duration — so the row pays for the action it costs. Never a bigger number for its own sake; the engine prices what you ask for.',
-  7: 'PRACTICAL SENSE. The row does not make sense for this creature as written. Make the mechanic something this body could do: the fiction decides the mechanic, not the reverse. If the effect lands on terrain or a state that is already that way, give it the thing that is actually missing.',
-};
-
-export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], principles = [], kind = 'an action', taken = [], lacks = [], bodyFacts = [] }) {
-  const classes = [...new Set(principles.map(Number).filter((x) => REPAIR_BY_PRINCIPLE[x]))];
-  // THE ARRAY IS NAMED, NOT THE PROSE KIND (2026-11-10). Probed in-pipeline: 5 of 6 repair
-  // answers came back in a shape the parser cannot read, and the sheets shipped the faulty row —
-  // 122 of 140 repairs declined across 480 sheets, 120 of them "the answer held no row of any
-  // kind". Two shapes, one cause: `IT IS ${kind}` names "a trait" and "a reaction", which happen
-  // to match envelope keys, but "an action" matches none, so the call answered {"action":[...]}
-  // and {"actions":[...]}; and the singular framing ("that ONE row", its text quoted above) got a
-  // bare row object with no wrapper at all. The sibling `buildSeatPrompt` restates the envelope
-  // after formsSpec and does not have this problem. So: name the array, restate the envelope, and
-  // say what an empty answer costs.
-  const ARRAY_FOR = { 'a trait': 'traits', 'a reaction': 'reactions', 'an action': 'saves' };
-  const arr = ARRAY_FOR[kind] ?? 'saves';
-  return `You are REPAIRING one ability of a D&D monster. The sheet below is finished, and one row on it does not work at a table. Rewrite that ONE row into the closed forms below, keeping what makes it interesting. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
-
-THE CREATURE: ${name} (${inline}), CR ${cr}.
-THE SHEET AS IT STANDS (every other row stays exactly as it is; never name a row that is not on it):
-${sheet}
-
-THE ROW TO REPAIR — it is called **"${row.name}"** and currently reads:
-${row.text}
-
-WHAT IS WRONG WITH IT:
-${problems.map((x) => `- ${x}`).join('\n')}${classes.length ? `
-
-WHAT KIND OF DEFECT THAT IS — this decides the shape of the repair, not just its words:
-${classes.map((c) => `- ${REPAIR_BY_PRINCIPLE[c]}`).join('\n')}` : ''}
-
-KEEP THE NAME "${row.name}" EXACTLY. Keep the idea — this row exists because it was a nice surprise on this creature, and a GM who likes it should still get it. Change only what makes it unrunnable.
-
-THREE TESTS YOUR REPAIR MUST PASS:
-1. SOUND. Everything a GM needs is on the row. No bonus, radius, duration or amount that the GM would have to work out from somewhere else — if a number is needed, use the form's token and let the engine write it.
-2. THE ACTION ECONOMY. The row costs something real. A trait that hands out a free attack whenever a condition is met, with no action and no limit, is the defect this test exists to catch — if an effect should fire often, gate it (a recharge, once per turn, or the creature's action).
-3. NOT A DEAD ROW. It must be worth choosing on the creature's turn, or worth having as a passive. A row a GM would never pick is as bad as one they cannot run.
-
-IT IS ${kind}, so the repaired row goes in the "${arr}" array. Write exactly one row there and leave every other array empty. If the row's SHAPE is itself the defect — a trait that reads like a reaction, an action that should be a passive — answer in the array that shape belongs to instead, and the engine moves the row to where that form lives.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps "${row.name}" and must not take any other: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The repaired row may not grant any of these in any wording.` : ''}
-
-${formsSpec({ name, inline, attackCap: 0 })}${bodyFacts.length ? `\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n${bodyFacts.map((f) => `- ${f}`).join('\n')}` : ''}
-
-${SAVE_STAT_RULES}
-
-Answer with ONE JSON object in exactly this shape — the row INSIDE its array. Never a bare row object, and never a key that is not one of these four: "action", "actions", "row" and "ability" are not keys here.
-${ENVELOPE({ attacks: '[]', unplaced: '[]' })}
-
-An answer with every array empty leaves the faulty row on the sheet word for word, which is the worst outcome available here — there is no ready-made row to fall back on. Repair it into one of these forms.`;
-}
+// THE ONE-ROW REPAIR PROMPT IS GONE (2026-11-17). `buildFreeRowFixPrompt` and its
+// `REPAIR_BY_PRINCIPLE` classes stood here: a row the audit faulted was sent back through the
+// authoring forms and re-written. The typed fixes replaced it on 2026-11-16 and from that commit
+// nothing reached it — 25 calls on the forty before, 0 after. Deleted with its call site in
+// generate.mjs; the tape still names the `free-row-fix` family so an older recording reads.
+//
+// `SAVE_STAT_RULES` above outlived it: `buildSeatPrompt` shares it, and it is the one copy.
 
 export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [] }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.

@@ -1,4 +1,4 @@
-import { parseAuthorResponse, validateAuthorResponse, buildSeatPrompt, buildRepairPrompt, buildFreeRowFixPrompt } from '../author.mjs';
+import { parseAuthorResponse, validateAuthorResponse, buildSeatPrompt, buildRepairPrompt } from '../author.mjs';
 
 describe('authoring into forms (fidelity pipeline step 5): the model never writes a number, the vocabularies are closed, the slots are enforced', () => {
   const keys = ['Melee Attack', 'Hybrid Attack'];
@@ -153,9 +153,7 @@ describe('the authoring envelope asks for every key the prompt talks about', () 
 
   // a repair is handed ONE faulty row and told an empty answer is the worst outcome available;
   // "answered" there would be a door out of the job
-  test('the free-row repair is offered no way to answer instead of repairing', () => {
-    expect(buildFreeRowFixPrompt({ name: 'X', inline: 'Medium Beast', cr: 3, sheet: 'S', row: { name: 'R', text: 't' } })).not.toContain('"answered"');
-  });
+  // the free-row repair's own envelope test went with `buildFreeRowFixPrompt` (deleted 2026-11-17)
 
   // the seat prices no attack: it has no weapon row of its own to clone
   test('the seat is offered no attack array to fill', () => {

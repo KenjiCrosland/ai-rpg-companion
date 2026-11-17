@@ -441,14 +441,17 @@ describe('a closest-accepted row whose subject is flipped is refused', () => {
   }, 30000);
 });
 
-// A ROW THE REPAIR ARM WROTE IS AS MUCH OURS AS A FREE ROW (the critic's §2a, gate of
+// A ROW THE MODEL WROTE IS THE ONE A FIX MAY REACH — free row OR authored (the critic's §2a,
+// gate of 2026-11-08; the repair this was written for was deleted 2026-11-17 and the predicate
+// now gates the TYPED fixes, which is the only thing that still acts on a finished row).
+// Originally: A ROW THE REPAIR ARM WROTE IS AS MUCH OURS AS A FREE ROW (gate of
 // 2026-11-08). Their #16 Forge Sovereign deals 18 (4d8) Fire to each creature of its choice
 // with no action, no bonus action and no frequency — a GM reads it as free and at will. The
 // audit flagged it and nothing acted, because the repair's selection read `freeRow` only
 // and the clause-repair arm stamps `authored` + `clause` (never `freeRow`, because it
 // answers a clause the GM typed). Measured across three forties before widening: 3 such
 // findings — Siege Frame, Forge Sovereign, Four Scythe-Arms — about 1 a forty.
-describe('the repair reaches an authored row that is not a free row', () => {
+describe('a fix reaches an authored row that is not a free row', () => {
   const sel = (row) => !!(row.freeRow || row.authored); // the widened predicate, verbatim
 
   it('selects an authored non-free row — the #16 shape', () => {
@@ -466,10 +469,12 @@ describe('the repair reaches an authored row that is not a free row', () => {
     }
   });
 
-  it('the pipeline uses that predicate and names the row kind in its trace', () => {
+  it('the pipeline uses that predicate to decide which findings a fix may reach', () => {
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'generate.mjs'), 'utf8');
     expect(src).toMatch(/!\(row\.freeRow \|\| row\.authored\)/);
-    expect(src).toMatch(/\[\$\{t\.row\.freeRow \? 'free row' : 'authored'\}\]/);
+    // the second assertion here read the trace of the one-row repair call, deleted 2026-11-17.
+    // The predicate outlived it: it is now what sends a finding to the typed fixes instead of
+    // naming it a catalog queue.
   });
 });
 

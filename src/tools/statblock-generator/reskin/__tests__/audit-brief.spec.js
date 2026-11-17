@@ -113,7 +113,6 @@ describe("the brief carries the owner's bar, not just accuracy", () => {
 // class the owner's scoring produced — a two-in-one is split, a dead row gains its payload.
 describe('the gate keeps what a fix can reach, and the fix is told the class', () => {
   const { verifyAuditFindings } = require('@/tools/statblock-generator/format-2024/audit.mjs');
-  const { buildFreeRowFixPrompt } = require('@/tools/statblock-generator/reskin/author.mjs');
   const SPAN = 'the target has the Frightened condition';
   const monster = (over = {}) => ({
     name: 'X',
@@ -146,22 +145,12 @@ describe('the gate keeps what a fix can reach, and the fix is told the class', (
     }
   });
 
-  test('the finding carries its principle, and the fix call turns it into an instruction', () => {
+  // THE FIX CALL THAT TURNED THE PRINCIPLE INTO AN INSTRUCTION IS GONE (2026-11-17).
+  // `buildFreeRowFixPrompt` was deleted with the repair that called it, and the two tests that read
+  // its prose went with it. What survives is the half that is still true and still used: the finding
+  // CARRIES its principle off the audit, and the checker and the trace read it.
+  test('the finding carries its principle', () => {
     const [f] = verifyAuditFindings(monster({ freeRow: true }), answer('medium', 5));
     expect(f.principle).toBe(5);
-    const p = buildFreeRowFixPrompt({ name: 'X', inline: 'Small Beast', cr: 1, sheet: 'S', row: { name: 'Dread Hide', text: 't' }, problems: [f.message], principles: [f.principle] });
-    expect(p).toMatch(/WHAT KIND OF DEFECT THAT IS/);
-    expect(p).toMatch(/SPLIT it/);                       // 5 = two-in-one
-    expect(p).not.toMatch(/Give it the payload it lacks/); // not 6
-  });
-
-  test('each class gives its own instruction, and no class gives none', () => {
-    const forP = (n) => buildFreeRowFixPrompt({ name: 'X', inline: 'y', cr: 1, sheet: 'S', row: { name: 'R', text: 't' }, problems: ['x'], principles: [n] });
-    expect(forP(1)).toMatch(/COUNTERPLAY/);
-    expect(forP(2)).toMatch(/Name the thing the GM cannot find/);
-    expect(forP(3)).toMatch(/Prefer keeping the NAME/);
-    expect(forP(6)).toMatch(/pays for the action it costs/);
-    expect(forP(7)).toMatch(/the fiction decides the mechanic/);
-    expect(forP(99)).not.toMatch(/WHAT KIND OF DEFECT THAT IS/); // an unknown number adds nothing
   });
 });
