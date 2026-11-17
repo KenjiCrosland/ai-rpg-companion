@@ -6576,7 +6576,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // THE CALL MAY DECLINE, and a decline is an answer: it named where the clause belongs
               // and wrote no row to fault. That is its judgement, and it is not asked again.
               if ((wrote?.unplaced ?? []).length) return { declined: `it belongs in the ${wrote.unplaced[0].where}` };
-              return refuse(`you wrote no ${seatKind}`);
+              return refuse(`you wrote no row of the kind asked for (${seatKind})`); // `seatKind` carries its own article
             } else {
               const row = authoredRow(form.kind, form.f);
               // THE ENGINE DOES NOT REWRITE AN AUTHORED SENTENCE (the critic's top line,
