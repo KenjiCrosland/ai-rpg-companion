@@ -4,7 +4,8 @@
  *   attack   { bonus, reach?, range?, avg, dice, type, rider? }        reach "5", range "30/120"; rider is a sentence after the damage
  *   save     { stat, dc, target, failure, success? }                   target "one creature within 60 feet" | "each creature in a 30-foot Cone"
  *   trait    { trigger?, effect }                                      a passive trait has no trigger: "The creature can breathe air and water."
- *   reaction { trigger, response }
+ *   reaction { trigger, response } — or { trigger, save: { stat, dc, target, failure, success } }
+ *                                      when the response forces a save (print: the Chain Devil)
  * Every form may carry `flavor`: text with no rules weight that no renderer prints inside the row (it routes to the
  * Languages line or the description — owner 2026-10-04).
  */
@@ -99,7 +100,20 @@ export function renderForm(form, edition = '2024', { properNouns = [] } = {}) {
       return `*${form.stat} Saving Throw*: DC ${form.dc}, ${form.target}. *Failure:* ${end(cap(form.failure))}${form.success ? ` *Success:* ${end(cap(form.success))}` : ''}`; // the engine's convention: the asterisk closes before the colon
     }
     case 'trait': return skeletonSave(form.trigger ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.effect))}` : end(cap(form.effect)));
-    case 'reaction': return skeletonSave(is2014 ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.response))}` : `*Trigger:* ${end(cap(form.trigger))} *Response:* ${end(cap(form.response))}`);
+    case 'reaction': {
+      // A REACTION THAT FORCES A SAVE writes it in the save form after "Response", which is how
+      // print writes its one example: the Chain Devil's Unnerving Gaze reads
+      //   *Trigger:* … *Response—Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* …
+      // A save as PROSE inside the response is the 2014 wording and is refused upstream, so this
+      // renders the fields or nothing.
+      if (form.save) {
+        const sv = form.save;
+        const head2024 = `*Trigger:* ${end(cap(form.trigger))} *Response—${sv.stat} Saving Throw:* DC ${sv.dc}, ${sv.target}. *Failure:* ${end(cap(sv.failure))}${sv.success ? ` *Success:* ${end(cap(sv.success))}` : ''}`;
+        const head2014 = `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(cap(sv.target))} must make a DC ${sv.dc} ${sv.stat} saving throw. On a failed save, ${lowN(end(sv.failure))}${sv.success ? ` On a successful save, ${lowN(end(sv.success))}` : ''}`;
+        return skeletonSave(is2014 ? head2014 : head2024);
+      }
+      return skeletonSave(is2014 ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.response))}` : `*Trigger:* ${end(cap(form.trigger))} *Response:* ${end(cap(form.response))}`);
+    }
     default: throw new Error(`unknown form kind: ${form.kind}`);
   }
 }

@@ -54,6 +54,7 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     `- {dmg} IS DAMAGE AND {dc} IS A SAVE DC. Never write {dmg} where a COUNT belongs — a number of uses, attacks or legendary actions is a plain small integer you write yourself ("can take 3 legendary actions"), because a GM cannot take 4d6 of anything. If a row should be limited, say so with its limit ("1/Day", "Recharge 5-6") and not with a number in the sentence.`,
     `- NEVER PROMISE A LIST YOU DO NOT WRITE. "choosing from the options below", "one of the following" and "as listed below" each require the options to follow IN THIS SAME row's text; a row that promises them and stops is a dead row a GM cannot run.`,
     `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises }.`,
+    `- A REACTION THAT FORCES A SAVE writes the save in FIELDS, never as prose in the response: add "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "damage": true|false, "type": a damage type or null, "condition": one of ${CONDITIONS.join('/')} or null, "success": one line or null }. Leave the response out when the save IS the whole response. The engine writes the DC and the dice and renders it after "Response", the way a published monster does: *Trigger:* … *Response—Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* … A saving throw written as a sentence inside "response" is refused.`,
     `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
     `- "heals" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.`,
     `- "quantities" ON A TRAIT OR REACTION: how many separate NUMBERS the row needs a table to know — every damage amount, every distance or area size, every bonus or penalty. Count them and answer the number. Then WRITE every one of them: {dmg} for damage the engine should fill, {dc} for a save DC, and a literal number for a distance or an area ("a 15-foot Emanation", "within 30 feet"). A row that promises a number and does not write it cannot be run at a table and is refused — "gains Temporary Hit Points" with no amount, "an Emanation" with no size, "deals extra Fire damage" with no amount. If the row needs no numbers at all, answer 0. A BONUS YOU ONLY DESCRIBE IS STILL A NUMBER: "deals extra Fire damage", "gains Temporary Hit Points", "is fiercer while Bloodied" each need an amount a table can read, so COUNT them. If you cannot give the amount as {dmg}, do not promise it.`,
@@ -514,7 +515,11 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     : firstTimeEachTurn(t) ? 'it fires "the first time each turn", which print never writes (0 of 329) — on every creature\'s turn is five times a round at a four-player table'
     : damagesAndHeals(t) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
     : overCap(t) ? `the trigger or effect runs past ${RULES_TEXT_CAP} characters, longer than any trait print writes — it is refused rather than cut mid-word`
-    : traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
+    // THE REASON NAMES THE FORM THE ABILITY BELONGS IN (2026-11-17). Read one by one, four of the
+    // seven traits refused this way on the baseline tape were a response to being HIT, DAMAGED or
+    // MOVED, which print writes as a Reaction. The second ask recovered 0 of 7 because the reason
+    // said what was wrong and not where to put it.
+    : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (stat, target, damage, condition, success)' : ''}`
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
     // A {dmg} USED AS A BONUS IS A NUMBER THIS ENGINE CANNOT PRICE (2026-11-16). It prices damage,
     // and a bonus to AC or to a roll is not damage — so the token is neither fillable nor safely
@@ -532,7 +537,18 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // filtered silently on `name && trigger && response`, so a reaction dropped for
   // any reason looked identical to a call that wrote none — the same blindness the
   // trait refusals were given a reason for on 2026-10-25.
-  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, heals: r?.heals === true, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, quantities: Number.isFinite(Number(r?.quantities)) ? Number(r.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
+  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, heals: r?.heals === true, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, quantities: Number.isFinite(Number(r?.quantities)) ? Number(r.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response),
+    // A REACTION MAY FORCE A SAVE, IN THE SAVE FORM'S OWN FIELDS (2026-11-17). Print writes two:
+    // the Chain Devil's Unnerving Gaze is the shape — "*Response—Wisdom Saving Throw:* DC 15, the
+    // triggering creature. *Failure:* …". The fields are the save form's, read the same way, so one
+    // renderer writes both and the model never writes a DC.
+    ...(r?.save && typeof r.save === 'object' ? { save: {
+      stat: STATS.includes(r.save.stat) ? r.save.stat : 'Dexterity',
+      target: TARGET_OK.test(str(r.save.target, 80)) ? str(r.save.target, 80) : 'the triggering creature',
+      damage: !!r.save.damage, type: DAMAGE_TYPES.includes(r.save.type) ? r.save.type : null,
+      condition: CONDITIONS.includes(r.save.condition) ? r.save.condition : null,
+      success: str(r.save.success, 120) || null,
+    } } : {}) }));
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
@@ -541,7 +557,14 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'
       : damagesAndHeals(r) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
       : overCap(r) ? `the trigger or response runs past ${RULES_TEXT_CAP} characters, longer than any reaction print writes — it is refused rather than cut mid-word`
-        : null);
+      // A SAVE WRITTEN AS PROSE IN A RESPONSE IS REFUSED (2026-11-17). `reactionWhy` had no save
+      // check at all, so "The attacker must succeed on a {dc} Strength saving throw or take {dmg}
+      // Piercing damage" passed and would have SHIPPED — the 2014 wording, which this engine does
+      // not print. Print writes the save in the form: "*Response—Wisdom Saving Throw:* DC 15, the
+      // triggering creature. *Failure:* …" (the Chain Devil). The reason says so.
+        : (!r.save && traitForcesASave(`${r.trigger ?? ''} ${r.response ?? ''}`))
+          ? 'the response writes a saving throw as prose — put it in the "save" object (stat, target, damage, condition, success) and the engine renders it after "Response", as print does'
+          : null);
   const refusedReactions = reactionsAll.filter((r) => reactionWhy(r) !== null);
   const reactions = reactionsAll.filter((r) => reactionWhy(r) === null).slice(0, 1);
   const crossRef = p.crossRef && typeof p.crossRef === 'object' && CONDITIONS.includes(p.crossRef.condition) ? { riderRow: str(p.crossRef.riderRow, 40), payoffRow: str(p.crossRef.payoffRow, 40), condition: p.crossRef.condition } : null;

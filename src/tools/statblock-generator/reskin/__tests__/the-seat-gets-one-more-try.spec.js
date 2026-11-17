@@ -115,3 +115,91 @@ describe('a refused ability gets one more try', () => {
     expect(retriesAsked).toBe(0);
   }, 30000);
 });
+
+/**
+ * THE TRAIT SEAT TAKES A REACTION (owner's ruling, 2026-11-17).
+ *
+ * Seven of the fourteen first-try refusals were "a trait is not a save", and read one by one FOUR of
+ * the seven are a response to being hit, damaged or moved — which print writes as a Reaction. The
+ * second ask recovered 0 of 7 because the reason said what was wrong and not where to put it.
+ *
+ * What the trait seat does NOT take is a bare save row: on the live run the model turned three
+ * refused traits into save rows and each lost its trigger, becoming a soft effect in an attack's
+ * place, which the owner has graded a dead row.
+ */
+const A_VALID_REACTION = {
+  traits: [],
+  reactions: [{ clause: 'tolls for the dying', name: 'Answering Peal',
+    trigger: 'A creature within 30 feet of the ghost damages it with a melee attack',
+    response: 'The bell answers the blow and the attacker is pushed 10 feet away from the ghost',
+    imposes: null, condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 1 }],
+};
+/** the same, forcing a save through the fields — print's Chain Devil shape */
+const A_REACTION_WITH_A_SAVE = {
+  traits: [],
+  reactions: [{ clause: 'tolls for the dying', name: 'Answering Peal',
+    trigger: 'A creature within 30 feet of the ghost damages it with a melee attack',
+    response: 'The bell answers the blow',
+    save: { stat: 'Wisdom', target: 'the triggering creature', damage: false, condition: 'Frightened', success: null },
+    imposes: null, condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 0 }],
+};
+/** the save as PROSE inside the response: the 2014 wording, which must not ship */
+const A_REACTION_WITH_A_PROSE_SAVE = {
+  traits: [],
+  reactions: [{ ...A_VALID_REACTION.reactions[0],
+    response: 'The attacker must succeed on a {dc} Wisdom saving throw or have the Frightened condition' }],
+};
+/** a bare save row offered to the trait seat */
+const A_BARE_SAVE_ROW = {
+  traits: [],
+  saves: [{ clause: 'tolls for the dying', name: 'Mourning Toll', stat: 'Wisdom',
+    target: 'each creature in a 30-foot Emanation', damage: false, condition: 'Frightened', mechanics: 1, quantities: 0 }],
+};
+
+describe('the trait seat and a Reaction', () => {
+  const sectionsOf = (m) => Object.fromEntries(Object.entries(m.sections ?? {}).map(([k, v]) => [k, (v ?? []).filter((e) => e?.name).map((e) => String(e.name))]));
+
+  test('a valid Reaction lands in Reactions', async () => {
+    const { monster, seatAsks } = await build([A_VALID_REACTION]);
+    expect(sectionsOf(monster).Reactions ?? []).toContain('Answering Peal');
+    expect(sectionsOf(monster).Traits ?? []).not.toContain('Answering Peal');
+    expect(seatAsks).toBe(1);
+  }, 30000);
+
+  test("a Reaction forcing a save through the fields prints print's own form after Response", async () => {
+    const { monster } = await build([A_REACTION_WITH_A_SAVE]);
+    const row = Object.values(monster.sections ?? {}).flat().find((e) => e?.name === 'Answering Peal');
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/\*Response—Wisdom Saving Throw:\*/);
+    expect(row.text).toMatch(/DC \d+, the triggering creature/);
+    expect(row.text).toMatch(/\*Failure:\*/);
+    expect(row.text).not.toMatch(/must succeed on/);     // never the 2014 prose
+    expect(row.text).not.toMatch(/\{dc\}/);
+  }, 30000);
+
+  test('a save written as PROSE in the response is refused, and the reason is returned', async () => {
+    const { monster, seatAsks, retriesAsked } = await build([A_REACTION_WITH_A_PROSE_SAVE, A_REACTION_WITH_A_PROSE_SAVE]);
+    expect(Object.values(monster.sections ?? {}).flat().map((e) => e?.name)).not.toContain('Answering Peal');
+    expect(seatAsks).toBe(2);           // it was refused, so it was asked again
+    expect(retriesAsked).toBe(1);
+  }, 30000);
+
+  test('a prose save on the first try and the FIELDS on the second: it lands', async () => {
+    const { monster, seatAsks } = await build([A_REACTION_WITH_A_PROSE_SAVE, A_REACTION_WITH_A_SAVE]);
+    const row = Object.values(monster.sections ?? {}).flat().find((e) => e?.name === 'Answering Peal');
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/\*Response—Wisdom Saving Throw:\*/);
+    expect(seatAsks).toBe(2);
+  }, 30000);
+
+  test('a bare SAVE ROW offered to the trait seat is still refused', async () => {
+    const { monster } = await build([A_BARE_SAVE_ROW, A_BARE_SAVE_ROW]);
+    expect(Object.values(monster.sections ?? {}).flat().map((e) => e?.name)).not.toContain('Mourning Toll');
+  }, 30000);
+
+  test('the Reaction counts as that seat\'s row — the trait seat does not also fill', async () => {
+    const { monster } = await build([A_VALID_REACTION]);
+    const s = sectionsOf(monster);
+    expect((s.Reactions ?? []).length).toBe(1);
+  }, 30000);
+});

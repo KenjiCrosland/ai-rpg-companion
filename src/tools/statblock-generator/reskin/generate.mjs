@@ -4122,8 +4122,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     if (kind === 'reaction') {
       const r = f;
-      const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024', { properNouns: ownNouns() });
-      return { name: r.name, text, authored: true, clause: r.clause, ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };
+      // A REACTION THAT FORCES A SAVE is priced and rendered the way a save row is: the engine writes
+      // the DC and the dice, and the save form goes after "Response" as print writes it (the Chain
+      // Devil). The model never writes a number here either.
+      const svF = r.save ? (() => {
+        const want = Math.max(3, Math.round((scaled.per_hit ?? 6) * (String(r.save.target).startsWith('each') ? 1.4 : 1.1)));
+        const dice = engineDiceFor(capSingleTargetSave(want, `Saving Throw ${r.save.target}`, cr));
+        const parts = [
+          r.save.damage ? `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage` : '',
+          r.save.condition ? `the target has the ${r.save.condition} condition` : '',
+        ].filter(Boolean);
+        return { stat: r.save.stat, dc: scaled.dc, target: r.save.target, failure: parts.join(', ') || `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage`, success: r.save.success ?? null };
+      })() : null;
+      const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response), ...(svF ? { save: svF } : {}) }, '2024', { properNouns: ownNouns() });
+      return { name: r.name, text, authored: true, clause: r.clause, ...(r.save?.condition ? { imposes: r.save.condition } : {}), ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };
     }
     return null;
   };
@@ -6513,8 +6525,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the form the SEAT asked for is the only one it takes: a save in the trait
             // seat would skip `valueCheck` (the consumer runs it on everything but
             // Traits and Rider), and a trait in the action seat is a different seat's row
+            // THE TRAIT SEAT TAKES A REACTION (owner's ruling, 2026-11-17).
+            //
+            // Seven of the fourteen first-try refusals were "a trait is not a save", and read one by
+            // one, FOUR of the seven are a response to being hit, damaged or moved — which print
+            // writes as a Reaction, not a trait. The seat asked for a trait, the model wrote the
+            // ability the idea called for, and the engine threw it away; the second ask recovered 0
+            // of 7, because there was nowhere to go.
+            //
+            // So the trait seat accepts a Reaction, and only a Reaction: it goes in Reactions, it
+            // passes the Reaction form's own gates, and it counts as that seat's row. A BARE SAVE
+            // ROW is still refused — on the live run the model turned three refused traits into save
+            // rows and each lost its trigger, becoming a soft effect in an attack's place, which the
+            // owner has graded a dead row.
+            //
+            // ONE REACTION FROM THIS PATH. If the sheet already carries a Reaction, this one is not
+            // taken: print writes at most one Reaction on 21 of its 22 Reaction-bearing blocks, and
+            // a second would be a row the seat added beside a row the body already has. The trace
+            // says so and the seat stays empty.
+            const reactionSeatOpen = () => !(sections.Reactions ?? []).filter(Boolean).length;
             const form = !wrote ? null
-              : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' } : null)
+              : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' }
+                : wrote.reactions[0] && reactionSeatOpen() ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions', fromTraitSeat: true } : null)
                 : seatKind === 'a reaction' ? (wrote.reactions[0] ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions' } : null)
                   : (wrote.saves[0] ? { kind: 'save', f: wrote.saves[0], section: seatKind === 'a bonus action' ? 'Bonus Actions' : 'Actions' } : null);
             // NO SHEET IMPOSES ONE CONDITION THREE WAYS, and an authored row reaches no
