@@ -37,7 +37,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENI
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
-import { routeFinding } from './typed-fixes.mjs'; // the audit names the fix; this applies the two that act
+import { routeFinding, renameDropsAGmWord } from './typed-fixes.mjs'; // the audit names the fix; this applies the two that act
 import { stripUnplacedDmg } from './author.mjs'; // one strip rule, shared with the parse
 import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
@@ -10987,14 +10987,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // row's own `clause`/`expresses` and nothing else, so a CHASSIS row the model had renamed
           // was unprotected: the Trench Leviathan's "Drowning Song" became "Abyssal Roar" and took
           // the GM's own "song" with it. The request's words guard every name the same way.
+          // THE GM-WORD GUARD, decided in one named place so it can be tested on a return value
+          // (typed-fixes.mjs). It covers every row, and exempts a refused template's stand-in.
           const cl = String(row?.clause ?? row?.expresses ?? '');
           {
-            const wordsOf = (x) => String(x).toLowerCase().match(/[a-z]{4,}/g) ?? [];
-            const gmWords = new Set([...wordsOf(cl), ...auditGmWords.filter((w) => w.length >= 4)]);
-            const kept = new Set(wordsOf(f.rename));
-            const lost = [...new Set(wordsOf(bare))].filter((w) => gmWords.has(w) && !kept.has(w));
+            const lost = renameDropsAGmWord(row, bare, f.rename, [...String(cl).toLowerCase().match(/[a-z]{4,}/g) ?? [], ...auditGmWords]);
             if (lost.length) {
-              trace('audit rename blocked —', `"${bare}" -> "${f.rename}" would drop the GM's own word${lost.length > 1 ? 's' : ''} ${lost.map((w) => `"${w}"`).join(', ')} from a row bound to "${cl}"; the mechanic would stay and the receipt would not`);
+              trace('audit rename blocked —', `"${bare}" -> "${f.rename}" would drop the GM's own word${lost.length > 1 ? 's' : ''} ${lost.map((w) => `"${w}"`).join(', ')}`);
               continue;
             }
           }

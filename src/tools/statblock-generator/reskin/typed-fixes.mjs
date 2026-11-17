@@ -158,3 +158,29 @@ export const routeFinding = ({ row, finding, gmWords = [] } = {}) => {
   const applied = applyAddDuration(row, finding);
   return { ...applied, kind, origin };
 };
+
+/**
+ * WOULD THIS RENAME DROP A WORD THE GM TYPED? (owner's rule, widened 2026-11-17, exempted the same
+ * day.) Returns the words that would be lost, or an empty array when the rename is free to proceed.
+ *
+ * The audit renames a row whose name promises what its text does not deliver, and that is usually
+ * right. It is wrong when the name is built from the GM's own words: the Trench Leviathan's
+ * "Drowning Song" became "Abyssal Roar" and the request's "song" went with it.
+ *
+ * THE EXEMPTION. A row marked `accepted_closest` landed as a refused template's stand-in — the fit
+ * call said no and the engine took the nearest shape anyway — so its name describes something the
+ * row does not do. The Owlbear's "Learned to Climb" is a pounce: a jump, a Dexterity save, Slashing
+ * damage and Prone. Keeping that name because it quotes the request kept a label on the wrong
+ * thing, and the sheet shipped "It can replace one attack with a use of Learned to Climb."
+ *
+ * A name made of the GM's words is worth keeping on a row that does what the words say.
+ *
+ * @param gmWords the request's own significant words, and the row's clause words
+ */
+export const renameDropsAGmWord = (row, oldName, newName, gmWords = []) => {
+  if (row?.accepted_closest) return [];
+  const wordsOf = (x) => String(x ?? '').toLowerCase().match(/[a-z]{4,}/g) ?? [];
+  const gm = new Set(gmWords.map((w) => String(w).toLowerCase()).filter((w) => w.length >= 4));
+  const kept = new Set(wordsOf(newName));
+  return [...new Set(wordsOf(oldName))].filter((w) => gm.has(w) && !kept.has(w));
+};

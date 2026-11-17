@@ -9,7 +9,7 @@
  * nothing into a closed form with a damage field, and across the tapes it added damage to ten rows
  * that had none, a condition to six, and turned three passive traits into saves.
  */
-import { routeFinding, applyAddDuration, onlyTheAllowedThingMoved, rowOrigin, FIX_NAMES } from '../typed-fixes.mjs';
+import { routeFinding, applyAddDuration, onlyTheAllowedThingMoved, rowOrigin, renameDropsAGmWord, FIX_NAMES } from '../typed-fixes.mjs';
 import { DURATIONS, durationClause } from '../templates.mjs';
 
 /** Rimewake, from sheet 14 of the baseline tape: a model-written row whose state never ends */
@@ -169,3 +169,49 @@ describe('routing', () => {
 // this route — the audit's own rename loop takes it, and that loop carries the claims, weapon and
 // part-name guards — so rename logs here and the guard is exercised in r4-seat-authors.spec.js
 // against a built sheet.
+
+/**
+ * THE GM-WORD GUARD ON A RENAME (widened and then exempted, 2026-11-17).
+ *
+ * The audit renames a row whose name promises what its text does not deliver, and that is usually
+ * right. It is wrong when the name is built from the GM's own words — the Trench Leviathan's
+ * "Drowning Song" became "Abyssal Roar" and the request's "song" went with it.
+ *
+ * And the widened rule was too blunt in one place, which is the exemption below.
+ */
+describe('a rename may not drop a word the GM typed', () => {
+  const gm = ['drowning', 'song', 'ships', 'under'];
+
+  test('it names the words that would be lost', () => {
+    expect(renameDropsAGmWord({}, 'Drowning Song', 'Abyssal Roar', gm)).toEqual(['drowning', 'song']);
+  });
+
+  test('a rename that keeps the word is free to proceed', () => {
+    expect(renameDropsAGmWord({}, 'Drowning Song', 'Drowning Song of the Deep', gm)).toEqual([]);
+  });
+
+  test('a word the GM never typed is not guarded', () => {
+    expect(renameDropsAGmWord({}, 'Crushing Grip', 'Vice Hold', gm)).toEqual([]);
+  });
+
+  test('short words are not guarded — they are not the request\'s substance', () => {
+    expect(renameDropsAGmWord({}, 'Song of Woe', 'Dirge', ['of', 'woe'])).toEqual([]);
+  });
+
+  // THE EXEMPTION. The Owlbear's "Learned to Climb" is the `leap` template landing as its closest
+  // after the fit call refused it, and the row is a pounce — a jump, a Dexterity save, Slashing
+  // damage and Prone. Keeping that name because it quotes the request kept a label on the wrong
+  // thing, and the sheet shipped "It can replace one attack with a use of Learned to Climb."
+  test("a refused template's stand-in is exempt, and may lose the words", () => {
+    expect(renameDropsAGmWord({ accepted_closest: true }, 'Learned to Climb', 'Crashing Pounce', ['learned', 'climb']))
+      .toEqual([]);
+    // the same row without the mark is still guarded
+    expect(renameDropsAGmWord({}, 'Learned to Climb', 'Crashing Pounce', ['learned', 'climb']))
+      .toEqual(['learned', 'climb']);
+  });
+
+  test('it never throws on missing arguments', () => {
+    expect(renameDropsAGmWord(null, 'A Name', 'Another', [])).toEqual([]);
+    expect(renameDropsAGmWord({}, null, null, gm)).toEqual([]);
+  });
+});
