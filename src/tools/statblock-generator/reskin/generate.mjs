@@ -56,6 +56,23 @@ import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
 import { classFor, classRows, CLASSES, classEligible, classWeapon, classLiftOwner } from './classes.mjs';
 import { renderForm, resolutionOf } from './forms.mjs';
 
+/**
+ * PRINT'S ROWS PER CR BAND — ONE DEFINITION (2026-11-17).
+ *
+ * These lived inside `settleSheetBudgets`, so the free-row budget used them and nothing else could.
+ * Counting thin cards therefore meant a second set of percentiles kept outside the repo, and two
+ * instruments disagreed about how many sheets were below print. `scripts/row-count.mjs` reads these,
+ * so the engine's budget and the count are the same numbers.
+ *
+ * p20-p90 of print's rows per card, Multiattack excluded. The note at the budget's own site records
+ * that the table claims p20-p90 and has not been re-derived since; that is unchanged here.
+ */
+export const PRINT_CARD_ROWS = { '0-2': [1, 4], '3-5': [2, 5], '6-9': [3, 5], '10-12': [4, 7], '13-16': [5, 10], '17-20': [7, 9], '21+': [8, 10] };
+export const PRINT_CARD_MEDIAN = { '0-2': 2, '3-5': 3, '6-9': 4, '10-12': 5, '13-16': 5, '17-20': 7, '21+': 8 };
+export const cardBand = (cr) => (cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+/** the rows the budget counts against print: Multiattack and the legendary header are not rows */
+export const COUNTED_ROW = (name) => !/^(?:Multiattack|Legendary Action Uses)\b/.test(String(name ?? ''));
+
 
 /**
  * A PAYOFF NEEDS A REACHABLE PRECONDITION (critic's second read, 2026-10-25: the
@@ -1353,8 +1370,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // sprint's standing note says it is, which was measured against the median):
   // over at CR 3-5 and 17-20, UNDER at 6-9, 10-12, 13-16 and 21+, with 3 of 39
   // sheets below the p20 floor. Hence a floor as well as a ceiling.
-  const band = cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+';
-  const PRINT_CARD_ROWS = { '0-2': [1, 4], '3-5': [2, 5], '6-9': [3, 5], '10-12': [4, 7], '13-16': [5, 10], '17-20': [7, 9], '21+': [8, 10] };
+  const band = cardBand(cr);
   // A ROW NOBODY ASKED FOR TRACKS PRINT'S MEDIAN, NOT ITS p90 (owner's ruling,
   // 2026-11-01: "reverse it" — for DEFAULT rows only; asked rows are never cut).
   // Measured on exactly the basis of the table above (non-legendary, Multiattack
@@ -1370,7 +1386,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // (n=8), 17-20 says 9 where print is 7 (n=3). Correcting those would tighten the
   // budget for ASKED rows too, which the ruling did not ask for, and two of the
   // three samples are thin. Left as measured.
-  const PRINT_CARD_MEDIAN = { '0-2': 2, '3-5': 3, '6-9': 4, '10-12': 5, '13-16': 5, '17-20': 7, '21+': 8 };
+
   // counted once, read by both the envelope and the median ceiling below
   const fixedRows = Object.entries(sections).flatMap(([, es]) => es ?? []).filter((e) => e && !e.freeRow && !/^Multiattack/.test(String(e.name ?? ''))).length;
   const freeBudget = (() => {
