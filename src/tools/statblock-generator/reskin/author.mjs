@@ -268,6 +268,55 @@ export const stripUnplacedDmg = (eff) => String(eff ?? '')
   .replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|gains?|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : ''))
   .replace(/\s{2,}/g, ' ');
 
+/**
+ * DOES THIS TRAIT FORCE A SAVING THROW? (2026-11-17.)
+ *
+ * The test was `/saving throw/` — true for ANY trait whose text contains the words. So the Steamclaw
+ * Ascetic's "Pressure Without Pause", which gives the ascetic Advantage "on saving throws against
+ * effects it imposes", was refused as a save row twice; and Meshrin's "Barbarian Rage", which gives
+ * Advantage on Strength saving throws, was refused for the same reason. That is a barbarian with no
+ * Rage.
+ *
+ * How wide it was: print has 324 traits. **85 mention a saving throw and only 12 force one** — the
+ * auras (Stench, Gibbering, Mucus Cloud, Fear Aura, Vile Appearance) and the death bursts. The other
+ * 73 are Legendary Resistance, Magic Resistance and their kin, so a model that wrote print's own
+ * Magic Resistance was refused. Measured over both tapes and the live run: of 20 traits the old test
+ * refused, 11 forced no save at all.
+ *
+ * THE RULE. A trait forces a save when a creature has to make one — the save form's own header, the
+ * words that demand a roll, or a DC standing beside a saving throw. Two things are not that:
+ *
+ *   the creature's OWN save    print writes these as traits. The Zombie's Undead Fortitude makes the
+ *                              zombie roll, and that is a trait, not a save row.
+ *   a bonus to a save          Advantage, Disadvantage, or choosing the result changes a save that
+ *                              something else forced; it forces nothing.
+ *
+ * Checked against print's own data rather than taste: it is true for exactly the 12 and false for
+ * exactly the 73, and still true for each of the 12 when the save is rewritten as prose.
+ */
+const SAVE_STATS = 'Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma';
+/** the save form's own header, which print writes only for a save against other creatures */
+const SAVE_FORM_HEADER = new RegExp(`\\*?\\s*(?:${SAVE_STATS})\\s+Saving\\s+Throw\\s*\\*?\\s*:`, 'i');
+/** the words that make something roll */
+const DEMANDS_A_ROLL = /\b(?:must|has to|needs to)\s+(?:succeed on|make|attempt)\b[^.]{0,100}saving throw|\bsaving throw\b[^.]{0,60}\bor\b/i;
+/** a DC standing beside a saving throw */
+const DC_BESIDE_A_SAVE = /(?:\bDC\s*\d+|\{dc\})[^.]{0,60}saving throw|saving throw[^.]{0,60}(?:\bDC\s*\d+|\{dc\})/i;
+/** the CREATURE ITSELF rolls — anchored to a clause start, or "that can hear it must succeed" matches */
+const ROLLS_ITS_OWN = /(?:^|[.;,]\s*)it (?:makes|must make|must succeed on)\s+a\b[^.]{0,40}saving throw/i;
+/** it only grants or changes a save someone else forced */
+const ONLY_CHANGES_A_SAVE = /(?:Advantage|Disadvantage) on\b[^.]{0,80}saving throws?|fails? a saving throw[^.]{0,40}choose to succeed|saving throw to take only half damage|has Disadvantage on the saving throw/i;
+
+export const traitForcesASave = (text) => {
+  const t = String(text ?? '');
+  if (!/saving throw/i.test(t)) return false;
+  if (SAVE_FORM_HEADER.test(t)) return true;
+  if (ROLLS_ITS_OWN.test(t)) return false;
+  if (!(DEMANDS_A_ROLL.test(t) || DC_BESIDE_A_SAVE.test(t))) return false;
+  // a mention that only grants or changes a save, with no demand left once it is removed, forces nothing
+  if (ONLY_CHANGES_A_SAVE.test(t) && !DEMANDS_A_ROLL.test(t.replace(new RegExp(ONLY_CHANGES_A_SAVE.source, 'gi'), ''))) return false;
+  return true;
+};
+
 /** A {dmg} written as a BONUS is a number this engine cannot price — it prices damage. */
 export const dmgWrittenAsABonus = (text) => /[+＋]\s*\{dmg\}|\{dmg\}\s*bonus/i.test(String(text ?? ''));
 
@@ -443,7 +492,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // The outcome phrasings are the same defect as the form and refuse for the same
   // reason: a trait is not a save. 1 of 523 authored rows in the saved runs, and it is
   // that row, so the widening refuses the defect and nothing else.
-  const traitIsSave = (t) => /saving throw|\bon a (?:failed|successful) save\b|\bfails? the save\b|\bsucceeds? on the save\b/i.test(`${t.trigger ?? ''} ${t.effect}`);
+  const traitIsSave = (t) => traitForcesASave(`${t.trigger ?? ''} ${t.effect}`);
   const dmgAsBonus = (t) => dmgWrittenAsABonus(`${t.trigger ?? ''} ${t.rawEffect ?? t.effect ?? ''}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
