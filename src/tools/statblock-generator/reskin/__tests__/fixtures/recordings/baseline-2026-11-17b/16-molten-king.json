@@ -160,8 +160,8 @@
      "clause": "rules a city of forges",
      "imposes": "Grappled",
      "authoredSeat": true,
-     "boundKeys": [],
-     "clauseId": "cl_cjxi88"
+     "clauseId": "cl_cjxi88",
+     "boundKeys": []
     }
    ],
    "Legendary Actions": [

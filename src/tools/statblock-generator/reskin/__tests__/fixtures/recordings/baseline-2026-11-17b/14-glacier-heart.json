@@ -232,8 +232,8 @@
       "clause": "trailing a wake of killing cold",
       "conditionRelation": "none",
       "authoredSeat": true,
-      "boundKeys": [],
-      "clauseId": "cl_18mzopc"
+      "clauseId": "cl_18mzopc",
+      "boundKeys": []
      }
     ],
     "Actions": [

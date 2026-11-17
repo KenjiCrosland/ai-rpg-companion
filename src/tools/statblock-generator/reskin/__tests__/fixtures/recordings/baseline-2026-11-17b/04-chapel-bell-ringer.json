@@ -115,7 +115,8 @@
      "library": true,
      "template": "drain",
      "boundKeys": [],
-     "freeRow": true
+     "freeRow": true,
+     "clauseId": "cl_1svw2ov"
     },
     {
      "name": "Horrific Visage",

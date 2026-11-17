@@ -147,9 +147,9 @@
      "clause": "commands lesser swarms",
      "imposes": "Poisoned",
      "authoredSeat": true,
+     "clauseId": "cl_1x4jef1",
      "widened": true,
-     "boundKeys": [],
-     "clauseId": "cl_1x4jef1"
+     "boundKeys": []
     }
    ],
    "Bonus Actions": [

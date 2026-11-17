@@ -293,8 +293,8 @@
       "gate": "Recharge 5-6",
       "imposes": "Restrained",
       "authoredSeat": true,
-      "boundKeys": [],
-      "clauseId": "cl_1e3qye3"
+      "clauseId": "cl_1e3qye3",
+      "boundKeys": []
      }
     ],
     "Reactions": [

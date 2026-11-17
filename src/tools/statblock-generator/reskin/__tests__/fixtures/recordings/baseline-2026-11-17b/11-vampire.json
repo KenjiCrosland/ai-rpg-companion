@@ -278,7 +278,8 @@
        "restrain"
       ],
       "gmQuote": "who keeps a garden of thorns",
-      "duration": "target_end"
+      "duration": "target_end",
+      "clauseId": "cl_1dvkjm3"
      },
      {
       "name": "Bite (Bat or Vampire Form Only)",

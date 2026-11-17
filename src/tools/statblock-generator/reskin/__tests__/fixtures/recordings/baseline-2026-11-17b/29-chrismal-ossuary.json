@@ -290,8 +290,8 @@
       "gate": "Recharge 5-6",
       "imposes": "Restrained",
       "authoredSeat": true,
-      "boundKeys": [],
-      "clauseId": "cl_fm6z29"
+      "clauseId": "cl_fm6z29",
+      "boundKeys": []
      }
     ]
    },
