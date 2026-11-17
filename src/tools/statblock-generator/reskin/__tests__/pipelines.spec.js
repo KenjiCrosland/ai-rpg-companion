@@ -1134,15 +1134,37 @@ describe('a gap line always carries a build target', () => {
     expect(t).not.toMatch(/closest accepted:/);
   });
 
-  it('a nearest declined for no_fit still lands — nothing offered carries the mechanic, so the nearest is the honest best', async () => {
+  // THIS TEST ASSERTED THE OPPOSITE UNTIL 2026-11-17, and the reason it changed belongs here.
+  // `no_fit` landed its nearest on the grounds that it was "the honest best available". All six
+  // no_fit nearest rows that reached a finished sheet on the baseline tape were read against what
+  // the model had actually asked for, and ONE of the six was fine:
+  //
+  //   s20 Stunning Coils   wanted an on-hit Deafened; got a TRAIT saying "when it hits with this
+  //                        attack", and Stunned rather than Deafened
+  //   s28 Tolling Rot      the same shape, the same way
+  //   s18 Halo of Candor   wanted hidden creatures revealed; got "can't speak a deliberate lie"
+  //   s36 Closing Blade    wanted an attack when a creature leaves its reach; the catalog's row
+  //                        rests on "within the last 24 hours", which the audit calls untrackable
+  //   s03 Pouncing Leap    wanted a climb speed, which Spider Climb already answers
+  //   s35 Distracting Cut  fine as a row, and not what was wanted
+  //
+  // One row in six is not a best available. So the seat stays empty, which is the owner's standing
+  // negation ruling and what collision and already_answered already did. Measured on the 38: the
+  // rule removes one row from each of six sheets and adds no unanswered clause.
+  it('a nearest declined for no_fit does NOT land — one of six was the row the model wanted', async () => {
     const t = await traceFor({ template: 'none', closest: 'reel', declined_because: 'no_fit', missing: 'hauls a creature under' });
-    expect(t).toMatch(/closest accepted:|closest refused:.*will not render|closest refused:.*never on this sheet/);
-    expect(t).not.toMatch(/declined it for (collision|already_answered)/);
+    expect(t).toMatch(/closest refused:.*declined it for no_fit/);
+    expect(t).not.toMatch(/closest accepted:/);
   });
 
+  // THE ONLY ARM THAT STILL LANDS A NEAREST. With all three enum values blocked, this is what
+  // `accepted_closest` is now reachable by — a call that gave no reason at all, which is a failed
+  // answer rather than an answer. Across the 50 fit refusals on the baseline tape there is not one:
+  // 47 no_fit, 2 collision, 1 already_answered.
   it('an unparsed reason keeps the old behaviour — a fallback acts when the call FAILS, never against an answer it gave', async () => {
     const t = await traceFor({ template: 'none', closest: 'reel', missing: 'hauls a creature under' });
-    expect(t).not.toMatch(/declined it for (collision|already_answered)/);
+    expect(t).not.toMatch(/declined it for (collision|already_answered|no_fit)/);
+    expect(t).toMatch(/closest accepted:|closest refused:.*will not render|closest refused:.*never on this sheet/);
   });
 
   it('never emits the old UNNAMED line', async () => {
@@ -1272,4 +1294,52 @@ describe('a weapon row rolls its own weapon\'s dice', () => {
     const j = dieOf(r.rows, 'javelin');
     if (j) expect(`javelin: d${j.die}`).toBe('javelin: d6');
   });
+});
+
+/**
+ * NO ROW FROM A REFUSED TEMPLATE REACHES THE SHEET (owner's ruling, 2026-11-17).
+ *
+ * The trace is one half of it; the other is that the template's rendered row is not on the finished
+ * sheet under any name. These drive the whole engine and read the returned monster, because a row
+ * can land, be renamed and still be that template's rules text — which is how "Learned to Climb"
+ * shipped on a pounce.
+ */
+describe('a refused template puts no row on the sheet', () => {
+  const sheetFor = async (fitAnswer, { seatRefuses = true } = {}) => generateReskin({
+    archetype: 'brute', concept: 'a bog hound that drags fishermen under and holds them there',
+    userConcept: 'a bog hound that drags fishermen under and holds them there', cr: 5,
+    path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: null },
+  }, async (prompt) => {
+    if (prompt.startsWith('You are inventing the SIGNATURE ability')) {
+      return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'It hauls a creature under the water and keeps it there until it drowns.', section: 'action', trigger: 'at_will', effect: 'condition', family: 'control' } });
+    }
+    if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify(fitAnswer);
+    if (prompt.startsWith('You are writing ONE ability')) {
+      // the seat's own row is REFUSED: a trait that writes a saving throw, which the parser declines
+      return seatRefuses
+        ? JSON.stringify({ traits: [{ clause: 'drags fishermen under', name: 'Undertow Hold', trigger: 'When it hits', effect: 'the target must make a Strength saving throw or be dragged under', imposes: null, condition_relation: 'none', heals: false, mechanics: 1, quantities: 1, passive_effect: 'other' }] })
+        : JSON.stringify({ traits: [] });
+    }
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return JSON.stringify(stub(5, null, 'brute')); // the same reskin answer the trace helper above uses
+  });
+  const rowsOf = (m) => Object.values(m.sections ?? {}).flat().filter((e) => e?.name);
+
+  test('refused for no_fit with a nearest named: no row carries that template', async () => {
+    const m = await sheetFor({ template: 'none', closest: 'reel', declined_because: 'no_fit', missing: 'hauls a creature under' });
+    expect(rowsOf(m).some((r) => r.template === 'reel')).toBe(false);
+    expect(rowsOf(m).some((r) => r.accepted_closest)).toBe(false);
+  }, 30000);
+
+  // THE NO-REASON ARM IS PINNED ON THE TRACE, not here. On this fixture `reel` is not on the
+  // sheet's menu and cannot render, so a sheet-level assertion would be about the fixture rather
+  // than the rule — which is the mistake this file's own comment warns about two tests up. The
+  // trace test above ('an unparsed reason keeps the old behaviour') is the one that can only pass
+  // for the right reason: it asserts the refusal path did NOT run for a call that gave no reason.
+  test('a row the call CHOSE is untouched by this — only a refused nearest is blocked', async () => {
+    const m = await sheetFor({ template: 'reel', because: 'hauls a creature under the water' });
+    expect(rowsOf(m).length).toBeGreaterThan(1);
+    expect(rowsOf(m).some((r) => r.accepted_closest)).toBe(false); // chosen, never borrowed
+  }, 30000);
 });

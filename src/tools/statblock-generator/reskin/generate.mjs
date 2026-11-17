@@ -6374,14 +6374,38 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         //                    the mechanic here. Landing it is exactly the error
         //                    this field exists to report.
         //   already_answered the sheet already does this. Landing it duplicates.
-        //   no_fit           nothing offered carries the mechanic. Here a nearest
-        //                    row is the honest best available, so it still lands.
+        //   no_fit           nothing offered carries the mechanic. It used to land
+        //                    anyway, on the grounds that a nearest row is "the honest
+        //                    best available". It is not — see below.
         // A missing/unparsed reason keeps the old behaviour: a fallback acts when
         // the call FAILS, never against an answer it actually gave.
-        const nearBlocked = ['collision', 'already_answered'].includes(fit.declined_because);
+        //
+        // NO_FIT JOINS THE OTHER TWO (owner's ruling, 2026-11-17). All six no_fit nearest rows
+        // that reached a finished sheet on the baseline tape were read against what the model had
+        // asked for, and ONE of the six was fine:
+        //
+        //   s20 Trench Leviathan  Stunning Coils  stunning-strike  wanted an on-hit Deafened, got a
+        //                         TRAIT reading "when it hits with this attack", and Stunned
+        //   s28 Bell Swarm        Tolling Rot     stunning-strike  the same, the same way
+        //   s18 Archlich          Halo of Candor  truth-aura       wanted hidden creatures revealed,
+        //                         got "can't speak a deliberate lie" on a combat sheet
+        //   s36 Unyielded Champ.  Closing Blade   relentless-pursuit  wanted an attack when a
+        //                         creature leaves its reach; the catalog's row rests on "within the
+        //                         last 24 hours", which the audit itself calls untrackable
+        //   s03 Owlbear           Pouncing Leap   leap             wanted a climb speed, which the
+        //                         sheet already answers with Spider Climb
+        //   s35 Meshrin           Distracting Cut aggro-curse      fine as a row, and not what was
+        //                         wanted
+        //
+        // So the seat stays empty, which is the owner's standing negation ruling and what the other
+        // two reasons already do. The gap list records what was wanted, as it did before.
+        const nearBlocked = ['collision', 'already_answered', 'no_fit'].includes(fit.declined_because);
         if (!fit.template && fit.declined_because === 'already_answered' && seat === 'action') alreadyAnsweredT = true;
         if (!fit.template && fit.closest && nearBlocked) {
-          trace('closest refused:', `${seat} — "${fit.closest}" was named nearest, but the call declined it for ${fit.declined_because} ("${fit.declined_raw || fit.declined_because}") — ${fit.declined_because === 'collision' ? 'the word suggests this mechanic and the row does not carry it' : 'the sheet already answers this'}; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
+          const whyBlocked = fit.declined_because === 'collision' ? 'the word suggests this mechanic and the row does not carry it'
+            : fit.declined_because === 'already_answered' ? 'the sheet already answers this'
+              : 'nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six';
+          trace('closest refused:', `${seat} — "${fit.closest}" was named nearest, but the call declined it for ${fit.declined_because} ("${fit.declined_raw || fit.declined_because}") — ${whyBlocked}; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
         }
         // R4 — THE SEAT WRITES THE ROW THE CATALOG CANNOT HOLD (owner's decisions,
         // 2026-11-02; roadmap §8 R4). The branch below lands the template the call

@@ -148,11 +148,23 @@ describe('the branch itself', () => {
     expect(trace).toMatch(/closest refused:/);
   }, 30000);
 
-  test('the nearest template is still the fallback when the authoring call writes nothing', async () => {
+  // THE NEAREST IS NO LONGER THE FALLBACK (owner's ruling, 2026-11-17). This asserted
+  // `closest accepted:` — that when the authoring call wrote nothing, the template the fit call had
+  // named nearest and then REFUSED stood in. All six such rows that reached a finished sheet on the
+  // baseline tape were read against what the model asked for and ONE was fine: two were a trait
+  // reading "when it hits with this attack", one answered "reveal hidden creatures" with "can't
+  // speak a deliberate lie", one rested on "within the last 24 hours", and one duplicated a climb
+  // speed the sheet already had. The seat now stays empty, which is the owner's standing negation
+  // ruling and what `collision` and `already_answered` already did.
+  //
+  // Still asserted here is the part that did not change: the seat IS asked, and its refusal is
+  // traced rather than silent.
+  test('the seat stays empty when the authoring call writes nothing — the nearest no longer stands in', async () => {
     const { prompts, trace } = await run({ ...golemCase, fit: { ...REFUSED, missing: 'passage through solid stone' }, seatRow: { unplaced: [{ clause: 'walled-up saint', where: 'description', text: 'a saint was walled into it' }] } });
     expect(prompts.filter((q) => q.startsWith(SEAT))).toHaveLength(1);
     expect(trace).toMatch(/seat authored nothing:/);
-    expect(trace).toMatch(/closest accepted:/); // the measured behaviour, unchanged, behind the attempt
+    expect(trace).not.toMatch(/closest accepted:/);
+    expect(trace).toMatch(/closest refused:.*declined it for no_fit/);
   }, 30000);
 
   test("an authored row does not overrule print's calibration — the trait ceiling still stops it", async () => {
