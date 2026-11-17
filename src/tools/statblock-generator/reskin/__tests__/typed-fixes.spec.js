@@ -36,6 +36,30 @@ describe('add_duration does only its own thing', () => {
     expect(row.text).toContain(durationClause(form));
   });
 
+  // THE SPAN IS NOT ALWAYS THE LAST SENTENCE. The first version of the check asked whether the
+  // original text was a PREFIX of the result, which can only be true when the quoted span sits at
+  // the end of the row — so a mid-row span was refused however correct it was. It cost a real fix
+  // on the live run (Echo of the Stolen Chorus) and these tests missed it by quoting an end-of-row
+  // span every time.
+  test('a span in the MIDDLE of the row is added to, and the rest is left alone', () => {
+    const row = { name: 'Echo of the Stolen Chorus', authored: true,
+      text: 'The first creature to hit the elemental each turn has Disadvantage on its next attack roll. The elemental then moves up to 10 feet without provoking Opportunity Attacks.' };
+    const span = 'The first creature to hit the elemental each turn has Disadvantage on its next attack roll.';
+    const { row: after, outcome } = applyAddDuration(row, { span, fix_param: 'target_end' });
+    expect(outcome).toBe('acted');
+    expect(after.text).toBe('The first creature to hit the elemental each turn has Disadvantage on its next attack roll until the end of its next turn. The elemental then moves up to 10 feet without provoking Opportunity Attacks.');
+    // the sentence AFTER the span is untouched
+    expect(after.text).toContain('moves up to 10 feet without provoking Opportunity Attacks.');
+  });
+
+  test('the result must be the original with exactly one clause added', () => {
+    // a row whose span appears to be edited beyond the clause is refused even when the shape holds
+    const row = { name: 'R', authored: true, text: 'A creature is Restrained. It then stands.' };
+    const r = applyAddDuration(row, { span: 'A creature is Restrained.', fix_param: 'target_end' });
+    expect(r.outcome).toBe('acted');
+    expect(r.row.text).toBe('A creature is Restrained until the end of its next turn. It then stands.');
+  });
+
   test('the clause itself is accepted as the parameter, and nothing else is', () => {
     expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'until the end of its next turn' }).outcome).toBe('acted');
     expect(applyAddDuration(rimewake(), { span: SPAN, fix_param: 'for one hour' }).reason).toMatch(/not one of the engine's duration forms/);

@@ -86,10 +86,6 @@ export const onlyTheAllowedThingMoved = (before, after, allow) => {
   const a = shapeOf(before.text); const b = shapeOf(after.text);
   for (const k of Object.keys(a)) if (a[k] !== b[k]) return `the row's ${k} changed (${a[k] || 'none'} -> ${b[k] || 'none'})`;
   if (bareName(before.name) !== bareName(after.name)) return 'the name changed, and only a rename may do that';
-  if (!String(after.text).startsWith(String(before.text).replace(/\s*$/, '').replace(/\.$/, ''))
-      && !String(after.text).includes(String(before.text).replace(/\.$/, ''))) {
-    return "the original text is not inside the result, so more than a clause was added";
-  }
   return null;
 };
 
@@ -149,6 +145,15 @@ export const applyAddDuration = (row, finding) => {
   const after = { ...row, text: text.replace(span, withClause) };
   const bad = onlyTheAllowedThingMoved(row, after, 'duration');
   if (bad) return { row, outcome: 'refused', reason: bad };
+  // EXACTLY ONE CLAUSE WAS INSERTED, and nothing else: take the clause back out of the result and
+  // it must be the row it started as. This replaces a weaker rule that asked whether the original
+  // text was a PREFIX of the result — which is only ever true when the quoted span sits at the END
+  // of the row, so a mid-row span was refused however correct it was. It cost a real fix on the
+  // live run (Echo of the Stolen Chorus) and my own tests missed it by quoting an end-of-row span.
+  const undone = String(after.text).replace(` ${clause}.`, '.').replace(/\s{2,}/g, ' ');
+  if (undone.replace(/\s*\.\s*$/, '') !== String(text).replace(/\s*\.\s*$/, '')) {
+    return { row, outcome: 'refused', reason: 'the result is not the original row with one clause added' };
+  }
   return { row: after, outcome: 'acted', reason: `${form}: "${clause}" appended to the sentence that imposes it` };
 };
 

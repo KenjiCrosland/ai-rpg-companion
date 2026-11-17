@@ -193,7 +193,11 @@ const run = async () => {
           post = JSON.stringify({ ...b, messages: msgs });
         } catch { post = undefined; }
       }
-      const res = await route.fetch(post ? { postData: post } : undefined);
+      // PLAYWRIGHT'S route.fetch DEFAULTS TO 30 SECONDS, which is shorter than a slow model call:
+      // the Scree Pit's live audit took longer and the sheet timed out as a harness failure, not a
+      // product one. The engine's own hang guard is 240s (ai-client's REQUEST_TIMEOUT_MS), so this
+      // follows it and lets the call fail honestly where it would have failed anyway.
+      const res = await route.fetch({ ...(post ? { postData: post } : {}), timeout: 240_000 });
       const asAnswered = await res.text();
       let body = asAnswered;
       if (arm?.answer && arm.call === familyOf(prompt)) { body = arm.answer(body); armedAnswers += 1; }
@@ -289,7 +293,12 @@ const run = async () => {
     // that rolls its whole creature; none is worth harness work. But a replay that always ends
     // "3 did NOT reproduce" teaches everyone to ignore its last line, so they are skipped by name
     // with their reason and counted separately. The live modes still run them.
-    if (replayDir && (mode === 'strict' || arm) && replayCases[i]?.replay?.skip) {
+    // SKIPPED IN EVERY REPLAY MODE (corrected 2026-11-17). The mark means THE TAPE CANNOT BE
+    // REPLAYED — sheet 22's CR and sheet 36's whole creature are rolled locally, so their prompts
+    // differ every run and the frozen half cannot be served. That is true whatever the mode: run
+    // live-from-the-audit, both sheets threw "Failed to generate a valid response", because the
+    // calls BEFORE the named one missed the tape and were answered offline.
+    if (replayDir && replayCases[i]?.replay?.skip) {
       const why = replayCases[i].replay.why ?? 'marked not replayable';
       console.log(`SKIPPED — ${why}`);
       replaySkipped += 1;
