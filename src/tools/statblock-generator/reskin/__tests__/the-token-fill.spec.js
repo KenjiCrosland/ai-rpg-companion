@@ -7,6 +7,11 @@
  *
  *   "a DC of {dc}"  shipped as "a DC of DC 13". The fill always wrote "DC n" and only ate an
  *                   IMMEDIATELY preceding "DC ", so the word "of" got between them.
+ *   "gains {dmg} Temporary Hit Points"  shipped as "gains Temporary Hit Points". The strip that
+ *                   drops a token not standing where damage is dealt took the number and left the
+ *                   words. Two rows across every recording, about one a forty.
+ *   "a +{dmg} bonus to its AC"  shipped as "a + bonus". That number this engine cannot price at
+ *                   all, so the row is REFUSED rather than stripped and left as a hole.
  */
 import { generateReskin } from '../generate.mjs';
 
@@ -64,4 +69,47 @@ describe('a DC token renders its letters once', () => {
       expect(all).not.toMatch(/\{dc\}|\{dmg\}/);
     }
   }, 40000);
+});
+
+describe('a damage token is filled or the row is refused, never left as a hole', () => {
+  test('"gains {dmg} Temporary Hit Points" keeps its number', async () => {
+    const m = await build('the hound gains {dmg} Temporary Hit Points whenever it ends its turn in mud');
+    const all = textOf(m);
+    expect(all).not.toMatch(/\{dmg\}/);
+    if (/Temporary Hit Points/.test(all)) {
+      // the promise is readable: a number stands in front of it
+      expect(all).toMatch(/\d+(?:\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\))?\s+Temporary Hit Points/);
+      expect(all).not.toMatch(/gains Temporary Hit Points/);
+    }
+  }, 30000);
+
+  test('"an extra {dmg} Fire damage" in the same row keeps its number too', async () => {
+    const m = await build('the hound gains {dmg} Temporary Hit Points, and its bite deals an extra {dmg} Fire damage');
+    const all = textOf(m);
+    expect(all).not.toMatch(/\{dmg\}/);
+    expect(all).not.toMatch(/gains Temporary Hit Points/);
+    expect(all).not.toMatch(/extra Fire damage\b/);   // the second token is not dropped either
+  }, 30000);
+
+  test('a {dmg} written as a bonus does not ship as "a + bonus"', async () => {
+    const m = await build('an ally within 5 feet gains a +{dmg} bonus to its AC until the start of the hound\'s next turn');
+    const all = textOf(m);
+    expect(all).not.toMatch(/\{dmg\}/);
+    expect(all).not.toMatch(/a \+ bonus/);
+    expect(all).not.toMatch(/\+\s+bonus/);
+  }, 30000);
+
+  test('no row on any of these sheets leaves a number promised and unwritten', async () => {
+    for (const effect of [
+      'the hound gains {dmg} Temporary Hit Points whenever it ends its turn in mud',
+      'an ally within 5 feet gains a +{dmg} bonus to its AC',
+      'a creature notices it on a DC of {dc} check',
+    ]) {
+      const all = textOf(await build(effect));
+      expect(all).not.toMatch(/\{dmg\}|\{dc\}/);
+      expect(all).not.toMatch(/gains Temporary Hit Points/);
+      expect(all).not.toMatch(/a \+ bonus/);
+      expect(all).not.toMatch(/equal to,/);
+    }
+  }, 60000);
 });

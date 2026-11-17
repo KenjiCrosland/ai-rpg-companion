@@ -418,6 +418,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // reason: a trait is not a save. 1 of 523 authored rows in the saved runs, and it is
   // that row, so the widening refuses the defect and nothing else.
   const traitIsSave = (t) => /saving throw|\bon a (?:failed|successful) save\b|\bfails? the save\b|\bsucceeds? on the save\b/i.test(`${t.trigger ?? ''} ${t.effect}`);
+  const dmgAsBonus = (t) => /[+＋]\s*\{dmg\}|\{dmg\}\s*bonus/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
   // computed separately from the test and had drifted: every refusal that was not
@@ -440,6 +441,11 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     : overCap(t) ? `the trigger or effect runs past ${RULES_TEXT_CAP} characters, longer than any trait print writes — it is refused rather than cut mid-word`
     : traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
+    // A {dmg} USED AS A BONUS IS A NUMBER THIS ENGINE CANNOT PRICE (2026-11-16). It prices damage,
+    // and a bonus to AC or to a roll is not damage — so the token is neither fillable nor safely
+    // droppable: "a +{dmg} bonus to its AC" shipped as "a + bonus". Refused the way every other
+    // unrunnable authored row is refused, rather than stripped and left as a hole.
+    : dmgAsBonus(t) ? '{dmg} is written as a bonus, and this engine prices damage, not bonuses — the row promises a number nothing can fill'
       : !healOk(t) ? 'heal names no amount or no limit'
         : !escalationOk(t) ? 'escalation names no amount or no ceiling'
           : !t.passive_effect && !MECHANIC.test(`${t.trigger ?? ''} ${t.effect}`) ? 'the call named no passive effect and the sentence states no rule'
