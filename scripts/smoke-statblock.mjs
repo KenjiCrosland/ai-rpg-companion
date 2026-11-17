@@ -165,6 +165,7 @@ const run = async () => {
   // repeats keeps a queue of its answers and they are served in the order they were recorded.
   let callLog = [];          // record mode: what this generation asked and was told
   let served = null;         // replay mode: prompt text -> queue of raw response bodies
+  let caseCalls = [];        // …and this generation's recorded calls, for an arm that looks one up by its CALL
   let replayMiss = null;     // replay mode: the first prompt with no recorded answer
   let missCount = 0;         // …and how many there were in all, including any after the sheet was saved
   const shapeOf = (req) => {
@@ -246,6 +247,19 @@ const run = async () => {
       // model and what the new recording stores, because it is what was actually asked.
       const armed = arm?.prompt && arm.call === familyOf(prompt) ? arm.prompt(prompt) : prompt;
       if (armed !== prompt) armedPrompts += 1;
+      // AN ARM THAT ANSWERS A CALL FROM THE TAPE BY ITS CALL, not by its prompt text. The tape is
+      // keyed on the exact prompt, so a changed prompt misses on every sheet and the comparison is
+      // lost; this serves the one answer recorded for that call in that generation.
+      if (arm?.fromTapeByCall && arm.call === familyOf(armed)) {
+        const rec = caseCalls.find((c) => familyOf(c.prompt) === arm.call);
+        if (rec) {
+          fromTape += 1;
+          let body = rec.response;
+          if (arm.answer) { body = arm.answer(body); armedAnswers += 1; }
+          await route.fulfill({ status: 200, contentType: 'application/json', body });
+          return;
+        }
+      }
       const d = decide({ mode, liveFrom, prompt: armed, tape: served, afterNamed });
       if (d.flips) afterNamed = true;
       if (d.use === 'tape') {
@@ -325,6 +339,7 @@ const run = async () => {
     if (replayDir) {
       // one queue per distinct prompt, in the order recorded
       served = buildTape(replayCases[i]?.calls ?? []);
+      caseCalls = replayCases[i]?.calls ?? [];
     }
 
     // Google-Fonts <link>s keep `load` pending in headless — domcontentloaded
@@ -536,7 +551,11 @@ const run = async () => {
       const unserved = unusedAnswers(served);
       // ONLY STRICT COMPARES THE SHEET. In a live mode the sheet is MEANT to differ — that is what
       // re-rolling a step is for — so comparing it would report the instrument working as a failure.
-      if (mode !== 'strict' || arm) {
+      // AN ARM THAT ONLY RE-KEYS THE TAPE IS STILL COMPARED. audit-as-taped changes nothing about
+      // the answers — it serves the same recorded audit answer by its call rather than its text —
+      // so a difference from the tape is the ENGINE's, which is the whole reason the arm exists.
+      const comparable = mode === 'strict' || (arm?.fromTapeByCall && !arm.answer && !arm.prompt);
+      if (!comparable) {
         lines.push(`[harness] ${arm ? `arm ${armName}` : mode}: the sheet is not compared with the recording — the point is that it may differ`);
       } else if (replayMiss) {
         replayFailures += 1;
@@ -677,7 +696,11 @@ const run = async () => {
   if (replayDir) {
     const attempted = results.length - replaySkipped;
     const skipNote = replaySkipped ? `, ${replaySkipped} skipped (not replayable)` : '';
-    if (arm) console.log(`ARM "${armName}" (${arm.why}): ${attempted} generation(s)${skipNote}; sheets not compared with the tape — that is the point`);
+    const armCompared = arm?.fromTapeByCall && !arm.answer && !arm.prompt;
+    if (arm && !armCompared) console.log(`ARM "${armName}" (${arm.why}): ${attempted} generation(s)${skipNote}; sheets not compared with the tape — that is the point`);
+    else if (arm) console.log(replayFailures
+      ? `ARM "${armName}": ${replayFailures} of ${attempted} differ from the tape${skipNote} — each one is the engine's, see the [harness] lines`
+      : `ARM "${armName}": all ${attempted} identical to the tape${skipNote}`);
     else if (mode !== 'strict') console.log(`REPLAY (${mode}${liveFrom ? ` ${liveFrom}` : ''}): ${attempted} generation(s) run; sheets not compared — the new recording is in ${path.relative(process.cwd(), recDir)}`);
     else console.log(replayFailures
       ? `REPLAY: ${replayFailures} of ${attempted} did NOT reproduce${skipNote} — see the [harness] lines above`

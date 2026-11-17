@@ -105,6 +105,20 @@ Do not invent a fix name outside this list. If the issue needs new prose written
 
 export const askForFix = (prompt) => `${dropLookAgain(prompt)}${FIX_FIELD}`;
 
+/**
+ * ANSWER THE AUDIT FROM THE TAPE, WHATEVER THE PROMPT SAYS (2026-11-17).
+ *
+ * The tape is keyed on the exact prompt, so the moment the audit's prompt changes every sheet
+ * misses at the audit and strict comparison is lost on the branch that changed it. This arm looks
+ * the audit's answer up by its CALL instead of by its text: the one audit answer recorded for that
+ * generation is served, whatever the engine asked.
+ *
+ * It separates a change to the ENGINE from a change to the PROMPT. With it, the 38 sheets replay in
+ * minutes with no model, and a difference is the engine's.
+ *
+ * Its limit is the mirror of its purpose: it says nothing about how the audit answers the new
+ * prompt. That is what the live Typed run is for.
+ */
 export const ARMS = {
   /** the sheet as the engine built it — the baseline every other arm is measured against */
   none: { call: 'audit', answer: emptyFindings, live: false,
@@ -122,6 +136,8 @@ export const ARMS = {
    * answer then EMPTIED before the page sees it. The findings are measured; none is applied, so
    * these sheets equal the None arm's and nothing about the engine is being tested here.
    */
+  'audit-as-taped': { call: 'audit', fromTapeByCall: true, live: false,
+    why: "the audit is answered from the tape by its CALL, not by its prompt text — so a prompt change does not cost the comparison" },
   'fix-kinds': { call: 'audit', prompt: askForFix, answer: emptyFindings, live: true,
     why: 'a live audit asked to name each finding\'s fix, with the findings then emptied so nothing is applied' },
 };
