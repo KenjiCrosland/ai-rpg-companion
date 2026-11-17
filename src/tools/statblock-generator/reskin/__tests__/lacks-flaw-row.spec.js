@@ -57,29 +57,31 @@ describe('a lack is honoured by a flaw row, and the flaw row must survive', () =
   });
 });
 
-describe('the removal predicate, both directions', () => {
-  // the engine's own shape: all words of the lack's clause appear in the row's stamped clause
-  const owns = (rowClause, lackText) => {
+// THE REMOVAL PREDICATE IS NOW AN ID COMPARISON (2026-11-17), and the tests that stood here
+// compared WORDS — in a local re-implementation of the engine's expression, so they tested a copy.
+// That copy is exactly what went wrong: `ownsThisLack` asked whether every word of the clause
+// appeared in `row.clause`, and on the roll that mattered the row carried the IDEA's sentence
+// instead, so the one row the exemption existed to protect was deleted.
+//
+// The rule is now `row.clauseId === lack.id`, and it is tested where it can only pass for the right
+// reason: through the real engine, in `a-row-written-for-a-lack-survives.spec.js`, with the clause
+// record built by `groundedClauses` from the call's own answer. A local copy of a predicate is not
+// a test of it, so nothing replaces these three here.
+describe('the removal predicate reads the engine\'s own join key', () => {
+  test('a row stamped with the lack\'s clause id is the lack expressed', () => {
+    const owns = (row, lack) => !!lack.id && row.clauseId === lack.id;
+    const lack = { id: 'cl_d36g34', text: 'blind in one eye' };
+    expect(owns({ clauseId: 'cl_d36g34', clause: "The dragon's ruined left eye leaves a permanent blind side" }, lack)).toBe(true);
+    // the same row under the OLD word test, to record why this changed
     const words = (t) => String(t ?? '').toLowerCase().match(/[a-z']+/g)?.filter((w) => w.length > 2) ?? [];
-    const cw = words(lackText);
-    return !!rowClause && cw.length > 0 && cw.every((w) => words(rowClause).includes(w));
-  };
-
-  test('a row the seat wrote FOR the lack is kept', () => {
-    expect(owns('Adult Red Dragon — blind in one eye from an old lance', 'blind in one eye')).toBe(true);
-    expect(owns('blind in one eye', 'blind in one eye')).toBe(true);
+    expect(words(lack.text).every((w) => words("The dragon's ruined left eye leaves a permanent blind side").includes(w))).toBe(false);
   });
 
-  test('a capability row that merely shares a word is still removed', () => {
-    // a Beholder-ish "Blinding Gaze" on a creature whose eyes are gone: no clause stamp at all
-    expect(owns(null, 'blind in one eye')).toBe(false);
-    expect(owns(undefined, 'no eyes at all')).toBe(false);
-    // a row stamped for a DIFFERENT clause does not get the exemption
-    expect(owns('carving with the others', 'blind in one eye')).toBe(false);
-    expect(owns('it has four scythe-arms', 'a shell that sheds acid')).toBe(false);
-  });
-
-  test('an empty lack never exempts everything', () => {
-    expect(owns('Adult Red Dragon — blind in one eye', '')).toBe(false);
+  test('a row with no id, or one for another clause, gets no exemption', () => {
+    const owns = (row, lack) => !!lack.id && row.clauseId === lack.id;
+    const lack = { id: 'cl_d36g34', text: 'blind in one eye' };
+    expect(owns({ clause: 'blind in one eye' }, lack)).toBe(false);        // text alone is not the key
+    expect(owns({ clauseId: 'cl_other' }, lack)).toBe(false);
+    expect(owns({ clauseId: 'cl_d36g34' }, { text: 'blind in one eye' })).toBe(false); // a lack with no id exempts nothing
   });
 });

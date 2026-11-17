@@ -5784,11 +5784,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (flat(cut(handed, String(p.name ?? ''))).length < 4) continue;
         if (answeredByAPart(f)) continue;
         if ([...answered].some((a) => a.includes(f) || f.includes(a))) continue;
-        out.push({ handed, mechanic: c.askMechanic ?? null, shape: c.askShape ?? null, kind: c.kind ?? null, head: !!c.head }); // the clause call's own declared answers, not a reading of the text
+        // `id` RIDES OUT (2026-11-17). Everything downstream had only the handed TEXT, so two
+        // later passes tried to recover which clause a row was for by comparing words — and the
+        // lacks pass deleted the Adult Red Dragon's own "Ruined Eye, Wary Ear" because the row
+        // carried the IDEA's sentence rather than the clause's.
+        out.push({ id: c.id ?? null, handed, mechanic: c.askMechanic ?? null, shape: c.askShape ?? null, kind: c.kind ?? null, head: !!c.head }); // the clause call's own declared answers, not a reading of the text
       }
       return out;
     };
     const unansweredClause = (opts) => (unansweredClauses(opts)[0]?.handed ?? null);
+    /**
+     * THE CLAUSE'S ID FROM THE TEXT A SEAT WAS HANDED (2026-11-17).
+     *
+     * A row written for a clause carried `row.clause`, a COPY of the text, and whoever needed to
+     * know which clause that was compared words against it. The handed text is either the clause's
+     * own text or its positive half, both of which this can match exactly — so the id is recovered
+     * once, here, and stamped on the row rather than guessed at later.
+     */
+    const clauseIdForHanded = (text) => {
+      const t = String(text ?? '').trim();
+      if (!t) return null;
+      for (const c of clauseRecord ?? []) {
+        if (!c?.id) continue;
+        if (String(c.text ?? '').trim() === t) return c.id;
+        if (String(positiveHalf(c, { forCall: true }) ?? '').trim() === t) return c.id;
+        if (String(positiveHalf(c) ?? '').trim() === t) return c.id;
+      }
+      return null;
+    };
     let ideasT = null;
     // THE OPEN ASKS, AT THE SEATS' SHARED SCOPE (R9 · F17). `openClausesT` is a `const`
     // inside the idea call's own try block (it closes ~430 lines above the trait seat),
@@ -6608,7 +6631,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 if (!answersGM) freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
 
-                if (answersGM) row.clause = row.clause ?? idea.clause;
+                // the ID as well as the text: this is the one site that knows which clause the row
+                // was written for, and the lacks pass 5,000 lines below needs to know it exactly
+                if (answersGM) { row.clause = row.clause ?? idea.clause; row.clauseId = row.clauseId ?? clauseIdForHanded(idea.clause); }
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
                 if (answersGM) trace('authored row answers the GM:', `${seat} — "${row.name}" was written for "${String(idea.clause).slice(0, 70)}", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it`);
                 else markFreeRow(authoredSeatShape); // one owner for the mark; BOTH marks ride, as they do for an element-receipt row
@@ -6976,6 +7001,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const own = unansweredClause();
       if (!own) return false;
       f.asked = own; // the receipt by construction: the engine's clause, not the call's quote
+      // and the row carries that clause's ID, so a later pass never has to ask "is this row about
+      // this clause?" by comparing words (2026-11-17)
+      const ownId = clauseIdForHanded(own);
+      if (ownId) { f.clauseId = ownId; if (f.row) f.row.clauseId = f.row.clauseId ?? ownId; }
       trace('seat takes its clause:', `"${f.row?.name ?? f.template}" is HANDED "${own}" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template`);
       return true;
     };
@@ -11777,10 +11806,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // FAILed `lack-honored`; the 11 that deleted nothing all shipped the flaw row and passed**
         // — a perfect correlation, and the one standing FAIL on the crafted forty all week.
         //
-        // A row stamped with THIS clause is the lack expressed. `row.clause` is already there
-        // (the 2026-11-08 "GM's ask is not a free row" landing stamps it), so this reads data the
-        // engine wrote rather than judging prose.
-        const ownsThisLack = !!e.clause && (() => { const cw = clauseWords(c.text); return cw.length > 0 && cw.every((w) => clauseWords(e.clause).includes(w)); })();
+        // A row stamped with THIS clause's ID is the lack expressed.
+        //
+        // It used to compare WORDS: every word of the clause's text had to appear in `row.clause`.
+        // That is a copy of the text, and on the Adult Red Dragon the seat's row carried the IDEA's
+        // sentence ("The dragon's ruined left eye leaves a permanent blind side…") rather than the
+        // clause, so the test failed and the row the lack had just produced was deleted — taking
+        // `Sight Weakness` with it, because the flaw-row builder stands down when a lack removed
+        // something. The GM typed "blind in one eye from an old lance" and got a plain Adult Red
+        // Dragon: of the 13 twists on printed monsters on the tape, 12 add a row and this one did
+        // not. Measured across 289 saved sheets, 24 carry a lacks clause and NOT ONE had a row
+        // bound to it by id or exact text.
+        //
+        // The id is now stamped where the engine hands the seat its clause and where the seat's own
+        // row takes it, so this reads the engine's own join key (2026-11-17).
+        const ownsThisLack = !!c.id && e.clauseId === c.id;
         if (ownsThisLack) { trace('lacks clause:', `${secL}/"${e.name}" STAYS — the seat wrote it for "${c.text}", so its name carrying that word is the lack expressed, not a capability the lack removes`); continue; }
         const nameHit = clauseWords(e.name).some((w) => lacked.includes(w));
         const magicHit = magic && !/Attack Roll/.test(e.text ?? '') && /\bcasts?\b|Spellcasting|\bspells?\b/i.test(`${e.name} ${e.text}`);
@@ -11836,6 +11876,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       });
       flawLanded = true;
       trace('flaw row:', `"${nm}" — "${c.text}" removed no row, so the absence costs the creature something instead (print's grammar: 11 of 329 blocks carry one; owner's ruling 1f)`);
+    }
+
+    // THE RECORD IS COUNTED FROM WHAT SHIPS (2026-11-17). `free_rows` is set by the budget and
+    // `expressed_rows` before the audit — both ~700 lines above the lacks pass, which can delete a
+    // free row. So the Adult Red Dragon shipped `free_rows: 1` and `expressed_rows: 1` with no free
+    // row on the sheet at all, and anything reading the record disagreed with the block beside it.
+    // Counted here, after the last pass that removes a row, the record cannot say that again.
+    if (monster.generation) {
+      const shipped = Object.values(monster.sections ?? {}).flat().filter(Boolean);
+      const freeNow = shipped.filter((e) => e.freeRow);
+      const decoNow = freeNow.filter((e) => e.decoration);
+      const wasFree = monster.generation.free_rows;
+      const wasExpr = monster.generation.expressed_rows;
+      monster.generation.free_rows = freeNow.length;
+      monster.generation.expressed_rows = freeNow.length - decoNow.length;
+      monster.generation.free_row_templates = freeNow.map((e) => e.template ?? e.seed ?? 'unknown');
+      if (wasFree !== freeNow.length || wasExpr !== monster.generation.expressed_rows) {
+        trace('record recounted:', `free_rows ${wasFree} -> ${freeNow.length}, expressed_rows ${wasExpr} -> ${monster.generation.expressed_rows} — a pass after the budget removed a free row, and the record is the finished sheet's`);
+      }
     }
 
     { // a melee weapon in a row's NAME narrows a hybrid print row to melee ("Iron-Shod Staff … or range 120 ft." — the Mage's Arcane Burst under a staff, critic's step-5 read)
