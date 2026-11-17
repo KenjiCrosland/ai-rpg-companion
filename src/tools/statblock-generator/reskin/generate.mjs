@@ -4044,7 +4044,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   const conditionClause = (c) => conditionClauseFor(c, scaled); // one definition, hoisted
   const authoredRow = (kind, f, { fallbackType = null } = {}) => {
     const token = (s) => String(s ?? '')
-      .replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) // "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5)
+      // THE TOKEN CARRIES ITS DC, BUT ONLY ONCE (2026-11-16). This read `(?:DC )?{dc}` and always
+      // wrote "DC n", which is right for a bare token ("a 15 Charisma saving throw" — step 7
+      // defect 5) and wrong whenever the prose already said DC a word or two earlier: the repair
+      // wrote "against a DC of {dc}" and the sheet shipped "against a DC of DC 13". The optional
+      // group only ate an IMMEDIATELY preceding "DC ", so "of" got between them. Now any "DC"
+      // already in front of the token — with or without "of" — keeps the letters and takes the
+      // number alone.
+      .replace(/(DC(?:\s+of)?\s+)?\{dc\}/g, (m0, pre) => (pre ? `${pre}${scaled.dc}` : `DC ${scaled.dc}`))
       .replace(/\{dmg\}/g, () => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; });
     if (kind === 'save') {
       const s = f;
