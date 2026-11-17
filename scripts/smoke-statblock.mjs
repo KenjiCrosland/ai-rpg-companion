@@ -127,7 +127,15 @@ const flagKeys = new Set((replayDir ? replayCases.map((c) => c.input) : JSON.par
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const outDir = path.resolve('smoke-out', `${armName ? `arm-${armName}` : batchName}-${stamp}`);
-const recDir = path.resolve(RECORDINGS, replayDir ? `${path.basename(replayDir)}-${mode}${liveFrom ? `-${liveFrom}` : ''}-${stamp}` : `${batchName}-${stamp}`);
+// WHERE A NEW RECORDING LANDS. `--record` and `--pass-through` make a tape meant to be kept, so
+// they write to the committed fixtures folder. Every other live mode is an EXPERIMENT — a step
+// re-rolled on a frozen sheet — and its tape stays out of the repo under the gitignored run folder,
+// per the standing order: a recording made for an experiment is committed only when a handoff names
+// it. `--live-from` was writing to the fixtures folder and leaving an uncommitted tape behind.
+const keptTape = recording || mode === 'pass-through';
+const recDir = keptTape
+  ? path.resolve(RECORDINGS, replayDir ? `${path.basename(replayDir)}-${mode}-${stamp}` : `${batchName}-${stamp}`)
+  : path.resolve(outDir, 'tape');
 fs.mkdirSync(outDir, { recursive: true });
 
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
