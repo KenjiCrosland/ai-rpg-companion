@@ -93,7 +93,11 @@ console.log(`\n=== per arm, across ${replayable.length} replayable sheets ===\n`
 const hdr = ['arm', 'findings', 'high', 'med', 'low', 'on model row', 'not', 'unclass', 'audits w/ findings', 'repair calls', 'engine rounds', 'rows changed', 'removed', 'added', 'renamed', 'damage moved', 'scan hits'];
 const rows = [];
 const baseline = arms.none;
-for (const name of ['none', 'today', 'high', 'no-look-again']) {
+// every arm handed in, in the order given, with `today` (the tape itself) second — so an arm added
+// later appears in this table without editing it. The list used to be hardcoded, which silently
+// dropped the two typed arms the first time they were measured.
+const ARM_ORDER = ['none', 'today', ...Object.keys(arms).filter((k) => k !== 'none')];
+for (const name of ARM_ORDER) {
   const a = name === 'today' ? null : arms[name];
   if (name !== 'today' && !a) continue;
   let f = 0, hi = 0, me = 0, lo = 0, withF = 0, rep = 0, rounds = 0, ch = 0, rm = 0, ad = 0, ren = 0, dmg = 0, scan = 0, onAuthored = 0, notAuthored = 0, unclassified = 0;
@@ -123,7 +127,14 @@ for (const name of ['none', 'today', 'high', 'no-look-again']) {
     const tr = name === 'today' ? null : a[i]?.trace;
     if (tr) { ren += (tr.match(/\[reskin\] name follows content:/g) ?? []).length; rounds += (tr.match(/\[reskin\] repair round \d+:/g) ?? []).length; }
   }
-  rows.push([name, f, hi, me, lo, onAuthored, notAuthored, unclassified, `${withF} of ${replayable.length}`, rep, name === 'today' ? '— (no trace)' : rounds, ch, rm, ad, ren, dmg, scan]);
+  // AN ARM WHOSE AUDIT ANSWER THIS SCRIPT CANNOT SEE reports "—", never 0. The finding columns are
+  // read out of a RECORDED audit call; an arm that answered the audit live, or from the tape by its
+  // call rather than its prompt, has no such call in its own directory. Printing 0 there reads as
+  // "the audit found nothing", which is the opposite of the truth — the typed arms' findings are in
+  // their traces (`typed fix:` lines), not in a recorded call.
+  const sawAudit = name === 'today' || replayable.some((i) => auditOf(arms[name]?.[i]));
+  const n = (x) => (sawAudit ? x : '—');
+  rows.push([name, n(f), n(hi), n(me), n(lo), n(onAuthored), n(notAuthored), n(unclassified), sawAudit ? `${withF} of ${replayable.length}` : '—', rep, name === 'today' ? '— (no trace)' : rounds, ch, rm, ad, ren, dmg, scan]);
 }
 const w = hdr.map((h, k) => Math.max(h.length, ...rows.map((r) => String(r[k]).length)));
 console.log(hdr.map((h, k) => h.padEnd(w[k])).join('  '));
@@ -142,7 +153,7 @@ for (const i of replayable) {
   if (!base) continue;
   const B = new Map(rowsOf(base).map((r) => [r.name, r.text]));
   const others = [['today', todaySheet(i), todayAudit(i)],
-    ...['high', 'no-look-again'].filter((k) => arms[k]).map((k) => [k, arms[k][i]?.sheet, auditOf(arms[k][i])])];
+    ...Object.keys(arms).filter((k) => k !== 'none').map((k) => [k, arms[k][i]?.sheet, auditOf(arms[k][i])])];
   const names = new Set();
   for (const [, sheet] of others) for (const r of rowsOf(sheet ?? {})) names.add(r.name);
   for (const n of B.keys()) names.add(n);
