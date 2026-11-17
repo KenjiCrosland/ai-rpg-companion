@@ -11,7 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseAuthorResponse, stripUnplacedDmg, dmgWrittenAsABonus } from '../author.mjs';
+import { parseAuthorResponse, stripUnplacedDmg, dmgWrittenAsABonus, fillBonusDmg } from '../author.mjs';
 
 const TAPE = path.resolve(__dirname, 'fixtures/recordings/baseline-2026-11-17');
 const seatAnswer = (sheet, carrying) => {
@@ -37,10 +37,25 @@ describe('the recorded answers the strip was written for', () => {
     expect(t.effect).not.toMatch(/gains Temporary Hit Points/);
   });
 
-  test('Dress the Line comes back REFUSED, not accepted with a hole', () => {
+  // THIS ROW IS NOW ACCEPTED, not refused (owner's ruling, 2026-11-17). Refusing it traded a blank
+  // number for a missing ability: the sheet shipped with no shield-wall row at all, which is what
+  // Vashka's GM typed. A bonus to AC, to attack rolls or to saving throws is filled with a flat 2.
+  test('Dress the Line is ACCEPTED, with a number where the token stood', () => {
     const body = seatAnswer('23', /\+\{dmg\} bonus/);
     expect(body).toBeTruthy();
     const p = parseAuthorResponse(body, {});
+    const row = (p.traits ?? []).find((t) => t.name === 'Dress the Line');
+    expect(row).toBeTruthy();
+    expect((p.refused ?? []).map((r) => r.name)).not.toContain('Dress the Line');
+    expect(row.effect).toMatch(/a \+2 bonus to its AC/);
+    expect(row.effect).not.toMatch(/\{dmg\}/);
+    expect(row.effect).not.toMatch(/a \+ bonus/);
+  });
+
+  test('a bonus to anything else is still refused, on the same recorded answer', () => {
+    const body = seatAnswer('23', /\+\{dmg\} bonus/);
+    // the one word changed: the engine can state +2 to AC and cannot state a bonus to damage
+    const p = parseAuthorResponse(body.replace(/bonus to its AC/g, 'bonus to its damage rolls'), {});
     expect((p.traits ?? []).map((t) => t.name)).not.toContain('Dress the Line');
     const refused = (p.refused ?? []).find((r) => r.name === 'Dress the Line');
     expect(refused).toBeTruthy();
@@ -69,5 +84,49 @@ describe('the rule itself', () => {
     expect(dmgWrittenAsABonus('a +{dmg} bonus to its AC')).toBe(true);
     expect(dmgWrittenAsABonus('a {dmg} bonus')).toBe(true);
     expect(dmgWrittenAsABonus('takes {dmg} Fire damage')).toBe(false);
+  });
+});
+
+describe('a bonus this engine can state is filled, and no other', () => {
+  test.each([
+    ['its AC', 'a +{dmg} bonus to its AC', 'a +2 bonus to its AC'],
+    ['AC, no article', 'a +{dmg} bonus to AC', 'a +2 bonus to AC'],
+    ['Armor Class', 'a +{dmg} bonus to Armor Class', 'a +2 bonus to Armor Class'],
+    ['attack rolls', 'a +{dmg} bonus to its attack rolls', 'a +2 bonus to its attack rolls'],
+    ['saving throws', 'a +{dmg} bonus to saving throws', 'a +2 bonus to saving throws'],
+    ['no plus sign', 'a {dmg} bonus to its AC', 'a +2 bonus to its AC'],
+  ])('%s is filled with a flat 2', (_label, before, after) => {
+    expect(fillBonusDmg(before)).toBe(after);
+  });
+
+  test.each([
+    'a +{dmg} bonus to its damage rolls',
+    'a +{dmg} bonus to its Speed',
+    'a +{dmg} bonus to Wisdom (Perception) checks',
+    'a +{dmg} bonus to its Hit Point maximum',
+  ])('%s is left exactly as it is, so the refusal still sees it', (text) => {
+    expect(fillBonusDmg(text)).toBe(text);
+    expect(dmgWrittenAsABonus(fillBonusDmg(text))).toBe(true);
+  });
+
+  test('a token that is not a bonus is untouched', () => {
+    for (const t of ['takes {dmg} Fire damage', 'gains {dmg} Temporary Hit Points', '']) {
+      expect(fillBonusDmg(t)).toBe(t);
+    }
+  });
+
+  test('the fill is flat — the same number at CR 1 and CR 24', () => {
+    // it is a constant, not a function of anything: a shield is +2 at every CR
+    expect(fillBonusDmg('a +{dmg} bonus to its AC')).toBe(fillBonusDmg('a +{dmg} bonus to its AC'));
+    expect(fillBonusDmg('a +{dmg} bonus to its AC')).toContain('+2');
+  });
+
+  test("last round's two cases keep their behaviour", () => {
+    // priced as dice, not as a flat bonus
+    const thp = parseAuthorResponse(JSON.stringify({ traits: [{ clause: 'c', name: 'R', trigger: 'While it is still',
+      effect: 'the hound gains {dmg} Temporary Hit Points', condition_relation: 'none', heals: false, mechanics: 1,
+      quantities: 1, passive_effect: 'defense' }] }), {});
+    expect(thp.traits[0].effect).toContain('{dmg}');   // the landing prices it, not this
+    expect(thp.traits[0].effect).not.toMatch(/\+2/);
   });
 });

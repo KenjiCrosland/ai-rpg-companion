@@ -244,6 +244,44 @@ export const stripUnplacedDmg = (eff) => String(eff ?? '')
 /** A {dmg} written as a BONUS is a number this engine cannot price — it prices damage. */
 export const dmgWrittenAsABonus = (text) => /[+＋]\s*\{dmg\}|\{dmg\}\s*bonus/i.test(String(text ?? ''));
 
+/**
+ * A BONUS TO AC, TO ATTACK ROLLS OR TO SAVING THROWS IS FILLED WITH A FLAT 2 (owner's ruling,
+ * 2026-11-17).
+ *
+ * Refusing the row was the wrong trade. Vashka's GM typed "fights from a shield wall"; the seat call
+ * answered "a +{dmg} bonus to its AC", the engine refused it, the call was asked again and wrote
+ * "Vashka gains a +{dmg} bonus to its AC", that was refused too, and the sheet shipped with NO
+ * shield-wall row. A sheet that ignores what the GM typed fails the same bar a blank number does.
+ *
+ * Only these three, because they are the only bonuses whose size this engine can state without
+ * pricing anything: +2 is print's own step for a shield, for a Bless, for a cover bonus. A bonus to
+ * damage, to a check, to speed, to HP — anything else — is still REFUSED exactly as before, because
+ * its size depends on what the row is worth and that is the pricing this engine does not do here.
+ *
+ * Across every recording there are 51 authoring answers. Two write the token as a bonus, both on
+ * s23 and both to AC. One answer writes a plain bonus itself ("+2 bonus to its Shackle-Flail attack
+ * rolls", s17) — the same number, which is where this one comes from.
+ */
+// FLAT AT EVERY CR, deliberately. +2 is a fixed step in this game: a shield gives +2 at CR 1 and at
+// CR 24, and Bless gives d4 at every level. Scaling it would make a defensive buff a damage-like
+// quantity, which is the thing the refusal exists to prevent. Do not make this a function of CR.
+const BONUS_FILL = 2;
+/** the three a flat +2 can be stated for, written as the answer writes them */
+const BONUS_TO_A_FILLABLE_THING = /\bbonus to (?:its |their |his |her |the )?(?:AC\b|Armor Class\b|attack rolls?\b|saving throws?\b)/i;
+
+/**
+ * Fill a bonus token this engine can state, and leave every other one exactly as it was so the
+ * refusal still sees it. Runs where the answer is PARSED, before the strip — the strip would take
+ * the token and leave the words ("a + bonus"), and the refusal needs the untouched text.
+ */
+export const fillBonusDmg = (text) => {
+  const t = String(text ?? '');
+  if (!dmgWrittenAsABonus(t) || !BONUS_TO_A_FILLABLE_THING.test(t)) return t;
+  return t
+    .replace(/([+＋])\s*\{dmg\}/g, `$1${BONUS_FILL}`)
+    .replace(/\{dmg\}(\s*bonus)/gi, `+${BONUS_FILL}$1`);
+};
+
 export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
@@ -278,7 +316,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = stripUnplacedDmg; // ONE rule, shared with the landing in generate.mjs
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, quantities: Number.isFinite(Number(t?.quantities)) ? Number(t.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), rawEffect: clean(t?.effect), /* the answer BEFORE the strip — the bonus refusal has to see a token the strip would remove (2026-11-17) */ flavor: str(t?.flavor, 160) || null,
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, quantities: Number.isFinite(Number(t?.quantities)) ? Number(t.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: fillBonusDmg(perTurn(clean(t?.trigger) || null, clean(t?.effect))), effect: scrubDmg(fillBonusDmg(clean(t?.effect))), rawEffect: fillBonusDmg(clean(t?.effect)), /* the answer BEFORE the strip — the bonus refusal has to see a token the strip would remove (2026-11-17) */ flavor: str(t?.flavor, 160) || null,
     // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
     // "this only describes the creature" is an answer and we act on it. The field
     // absent means the call failed or is an older shape, and a failed call never

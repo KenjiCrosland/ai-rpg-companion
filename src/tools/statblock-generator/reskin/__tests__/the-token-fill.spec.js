@@ -125,9 +125,20 @@ describe('a damage token is filled or the row is refused, never left as a hole',
     expect(text).not.toMatch(/\{dmg\}/);
   }, 30000);
 
-  test('a {dmg} written as a bonus is REFUSED, not shipped as "a + bonus"', async () => {
-    // this quantity the engine cannot price, so the whole row goes rather than ship a hole
+  // A BONUS TO AC IS NOW FILLED WITH A FLAT 2 (owner's ruling, 2026-11-17). This test asserted the
+  // refusal; refusing it cost Vashka her shield-wall row entirely, which fails the same bar a blank
+  // number does. A bonus to AC, to attack rolls or to saving throws is stated as +2; anything else
+  // is still refused, which the second test here holds.
+  test('a {dmg} written as a bonus to AC is FILLED, never shipped as "a + bonus"', async () => {
     const m = await build('an ally within 5 feet gains a +{dmg} bonus to its AC until the start of the hound\'s next turn');
+    const text = authoredRow(m);
+    expect(text).toMatch(/a \+2 bonus to its AC/);
+    expect(text).not.toMatch(/\{dmg\}/);
+    expect(text).not.toMatch(/\+\s+bonus/);
+  }, 30000);
+
+  test('a bonus to anything else is still REFUSED rather than left as a hole', async () => {
+    const m = await build('an ally within 5 feet gains a +{dmg} bonus to its damage rolls until the start of the hound\'s next turn');
     expect(rowsOf(m).map((e) => e.name)).not.toContain(ROW);
     const all = textOf(m);
     expect(all).not.toMatch(/\{dmg\}/);
@@ -137,7 +148,8 @@ describe('a damage token is filled or the row is refused, never left as a hole',
   test('no row on any of these sheets leaves a number promised and unwritten', async () => {
     for (const effect of [
       'the hound gains {dmg} Temporary Hit Points whenever it ends its turn in mud',
-      'an ally within 5 feet gains a +{dmg} bonus to its AC',
+      'an ally within 5 feet gains a +{dmg} bonus to its AC',          // filled with +2
+      'an ally within 5 feet gains a +{dmg} bonus to its damage rolls', // refused
       'a creature notices it on a DC of {dc} check',
     ]) {
       const all = textOf(await build(effect));
