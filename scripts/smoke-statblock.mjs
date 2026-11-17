@@ -27,7 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { buildTape, takeAnswer, unusedAnswers, decide, formatMiss, familyOf, MISS_BODY, FAMILY_NAMES } from './lib/tape.mjs';
+import { buildTape, takeAnswer, unusedAnswers, decide, formatMiss, familyOf, MISS_BODY, FAMILY_NAMES, sheetsDiffer, differingFields, onlyKeyOrderDiffers } from './lib/tape.mjs';
 import { ARMS, ARM_NAMES } from './lib/arms.mjs';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:5173';
@@ -568,13 +568,17 @@ const run = async () => {
         const report = formatMiss(replayMiss, replayCases[i]?.calls ?? []);
         lines.push(`[harness] ${report}\n[harness] the whole prompt, and every recorded one, is in ${path.basename(missFile)}`);
         console.log(report.split('\n')[0]);
-      } else if (JSON.stringify(want) !== JSON.stringify(monster)) {
+      } else if (sheetsDiffer(want, monster)) {
         replayFailures += 1;
-        const diffKey = Object.keys({ ...(want ?? {}), ...(monster ?? {}) }).filter((k) => JSON.stringify(want?.[k]) !== JSON.stringify(monster?.[k]));
+        const diffKey = differingFields(want, monster);
         lines.push(`[harness] REPLAY DIFFERS from ${replayCases[i].file} — fields: ${diffKey.join(', ') || '(shape)'}`);
         console.log(`REPLAY DIFFERS (${diffKey.slice(0, 4).join(', ')})`);
       } else {
-        lines.push(`[harness] replay identical to ${replayCases[i].file}${unserved ? ` — ${unserved} recorded answer(s) unused` : ''}`);
+        // KEY ORDER IS NOT A DIFFERENCE, but it is worth saying when it moved: a field stamped
+        // earlier in the pipeline serialises in a different position, and knowing that is how last
+        // round's 13 "failures" were read correctly.
+        const moved = onlyKeyOrderDiffers(want, monster);
+        lines.push(`[harness] replay identical to ${replayCases[i].file}${moved ? ' — the same sheet, with some keys in a different order' : ''}${unserved ? ` — ${unserved} recorded answer(s) unused` : ''}`);
       }
       if (missCount) lines.push(`[harness] ${missCount} prompt(s) had no recorded answer during this entry: ${Object.entries(missFamilies).map(([k, v]) => `${k} x${v}`).join(', ')}`);
       if (arm) lines.push(`[harness] arm "${armName}": ${arm.why} — ${armedPrompts} prompt(s) rewritten, ${armedAnswers} answer(s) rewritten`);

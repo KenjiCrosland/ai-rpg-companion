@@ -210,3 +210,69 @@ describe('naming the difference', () => {
     expect(() => formatMiss(AUDIT, [])).not.toThrow();
   });
 });
+
+/**
+ * THE COMPARISON IS THE SHEET, NOT ITS SERIALISATION (2026-11-17).
+ *
+ * The replay compared `JSON.stringify(want) !== JSON.stringify(got)`, which makes key ORDER part of
+ * the answer. It is not. Stamping a row's `clauseId` earlier in the pipeline moved that field's
+ * position, and 13 sheets reported "did not reproduce" with byte-identical content — which cost a
+ * round of reading and a hand-written canonicaliser to disprove.
+ *
+ * Arrays keep their order on purpose: a sheet's sections are ordered, and the rows inside one are
+ * the order a GM reads them, so a re-ordered array IS a different sheet.
+ */
+describe('two sheets compare as sheets', () => {
+  const { canonical, sheetsDiffer, differingFields, onlyKeyOrderDiffers } = require('../../../../../scripts/lib/tape.mjs');
+
+  const sheet = (over = {}) => ({
+    name: 'Bog Hound', cr: 1,
+    sections: { Traits: [{ name: 'Mud-Caked Hide', text: 'it is indistinguishable from the mud', clauseId: 'cl_a1', authored: true }] },
+    generation: { free_rows: 1, clauses: [{ id: 'cl_a1', text: 'hides in the mud' }] },
+    ...over,
+  });
+
+  test('the same sheet with its keys in another order compares EQUAL', () => {
+    const a = sheet();
+    // the exact shape that misled us: one row's fields written in a different order
+    const b = sheet({ sections: { Traits: [{ authored: true, clauseId: 'cl_a1', text: 'it is indistinguishable from the mud', name: 'Mud-Caked Hide' }] } });
+    expect(JSON.stringify(a)).not.toBe(JSON.stringify(b));   // the old comparison called this a failure
+    expect(sheetsDiffer(a, b)).toBe(false);
+    expect(differingFields(a, b)).toEqual([]);
+    expect(onlyKeyOrderDiffers(a, b)).toBe(true);
+  });
+
+  test('one changed value compares UNEQUAL, and the difference names the field', () => {
+    const a = sheet();
+    const b = sheet({ generation: { free_rows: 0, clauses: [{ id: 'cl_a1', text: 'hides in the mud' }] } });
+    expect(sheetsDiffer(a, b)).toBe(true);
+    expect(differingFields(a, b)).toEqual(['generation']);
+    expect(onlyKeyOrderDiffers(a, b)).toBe(false);
+  });
+
+  test('a row\'s text changing names `sections`, and a top-level field names itself', () => {
+    const a = sheet();
+    expect(differingFields(a, sheet({ sections: { Traits: [{ name: 'Mud-Caked Hide', text: 'CHANGED', clauseId: 'cl_a1', authored: true }] } }))).toEqual(['sections']);
+    expect(differingFields(a, sheet({ cr: 2 }))).toEqual(['cr']);
+    expect(differingFields(a, sheet({ name: 'Bog Hound', cr: 2, generation: { free_rows: 2, clauses: [] } }))).toEqual(['cr', 'generation']);
+  });
+
+  test('a RE-ORDERED ARRAY is a different sheet — row order is what a GM reads', () => {
+    const two = (first, second) => sheet({ sections: { Traits: [{ name: first }, { name: second }] } });
+    expect(sheetsDiffer(two('A', 'B'), two('B', 'A'))).toBe(true);
+  });
+
+  test('canonical sorts keys at every depth and leaves values alone', () => {
+    expect(JSON.stringify(canonical({ b: 1, a: { d: 2, c: [3, { f: 4, e: 5 }] } })))
+      .toBe('{"a":{"c":[3,{"e":5,"f":4}],"d":2},"b":1}');
+    expect(canonical(null)).toBeNull();
+    expect(canonical('x')).toBe('x');
+    expect(canonical([2, 1])).toEqual([2, 1]);   // not sorted
+  });
+
+  test('a missing field and an undefined one are not confused with a different value', () => {
+    expect(sheetsDiffer({ a: 1 }, { a: 1, b: undefined })).toBe(false); // JSON drops undefined
+    expect(sheetsDiffer({ a: 1 }, { a: 1, b: null })).toBe(true);
+    expect(differingFields({ a: 1 }, { a: 1, b: null })).toEqual(['b']);
+  });
+});

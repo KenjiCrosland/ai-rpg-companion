@@ -159,3 +159,39 @@ export const formatMiss = (prompt, calls = []) => {
  * reports the miss itself.
  */
 export const MISS_BODY = JSON.stringify({ choices: [{ message: { content: JSON.stringify({ __replay_miss: true }) } }] });
+
+/**
+ * TWO SHEETS, COMPARED THE WAY A SHEET MEANS SOMETHING (2026-11-17).
+ *
+ * The replay used to compare `JSON.stringify(want) !== JSON.stringify(got)`, which makes KEY ORDER
+ * part of the comparison. It is not part of the sheet: stamping a row's `clauseId` earlier in the
+ * pipeline moved the field's position and 13 sheets read as "did not reproduce" with identical
+ * content. Proving them unchanged meant sorting every object's keys by hand, which is what this now
+ * does for every comparison.
+ *
+ * ARRAYS KEEP THEIR ORDER. A sheet's sections are ordered — Traits before Actions, and the rows
+ * within a section are the order a GM reads — so a re-ordered array IS a different sheet.
+ */
+export const canonical = (v) => {
+  if (Array.isArray(v)) return v.map(canonical);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const k of Object.keys(v).sort()) out[k] = canonical(v[k]);
+    return out;
+  }
+  return v;
+};
+
+/** true when two sheets differ in anything but the order of their keys */
+export const sheetsDiffer = (a, b) => JSON.stringify(canonical(a)) !== JSON.stringify(canonical(b));
+
+/**
+ * The fields that actually differ, so the report names them. Compared canonically too — a field
+ * whose own object had its keys reordered is not a difference.
+ */
+export const differingFields = (a, b) => Object.keys({ ...(a ?? {}), ...(b ?? {}) })
+  .filter((k) => JSON.stringify(canonical(a?.[k])) !== JSON.stringify(canonical(b?.[k])))
+  .sort();
+
+/** KEY ORDER ALONE, reported rather than hidden: the sheet is the same and the serialisation moved. */
+export const onlyKeyOrderDiffers = (a, b) => JSON.stringify(a) !== JSON.stringify(b) && !sheetsDiffer(a, b);
