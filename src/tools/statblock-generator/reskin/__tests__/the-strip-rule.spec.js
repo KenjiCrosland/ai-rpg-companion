@@ -13,9 +13,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseAuthorResponse, stripUnplacedDmg, dmgWrittenAsABonus, fillBonusDmg } from '../author.mjs';
 
-const TAPE = path.resolve(__dirname, 'fixtures/recordings/baseline-2026-11-17');
-const seatAnswer = (sheet, carrying) => {
-  const f = fs.readdirSync(TAPE).find((x) => x.startsWith(`${sheet}-`) && x.endsWith('.json'));
+const TAPE = path.resolve(__dirname, 'fixtures/recordings/baseline-2026-11-17b');
+/**
+ * Found by the CREATURE, never by the sheet number. Each generation of the tape is recorded by
+ * replaying the last one, and a tape with 38 entries renumbers everything after the first skipped
+ * input — so Vashka was `23-` on one tape and `22-` on the next, and a test keyed on the number
+ * silently read another creature's answers.
+ */
+const seatAnswer = (creature, carrying) => {
+  const f = fs.readdirSync(TAPE).find((x) => x.includes(creature) && x.endsWith('.json'));
+  expect(f).toBeTruthy();
   for (const c of JSON.parse(fs.readFileSync(path.join(TAPE, f), 'utf8')).calls) {
     if (!String(c.prompt).startsWith('You are writing ONE ability')) continue;
     const body = JSON.parse(c.response).choices[0].message.content;
@@ -26,7 +33,7 @@ const seatAnswer = (sheet, carrying) => {
 
 describe('the recorded answers the strip was written for', () => {
   test('Chain of Broken Oaths keeps BOTH tokens in its effect', () => {
-    const body = seatAnswer('17', /gains \{dmg\} Temporary Hit Points/);
+    const body = seatAnswer('pit-fiend', /gains \{dmg\} Temporary Hit Points/);
     expect(body).toBeTruthy();
     const t = (parseAuthorResponse(body, {}).traits ?? [])[0];
     expect(t).toBeTruthy();
@@ -41,7 +48,7 @@ describe('the recorded answers the strip was written for', () => {
   // number for a missing ability: the sheet shipped with no shield-wall row at all, which is what
   // Vashka's GM typed. A bonus to AC, to attack rolls or to saving throws is filled with a flat 2.
   test('Dress the Line is ACCEPTED, with a number where the token stood', () => {
-    const body = seatAnswer('23', /\+\{dmg\} bonus/);
+    const body = seatAnswer('vashka', /\+\{dmg\} bonus/);
     expect(body).toBeTruthy();
     const p = parseAuthorResponse(body, {});
     const row = (p.traits ?? []).find((t) => t.name === 'Dress the Line');
@@ -53,7 +60,7 @@ describe('the recorded answers the strip was written for', () => {
   });
 
   test('a bonus to anything else is still refused, on the same recorded answer', () => {
-    const body = seatAnswer('23', /\+\{dmg\} bonus/);
+    const body = seatAnswer('vashka', /\+\{dmg\} bonus/);
     // the one word changed: the engine can state +2 to AC and cannot state a bonus to damage
     const p = parseAuthorResponse(body.replace(/bonus to its AC/g, 'bonus to its damage rolls'), {});
     expect((p.traits ?? []).map((t) => t.name)).not.toContain('Dress the Line');
