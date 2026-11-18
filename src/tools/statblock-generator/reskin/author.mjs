@@ -25,8 +25,14 @@ export const STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', '
 // convention and needs nothing. The first fix for this read the RENDERED row for a
 // Sphere with no "centered on" — which is class D, meaning read off engine text where a
 // declared field exists. The declared field is this one, so the refusal belongs here.
-const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Line|Emanation)|each creature in a \d+-foot (?:Sphere|Cube) centered on a point within \d+ feet|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
+// AN EMANATION NAMES WHAT IT COMES FROM (2026-11-17). Print writes "each creature in a 5-foot
+// Emanation originating from the aboleth" — the tail is print's own wording and this pattern, being
+// anchored, rejected it and fell back to a default target. It cost the area on a Reaction's save,
+// which is where it was noticed; it was doing the same to a save row's.
+const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Line|Emanation)(?: originating from [\w' -]{2,40})?|each creature in a \d+-foot (?:Sphere|Cube) centered on a point within \d+ feet|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
 const HAS_NUMBER = /\d/;
+/** a save target that names an AREA rather than one creature — one definition, read here and by the landing */
+export const AN_AREA = /\beach creature\b|\d+-foot|\bEmanation\b|\bCone\b|\bLine\b|\bSphere\b|\bCube\b/i;
 // print's longest trait text is 714 characters (Loathsome Limbs); 240 refused 9% of print's 324
 const RULES_TEXT_CAP = 720;
 
@@ -569,7 +575,14 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     // renderer writes both and the model never writes a DC.
     ...(r?.save && typeof r.save === 'object' ? { save: {
       stat: STATS.includes(r.save.stat) ? r.save.stat : 'Dexterity',
-      target: TARGET_OK.test(str(r.save.target, 80)) ? str(r.save.target, 80) : 'the triggering creature',
+      // AN AREA IS NEVER DEFAULTED TO A SINGLE CREATURE. `TARGET_OK` is anchored and narrow — it
+      // rejected "each creature in a 15-foot Emanation centered on the breach" — and the fallback
+      // then turned the ram-golem's whole breach into one creature saving. Silently narrowing an
+      // area is worse than keeping a phrasing the pattern does not list, so an area keeps the
+      // model's own words and only a non-area target falls back.
+      target: TARGET_OK.test(str(r.save.target, 80)) ? str(r.save.target, 80)
+        : AN_AREA.test(str(r.save.target, 80)) ? str(r.save.target, 80)
+          : 'the triggering creature',
       damage: !!r.save.damage, type: DAMAGE_TYPES.includes(r.save.type) ? r.save.type : null,
       condition: CONDITIONS.includes(r.save.condition) ? r.save.condition : null,
       success: str(r.save.success, 120) || null,

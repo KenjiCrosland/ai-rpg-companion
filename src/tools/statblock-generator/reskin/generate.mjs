@@ -38,7 +38,7 @@ import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the va
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { routeFinding, renameDropsAGmWord, formatFinding } from './typed-fixes.mjs'; // the audit names the defect; nothing here acts on it
-import { stripUnplacedDmg } from './author.mjs'; // one strip rule, shared with the parse
+import { stripUnplacedDmg, AN_AREA } from './author.mjs'; // one strip rule, shared with the parse
 import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -4128,11 +4128,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const svF = r.save ? (() => {
         const want = Math.max(3, Math.round((scaled.per_hit ?? 6) * (String(r.save.target).startsWith('each') ? 1.4 : 1.1)));
         const dice = engineDiceFor(capSingleTargetSave(want, `Saving Throw ${r.save.target}`, cr));
+        // WHO SAVES: THE CREATURE THE TRIGGER NAMES (owner's ruling, 2026-11-17). A Reaction fires
+        // because something happened, and a single-target save in one is made by the creature that
+        // did it — not by whoever the target field happens to name. s20's Ringing of the Deep
+        // triggered on "the leviathan hits a creature with Coils" and then asked "one creature
+        // within 10 feet" to save, which is a different creature; s10's Chorus of Wounds did the
+        // same. An AREA stays an area, because an area is not about who triggered it.
+        //
+        // The wording is print's own, from the only Reaction in the corpus that forces a
+        // single-target save — the Chain Devil's Unnerving Gaze: "DC 15, the triggering creature."
+        const area = AN_AREA.test(String(r.save.target ?? ''));
+        const target = area ? r.save.target : 'the triggering creature';
+        // WHEN IT ENDS: the same thing that ends a save ROW's condition (`conditionClauseFor`) —
+        // Grappled takes an escape DC, Prone self-ends and needs none, everything else takes
+        // "until the end of its next turn". s20 and s10 both shipped a Deafened that never ended.
         const parts = [
           r.save.damage ? `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage` : '',
-          r.save.condition ? `the target has the ${r.save.condition} condition` : '',
+          r.save.condition ? conditionClause(r.save.condition) : '',
         ].filter(Boolean);
-        return { stat: r.save.stat, dc: scaled.dc, target: r.save.target, failure: parts.join(', ') || `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage`, success: r.save.success ?? null };
+        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', ') || `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage`, success: r.save.success ?? null };
       })() : null;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response), ...(svF ? { save: svF } : {}) }, '2024', { properNouns: ownNouns() });
       return { name: r.name, text, authored: true, clause: r.clause, ...(r.save?.condition ? { imposes: r.save.condition } : {}), ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };

@@ -81,3 +81,72 @@ describe('the number gate and a save in fields', () => {
     }
   });
 });
+
+/**
+ * WHO SAVES, AND WHEN IT ENDS (owner's ruling, 2026-11-17).
+ *
+ * `Ringing of the Deep` triggered on "the leviathan hits a creature with Coils" and then asked "one
+ * creature within 10 feet" to save — a different creature — and its Deafened never ended. s10's
+ * `Chorus of Wounds` did both the same way.
+ *
+ * A single-target save in a Reaction is made by the creature the trigger names, in print's own
+ * words: the Chain Devil's Unnerving Gaze reads "DC 15, the triggering creature". An area stays an
+ * area. And the condition ends the way a save ROW's does, through `conditionClauseFor` — Grappled
+ * takes an escape DC, Prone self-ends, everything else takes "until the end of its next turn".
+ */
+describe("who saves, and when it ends", () => {
+  const { generateReskin } = require('../generate.mjs');
+  const keysOf2 = (p, field) => { const i = p.indexOf(`"${field}": {`); if (i < 0) return []; return [...p.slice(i + field.length + 5, p.indexOf('}', i)).matchAll(/"([^"]+)":\s*"</g)].map((m) => m[1]); };
+  const onASheet = async (save) => {
+    let cached = null;
+    const m = await generateReskin({
+      mechanics: [], archetype: 'brute', concept: 'a trench leviathan whose coils ring like a struck bell',
+      userConcept: 'a trench leviathan whose coils ring like a struck bell', cr: 11,
+      path: { path: 'homebrew', print_body: null, relation: null, class: null },
+    }, async (p0) => {
+      const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+      if (p.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'Its coils ring when they strike.', section: 'trait', trigger: 'always', effect: 'other', family: 'none' } });
+      if (p.startsWith("A monster's signature ability has been described in plain words")) return JSON.stringify({ template: null, declined_because: 'no_fit', closest: null, missing: 'a ringing blow' });
+      if (p.startsWith('You are writing ONE ability')) {
+        return JSON.stringify({ traits: [], reactions: [{ clause: 'rings like a struck bell', name: 'Ringing Coils',
+          trigger: 'The leviathan hits a creature with its coils', response: '', save,
+          imposes: null, condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 1 }] });
+      }
+      const rk = keysOf2(p, 'renames');
+      if (rk.length || !cached) {
+        const renames = Object.fromEntries(rk.map((k, i) => [k, `Named Row${i}`]));
+        cached = JSON.stringify({ name: 'Trench Leviathan', type: 'Monstrosity', size: 'Huge', alignment: 'Unaligned',
+          senses: 'darkvision 60 ft.', languages: 'None', renames, damage_types: {}, conditions: { condition_minor: 'Prone' },
+          melee_rider: 'none', projectile: 'water', wildcard: '' });
+      }
+      return cached;
+    });
+    return (m.sections?.Reactions ?? []).filter(Boolean).find((e) => e?.name === 'Ringing Coils');
+  };
+
+  test('a single-target save is made by the creature the trigger names', async () => {
+    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: false, condition: 'Deafened' });
+    expect(row).toBeTruthy();
+    expect(row.text).toContain('the triggering creature');
+    expect(row.text).not.toContain('one creature within 10 feet');
+  }, 30000);
+
+  test('an AREA stays an area', async () => {
+    const row = await onASheet({ stat: 'Constitution', target: 'each creature in a 30-foot Emanation originating from the leviathan', damage: false, condition: 'Deafened' });
+    expect(row.text).toContain('each creature in a 30-foot Emanation');
+    expect(row.text).not.toContain('the triggering creature');
+  }, 30000);
+
+  test('the condition prints an end, from the same helper a save ROW uses', async () => {
+    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: false, condition: 'Deafened' });
+    expect(row.text).toMatch(/Deafened condition until the end of its next turn/);
+  }, 30000);
+
+  test('Grappled takes an escape DC and Prone takes no ending, as a save row does', async () => {
+    const grappled = await onASheet({ stat: 'Strength', target: 'one creature within 10 feet', damage: false, condition: 'Grappled' });
+    expect(grappled.text).toMatch(/Grappled condition \(escape DC \d+\)/);
+    const prone = await onASheet({ stat: 'Strength', target: 'one creature within 10 feet', damage: false, condition: 'Prone' });
+    expect(prone.text).toMatch(/Prone condition/);
+    expect(prone.text).not.toMatch(/Prone condition until/);
+  }, 40000);
+});
