@@ -9522,7 +9522,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           for (let i = esA.length - 1; i >= 0; i -= 1) {
             const row = esA[i];
             if (row.library || row.print || !/\(Recharge [\d–-]+\)|\d\/Day/.test(row.name ?? '') || !/Saving Throw/.test(row.text ?? '')) continue;
-            trace('print canon: chassis row leaves —', `Actions/"${row.name}" is the seat's nova, not the ${pc.name}'s`);
+            // A ROW WRITTEN FOR A CLAUSE THE GM TYPED SURVIVES (owner's order, 2026-11-18). This pass
+            // replaces a CHASSIS nova with print's own, which is right — but it was reading any
+            // recharge save row as the chassis's. The Purple Worm's "Vomited Armoury" is the seat's
+            // answer to "swallowed a war-band's armoury", and removing it left print's worm with no
+            // armoury anywhere: the owner graded that sheet a Fix for exactly that.
+            //
+            // Counted on the checkpoint forty before building it: of the 7 rows this pass removed
+            // from Actions, ONE carries a typed clause's id. Five are the chassis's own nova renamed
+            // by the model — the trace below said "the seat's nova" for those too, which is what made
+            // the fault look six times larger than it is — and one had no provenance at all.
+            if (row.clauseId || (row.authoredSeat && row.clause)) {
+              trace('print canon: the seat\'s own row STAYS —', `Actions/"${row.name}" answers "${String(row.clause ?? row.clauseId).slice(0, 60)}", which the GM typed; print's nova rides beside it rather than over it`);
+              continue;
+            }
+            // SAY WHOSE ROW IT IS. Everything reaching this line is the CHASSIS's: print and library
+            // rows were skipped above, and a row answering a typed clause was skipped just now. The
+            // old wording called all of them "the seat's nova", which is what made six renamed
+            // chassis novas read as six lost answers to the GM.
+            trace('print canon: chassis row leaves —', `Actions/"${row.name}" is the chassis's own nova (the model renamed it), not the ${pc.name}'s`);
             const bareN = String(row.name).replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             esA.splice(i, 1);
             for (const e2 of Object.values(sections).flat()) if (e2.name === 'Multiattack' && new RegExp(`\\b${bareN}\\b`).test(e2.text ?? '')) e2.text = e2.text.replace(new RegExp(`[^.!?]*\\b${bareN}\\b[^.!?]*[.!?]\\s*`), '').trim();
