@@ -9,26 +9,29 @@
  *
  * These are the two recorded answers from the baseline tape, fed to the real parser.
  */
-import fs from 'node:fs';
-import path from 'node:path';
 import { parseAuthorResponse, stripUnplacedDmg, dmgWrittenAsABonus, fillBonusDmg } from '../author.mjs';
 
-const TAPE = path.resolve(__dirname, 'fixtures/recordings/baseline-2026-11-17b');
 /**
- * Found by the CREATURE, never by the sheet number. Each generation of the tape is recorded by
- * replaying the last one, and a tape with 38 entries renumbers everything after the first skipped
- * input — so Vashka was `23-` on one tape and `22-` on the next, and a test keyed on the number
- * silently read another creature's answers.
+ * THE TWO ANSWERS, INLINED (2026-11-18).
+ *
+ * These were read off the baseline tape by creature name. The clean forty of 2026-11-18 is a fresh
+ * roll of every call and reproduced NEITHER of them — a model answer is not a fact about the engine,
+ * and a test that needs a particular one cannot live on a tape that gets re-rolled. So they are
+ * fixtures now, copied verbatim from `baseline-2026-11-17b` before it was replaced: the Pit Fiend's
+ * seat answer carrying two `{dmg}` tokens, and Vashka's carrying one written as a bonus.
+ *
+ * Nothing about what they prove changes. They are still real answers the model gave, fed to the real
+ * parser; what changed is that they no longer depend on a tape still holding them.
  */
+const RECORDED = {
+  'pit-fiend': "```json\n{\n  \"attacks\": [],\n  \"saves\": [],\n  \"traits\": [\n    {\n      \"clause\": \"When a creature dies within reach of the pit fiend, its final oath binds to the flail's chain: the pit fiend gains temporary hit points and the chain grows heavier, adding fire damage to its Shackle-Flail attacks until the end of its next turn.\",\n      \"name\": \"Chain of Broken Oaths\",\n      \"trigger\": \"When a creature dies within 10 feet of the pit fiend\",\n      \"effect\": \"The pit fiend gains {dmg} Temporary Hit Points, and until the end of its next turn its Shackle-Flail attacks deal an extra {dmg} Fire damage.\",\n      \"imposes\": null,\n      \"condition_relation\": \"none\",\n      \"acts\": null,\n      \"heals\": false,\n      \"mechanics\": 1,\n      \"quantities\": 2,\n      \"passive_effect\": \"bonus\"\n    }\n  ],\n  \"reactions\": [],\n  \"crossRef\": null,\n  \"answered\": [\n    {\n      \"clause\": \"When a creature dies within reach of the pit fiend, its final oath binds to the flail's chain: the pit fiend gains temporary hit points and the chain grows heavier, adding fire damage to its Shackle-Flail attacks until the end of its next turn.\",\n      \"row\": \"Chain of Broken Oaths\"\n    }\n  ],\n  \"unplaced\": []\n}\n```",
+  vashka: "{\n  \"attacks\": [],\n  \"saves\": [],\n  \"traits\": [\n    {\n      \"clause\": \"Vashka barks an order that snaps the line back into dress\",\n      \"name\": \"Dress the Line\",\n      \"trigger\": \"When a creature within 5 feet of Vashka that can hear her is hit by an attack roll\",\n      \"effect\": \"That creature gains a +{dmg} bonus to its AC until the start of Vashka's next turn, provided it is standing shoulder-to-shoulder with Vashka or another ally.\",\n      \"imposes\": null,\n      \"condition_relation\": \"none\",\n      \"acts\": null,\n      \"heals\": false,\n      \"mechanics\": 1,\n      \"quantities\": 1,\n      \"passive_effect\": \"protection\"\n    }\n  ],\n  \"reactions\": [],\n  \"crossRef\": null,\n  \"answered\": [],\n  \"unplaced\": []\n}",
+};
 const seatAnswer = (creature, carrying) => {
-  const f = fs.readdirSync(TAPE).find((x) => x.includes(creature) && x.endsWith('.json'));
-  expect(f).toBeTruthy();
-  for (const c of JSON.parse(fs.readFileSync(path.join(TAPE, f), 'utf8')).calls) {
-    if (!String(c.prompt).startsWith('You are writing ONE ability')) continue;
-    const body = JSON.parse(c.response).choices[0].message.content;
-    if (carrying.test(body)) return body;
-  }
-  return null;
+  const body = RECORDED[creature];
+  expect(body).toBeTruthy();
+  expect(carrying.test(body)).toBe(true);
+  return body;
 };
 
 describe('the recorded answers the strip was written for', () => {

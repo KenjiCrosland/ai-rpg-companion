@@ -98,6 +98,29 @@ let replaySkipped = 0;
 const RECORDINGS = path.resolve('src/tools/statblock-generator/reskin/__tests__/fixtures/recordings');
 // IN REPLAY THE RECORDING IS THE INPUT, not a batch file — so the inputs cannot drift from the
 // prompts that were recorded against them.
+/**
+ * AN INPUT WHOSE PROMPTS CANNOT BE FROZEN (2026-11-18).
+ *
+ * Two of the forty roll part of themselves before any call is built: `cr: "auto"` is rolled by
+ * `rollRandomCR` and lands in the route prompt, and a blank name AND description make
+ * `buildRandomConceptSeed` invent the whole creature. Their prompts differ every run, so the tape
+ * cannot serve them and the harness skips them in every replay mode.
+ *
+ * THE RECORDER NOW WRITES THE MARK. It was hand-added to the tape of 2026-11-16 and then lost: each
+ * generation of the tape is recorded by replaying the last, and a skipped entry produces no entry,
+ * so the mark fell out of the lineage. The clean forty of 2026-11-18 recorded all 40 and strict
+ * replay reported 2 misses that had been 2 skips. The rule is knowable from the input, so it is
+ * written rather than remembered.
+ */
+const notReplayable = (entry) => {
+  const noCr = String(entry?.cr ?? '').trim().toLowerCase() === 'auto';
+  const blank = !String(entry?.name ?? '').trim() && !String(entry?.description ?? '').trim();
+  if (!noCr && !blank) return {};
+  return { replay: { skip: true, why: noCr
+    ? 'the CR the user did not set is rolled locally (rollRandomCR) and lands in the route prompt'
+    : 'a blank form rolls its whole creature — type, traits, energy, naming (buildRandomConceptSeed)' } };
+};
+
 let replayCases = [];
 if (replayDir) {
   if (!fs.existsSync(replayDir)) { console.error(`No recording at ${replayDir}`); process.exit(1); }
@@ -544,7 +567,7 @@ const run = async () => {
       fs.mkdirSync(recDir, { recursive: true });
       const roll = replayCases[i]?.roll ? `-roll${replayCases[i].roll}` : '';
       fs.writeFileSync(path.join(recDir, `${n}-${slug(monster?.name ?? label)}${roll}.json`),
-        JSON.stringify({ input: entry, request: reqSeen, takenNames: replayCases[i]?.takenNames ?? [], calls: callLog, sheet: monster }, null, 1));
+        JSON.stringify({ input: entry, ...notReplayable(entry), request: reqSeen, takenNames: replayCases[i]?.takenNames ?? [], calls: callLog, sheet: monster }, null, 1));
     }
     if (replayDir) {
       const want = replayCases[i]?.sheet ?? null;
