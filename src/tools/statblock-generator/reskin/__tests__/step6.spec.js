@@ -156,7 +156,7 @@ describe('the 2014 Multiattack is rendered, never translated', () => {
 });
 
 describe('the author forms (step 6 repairs)', () => {
-  test('a save with no effect deals damage; movement prose normalises; a damage-taken trigger gains once per turn', () => {
+  test('a save with no effect is REFUSED; movement prose normalises; a damage-taken trigger gains once per turn', () => {
     const p = parseAuthorResponse(JSON.stringify({ attacks: [], saves: [{ clause: 'drags under', name: 'Drag Under', stat: 'Strength', target: 'one creature within 30 feet', damage: false, condition: null, movement: 'pulled up to 10 feet toward the hound', success: 'none', recharge: false }],
       traits: [{ clause: 'cloud of ash', name: 'Cloud of Ash', trigger: 'When she would take damage', effect: 'she dissolves into ash and has Resistance to that damage' }], reactions: [] }), { attackKeys: [], attackCap: 2 });
     expect(p.saves[0].movement).toBe('pulled up to 10 feet'); expect(p.saves[0].damage).toBe(false);
@@ -165,7 +165,14 @@ describe('the author forms (step 6 repairs)', () => {
     expect(imm.traits[0].trigger).toBe('When the bull is hit by a weapon that is not adamantine'); // an immunity is a rule, not a once-per-turn resource
     expect(parseAuthorResponse(JSON.stringify({ saves: [{ clause: 'breathes scalding steam', name: 'Scalding Steam', stat: 'Dexterity', target: 'each creature in a 20-foot Cone', damage: true, type: 'Fire', recharge: true }] }), { attackKeys: [] }).saves[0].type).toBe('Fire');
     const q = parseAuthorResponse(JSON.stringify({ saves: [{ clause: 'x', name: 'Reeking Hug', stat: 'Constitution', target: 'one creature within 30 feet', damage: false, condition: null, movement: null }] }), { attackKeys: [] });
-    expect(q.saves[0].damage).toBe(true); // a save must DO something
+    // A SAVE WITH NO EFFECT IS NOW REFUSED, NOT FILLED (item 2.2, 2026-11-18). This used to read
+    // `expect(q.saves[0].damage).toBe(true)` — "a save must DO something", so one that named
+    // nothing was given damage. On the marsh witch that turned a curse mark into "19 (3d12)
+    // Bludgeoning damage" and the audit renamed the row because a hex that only bludgeons is not a
+    // hex. The call is told what is missing and asked again instead.
+    expect(q.saves).toHaveLength(0);
+    expect(q.refused.map((r) => r.name)).toContain('Reeking Hug');
+    expect(q.refused.find((r) => r.name === 'Reeking Hug').why).toMatch(/does nothing on a failed save/);
     expect(buildRepairPrompt({ name: 'Meshrin', inline: 'Meshrin', clauses: [{ text: 'is trained in fighting styles' }], cr: 8, sheet: 'Actions / Greatsword: …' })).toMatch(/^You are repairing the ABILITIES[^]*1\. is trained in fighting styles/);
   });
   test('a negated key does not route: "cannot cast any spells" is not a caster', () => {

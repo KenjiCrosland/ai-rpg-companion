@@ -33,6 +33,27 @@ import { capSingleTargetSave, escalateFrom } from './card-budgets.mjs';
 
 const MINOR_REWARDS = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // the mild pool, same list the catalog's {condition_minor} slot accepts
 
+/**
+ * WHAT A CURSE DOES, BY THE CREATURE'S CR (owner's ruling R2, 2026-11-18). "Curses scale with CR."
+ *
+ * The moderate and severe effects are print's own words — the Incubus's Short Rests, the Mummy's
+ * Hit Points, the Rakshasa's Short or Long Rest. The two MINOR effects are the handoff author's
+ * wording of the owner's "a minor inconvenience" and are flagged in the report for him to change.
+ *
+ * The sentence that carries them is print's: "the target is cursed. While cursed, X." No duration
+ * and no "until" — that is what makes it a curse rather than a condition with a timer.
+ */
+export const CURSE_TIERS = [
+  { tier: 'minor', maxCr: 1, effects: ['the target has Disadvantage on Dexterity (Stealth) checks', 'the target has Disadvantage on Charisma (Persuasion) checks'] },
+  { tier: 'moderate', maxCr: 4, effects: ["the target's Speed is reduced by 5 feet", 'the target gains no benefit from finishing Short Rests'] },
+  { tier: 'severe', maxCr: Infinity, effects: ["the target can't regain Hit Points", 'the target gains no benefit from finishing a Short or Long Rest'] },
+];
+/** the tier that holds this CR, and one effect from it chosen by the sheet's own seed */
+export const curseEffectFor = (cr, seedName = '') => {
+  const tier = CURSE_TIERS.find((t) => Number(cr ?? 0) <= t.maxCr) ?? CURSE_TIERS.at(-1);
+  return { tier: tier.tier, effect: tier.effects[nameHash(String(seedName)) % tier.effects.length] };
+};
+
 export const LIBRARY_SEEDS = [
   // ——— control ———
   {
@@ -186,10 +207,20 @@ export const LIBRARY_SEEDS = [
     text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}.",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
   },
   {
+    // A CURSE IS PERMANENT (owner's ruling R2, 2026-11-18). This row used to read "cursed until
+    // the end of the creature's next turn", which is a condition with a timer, not a curse. The
+    // owner: "curse is a permanent effect. At lower levels it can even be a joke, like CR 1/2 it's
+    // a minor inconvenience, but still needs a restoration spell."
+    //
+    // PRINT'S OWN SENTENCE, and its own effects: the Mummy and the Mummy Lord write "it is cursed.
+    // While cursed, the target can't regain Hit Points"; the Rakshasa "While cursed, the target
+    // gains no benefit from finishing a Short or Long Rest"; the Incubus "the target gains no
+    // benefit from finishing Short Rests". No "until", no duration. The curse is a RIDER on damage,
+    // never a row whose only effect is the curse.
     key: 'curse-debt', keys: ['curse', 'debt', 'rebuke', 'price'],
     section: 'Actions', archetypes: ['caster', 'defender'],
-    name: 'Debt of Ruin', dpr_frac: 0.6, // the inverted-rebuke class
-    text: '*Charisma Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is cursed until the end of the creature\'s next turn. The first time the cursed target deals damage to any creature before then, it takes {burst} {damage_type} damage.',
+    name: 'Ruinous Curse', dpr_frac: 0.6, // was "Debt of Ruin" — the debt mechanic it named is gone
+    text: '*Charisma Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.',
   },
   {
     // RETIRED 2026-11-11 (owner's read of the H7 twelve: "a reaction masquerading as a bonus
@@ -438,6 +469,13 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
     // seed with no damage token must not carry a misleading default
     if (text.includes('{damage_type}')) spentDamageType = dtype;
     text = text.split('{damage_type}').join(dtype);
+  }
+  // THE CURSE'S EFFECT COMES FROM THE TIER THAT HOLDS THIS CR (R2). Until the model has a field
+  // for it, the engine picks one of the tier's two by the sheet's own seed, so a given creature
+  // always curses the same way.
+  if (text.includes('{curse_effect}')) {
+    const { effect } = curseEffectFor(cr ?? scaled.cr, name);
+    text = text.split('{curse_effect}').join(effect);
   }
   // THE ROW CARRIES ITS SEED (critic's hold 5, 2026-10-16). A drawn row said only
   // `library: true`, so nothing downstream could tell WHICH shape it was: the

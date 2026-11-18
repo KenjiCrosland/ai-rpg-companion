@@ -833,6 +833,21 @@ export const priceAreaSwapAtHalfAHit = (sections, traceFn = () => {}) => {
 };
 
 /**
+ * WHICH TEMPLATE ANSWERS THE SHEET'S DECLARED ASK (owner's ruling R4, 2026-11-18).
+ *
+ * The routing half of "when the row written for the GM's word fails, the catalog's template for
+ * that word lands". Returns the templates on this seat's menu whose mechanic IS the declared ask
+ * and that the fit call did not decline as a word mismatch, in menu order — the caller lands the
+ * first that renders.
+ *
+ * `declinedAsWordMismatch` is the call's own answer ("the key word does not mean the mechanic
+ * here"), so a template the model has already judged wrong for these words is never revived.
+ */
+export const templatesForDeclaredAsk = (askedMechanic, menu = [], declinedAsWordMismatch = new Set()) => (
+  !askedMechanic ? [] : (menu ?? []).filter((t) => t?.mechanic === askedMechanic && !declinedAsWordMismatch.has(t.id))
+);
+
+/**
  * A MULTIATTACK CITES A ROW AS THE ROW IS NAMED (item 1.1, 2026-11-18).
  *
  * The Multiattack is composed while a nova row is still gated, so it writes "a use of Molten Seam
@@ -7021,6 +7036,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               fit = { ...fit, template: near, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null, name: fit.name, accepted_closest: true };
             } else trace('closest refused:', `${seat} — "${near.id}" was named closest but will not render on this sheet`);
           } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu (a gate refused it, or the pool did not offer it for this idea's declared trigger)`);
+        }
+        // WHEN THE ROW WRITTEN FOR THE GM'S WORD FAILS, THE CATALOG'S TEMPLATE FOR THAT WORD LANDS
+        // (owner's ruling R4, 2026-11-18).
+        //
+        // The marsh witch is the case. The GM typed "a marsh witch who curses trespassers", the
+        // route call declared the ask `curse`, and the menu led with the curse templates — and then
+        // her seat's own hex was refused as a save with no effect (item 2.2) and her sheet shipped
+        // with nothing on it that curses. The catalog HELD a curse the whole time.
+        //
+        // Three conditions, all read off answers we already have:
+        //   - the sheet declared an ask (`askedT`, the route call's one answer for the concept)
+        //   - the seat that carries it ended with NO ROW; reaching this line is that fact, because
+        //     the seat returns the moment it lands one
+        //   - a template for that mechanic was on this seat's menu and the fit call did NOT decline
+        //     it as a word mismatch (`wrongT` is the call's own "the key word does not mean the
+        //     mechanic here")
+        //
+        // It never replaces a row that landed: the guard is `!fit.template`, and a landed seat has
+        // already returned.
+        if (!fit.template && askedT) {
+          for (const t of templatesForDeclaredAsk(askedT, offered, wrongT)) {
+            if (!renderTemplate(t, ctxT, bindFills(t))) continue;
+            trace("the declared ask's own template lands:", `${seat} — the sheet's declared ask is "${askedT}", the seat that carries it ended with no row, and "${t.id}" answers that mechanic and was not declined as a word mismatch (owner's R4)`);
+            fit = { ...fit, template: t, because: fit.because || String(idea.idea ?? '').slice(0, 160), declaredAsk: askedT };
+            break;
+          }
         }
         const hnF = headNoun(verbText); const topC = conceptBound.length ? rankByVerb([conceptBound[0]], verbText)[0].concept : [];
         // The call answered `none` for the WHOLE menu, and every conceptBound template

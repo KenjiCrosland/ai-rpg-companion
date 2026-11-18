@@ -421,10 +421,26 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const NON_STRIKING = /\b(?:stare|gaze|glare|look|eyes?|voice|aura|presence|scent|stench|smell|whisper|song|shadow|breath)\b/i;
   const refusedAttacks = attacks.filter((a) => NON_STRIKING.test(a.name));
   const attacksKept = attacks.filter((a) => !NON_STRIKING.test(a.name)).slice(0, attackCap);
-  const saves = (Array.isArray(p.saves) ? p.saves : []).map((s) => ({
+  const savesAll = (Array.isArray(p.saves) ? p.saves : []).map((s) => ({
     clause: str(s?.clause, 120), name: str(s?.name, 40), stat: STATS.includes(s?.stat) ? s.stat : 'Dexterity', target: TARGET_OK.test(str(s?.target, 80)) ? str(s?.target, 80) : 'one creature within 30 feet',
     damage: !!s?.damage, type: DAMAGE_TYPES.includes(s?.type) ? s.type : null, condition: CONDITIONS.includes(s?.condition) ? s.condition : null, movement: (/\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(str(s?.movement, 80)) ?? null) && (([, verb, n]) => `${/pull|drag/i.test(verb) ? 'pulled' : 'pushed'} up to ${n} feet`)(/\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(str(s?.movement, 80))), success: s?.success === 'half' ? 'half' : 'none', recharge: !!s?.recharge,
-  })).map((s) => (s.damage || s.condition || s.movement ? s : { ...s, damage: true })) /* a save that names no effect deals damage — the row must DO something (the placeholder's "Disadvantage on its next attack roll" shipped as Drag Under, critic's step-5 read) */ .filter((s) => s.name);
+  }));
+  // A SAVE THAT NAMES NO EFFECT IS REFUSED, NOT FILLED (item 2.2, 2026-11-18).
+  //
+  // This line used to read `.map((s) => (s.damage || s.condition || s.movement ? s : { ...s, damage: true }))`
+  // — a save that names no effect deals damage. On the marsh witch the seat's idea was "a lasting
+  // curse mark that halves the victim's movement and lets her track it", and the call answered a
+  // save with damage:false, condition:null, movement:null, because the form has no field for what
+  // it wanted to say. The fill turned that into "Fen-Whisper Hex. 19 (3d12) Bludgeoning damage",
+  // and the audit renamed it Fen-Whisper Blast, because a hex that only bludgeons is not a hex.
+  //
+  // The call is now told what is missing and asked again, like every other refusal. If the second
+  // answer is empty too, the seat is empty and counted — which is honest, and is what R4 picks up.
+  const saveWhy = (s) => (!s.damage && !s.condition && !s.movement
+    ? 'the row does nothing on a failed save — say what the target suffers: a condition it gains, a forced movement, or damage'
+    : null);
+  const refusedSaves = savesAll.filter((s) => s.name && saveWhy(s) !== null);
+  const saves = savesAll.filter((s) => saveWhy(s) === null);
   // a damage-taken trigger with no frequency is permanent resistance phrased as a reaction (the hag's Cloud of Ash fired on every instance of damage — critic's step-5 read): once per turn
   const perTurn = (trig, eff = '') => (trig && /\b(?:takes? damage|would take damage|is hit|is damaged|is struck|is attacked)\b/i.test(trig) && /\{dmg\}|resistance|regains?|heals?|teleports?|dissolves?|moves?/i.test(eff) && !/\b(?:once per|the first time|on (?:its|her|his|their) turn|each turn|per round)\b/i.test(trig) ? `Once per turn, ${trig.replace(/^./, (c) => c.toLowerCase())}` : trig); // the hag's ash-cloud resistance is a resource; the bull's adamantine immunity is a rule
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
@@ -641,7 +657,8 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // `unplaced`, so a sheet that lost its ramp to escalationOk and a sheet whose
   // call never wrote one looked identical from outside. The reason rides out
   // for the caller to trace; nothing about the refusal itself changes.
-  const refused = [...refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })), ...refusedReactions.map((r) => ({ name: r.name || '(unnamed reaction)', why: reactionWhy(r) }))]; // one definition: the reason IS the test
+  const refused = [...refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })), ...refusedReactions.map((r) => ({ name: r.name || '(unnamed reaction)', why: reactionWhy(r) })),
+    ...refusedSaves.map((s) => ({ name: s.name, why: saveWhy(s) }))]; // one definition: the reason IS the test
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
   return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
