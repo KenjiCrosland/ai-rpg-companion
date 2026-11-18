@@ -749,8 +749,69 @@ export const assertSomethingToRoll = (sections) => {
 // Both halves are fixed: the name consumes its own usage parenthetical, and the objectless clause
 // is removed whole even if one is left behind by some other path.
 const USAGE_SUFFIX = '(?:\\s*\\((?:Recharge [\\d\u2013-]+|\\d\\/Day)\\))?';
+/**
+ * A ROW'S USAGE GATE, as it sits at the end of the row's name. Twelve other sites in this file
+ * strip it with an inline copy of the Recharge/Day pair; this is the named form, and it also
+ * covers a legendary row's "(Costs 2 Actions)". Consolidating the twelve is its own change.
+ */
+const ROW_GATE = /\s*\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)$/;
 // EXPORTED so the rule can be tested (2026-11-15). It was module-local, and the stump it ships
 // when a cited ability leaves could only be found by reading a sheet after the fact.
+/**
+ * EVERY CITATION IN MULTIATTACK READS THE ROW IT NAMES (2026-11-18).
+ *
+ * The Multiattack line is written while the sheet is still being built, and two later passes rename
+ * the row it cites. The visible one is the Brass Tyrant: the seat writes a damaging area row, the
+ * area swap names it "Molten Seam (Recharge 5-6)", the Multiattack line is written citing that, and
+ * then the one-nova rule at ship takes the Recharge back off the ROW because the chassis's own nova
+ * already holds the sheet's recharge. The line keeps a parenthetical the row no longer has.
+ *
+ * 0 of 40 on both forties of 16 November, 3 of 40 now (s14, s16, s20) — those seats used to hold
+ * rows that deal no damage, so the area swap never fired and never renamed anything.
+ *
+ * ONE FUNCTION AT THE END OF THE LINE, rather than a sync in each pass that renames: for every
+ * citation, find the row by its BARE name and write the row's own name back, parenthetical and all.
+ * It is idempotent and order-independent, which a per-pass sync is not.
+ *
+ * It does not fight `sweepDeadName`, which owns the other case: a citation whose row is GONE. This
+ * leaves such a citation untouched — there is no row to read a name from — and the sweep removes it.
+ */
+/**
+ * A MULTIATTACK CITES A ROW AS THE ROW IS NAMED (item 1.1, 2026-11-18).
+ *
+ * The Multiattack is composed while a nova row is still gated, so it writes "a use of Molten Seam
+ * (Recharge 5-6)". The one-nova rule later un-gates the row, and the citation keeps a Recharge the
+ * sheet no longer has — three of the forty shipped that (s14, s16, s20).
+ *
+ * WHAT PRINT DOES, measured on srd52-monsters.json: of the 27 "use of X" citations whose row
+ * resolves, ZERO carry a usage parenthetical, and the one whose row IS gated — the Chimera's
+ * "Fire Breath (Recharge 5-6)" — is cited BARE. So the citation is the row's bare name, and a gate
+ * in a citation is always stale. (The handoff asked for "the bare name, then the row's own
+ * parenthetical if it has one"; print disagrees 1 of 1, and print rules calibration.)
+ *
+ * Scope is the gate, not the name. A citation whose row was RENAMED is `sweepDeadName`'s — it is
+ * handed the dead name and re-points or drops the clause, which is the owner's pinned behaviour
+ * (`a-cited-ability-takes-its-parenthetical.spec.js`). The two cannot fight: this one acts only on
+ * a citation whose row EXISTS, that one only on a name no row carries any more. Matching the gate
+ * rather than a Title-Case name run also means a row like "Over the Dying" is handled, which a
+ * name-shaped pattern cannot see.
+ */
+export const syncMultiattackCitations = (sectionsMap, traceFn = () => {}) => {
+  const bare = (n) => String(n ?? '').replace(ROW_GATE, '').trim();
+  const rows = Object.values(sectionsMap ?? {}).flat().filter((e) => e?.name);
+  const named = new Set(rows.map((r) => bare(r.name).toLowerCase()));
+  for (const mm of rows.filter((r) => /^Multiattack/.test(String(r.name)))) {
+    const before = String(mm.text ?? '');
+    const after = before.replace(
+      /\buse of ([^.;,]*?)\s*\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)/g,
+      (m0, cited) => (named.has(String(cited).trim().toLowerCase()) ? `use of ${String(cited).trim()}` : m0),
+    );
+    if (after === before) continue;
+    mm.text = after;
+    traceFn('multiattack citation synced:', `"${mm.name}" cites each row as the row is named — a later pass had un-gated one, and print never carries a usage parenthetical in a citation`);
+  }
+};
+
 export const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
@@ -12179,6 +12240,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
+  syncMultiattackCitations(monster.sections, trace); // every citation reads its row, after everything that renames
   stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
   advantageReachable(monster.sections, trace); // and a conditional Advantage with no imposer is a dead CLAUSE
