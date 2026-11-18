@@ -2400,7 +2400,7 @@
       "CHA": 3
     },
     "skills": "Arcana +13, History +9, Perception +6",
-    "immunities": "Psychic; Charmed ((with Mind Blank))",
+    "immunities": "Psychic; Charmed (with Mind Blank)",
     "senses": "Passive Perception 16",
     "languages": "Common plus five other languages",
     "gear": "Wand",
@@ -15459,7 +15459,7 @@
     },
     "skills": "Perception +4, Persuasion +4, Stealth +7",
     "resistances": "Necrotic",
-    "immunities": "Charmed ((except from its vampire master))",
+    "immunities": "Charmed (except from its vampire master)",
     "senses": "darkvision 60 ft.; Passive Perception 14",
     "languages": "Common plus one other language",
     "gear": "Dagger x 10",
