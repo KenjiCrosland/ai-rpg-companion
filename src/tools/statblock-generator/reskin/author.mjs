@@ -486,7 +486,24 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   //
   // Counting is on EXPRESSIONS, not digits: "10 (3d6) Fire damage" is one quantity and
   // three numerals. A missing answer passes, as every other declared field's does.
-  const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''}`)
+  /**
+   * A SAVE IN FIELDS KEEPS ITS NUMBERS THERE (2026-11-17).
+   *
+   * This counted only the row's PROSE — trigger, effect, response — which is right for every form
+   * that writes its numbers in a sentence. A Reaction whose save is in fields does not: its area
+   * and range live in `save.target` ("each creature within 30 feet", "a 15-foot Emanation"), its DC
+   * comes from the engine, and its dice come from the engine when `damage` is true. So a correct
+   * row read as promising one number and writing none, and was refused for keeping its numbers
+   * exactly where this round told it to put them. Three of three second answers that used the new
+   * form were refused this way: s04 Toll of Her Own Death, s08 Splintering Breach, s10 Chorus of
+   * Wounds.
+   *
+   * The engine's own two count as written because the engine writes them: a save always prints a
+   * DC, and it prints dice whenever `damage` is true.
+   */
+  /** what the ENGINE will print for a save in fields: always a DC, dice when damage is true, and the target as it stands */
+  const theEngineWrites = (sv) => (sv ? `${sv.target ?? ''} DC 1${sv.damage ? ' 1 (1d1) damage' : ''}` : '');
+  const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''} ${theEngineWrites(x?.save)}`)
     .replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, '#')  // a filled damage expression
     .replace(/\{dmg\}|\{dc\}/g, '#')                        // an unfilled engine slot
     .replace(/\d+d\d+/g, '#')
