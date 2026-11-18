@@ -122,3 +122,51 @@ describe("an area row in an attack's place deals half a hit", () => {
     expect(() => priceAreaSwapAtHalfAHit(null, () => {})).not.toThrow();
   });
 });
+
+/**
+ * THE CEILING READS A MULTIATTACK THAT OFFERS TWO THINGS (fix 2, 2026-11-18).
+ *
+ * The citation used to be read OUT of the sentence — everything up to the full stop as one name —
+ * so the two forms the engine writes on caster and dragon bodies found no row and the ceiling was
+ * skipped entirely. Molten Seam stayed at 35 against a 33 hit on both:
+ *
+ *     "…a use of (A) Molten Seam or (B) Spellcasting to cast Scorching Ray."
+ *     "…a use of Molten Seam or Spellcasting."
+ *
+ * Each row now looks for its OWN name after "use of", which is how `syncMultiattackCitations`
+ * already does it, so no name is parsed out of prose.
+ */
+describe('the half-a-hit ceiling reads a Multiattack that offers two things', () => {
+  const tyrant = (ma) => ({ Actions: [
+    { name: 'Multiattack', text: ma },
+    { name: 'Brass Fist', text: '*Melee Attack Roll:* +12, reach 10 ft. 19 (3d8 + 6) Bludgeoning damage plus 14 (4d6) Fire damage.' },
+    { name: 'Forge-Heat Roar (Recharge 5-6)', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 66 (12d10) Fire damage.' },
+    { name: 'Molten Seam', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 35 (10d6) Fire damage. *Success:* Half damage only.' },
+  ] });
+  const LINES = [
+    'The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Molten Seam.',
+    'The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of (A) Molten Seam or (B) Spellcasting to cast Scorching Ray.',
+    'The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Molten Seam or Spellcasting.',
+  ];
+
+  for (const [i, ma] of LINES.entries()) {
+    test(`form ${i + 1}: Molten Seam comes down to half a whole hit`, () => {
+      const s = tyrant(ma);
+      const row = s.Actions.find((e) => e.name === 'Molten Seam');
+      expect(wholeHit(row.text)).toBe(35);                       // the defect is present
+      expect(wholeHit(s.Actions.find((e) => e.name === 'Brass Fist').text)).toBe(33);
+      priceAreaSwapAtHalfAHit(s, () => {});
+      expect(wholeHit(row.text)).toBeLessThanOrEqual(17);
+      expect(row.text).toMatch(/\*Success:\*\s*Half damage only/);
+    });
+
+    test(`form ${i + 1}: the row that keeps its Recharge is unchanged`, () => {
+      const s = tyrant(ma);
+      const gated = s.Actions.find((e) => /^Forge-Heat Roar/.test(e.name));
+      const before = gated.text;
+      priceAreaSwapAtHalfAHit(s, () => {});
+      expect(gated.text).toBe(before);
+      expect(wholeHit(gated.text)).toBe(66);
+    });
+  }
+});

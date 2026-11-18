@@ -808,15 +808,25 @@ export const priceAreaSwapAtHalfAHit = (sections, traceFn = () => {}) => {
   const rows = Object.values(sections ?? {}).flat().filter((e) => e?.name);
   const bareOf = (n) => String(n ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   const multi = rows.find((e) => /^Multiattack/.test(String(e.name)));
-  const cited = multi ? [...String(multi.text ?? '').matchAll(/use of ([^.;,]+?)(?:\s+if available)?(?=[.;,]|$)/g)].map((m) => bareOf(m[1])) : [];
-  for (const name of cited) {
-    const row = rows.find((e) => bareOf(e.name) === name);
+  if (!multi) return;
+  // EACH ROW LOOKS FOR ITS OWN NAME AFTER "use of" (fix 2, 2026-11-18). This used to read the name
+  // OUT of the sentence — everything up to the full stop — so the two forms the engine writes on
+  // caster and dragon bodies found no row and the ceiling was skipped entirely:
+  //
+  //     "…a use of (A) Molten Seam or (B) Spellcasting to cast Scorching Ray."   -> no row
+  //     "…a use of Molten Seam or Spellcasting."                                  -> no row
+  //
+  // One way of reading a citation, the same one `syncMultiattackCitations` uses: the row names are
+  // known, so no name is ever parsed out of prose.
+  const cited = rows.filter((e) => new RegExp(`\\buse of (?:\\([A-Z]\\) )?${bareOf(e.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text ?? '')));
+  for (const row of cited) {
     // AT WILL ONLY: a gate in the NAME or in the TEXT means the row paid for its damage
     if (!row || / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(String(row.name)) || TEXT_GATE.test(row.text ?? '') || !AREA_ROW.test(row.text ?? '')) continue;
     const dealt = wholeHit(row.text);
     if (!dealt) continue;
-    // the attack it replaces: the biggest whole hit the Multiattack itself offers, since the GM
-    // chooses which attack to give up
+    // THE ATTACK IT REPLACES is the BIGGEST whole hit the Multiattack offers. The GM chooses which
+    // attack to give up, which argues for the smallest — but the smallest would price the row out
+    // of being worth using at all, so the ceiling is generous on purpose (owner's call, fix 2).
     const attacks = rows.filter((e) => /Attack Roll|Weapon Attack/.test(String(e.text ?? ''))
       && new RegExp(`\\b${bareOf(e.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text)));
     const hit = Math.max(0, ...attacks.map((e) => wholeHit(e.text)));
