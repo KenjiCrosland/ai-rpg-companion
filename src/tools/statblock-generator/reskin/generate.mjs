@@ -86,7 +86,13 @@ export const cardBand = (cr) => (cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ?
  *
  * Exported so the test asserts on THIS and not on a copy of it.
  */
-export const printCanonExempt = (row) => !!row?.clauseId;
+export const writtenForATypedClause = (row) => !!row?.clauseId;
+/**
+ * The same question, under the name its first reader used. Two passes now ask it — print canon,
+ * which keeps such a row when print's own rows land, and the AUDIT'S RENAME, which may not take the
+ * GM's word off a row that was written for it (fix 1, 2026-11-18).
+ */
+export const printCanonExempt = writtenForATypedClause;
 
 /** the rows the budget counts against print: Multiattack and the legendary header are not rows */
 export const COUNTED_ROW = (name) => !/^(?:Multiattack|Legendary Action Uses)\b/.test(String(name ?? ''));
@@ -11402,6 +11408,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               trace('audit rename blocked —', `"${bare}" -> "${f.rename}" would drop the GM's own word${lost.length > 1 ? 's' : ''} ${lost.map((w) => `"${w}"`).join(', ')}`);
               continue;
             }
+          }
+        }
+        // THE AUDIT DOES NOT RENAME A ROW WRITTEN FOR THE GM'S WORDS (fix 1, 2026-11-18).
+        //
+        // The Air Elemental's seat wrote "Chorus of the Drowned" for the clause "carries stolen
+        // voices" — the trace reads `seat takes its clause: "Chorus of the Drowned" is HANDED
+        // "carries stolen voices"` — and the audit renamed it "Howling Gust", so nothing on the
+        // sheet was a voice any more. The audit is never shown what the GM typed: "stolen voices"
+        // appears nowhere in its prompt, so it judged the fiction blind and removed the ask.
+        //
+        // The word guard above could not catch it because it compares WORDS, and the clause says
+        // "voices" where the name says "Chorus". The binding is the thing to read, not the wording:
+        // a row carrying a clauseId was written for a clause the GM typed, and its name is part of
+        // the answer. The finding is still logged; only the rename is held.
+        {
+          const bound = Object.values(monster.sections ?? {}).flat()
+            .find((e) => String(e.name ?? '').replace(/\s*\(.*\)$/, '') === bare);
+          if (writtenForATypedClause(bound)) {
+            trace('audit rename held —', `"${bare}" was written for the GM's own clause (${bound.clauseId}${bound.clause ? `: "${String(bound.clause).slice(0, 60)}"` : ''}), so "${f.rename}" does not land; the finding stands as logged`);
+            continue;
           }
         }
         let fresh = `${f.rename}${gate}`;
