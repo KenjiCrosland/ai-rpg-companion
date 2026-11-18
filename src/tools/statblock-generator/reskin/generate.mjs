@@ -38,7 +38,7 @@ import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the va
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { routeFinding, renameDropsAGmWord, formatFinding } from './typed-fixes.mjs'; // the audit names the defect; nothing here acts on it
-import { stripUnplacedDmg, manyTargets } from './author.mjs'; // one strip rule, shared with the parse
+import { stripUnplacedDmg, manyTargets, REFUSED_FOR_DEAFENED_ALONE, swapDeafenedToFrightened } from './author.mjs'; // one strip rule, shared with the parse
 import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -6741,7 +6741,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const askSeat = async (refusedBefore) => {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
             const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) , ...(refusedBefore ? { refusedBefore } : {})}), validateAuthorResponse);
-            const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            let wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            // DEAFENED ALONE IS SWAPPED, NOT DROPPED (owner's ruling, 18 November evening). On the
+            // SECOND ask only, and only when that refusal is the whole of what was wrong: the bells
+            // answered Deafened twice and the swarm shipped with no Reaction at all.
+            if (refusedBefore && (wrote?.refused ?? []).length
+              && wrote.refused.every((r2) => REFUSED_FOR_DEAFENED_ALONE.test(String(r2.why)))) {
+              const swapped = swapDeafenedToFrightened(rawS);
+              const again = swapped ? parseAuthorResponse(swapped, { attackCap: 0, traitSlots: 1 }) : null;
+              if (again && !(again.refused ?? []).length) {
+                trace('Deafened swapped for Frightened:', `${seat} — the second answer was refused for Deafened alone and for nothing else, so the engine made it Frightened and kept the row (owner's ruling)`);
+                wrote = again;
+              }
+            }
             const refuse = (why) => ({ refused: why, raw: rawS });
             // THE SEAT READS `answered` TOO (2026-11-11). The envelope has always asked the call to
             // say when a row already on the sheet carries the clause, and `parseAuthorResponse`

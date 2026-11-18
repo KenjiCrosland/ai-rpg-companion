@@ -405,6 +405,32 @@ const moveForm = (v) => {
   const m = /\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(String(typeof v === 'string' ? v.trim().slice(0, 80) : ''));
   return m ? `${/pull|drag/i.test(m[1]) ? 'pulled' : 'pushed'} up to ${m[2]} feet` : null;
 };
+/** the one refusal that 0.1 swaps rather than drops */
+export const REFUSED_FOR_DEAFENED_ALONE = /Deafened alone is too slight/;
+/**
+ * DEAFENED ALONE IS SWAPPED, NOT DROPPED (owner's ruling, 18 November evening).
+ *
+ * The bells' Knellsong was refused for Deafened alone, the second ask answered Deafened again, and
+ * the swarm shipped with no Reaction. When the SECOND answer is refused for this and nothing else,
+ * the engine makes the condition Frightened and keeps the row otherwise as the model wrote it.
+ *
+ * Returns the answer with every Deafened condition changed to Frightened, or null when there was
+ * none to change or the answer will not parse.
+ */
+export const swapDeafenedToFrightened = (raw) => {
+  let o; try { o = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
+  if (!o || typeof o !== 'object') return null;
+  let swapped = 0;
+  for (const key of ['saves', 'reactions', 'traits']) {
+    for (const row of Array.isArray(o[key]) ? o[key] : []) {
+      if (row?.condition === 'Deafened') { row.condition = 'Frightened'; swapped += 1; }
+      if (row?.save?.condition === 'Deafened') { row.save.condition = 'Frightened'; swapped += 1; }
+      if (row?.imposes === 'Deafened') { row.imposes = 'Frightened'; swapped += 1; }
+    }
+  }
+  return swapped ? JSON.stringify(o) : null;
+};
+
 export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
@@ -459,7 +485,9 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const saveWhy = (s) => (!s.damage && !s.condition && !s.movement
     ? 'the row does nothing on a failed save — say what the target suffers: a condition it gains, a forced movement, or damage'
     : DEAFENED_ALONE(s)
-      ? 'Deafened alone is too slight to cost an action — choose Frightened or Charmed, whichever fits this creature, or keep Deafened and add damage'
+      // STUNNED IS OFFERED ONLY ON A GATED ROW (owner, 18 November evening). A row that costs a
+      // Recharge can carry a turn-denying condition; an at-will one cannot.
+      ? `Deafened alone is too slight to cost an action — choose Frightened${s.recharge ? ', Charmed or Stunned' : ' or Charmed'}, whichever fits this creature, or keep Deafened and add damage`
       : null);
   const refusedSaves = savesAll.filter((s) => s.name && saveWhy(s) !== null);
   const saves = savesAll.filter((s) => saveWhy(s) === null);
@@ -589,12 +617,22 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
    */
   /** what the ENGINE will print for a save in fields: always a DC, dice when damage is true, and the target as it stands */
   const theEngineWrites = (sv) => (sv ? `${sv.target ?? ''} DC 1${sv.damage ? ' 1 (1d1) damage' : ''}` : '');
+  // AN AMOUNT STATED BY RELATION IS STATED (item 0.2, 2026-11-18). The Oathbroken Warder's trait —
+  // "the warder can deal maximum damage instead of rolling, but takes psychic damage equal to the
+  // damage dealt" — declared one number and writes no numeral, so the gate refused it twice. The
+  // amount is there: it is the damage dealt. A table can run it without a die.
+  //
+  // These relations are the owner's own list from the handoff. Measured on the baseline: the gate
+  // would refuse 4 rows and 2 of them state their amount this way — the warder's, and the Well
+  // Drowned Worm's "moves up to its speed toward the nearest body of water".
+  const BY_RELATION = /\bequal to\b|\bhalf (?:of |the |its )?|\b(?:twice|double)\b|\bmaximum damage\b|\bits (?:Speed|reach|Hit Point maximum)\b/gi;
   const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''} ${theEngineWrites(x?.save)}`)
     .replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, '#')  // a filled damage expression
     .replace(/\{dmg\}|\{dc\}/g, '#')                        // an unfilled engine slot
     .replace(/\d+d\d+/g, '#')
     .replace(/\b\d+(?:-foot|\s*feet|\s*ft\.)/g, '#')
     .replace(/\b\d+\b/g, '#')
+    .replace(BY_RELATION, '#')                              // an amount the table can read off something it knows
     .match(/#/g) ?? []).length;
   const quantitiesOk = (x) => !Number.isFinite(Number(x?.quantities)) || Number(x.quantities) <= quantitiesStated(x);
   // A SAVE'S OUTCOME IS A SAVE TOO (critic, 2026-11-04). This tested for the words

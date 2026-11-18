@@ -23,8 +23,13 @@ hold sheets back waiting for a review.
 4. handoff reports
 5. anything a file outside the folder names
 
-**When a new blocks file lands, delete the previous round's** unless it is a milestone. Git
-history keeps it.
+**When a new blocks file lands, delete the previous round's** unless it is a milestone, or unless a
+file OTHER THAN ITS OWN ROUND'S REPORT names it. Git history keeps it.
+
+A round's own handoff report always names its blocks file — it opens by pointing at it — so that
+naming does not count, or no blocks file could ever be deleted. A later handoff, a plan, a spec or
+another round's report naming it does count (owner's ruling, 2026-11-18, after a deletion that took
+19 files on the wider reading and had to be reverted).
 
 **A `CHECK-*` file goes when its blocks file goes**, in the same deletion commit, unless
 something outside the folder names it (owner's ruling, 2026-11-16). The checker's output is
