@@ -90,7 +90,33 @@ WHERE THESE ROWS CAME FROM — this changes what a finding on each is worth:${li
   principles.`;
 }
 
-export function buildAuditPrompt(monster, edition = '2024', { reskin = false, elementClaims = [] } = {}) {
+/**
+ * WHAT THE GM TYPED, AND WHICH ROW ANSWERS WHICH CLAUSE (part 2, 2026-11-18).
+ *
+ * The audit judged each row's fiction without the request in front of it. On the Air Elemental it
+ * called a row written for "carries stolen voices" a mismatch because the creature had "no fiction
+ * for" voices, and renamed it; the rename guard holds that now, and the cause did not go away.
+ *
+ * It is also the instrument the owner's first rule needs. His commonest reason for a Fix is that the
+ * sheet does not deliver what was typed, and today only a person reading the sheet can see that.
+ *
+ * `request` is the GM's own words. `clauseRows` is one entry per row that carries a clauseId —
+ * `{ section, name, clause }` — so the audit can see which row was written for which part of the
+ * ask. Both are omitted when there is nothing to say, so a non-reskin audit is unchanged.
+ */
+function requestLines(request, clauseRows = []) {
+  const req = String(request ?? '').trim();
+  if (!req) return '';
+  const bound = (clauseRows ?? []).filter((r) => r?.name && r?.clause);
+  return `
+
+WHAT THE GM ASKED FOR, IN THEIR OWN WORDS: "${req.slice(0, 400)}"${bound.length ? `
+
+ROWS WRITTEN FOR A PART OF THAT ASK:${bound.map((r) => `\n- ${r.section}/${String(r.name).replace(/ \(.*\)$/, '')} was written for "${String(r.clause).slice(0, 120)}"`).join('')}` : ''}
+`;
+}
+
+export function buildAuditPrompt(monster, edition = '2024', { reskin = false, elementClaims = [], request = '', clauseRows = [] } = {}) {
   const is2014 = edition === '2014';
   return `You are auditing a D&D ${is2014 ? '5th edition (2014 rules)' : '2024-format'} monster statblock for MECHANICAL defects.
 Deterministic checks (math, DCs, damage bands, known formatting rules) have
@@ -104,7 +130,7 @@ row that is not worth its action, cannot be run in the time a turn allows, or do
 not make practical sense for the creature it is on. A row can be perfectly correct
 and still be a defect, because a GM who cannot use it got nothing.
 
-${originLines(monster)}
+${originLines(monster)}${requestLines(request, clauseRows)}
 Audit against these principles. 1-4 are correctness; 5-7 are whether the block
 is any good at a table, and the owner's bar is both:
 
@@ -273,7 +299,7 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
   "rename": "<optional, name-defect findings only: the replacement entry name>",
   "confidence": "high|medium|low",
-  "defect": "misnamed|untrackable|open_ended|dead_reference|wording|weak|other" } ] }
+  "defect": "misnamed|untrackable|open_ended|dead_reference|wording|weak|undelivered|other" } ] }
 NAME THE DEFECT, do not prescribe a repair. You are saying WHAT IS WRONG with the row, in one word
 from this list. Choose the one that names the thing you described in "issue":
   misnamed       the name promises something the rules text does not do.
@@ -286,6 +312,8 @@ from this list. Choose the one that names the thing you described in "issue":
   wording        grammar, format or a pronoun. The rule itself is clear.
   weak           the row runs exactly as written, and you judge it underpowered or outclassed by
                  something else the creature can do.
+  undelivered    the row was written for something the GM asked for, and does not do it. Only for a
+                 row listed above as written for part of the ask, and name the clause in "issue".
   other          none of the above describes it.
 Pick the defect that is the ROOT of the issue. A row whose name is wrong AND whose state never ends
 is "misnamed" only if the name is what you wrote the finding about. Do not invent a word outside

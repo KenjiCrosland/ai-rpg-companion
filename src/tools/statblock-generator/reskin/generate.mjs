@@ -11260,7 +11260,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const elementClaims = Object.values(monster.sections ?? {}).flat()
         .filter((e) => e.expresses && e.freeRow)
         .map((e) => ({ entry: String(e.name ?? '').replace(/ \(.*\)$/, ''), element: e.expresses }));
-      const rawAudit = await callLLM(buildAuditPrompt(monster, '2024', { reskin: true, elementClaims }) + libraryBrief, validateAuditResponse);
+      // THE AUDIT IS SHOWN WHAT THE GM TYPED, and which row was written for which part of it
+      // (part 2, 2026-11-18). It judged each row's fiction blind, which is how a row written for
+      // "carries stolen voices" was called a mismatch for having "no fiction for" voices.
+      const clauseRows = Object.entries(monster.sections ?? {})
+        .flatMap(([sec, es]) => (es ?? []).filter((e) => e?.clauseId)
+          .map((e) => ({ section: sec, name: e.name, clause: (clauseRecord ?? []).find((c) => c.id === e.clauseId)?.text ?? e.clause ?? '' })))
+        .filter((r) => r.clause);
+      if (clauseRows.length) trace('audit sees the ask:', `${clauseRows.length} row(s) shown with the clause they were written for`);
+      const rawAudit = await callLLM(buildAuditPrompt(monster, '2024', { reskin: true, elementClaims, request: options.userConcept ?? concept ?? '', clauseRows }) + libraryBrief, validateAuditResponse);
       // the metric runs whether or not there was anything to ASK: a sheet whose
       // only free row is a refused template has no claim to judge and would
       // otherwise report no decoration at all.
