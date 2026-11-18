@@ -32,15 +32,32 @@ const answer = (name, over = {}) => JSON.stringify({
 });
 
 describe('the number gate and a save in fields', () => {
+  // CHORUS OF WOUNDS IS NOW REFUSED FOR A DIFFERENT REASON (fix C, 2026-11-18): its save's only
+  // effect is Deafened, which the owner ruled too slight to cost an action. The number gate — what
+  // this file is about — still passes it, so the recorded answer is kept and given damage here, and
+  // the refusal as recorded is pinned in its own test below.
+  const DEAFENED_ONLY = new Set(['Chorus of Wounds']);
+  const numbersOK = (name, over = {}) => answer(name, DEAFENED_ONLY.has(name)
+    ? { save: { ...RECORDED[name].save, damage: true, type: 'Thunder' }, quantities: 2, ...over } : over);
+
   test.each(Object.keys(RECORDED))('%s comes back as a Reaction', (name) => {
-    const p = parseAuthorResponse(answer(name), SEAT);
+    const p = parseAuthorResponse(numbersOK(name), SEAT);
     expect((p?.refused ?? []).map((r) => r.why)).toEqual([]);
     expect((p?.reactions ?? []).map((r) => r.name)).toEqual([name]);
   });
 
+  test('Chorus of Wounds AS RECORDED is refused for Deafened alone, not for its numbers', () => {
+    const p = parseAuthorResponse(answer('Chorus of Wounds'), SEAT);
+    expect(RECORDED['Chorus of Wounds'].save.condition).toBe('Deafened');   // the subject is present
+    expect(RECORDED['Chorus of Wounds'].save.damage).toBe(false);
+    expect((p?.reactions ?? [])).toHaveLength(0);
+    expect((p?.refused ?? [])[0].why).toMatch(/Deafened alone is too slight/);
+    expect((p?.refused ?? [])[0].why).not.toMatch(/number\(s\) the row promises/);
+  });
+
   test('the DC the engine always writes is what satisfies a declared 1', () => {
     // none of the three writes a number in its prose; the engine writes the DC for every save
-    const p = parseAuthorResponse(answer('Chorus of Wounds'), SEAT);
+    const p = parseAuthorResponse(numbersOK('Chorus of Wounds', { quantities: 1 }), SEAT);
     expect((p?.reactions ?? []).length).toBe(1);
   });
 
@@ -124,21 +141,24 @@ describe("who saves, and when it ends", () => {
     return (m.sections?.Reactions ?? []).filter(Boolean).find((e) => e?.name === 'Ringing Coils');
   };
 
+  // DEAFENED ALONE IS NOW REFUSED AT THE READ (fix C, 2026-11-18), and these three tests are about
+  // WHO saves and WHEN it ends, not about the condition — so they ask for Frightened. The Deafened
+  // case is kept in the ending test, riding on damage, which is how the Leviathan's own rows carry it.
   test('a single-target save is made by the creature the trigger names', async () => {
-    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: false, condition: 'Deafened' });
+    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: false, condition: 'Frightened' });
     expect(row).toBeTruthy();
     expect(row.text).toContain('the triggering creature');
     expect(row.text).not.toContain('one creature within 10 feet');
   }, 30000);
 
   test('an AREA stays an area', async () => {
-    const row = await onASheet({ stat: 'Constitution', target: 'each creature in a 30-foot Emanation originating from the leviathan', damage: false, condition: 'Deafened' });
+    const row = await onASheet({ stat: 'Constitution', target: 'each creature in a 30-foot Emanation originating from the leviathan', damage: false, condition: 'Frightened' });
     expect(row.text).toContain('each creature in a 30-foot Emanation');
     expect(row.text).not.toContain('the triggering creature');
   }, 30000);
 
   test('the condition prints an end, from the same helper a save ROW uses', async () => {
-    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: false, condition: 'Deafened' });
+    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: true, type: 'Thunder', condition: 'Deafened' });
     expect(row.text).toMatch(/Deafened condition until the end of its next turn/);
   }, 30000);
 

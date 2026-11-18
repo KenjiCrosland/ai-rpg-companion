@@ -396,6 +396,15 @@ export const fillBonusDmg = (text) => {
     .replace(/\{dmg\}(\s*bonus)/gi, `+${BONUS_FILL}$1`);
 };
 
+/**
+ * A FORCED MOVEMENT, IN THE ENGINE'S OWN WORDS — one definition, read by the save form and by a
+ * Reaction's save. Returns "pushed up to N feet" / "pulled up to N feet", or null when the call
+ * named no movement the engine can run.
+ */
+const moveForm = (v) => {
+  const m = /\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(String(typeof v === 'string' ? v.trim().slice(0, 80) : ''));
+  return m ? `${/pull|drag/i.test(m[1]) ? 'pulled' : 'pushed'} up to ${m[2]} feet` : null;
+};
 export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
@@ -436,9 +445,22 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   //
   // The call is now told what is missing and asked again, like every other refusal. If the second
   // answer is empty too, the seat is empty and counted — which is honest, and is what R4 picks up.
+  // DEAFENED IS NEVER A ROW'S ONLY EFFECT (owner's ruling, fix C, 2026-11-18). His words: "Deafened
+  // is such a minor condition and not worth a gated recharge. I would prefer frightened or charmed
+  // based on the monster and context. The condition is nice for flavor but basically a
+  // nothingburger." On the forty 4 rows impose it across 3 sheets, and on 2 it is the whole row —
+  // the Drowned Choir's hymn, on a Recharge, and the bells' Knellsong, a Reaction. The catalog's
+  // own uses all ride on damage and are untouched.
+  //
+  // THE CHOICE IS THE MODEL'S, not a swap by rule: the Drowned Choir heals itself while a creature
+  // is "deafened or frightened by it", and a deafened creature cannot hear a hymn, so Frightened is
+  // right there — and on another creature Charmed will be.
+  const DEAFENED_ALONE = (x) => String(x?.condition) === 'Deafened' && !x?.damage && !x?.movement;
   const saveWhy = (s) => (!s.damage && !s.condition && !s.movement
     ? 'the row does nothing on a failed save — say what the target suffers: a condition it gains, a forced movement, or damage'
-    : null);
+    : DEAFENED_ALONE(s)
+      ? 'Deafened alone is too slight to cost an action — choose Frightened or Charmed, whichever fits this creature, or keep Deafened and add damage'
+      : null);
   const refusedSaves = savesAll.filter((s) => s.name && saveWhy(s) !== null);
   const saves = savesAll.filter((s) => saveWhy(s) === null);
   // a damage-taken trigger with no frequency is permanent resistance phrased as a reaction (the hag's Cloud of Ash fired on every instance of damage — critic's step-5 read): once per turn
@@ -643,6 +665,12 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
           : 'the triggering creature',
       damage: !!r.save.damage, type: DAMAGE_TYPES.includes(r.save.type) ? r.save.type : null,
       condition: CONDITIONS.includes(r.save.condition) ? r.save.condition : null,
+      // THE MOVEMENT WAS A DEAD FIELD (fix B, 2026-11-18). `renderForm`'s reaction branch reads
+      // `save.movement` and this parse never carried it, so a Reaction whose whole effect is a
+      // forced movement had nowhere to put it: the Air Elemental's Engulfing Wake wanted the target
+      // "dragged along in the elemental's wake", and the row reached the sheet as "*Failure:*" with
+      // nothing after it and was cut at ship. Same validator as the save form's, one line over.
+      movement: moveForm(r.save.movement),
       success: str(r.save.success, 120) || null,
     } } : {}) }));
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
@@ -653,6 +681,18 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     // second answer came back as the Reaction the reason had asked for and was turned away for the
     // shape the prompt told it to use.
     : !r.trigger || (!r.response && !r.save) ? 'a reaction needs a trigger, and either a response or a save'
+    // A REACTION'S SAVE SAYS WHAT THE TARGET SUFFERS (fix B, 2026-11-18). A Reaction's save deals
+    // no damage by the owner's ruling, so a save with no condition and no forced movement has
+    // nothing left: the Air Elemental's Engulfing Wake reached the sheet as "*Failure:*" with
+    // nothing after it and was cut at ship as half a rule. Refused at the READ instead, so it never
+    // spends a place in the free-row budget and then vanishes — which is how that sheet came to
+    // ship with no signature row at all. The reason goes to the second ask like any other.
+    : r.save && !r.save.condition && !r.save.movement
+      ? "a reaction's save deals no damage here, so say what the target suffers as a condition or a forced movement, or write the response with no save"
+      // DEAFENED ALONE, on the Reaction path (fix C). Damage is held on a Reaction, so the reason
+      // offers the two conditions only.
+      : r.save && DEAFENED_ALONE(r.save)
+        ? 'Deafened alone is too slight to cost a Reaction — choose Frightened or Charmed, whichever fits this creature'
       : !quantitiesOk(r) ? `the call counts ${r.quantities} number(s) the row promises and only ${quantitiesStated(r)} are written — a promised amount, area or bonus with no number cannot be run`
       : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'
       : damagesAndHeals(r) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'

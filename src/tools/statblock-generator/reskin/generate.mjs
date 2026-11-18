@@ -1524,6 +1524,18 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // templates, which is where the sameness had moved.
   const freeRows = [];
   for (const [sec, es] of Object.entries(sections)) for (const e of es ?? []) if (e.freeRow) freeRows.push({ sec, e });
+  // A ROW HANDED A CLAUSE THE GM TYPED IS KEPT FIRST (fix A, 2026-11-18).
+  //
+  // The Air Elemental's budget was 1, and it met a row nobody asked for before it met the one the
+  // seat had been handed "carries stolen voices": `free row over budget: Actions/"Stolen Voices"
+  // leaves at ship`. The sheet shipped with no signature row, and the row the budget kept was then
+  // dropped as half a rule. On the forty, 7 rows left on this budget and 2 of them carried a typed
+  // clause — Stolen Voices on s05 and River's Reversal on s33.
+  //
+  // THIS IS AN ORDERING, NOT AN EXEMPTION. The row still counts against the budget and still earns
+  // no clause credit, so the owner's 22 October ruling stands: a row handed a clause has not
+  // thereby answered it. `Array.prototype.sort` is stable, so everything else keeps its order.
+  freeRows.sort((a, b) => Number(writtenForATypedClause(b.e)) - Number(writtenForATypedClause(a.e)));
   // THE BUDGET IS ELASTIC AGAINST PRINT'S OWN CARD SIZE (owner's ruling,
   // 2026-10-29: "maybe we keep the row if there aren't enough but drop if there
   // are too many based on a number (not median but comfortable high end)").
