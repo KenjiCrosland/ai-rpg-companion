@@ -1524,18 +1524,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // templates, which is where the sameness had moved.
   const freeRows = [];
   for (const [sec, es] of Object.entries(sections)) for (const e of es ?? []) if (e.freeRow) freeRows.push({ sec, e });
-  // A ROW HANDED A CLAUSE THE GM TYPED IS KEPT FIRST (fix A, 2026-11-18).
-  //
-  // The Air Elemental's budget was 1, and it met a row nobody asked for before it met the one the
-  // seat had been handed "carries stolen voices": `free row over budget: Actions/"Stolen Voices"
-  // leaves at ship`. The sheet shipped with no signature row, and the row the budget kept was then
-  // dropped as half a rule. On the forty, 7 rows left on this budget and 2 of them carried a typed
-  // clause — Stolen Voices on s05 and River's Reversal on s33.
-  //
-  // THIS IS AN ORDERING, NOT AN EXEMPTION. The row still counts against the budget and still earns
-  // no clause credit, so the owner's 22 October ruling stands: a row handed a clause has not
-  // thereby answered it. `Array.prototype.sort` is stable, so everything else keeps its order.
-  freeRows.sort((a, b) => Number(writtenForATypedClause(b.e)) - Number(writtenForATypedClause(a.e)));
+
   // THE BUDGET IS ELASTIC AGAINST PRINT'S OWN CARD SIZE (owner's ruling,
   // 2026-10-29: "maybe we keep the row if there aren't enough but drop if there
   // are too many based on a number (not median but comfortable high end)").
@@ -1629,7 +1618,21 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // owner's complaint is about the BORROWED row — "refusals lead to sameness
   // because we borrow a stock row from the chassis" — and `accepted_closest` is
   // exactly that row, stamped where the nearest lands.
-  const receiptRank = (e) => ((e.gmQuote || e.clause) ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
+  // THE LADDER READS THE CLAUSE BINDING, NOT ONLY THE CLAUSE TEXT (fix A, 2026-11-18).
+  //
+  // This read `e.clause`, which is prose the seat may or may not carry, and missed `clauseId`, which
+  // is the BINDING the lacks fix stamps. On the Air Elemental both free rows had been handed
+  // "carries stolen voices" and only one of them carried the prose, so the ladder read the other as
+  // DECORATION and the budget of one cut it: `free row over budget: Actions/"Stolen Voices" leaves
+  // at ship`. The sheet shipped with no signature row at all.
+  //
+  // My first attempt sorted `freeRows` where it is built, which is INERT — the loop below iterates
+  // `ranked`, and this ladder re-sorts it. The ordering has to be here or it is not an ordering.
+  //
+  // It is still an ordering and not an exemption: the row counts against the budget and earns no
+  // clause credit, so the owner's 22 October ruling stands. Same predicate the audit's rename guard
+  // and print canon read.
+  const receiptRank = (e) => ((e.gmQuote || e.clause || writtenForATypedClause(e)) ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
   // WITHIN ONE RANK, A TEMPLATED ROW BEATS AN UNTEMPLATED ONE (2026-11-14). The sort is stable,
   // so a tie fell to sheet order — and Traits come before Actions. On probe B's clockwork
   // spider one package seat wrote two rows for the same element: the action "Caught Line

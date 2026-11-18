@@ -76,3 +76,41 @@ describe('the free-row budget keeps the typed row', () => {
     expect(drops.some((d) => d.stage === 'the free-row budget')).toBe(true);
   });
 });
+
+/**
+ * AND IT HAS TO BE IN THE LADDER. My first attempt sorted `freeRows` where it is built, which is
+ * inert: the budget loop iterates `ranked`, and the receipt ladder re-sorts it. The tests above
+ * passed anyway, because both of their rows tied on the old ladder and a stable sort kept my order.
+ * These two drive the ladder itself, so an ordering put in the wrong place fails here.
+ */
+describe('the receipt ladder reads the clause binding', () => {
+  const { settleSheetBudgets: settle } = require('../generate.mjs');
+  const rank = (rows) => {
+    const sections = { Traits: rows, Actions: Array.from({ length: 7 }, (_, i) => ({ name: `C${i}`, text: '*Melee Attack Roll:* +12, reach 5 ft. 20 (4d6 + 6) Bludgeoning damage.' })) };
+    settle({ sections, scaled: { per_hit: 10 }, cr: 17, noteDrop: () => {} });
+    return Object.values(sections).flat().map((e) => e.name);
+  };
+
+  // s05's own pair: both handed "carries stolen voices", one carrying the prose and one the id.
+  // Within rank 0 the TEMPLATED row wins, which is the 2026-11-14 tie-break, so the id row stays.
+  test("a row with only the binding ranks with a row carrying the clause prose", () => {
+    const kept = rank([
+      { name: 'Engulfing Wake', text: 'x', freeRow: true, clause: 'carries stolen voices' },
+      { name: 'Stolen Voices', text: 'y', freeRow: true, clauseId: 'cl_voices', template: 'escalating-dread' },
+    ]);
+    expect(kept).toContain('Stolen Voices');
+    expect(kept).not.toContain('Engulfing Wake');
+  });
+
+  test('a bound row outranks a decoration row wherever the loop meets it', () => {
+    for (const order of [0, 1]) {
+      const rows = [
+        { name: 'Decoration', text: 'x', freeRow: true, template: 'terror-pulse' },
+        { name: 'Bound', text: 'y', freeRow: true, clauseId: 'cl_a' },
+      ];
+      const kept = rank(order ? rows.reverse() : rows);
+      expect(kept).toContain('Bound');
+      expect(kept).not.toContain('Decoration');
+    }
+  });
+});
