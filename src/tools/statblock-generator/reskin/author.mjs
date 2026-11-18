@@ -33,6 +33,29 @@ const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot 
 const HAS_NUMBER = /\d/;
 /** a save target that names an AREA rather than one creature — one definition, read here and by the landing */
 export const AN_AREA = /\beach creature\b|\d+-foot|\bEmanation\b|\bCone\b|\bLine\b|\bSphere\b|\bCube\b/i;
+/**
+ * MANY CREATURES SAVE, OR ONE — ONE DEFINITION (item 1.2, 2026-11-18).
+ *
+ * The Swarm of Funeral Bells shipped a Reaction whose save was aimed at a creature that had
+ * already dropped: "*Trigger:* A creature within the swarm's reach drops to 0 Hit Points.
+ * *Response—Constitution Saving Throw:* DC 17, the triggering creature." The call had answered
+ * `target: "each other creature of the swarm's choice within 30 feet"` — many creatures — and the
+ * engine replaced it with the one creature the trigger names, which is the one at 0 HP.
+ *
+ * It happened because this question had THREE answers in two files. `AN_AREA` wants "each creature"
+ * adjacent or an "N-foot" shape, so "each OTHER creature … within 30 feet" failed it and the target
+ * collapsed; meanwhile the pricing line in `generate.mjs` read `target.startsWith('each')` and
+ * priced the very same row as an area. Price said many, text said one.
+ *
+ * So the determiner decides, because that is what makes a target plural in English rather than a
+ * phrasing we happen to have listed: a target that begins "each" is many. `AN_AREA` stays exactly
+ * as it is for the shapes it names, and this is the union, read by both files and by the price.
+ *
+ * (Print never writes "each other creature" — 0 of 329, against "each creature" 118 times — so the
+ * model's phrasing is not print idiom. Keeping its words is still better than silently narrowing an
+ * area to one creature, which is the rule the save-target fallback below already states.)
+ */
+export const manyTargets = (t) => AN_AREA.test(String(t ?? '')) || /^\s*each\b/i.test(String(t ?? ''));
 // print's longest trait text is 714 characters (Loathsome Limbs); 240 refused 9% of print's 324
 const RULES_TEXT_CAP = 720;
 
@@ -581,7 +604,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       // area is worse than keeping a phrasing the pattern does not list, so an area keeps the
       // model's own words and only a non-area target falls back.
       target: TARGET_OK.test(str(r.save.target, 80)) ? str(r.save.target, 80)
-        : AN_AREA.test(str(r.save.target, 80)) ? str(r.save.target, 80)
+        : manyTargets(str(r.save.target, 80)) ? str(r.save.target, 80)
           : 'the triggering creature',
       damage: !!r.save.damage, type: DAMAGE_TYPES.includes(r.save.type) ? r.save.type : null,
       condition: CONDITIONS.includes(r.save.condition) ? r.save.condition : null,

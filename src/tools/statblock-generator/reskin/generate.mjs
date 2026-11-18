@@ -38,7 +38,7 @@ import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the va
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { routeFinding, renameDropsAGmWord, formatFinding } from './typed-fixes.mjs'; // the audit names the defect; nothing here acts on it
-import { stripUnplacedDmg, AN_AREA } from './author.mjs'; // one strip rule, shared with the parse
+import { stripUnplacedDmg, manyTargets } from './author.mjs'; // one strip rule, shared with the parse
 import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -4207,7 +4207,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the DC and the dice, and the save form goes after "Response" as print writes it (the Chain
       // Devil). The model never writes a number here either.
       const svF = r.save ? (() => {
-        const want = Math.max(3, Math.round((scaled.per_hit ?? 6) * (String(r.save.target).startsWith('each') ? 1.4 : 1.1)));
+        // ONE PREDICATE for the price and for the text (item 1.2). These were `startsWith('each')`
+        // here and `AN_AREA` three lines down, and on the Swarm of Funeral Bells they disagreed:
+        // the row priced as an area and then named one creature — the one the trigger had just
+        // dropped to 0 HP.
+        const many = manyTargets(r.save.target);
+        const want = Math.max(3, Math.round((scaled.per_hit ?? 6) * (many ? 1.4 : 1.1)));
         const dice = engineDiceFor(capSingleTargetSave(want, `Saving Throw ${r.save.target}`, cr));
         // WHO SAVES: THE CREATURE THE TRIGGER NAMES (owner's ruling, 2026-11-17). A Reaction fires
         // because something happened, and a single-target save in one is made by the creature that
@@ -4218,7 +4223,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         //
         // The wording is print's own, from the only Reaction in the corpus that forces a
         // single-target save — the Chain Devil's Unnerving Gaze: "DC 15, the triggering creature."
-        const area = AN_AREA.test(String(r.save.target ?? ''));
+        const area = many;
         const target = area ? r.save.target : 'the triggering creature';
         // WHEN IT ENDS: the same thing that ends a save ROW's condition (`conditionClauseFor`) —
         // Grappled takes an escape DC, Prone self-ends and needs none, everything else takes
