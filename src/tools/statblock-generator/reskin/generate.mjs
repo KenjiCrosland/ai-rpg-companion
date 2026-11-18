@@ -754,6 +754,11 @@ const USAGE_SUFFIX = '(?:\\s*\\((?:Recharge [\\d\u2013-]+|\\d\\/Day)\\))?';
  * strip it with an inline copy of the Recharge/Day pair; this is the named form, and it also
  * covers a legendary row's "(Costs 2 Actions)". Consolidating the twelve is its own change.
  */
+/** every damage number a row rolls, added up — a hit is the whole hit, riders included (R1, 2026-11-18) */
+export const wholeHit = (text) => (String(text ?? '').match(/\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/g) ?? [])
+  .reduce((a, part) => a + (Number(/^(\d+)/.exec(part)?.[1]) || 0), 0);
+/** a row aimed at an AREA rather than one target — one definition, read by the swap gate and by R1's ceiling */
+const AREA_ROW = /\b(?:Cone|Line|Emanation|Sphere|Cube|Cylinder)\b|each creature (?:within|in)/i;
 const ROW_GATE = /\s*\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)$/;
 // EXPORTED so the rule can be tested (2026-11-15). It was module-local, and the stump it ships
 // when a cited ability leaves could only be found by reading a sheet after the fact.
@@ -777,38 +782,103 @@ const ROW_GATE = /\s*\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)$/;
  * leaves such a citation untouched — there is no row to read a name from — and the sweep removes it.
  */
 /**
+ * AN AREA ROW THAT TAKES AN ATTACK'S PLACE AT WILL DEALS HALF A HIT (owner's ruling R1, 2026-11-18).
+ *
+ * The Brass Tyrant's fist is 33 a hit — 19 Bludgeoning plus 14 Fire — and Molten Seam dealt 35 to
+ * every creature in a 60-foot line, every round, for the price of one fist. The Glacierheart's
+ * Glacial Advance did 32 against a 34 hit; the Trenchsong Leviathan's Brineplate Detonation 38
+ * against 36.
+ *
+ * The one-nova rule is what makes these AT WILL: the chassis already holds the sheet's Recharge
+ * nova, so the seat row's gate leaves and `forceUngated` reprices it to the Multiattack sum. That
+ * sum is the wrong ceiling for a row offered IN AN ATTACK'S PLACE, because the trade is one attack,
+ * not the turn. Print offers 15 area rows in an attack's place and NONE of them deals damage.
+ *
+ * The ceiling is half of one WHOLE hit of the attack it replaces, riders included, and the row keeps
+ * a save for half. A row that still carries its Recharge is untouched — it paid for its damage with
+ * the gate. Run from `settleSheetBudgets` after the one-nova un-gate, which is what creates the case.
+ */
+export const priceAreaSwapAtHalfAHit = (sections, traceFn = () => {}) => {
+  const rows = Object.values(sections ?? {}).flat().filter((e) => e?.name);
+  const bareOf = (n) => String(n ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
+  const multi = rows.find((e) => /^Multiattack/.test(String(e.name)));
+  const cited = multi ? [...String(multi.text ?? '').matchAll(/use of ([^.;,]+?)(?:\s+if available)?(?=[.;,]|$)/g)].map((m) => bareOf(m[1])) : [];
+  for (const name of cited) {
+    const row = rows.find((e) => bareOf(e.name) === name);
+    // AT WILL ONLY: a gate in the NAME or in the TEXT means the row paid for its damage
+    if (!row || / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(String(row.name)) || TEXT_GATE.test(row.text ?? '') || !AREA_ROW.test(row.text ?? '')) continue;
+    const dealt = wholeHit(row.text);
+    if (!dealt) continue;
+    // the attack it replaces: the biggest whole hit the Multiattack itself offers, since the GM
+    // chooses which attack to give up
+    const attacks = rows.filter((e) => /Attack Roll|Weapon Attack/.test(String(e.text ?? ''))
+      && new RegExp(`\\b${bareOf(e.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text)));
+    const hit = Math.max(0, ...attacks.map((e) => wholeHit(e.text)));
+    if (!hit) continue;
+    const ceiling = Math.max(1, Math.round(hit / 2));
+    if (dealt <= ceiling) continue;
+    const parts = String(row.text).match(/\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/g) ?? [];
+    const ratio = ceiling / dealt;
+    let text = String(row.text);
+    for (const part of parts) {
+      const was = Number(/^(\d+)/.exec(part)?.[1]) || 0;
+      const d = engineDiceFor(Math.max(1, Math.round(was * ratio)));
+      text = text.replace(part, `${d.avg} (${d.dice})`);
+    }
+    if (!/\*Success:\*/.test(text)) text = `${text.replace(/\s*$/, '')} *Success:* Half damage only.`;
+    if (row.text_noRider) row.text_noRider = text;
+    row.text = text;
+    traceFn('area swap priced at half a hit:', `"${row.name}" is offered in an attack's place AT WILL and dealt ${dealt} against a whole hit of ${hit}; the ceiling is half a hit (${ceiling}) with a save for half — print offers 15 area rows in an attack's place and none deals damage (owner's R1)`);
+  }
+};
+
+/**
  * A MULTIATTACK CITES A ROW AS THE ROW IS NAMED (item 1.1, 2026-11-18).
  *
  * The Multiattack is composed while a nova row is still gated, so it writes "a use of Molten Seam
- * (Recharge 5-6)". The one-nova rule later un-gates the row, and the citation keeps a Recharge the
- * sheet no longer has — three of the forty shipped that (s14, s16, s20).
+ * (Recharge 5-6)". The ONE-NOVA RULE then un-gates that row — the chassis already carries a
+ * Recharge nova, so the seat's gate leaves (`generate.mjs`, "one nova:") — and the citation keeps a
+ * Recharge the sheet no longer has anywhere. Three of the forty shipped it: the Glacierheart's
+ * Glacial Advance, the Brass Tyrant's Molten Seam, the Trenchsong Leviathan's Brineplate Detonation.
  *
- * WHAT PRINT DOES, measured on srd52-monsters.json: of the 27 "use of X" citations whose row
- * resolves, ZERO carry a usage parenthetical, and the one whose row IS gated — the Chimera's
- * "Fire Breath (Recharge 5-6)" — is cited BARE. So the citation is the row's bare name, and a gate
- * in a citation is always stale. (The handoff asked for "the bare name, then the row's own
- * parenthetical if it has one"; print disagrees 1 of 1, and print rules calibration.)
+ * WHAT PRINT DOES, measured on srd52-monsters.json. No citation carries a usage parenthetical — not
+ * even the Chimera's, whose row IS "Fire Breath (Recharge 5-6)". Instead print says the row MIGHT
+ * NOT BE THERE, in two words: "It can replace the Claw attack with a use of Fire Breath IF
+ * AVAILABLE." All three of print's "if available" citations point at a gated row — the Chimera's
+ * Recharge 5-6, the Doppelganger's Unsettling Visage (Recharge 6), the Aboleth's Dominate Mind
+ * (2/Day) — and no citation of an ungated row says it. So:
  *
- * Scope is the gate, not the name. A citation whose row was RENAMED is `sweepDeadName`'s — it is
- * handed the dead name and re-points or drops the clause, which is the owner's pinned behaviour
- * (`a-cited-ability-takes-its-parenthetical.spec.js`). The two cannot fight: this one acts only on
- * a citation whose row EXISTS, that one only on a name no row carries any more. Matching the gate
- * rather than a Title-Case name run also means a row like "Over the Dying" is handled, which a
- * name-shaped pattern cannot see.
+ *     row gated   ->  "a use of Molten Seam if available"
+ *     row ungated ->  "a use of Molten Seam"
+ *
+ * (My first pass dropped the gate and stopped there, which is the Brass Tyrant's mismatch the other
+ * way round: a GM reading a bare citation has no idea the row may be spent.)
+ *
+ * MATCHED BY THE ROW'S OWN NAME, not by a name parsed out of the sentence. A Title-Case run cannot
+ * see "Over the Dying", and a citation's trailing words ("Fire Breath if available") are not part of
+ * the name. Each row looks for its own citation and rewrites that citation's tail.
+ *
+ * A citation whose row was RENAMED is `sweepDeadName`'s — it is handed the dead name and re-points
+ * or drops the clause, which is pinned behaviour in `a-cited-ability-takes-its-parenthetical.spec.js`.
+ * This pass acts only where the cited row still EXISTS, so the two cannot fight.
  */
+const CITATION_TAIL = '(?:\\s*\\((?:Recharge [\\d\u2013-]+|\\d\\/Day|Costs? \\d+ Actions?)\\))?(?:\\s+if available)?';
 export const syncMultiattackCitations = (sectionsMap, traceFn = () => {}) => {
   const bare = (n) => String(n ?? '').replace(ROW_GATE, '').trim();
   const rows = Object.values(sectionsMap ?? {}).flat().filter((e) => e?.name);
-  const named = new Set(rows.map((r) => bare(r.name).toLowerCase()));
   for (const mm of rows.filter((r) => /^Multiattack/.test(String(r.name)))) {
     const before = String(mm.text ?? '');
-    const after = before.replace(
-      /\buse of ([^.;,]*?)\s*\((?:Recharge [\d–-]+|\d\/Day|Costs? \d+ Actions?)\)/g,
-      (m0, cited) => (named.has(String(cited).trim().toLowerCase()) ? `use of ${String(cited).trim()}` : m0),
-    );
+    let after = before;
+    for (const row of rows) {
+      const name = bare(row.name);
+      if (!name) continue;
+      const gated = ROW_GATE.test(String(row.name));
+      const re = new RegExp(`\\buse of ${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${CITATION_TAIL}`, 'g');
+      after = after.replace(re, `use of ${name}${gated ? ' if available' : ''}`);
+    }
     if (after === before) continue;
     mm.text = after;
-    traceFn('multiattack citation synced:', `"${mm.name}" cites each row as the row is named — a later pass had un-gated one, and print never carries a usage parenthetical in a citation`);
+    traceFn('multiattack citation synced:', `"${mm.name}" cites each row as the row is named — a gated row reads "if available" as print writes it, an ungated row reads bare`);
   }
 };
 
@@ -1644,6 +1714,8 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       trace('one nova at ship:', `"${beforeName}" un-gated to "${e.name}" — "${bareName(keepNova)}" already carries this sheet's Recharge nova${vc.steps.length ? ` (${vc.steps.join('; ')})` : ''}`);
     }
   }
+  priceAreaSwapAtHalfAHit(sections, trace);
+
   // A PAYOFF GETS ITS ENABLER AT SHIP (owner's design, 2026-11-04; the critic's
   // effect-claim item). A row that declares `requiresCondition` needs some row on the
   // sheet to impose that condition, or its trigger can never fire. BOTH authoring paths
@@ -10378,9 +10450,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // this — "a use of (A) Sleep Breath", and Sleep Breath is Recharge 5-6).
     if (saveAction && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(saveAction.name ?? '')) {
       const t = String(saveAction.text ?? '');
-      const isArea = /\b(?:Cone|Line|Emanation|Sphere|Cube|Cylinder)\b|each creature (?:within|in)/i.test(t);
-      const dmg = (t.match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + (Number(/^(\d+)/.exec(p)?.[1]) || 0), 0);
-      const atk = Math.max(0, ...Object.values(sections).flat().filter((e2) => /Attack Roll/.test(e2.text ?? '')).map((e2) => Number(/(\d+) \(\d+d\d+/.exec(e2.text ?? '')?.[1]) || 0));
+      const isArea = AREA_ROW.test(t);
+      const dmg = wholeHit(t);
+      // A HIT IS THE WHOLE HIT (R1, 2026-11-18). This read only the FIRST damage number of an attack,
+      // so the Brass Tyrant's fist — "19 (3d8 + 6) Bludgeoning damage plus 14 (4d6) Fire damage" —
+      // counted as 19 instead of 33, and a 35-damage line did not read as out-damaging it.
+      const atk = Math.max(0, ...Object.values(sections).flat().filter((e2) => /Attack Roll/.test(e2.text ?? '')).map((e2) => wholeHit(e2.text)));
       if (isArea && dmg > 0 && atk > 0 && dmg >= atk) {
         saveAction.name = `${String(saveAction.name).replace(/ \(.*\)$/, '')} (Recharge 5-6)`;
         saveAction.gate = 'Recharge 5-6';

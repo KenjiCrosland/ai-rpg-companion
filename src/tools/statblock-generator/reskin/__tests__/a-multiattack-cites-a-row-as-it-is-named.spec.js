@@ -66,16 +66,30 @@ describe('a multiattack cites a row as the row is named', () => {
     expect(row.name).toBe('Molten Seam');                        // the ROW is not touched
   });
 
-  test("THE GATE KEPT: a gated row is still cited bare, as print cites the Chimera's Fire Breath", () => {
+  test('THE GATE KEPT: a gated row is cited "if available", as print cites the Chimera', () => {
     const sections = tyrant('Forge-Heat Roar (Recharge 5-6)');
     const row = rowsOf(sections).find((r) => /^Forge-Heat Roar/.test(r.name));
     expect(row.name).toMatch(GATE);                              // the gate is KEPT on the row
 
     syncMultiattackCitations(sections, () => {});
 
-    expect(ma(sections).text).toBe('The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Forge-Heat Roar.');
-    expect(everyCitationResolvesBare(sections)).toEqual([{ cited: 'Forge-Heat Roar', gated: false, exists: true }]);
+    expect(ma(sections).text).toBe('The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Forge-Heat Roar if available.');
+    expect(ma(sections).text).not.toMatch(GATE);                 // the gate itself never travels
     expect(row.name).toBe('Forge-Heat Roar (Recharge 5-6)');     // the row keeps its gate
+  });
+
+  test('a bare citation of a gated row GAINS "if available" — the mismatch the other way round', () => {
+    const sections = tyrant('Forge-Heat Roar');
+    syncMultiattackCitations(sections, () => {});
+    expect(ma(sections).text).toMatch(/a use of Forge-Heat Roar if available\.$/);
+  });
+
+  test('a stale "if available" comes off a row that lost its gate', () => {
+    const sections = tyrant('Molten Seam if available');
+    expect(rowsOf(sections).find((r) => r.name === 'Molten Seam')).toBeDefined();
+    syncMultiattackCitations(sections, () => {});
+    expect(ma(sections).text).toMatch(/a use of Molten Seam\.$/);
+    expect(ma(sections).text).not.toContain('if available');
   });
 
   test('a citation that is already bare is left exactly as it is, and nothing traces', () => {
@@ -91,10 +105,9 @@ describe('a multiattack cites a row as the row is named', () => {
     // the Swarm of Funeral Bells' row is "Over the Dying"; matching on the GATE rather than on a
     // run of Title-Case words is what makes this case reachable at all
     const sections = tyrant('Over the Dying (1/Day)');
-    sections.Actions.push({ name: 'Over the Dying', text: '*Wisdom Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* 18 (4d8) Psychic damage.' });
+    sections.Actions.push({ name: 'Over the Dying (1/Day)', text: '*Wisdom Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* 18 (4d8) Psychic damage.' });
     syncMultiattackCitations(sections, () => {});
-    expect(ma(sections).text).toMatch(/a use of Over the Dying\.$/);
-    expect(everyCitationResolvesBare(sections)).toEqual([{ cited: 'Over the Dying', gated: false, exists: true }]);
+    expect(ma(sections).text).toMatch(/a use of Over the Dying if available\.$/);
   });
 
   // THE TWO PASSES DO NOT FIGHT. `sweepDeadName` owns a citation whose row is GONE; this one owns a
@@ -146,6 +159,17 @@ describe('a multiattack cites a row as the row is named', () => {
     }
     expect(resolved).toBeGreaterThan(10);  // the sweep actually resolved citations
     expect(gatedCitations).toBe(0);        // and print gates one ZERO times
+  });
+
+  test('every print row saying "if available" points at a GATED row — the rule this pass follows', () => {
+    const list = Array.isArray(srd) ? srd : (srd.monsters ?? Object.values(srd).flat());
+    const saying = [];
+    for (const m of list) for (const r of rowsOf(m.sections).filter((x) => /if available/i.test(String(x.text ?? '')))) {
+      const cited = rowsOf(m.sections).filter((x) => GATE.test(String(x.name)) && String(r.text).includes(String(x.name).replace(GATE, '').trim()));
+      saying.push([`${m.name}/${r.name}`, cited.map((x) => x.name)]);
+    }
+    expect(saying.length).toBe(3);                                  // Aboleth, Chimera, Doppelganger
+    for (const [, gatedRows] of saying) expect(gatedRows.length).toBeGreaterThan(0);
   });
 
   // THE CHIMERA, asserted by name rather than through the extractor above: print's one gated row
