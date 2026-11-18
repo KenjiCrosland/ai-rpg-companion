@@ -6553,11 +6553,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // rows and each lost its trigger, becoming a soft effect in an attack's place, which the
             // owner has graded a dead row.
             //
-            // ONE REACTION FROM THIS PATH. If the sheet already carries a Reaction, this one is not
-            // taken: print writes at most one Reaction on 21 of its 22 Reaction-bearing blocks, and
-            // a second would be a row the seat added beside a row the body already has. The trace
-            // says so and the seat stays empty.
-            const reactionSeatOpen = () => !(sections.Reactions ?? []).filter(Boolean).length;
+            // THE SEAT'S REACTION LANDS BESIDE THE BODY'S (owner's ruling, 2026-11-18). It never adds
+            // a SECOND of its own, and a sheet carries at most two.
+            //
+            // The first version of this refused any Reaction when the sheet already had one, on
+            // print's habit of carrying a single one. That put the body's habit ahead of the
+            // request: Vashka's seat Reaction answers "fights from a shield wall", which her GM
+            // typed, and Riposte is what her kit happened to bring. Across three live rolls the rule
+            // declined five seat Reactions and three were that one sheet, blocked by that one kit row.
+            //
+            // The arithmetic on the tape: 9 of 38 sheets carry a Reaction the seat did not write, and
+            // the seat writes one on about five sheets a run, so the two meet about once a run. The
+            // two it still declines are right to be — s11 and s36 each already had a Reaction FROM
+            // THE SEAT, and a creature has one reaction a round.
+            const seatWroteAReaction = () => (sections.Reactions ?? []).filter(Boolean).some((e) => e.authoredSeat);
+            const reactionSeatOpen = () => !seatWroteAReaction() && (sections.Reactions ?? []).filter(Boolean).length < 2;
             const form = !wrote ? null
               : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' }
                 : wrote.reactions[0] && reactionSeatOpen() ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions', fromTraitSeat: true } : null)
@@ -6627,7 +6637,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // Reaction and the sheet simply already had one — so the second ask was told to write
               // something it had not got wrong (the Vashka roll, 2026-11-17).
               if (seatKind === 'a trait' && wrote?.reactions?.[0] && !reactionSeatOpen()) {
-                return { declined: `it wrote a Reaction, which this seat can take — but "${String((sections.Reactions ?? []).filter(Boolean)[0]?.name ?? 'a Reaction')}" is already on the sheet and a creature gets one` };
+                const rx = (sections.Reactions ?? []).filter(Boolean);
+                return { declined: seatWroteAReaction()
+                  ? `it wrote a Reaction, which this seat can take — but the seat already wrote "${String(rx.find((e) => e.authoredSeat)?.name ?? 'one')}", and it never adds a second of its own`
+                  : `it wrote a Reaction, which this seat can take — but this sheet already carries ${rx.length} (${rx.map((e) => `"${e.name}"`).join(', ')}) and a sheet carries at most two` };
               }
               return refuse(`you wrote no row of the kind asked for (${seatKind})`); // `seatKind` carries its own article
             } else {

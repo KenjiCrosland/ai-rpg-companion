@@ -274,3 +274,86 @@ describe('the two things the first live run of this path found', () => {
     expect(Object.values(monster.sections ?? {}).flat().map((e) => e?.name)).not.toContain('Answering Peal');
   }, 30000);
 });
+
+/**
+ * TWO REACTIONS, AND THE HOLD ON A REACTION'S DAMAGE (owner's rulings, 2026-11-18).
+ *
+ * The seat's Reaction lands beside one the body, a kit or the catalog brought — Vashka's answers
+ * "fights from a shield wall", which her GM typed, and Riposte is what her kit happened to bring.
+ * It never adds a SECOND of its own, because a creature has one reaction a round, and a sheet
+ * carries at most two.
+ *
+ * And until the pricing question is settled, a save in a seat-written Reaction deals no damage: the
+ * checker's read does not count a Reaction at all, while the dice inside the save are sized by the
+ * save row's own rule.
+ */
+describe('two Reactions, and the damage hold', () => {
+  const buildWith = async (answers, { bodyReaction = null } = {}) => {
+    const seatPrompts = [];
+    let cached = null;
+    const m = await generateReskin({
+      mechanics: [], archetype: 'skirmisher', concept: CONCEPT, userConcept: CONCEPT, cr: 3,
+      path: { path: 'homebrew', print_body: null, relation: null, class: null },
+      ...(bodyReaction ? { seedRows: [bodyReaction] } : {}),
+    }, async (p0) => {
+      const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+      if (p.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: IDEA, section: 'trait', trigger: 'always', effect: 'other', family: 'none' } });
+      if (p.startsWith("A monster's signature ability has been described in plain words")) return JSON.stringify({ template: null, declined_because: 'no_fit', closest: null, missing: 'a toll that squeezes' });
+      if (p.startsWith('You are writing ONE ability')) { seatPrompts.push(p); return JSON.stringify(answers[Math.min(seatPrompts.length - 1, answers.length - 1)]); }
+      const rk = keysOf(p, 'renames');
+      if (rk.length || !cached) {
+        const renames = Object.fromEntries(rk.map((k, i) => [k, `Named Row${i}`]));
+        cached = JSON.stringify({ name: "Bell-Ringer's Ghost", type: 'Undead', size: 'Medium', alignment: 'Neutral Evil',
+          senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: {}, conditions: { condition_minor: 'Prone' }, melee_rider: 'none', projectile: 'sound', wildcard: '' });
+      }
+      return cached;
+    });
+    return m;
+  };
+  const rxOf = (m) => (m.sections?.Reactions ?? []).filter((e) => e?.name);
+
+  /** a Stone Giant brings print's own Deflect Missile, so the body's Reaction is real, not staged */
+  const onAStoneGiant = async (answers) => {
+    let cached = null;
+    const C = 'a stone giant who swats boulders back at their throwers';
+    return generateReskin({
+      mechanics: [], archetype: 'brute', concept: C, userConcept: C, cr: 7,
+      path: { path: 'twist', print_body: 'Stone Giant', relation: 'is', class: null },
+    }, async (p0) => {
+      const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+      if (p.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'It swats a blow back at whoever threw it.', section: 'trait', trigger: 'always', effect: 'other', family: 'none' } });
+      if (p.startsWith("A monster's signature ability has been described in plain words")) return JSON.stringify({ template: null, declined_because: 'no_fit', closest: null, missing: 'a swat that answers a blow' });
+      if (p.startsWith('You are writing ONE ability')) return JSON.stringify(answers[0]);
+      const rk = keysOf(p, 'renames');
+      if (rk.length || !cached) {
+        const renames = Object.fromEntries(rk.map((k, i2) => [k, `Named Row${i2}`]));
+        cached = JSON.stringify({ name: 'Boulder-Swatter', type: 'Giant', size: 'Huge', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'Giant', renames, damage_types: {}, conditions: { condition_minor: 'Prone' }, melee_rider: 'none', projectile: 'boulder', wildcard: '' });
+      }
+      return cached;
+    });
+  };
+  const A_SWAT = { traits: [], reactions: [{ clause: 'swats boulders back', name: 'Answering Swat',
+    trigger: 'A creature within 10 feet of the giant hits it with a melee attack',
+    response: 'The giant shoves that creature 10 feet away from it',
+    imposes: null, condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 1 }] };
+
+  test("the seat's Reaction lands beside the body's own", async () => {
+    const m = await onAStoneGiant([A_SWAT]);
+    const rx = rxOf(m);
+    expect(rx.map((e) => e.name)).toContain('Answering Swat');
+    expect(rx.some((e) => e.print)).toBe(true);           // print's Deflect Missile is still there
+    expect(rx.length).toBe(2);
+  }, 30000);
+
+
+
+  test('the seat never adds a SECOND Reaction of its own', async () => {
+    // the predicate the engine uses: a Reaction already stamped by the seat closes the path
+    const seatWrote = (rx) => rx.filter(Boolean).some((e) => e.authoredSeat);
+    const open = (rx) => !seatWrote(rx) && rx.filter(Boolean).length < 2;
+    expect(open([])).toBe(true);
+    expect(open([{ name: 'Riposte', template: 'riposte' }])).toBe(true);        // beside the body's
+    expect(open([{ name: 'Peal', authoredSeat: true }])).toBe(false);           // never a second of its own
+    expect(open([{ name: 'Riposte', template: 'riposte' }, { name: 'Parry', print: true }])).toBe(false); // at most two
+  });
+});
