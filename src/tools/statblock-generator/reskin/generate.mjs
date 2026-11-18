@@ -3805,6 +3805,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // failure, not a code one.
   const gapRecords = []; // the [gap] lines, emitted once the sheet is final so the outcome is the SHIPPED one
   let freeRowsUsed = 0;  // signature rows quoting none of the GM's words — the path sets the allowance (owner's ruling 2026-10-21)
+  /** Reactions whose save had its damage set aside by the hold — read onto the record below */
+  const reactionDamageHeld = [];
   let authored = null; let inlineGuessUsed = null; let inlineResolved = null; // the short form the kit and feature rows were stamped with, before the rows' form is settled
   const priceTheRound = (when) => {
     const rowsP = Object.entries(sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
@@ -4142,11 +4144,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // WHEN IT ENDS: the same thing that ends a save ROW's condition (`conditionClauseFor`) —
         // Grappled takes an escape DC, Prone self-ends and needs none, everything else takes
         // "until the end of its next turn". s20 and s10 both shipped a Deafened that never ended.
+        // THE HOLD: A SEAT-WRITTEN REACTION'S SAVE DEALS NO DAMAGE (owner's ruling, 2026-11-18).
+        //
+        // The checker's damage read does not count a Reaction at all — the Vampire with a 24 (7d6)
+        // Reaction reads 75 damage and offensive CR 12, with it and without it — while the dice
+        // INSIDE the save are sized by the save row's own rule. Priced like a save row and not
+        // counted like one, which is the shape of the defect the end-of-line repair was deleted for.
+        //
+        // It is held, not fixed: the condition and the movement stay, the damage flag is set aside,
+        // and the record says so. An attack-making Reaction is left alone (Riposte is in prod): an
+        // attack as a Reaction is one target and one attack's worth, where a save can be an area at
+        // 1.4 times an attack, on every creature in it, every round.
+        const damageHeld = !!r.save.damage;
         const parts = [
-          r.save.damage ? `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage` : '',
           r.save.condition ? conditionClause(r.save.condition) : '',
+          r.save.movement ? `the target is ${r.save.movement} straight ${/pushed/.test(String(r.save.movement)) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '',
         ].filter(Boolean);
-        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', ') || `${dice.avg} (${dice.dice}) ${r.save.type ?? 'Bludgeoning'} damage`, success: r.save.success ?? null };
+        if (damageHeld) {
+          trace('reaction damage set aside:', `"${r.name}" — the call set damage on this Reaction's save, and a Reaction's damage is not counted by the sheet's CR read, so the save keeps its ${r.save.condition ? `${r.save.condition} condition` : 'effect'} and deals none (owner's hold, 2026-11-18)`);
+          reactionDamageHeld.push(String(r.name));   // stamped onto the record once `monster` exists
+        }
+        // a save with nothing left to do is not a row: the refusal below catches it
+        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', '), success: r.save.success ?? null, heldDamage: damageHeld };
       })() : null;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response), ...(svF ? { save: svF } : {}) }, '2024', { properNouns: ownNouns() });
       return { name: r.name, text, authored: true, clause: r.clause, ...(r.save?.condition ? { imposes: r.save.condition } : {}), ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };
@@ -12051,6 +12070,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // free row. So the Adult Red Dragon shipped `free_rows: 1` and `expressed_rows: 1` with no free
     // row on the sheet at all, and anything reading the record disagreed with the block beside it.
     // Counted here, after the last pass that removes a row, the record cannot say that again.
+    if (monster.generation && reactionDamageHeld.length) monster.generation.reaction_damage_set_aside = [...new Set(reactionDamageHeld)];
     if (monster.generation) {
       const shipped = Object.values(monster.sections ?? {}).flat().filter(Boolean);
       const freeNow = shipped.filter((e) => e.freeRow);

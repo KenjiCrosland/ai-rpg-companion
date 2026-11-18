@@ -345,7 +345,24 @@ describe('two Reactions, and the damage hold', () => {
     expect(rx.length).toBe(2);
   }, 30000);
 
+  test('a save with damage true prints no dice, keeps its condition, and the record says so', async () => {
+    const withDamage = { traits: [], reactions: [{ ...A_REACTION_WITH_A_SAVE.reactions[0],
+      save: { ...A_REACTION_WITH_A_SAVE.reactions[0].save, damage: true, type: 'Thunder' } }] };
+    const m = await buildWith([withDamage]);
+    const row = rxOf(m).find((e) => e.name === 'Answering Peal');
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/Frightened condition until the end of its next turn/);
+    expect(row.text).not.toMatch(/\d+ \(\d+d\d+\)/);          // no dice
+    expect(row.text).not.toMatch(/Thunder damage/);
+    expect(m.generation.reaction_damage_set_aside).toContain('Answering Peal');
+  }, 30000);
 
+  test('a save with no damage flag is untouched and the record stays clean', async () => {
+    const m = await buildWith([A_REACTION_WITH_A_SAVE]);
+    const row = rxOf(m).find((e) => e.name === 'Answering Peal');
+    expect(row.text).toMatch(/Frightened condition until the end of its next turn/);
+    expect(m.generation.reaction_damage_set_aside).toBeUndefined();
+  }, 30000);
 
   test('the seat never adds a SECOND Reaction of its own', async () => {
     // the predicate the engine uses: a Reaction already stamped by the seat closes the path
