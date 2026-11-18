@@ -9538,7 +9538,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // a class-kit row are the GM's own; only the seat's rows stand down.
           for (let i = esC.length - 1; i >= 0; i -= 1) {
             const e = esC[i];
-            if (e.library || e.print || e.kit || e.part || e.feature) continue;
+            // A ROW THE AUTHORING SEAT WROTE IS NOT CHASSIS FILLER (2026-11-17). This pass clears a
+            // print body's Bonus Actions, Reactions and Traits of rows print does not define, and
+            // its own comment says a part, a species row, a feature and a kit row are the GM's own
+            // and only the SEAT's rows stand down — but that means the chassis's named mobility and
+            // flyby seats, guarded by `seatTraitNames` in the Traits branch below. The AUTHORING
+            // seat's row is the opposite thing: the model's answer to the GM's idea.
+            //
+            // It cost the whole Reaction path on its first live run. The Chapel Bell-Ringer's
+            // "Death Knell" landed in Reactions on the second try, and this line removed it with
+            // "is the seat's, not the Ghost's" — the Ghost prints no Reaction, so nothing replaced
+            // it and the sheet simply lost the row. 0 of the Reactions that landed survived to the
+            // sheet; the trace said they landed and the block did not carry them.
+            if (e.library || e.print || e.kit || e.part || e.feature || (e.authoredSeat && secC !== 'Traits')) continue;
             // THE CLASS PATH IS CLOSED TO CHASSIS FILLER IN EVERY SECTION (critic B, 2026-10-19):
             // the Traits branch below sweeps only a named seat's trait, so the leader chassis's
             // `rules` aura rode on a class sheet beside the kit's own Aura of Authority — two auras,

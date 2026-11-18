@@ -648,9 +648,17 @@ describe('a gate shapes an explicit ask, never removes it', () => {
   });
 
   test('a class-kit row the GM named survives the print pass', () => {
-    // "rogue" is in the words, so Cunning Action stays on the Imp's body
+    // "rogue" is in the words, so Cunning Action stays on the Imp's body.
+    //
+    // The pattern used to pin the whole line. On 2026-11-17 the guard gained one more case — a row
+    // the AUTHORING seat wrote outside Traits, because the paste was removing the seat's Reactions
+    // as chassis filler — and an exact-line match called that a failure. It asserts the four flags
+    // it is about, each on its own, so another case added beside them is not a regression here.
     const src = require('fs').readFileSync(require('path').join(__dirname, '../generate.mjs'), 'utf8');
-    expect(src).toMatch(/if \(e\.library \|\| e\.print \|\| e\.kit \|\| e\.part \|\| e\.feature\) continue;/);
+    const guard = src.split('\n').find((l) => /if \(e\.library \|\| e\.print \|\| e\.kit \|\| e\.part \|\| e\.feature/.test(l));
+    expect(guard).toBeTruthy();
+    for (const flag of ['library', 'print', 'kit', 'part', 'feature']) expect(guard).toContain(`e.${flag}`);
+    expect(guard).toContain('continue;');
   });
 
   test('a row whose name failed to parse never ships', () => {

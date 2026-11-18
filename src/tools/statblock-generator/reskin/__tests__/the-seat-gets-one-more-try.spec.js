@@ -203,3 +203,55 @@ describe('the trait seat and a Reaction', () => {
     expect((s.Reactions ?? []).length).toBe(1);
   }, 30000);
 });
+
+/**
+ * A SEAT-WRITTEN REACTION SURVIVES THE PRINT-CANON PASS (2026-11-17).
+ *
+ * The tests above drive a homebrew path, where the print-canon paste never runs — so they all passed
+ * while the Reaction path was dead on every print body. On the first live run the Chapel Bell-Ringer's
+ * "Death Knell" landed in Reactions on the second try and the paste removed it: "is the seat's, not
+ * the Ghost's". The Ghost prints no Reaction, so nothing replaced it and the sheet lost the row.
+ * Zero of the Reactions that landed reached a sheet, and the trace said they had landed.
+ */
+describe('a Reaction the seat wrote survives a print body', () => {
+  const buildOnAGhost = async (answers) => {
+    const seatPrompts = [];
+    let cached = null;
+    const m = await generateReskin({
+      mechanics: [], archetype: 'skirmisher', concept: "a chapel bell-ringer's ghost that tolls for the dying",
+      userConcept: "a chapel bell-ringer's ghost that tolls for the dying", cr: 4,
+      path: { path: 'twist', print_body: 'Ghost', relation: 'is', class: null },
+    }, async (p0) => {
+      const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+      if (p.startsWith('You are inventing the SIGNATURE ability')) {
+        return JSON.stringify({ trait: { idea: 'When the bell is struck the blow sets it tolling.', section: 'trait', trigger: 'always', effect: 'other', family: 'none' } });
+      }
+      if (p.startsWith("A monster's signature ability has been described in plain words")) {
+        return JSON.stringify({ template: null, declined_because: 'no_fit', closest: null, missing: 'a toll that answers a blow' });
+      }
+      if (p.startsWith('You are writing ONE ability')) { seatPrompts.push(p); return JSON.stringify(answers[Math.min(seatPrompts.length - 1, answers.length - 1)]); }
+      const rk = keysOf(p, 'renames');
+      if (rk.length || !cached) {
+        const renames = Object.fromEntries(rk.map((k, i) => [k, `Named Row${i}`]));
+        cached = JSON.stringify({ name: "Chapel Bell-Ringer", type: 'Undead', size: 'Medium', alignment: 'Neutral Evil',
+          senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: {},
+          conditions: { condition_minor: 'Prone' }, melee_rider: 'none', projectile: 'sound', wildcard: '' });
+      }
+      return cached;
+    });
+    return m;
+  };
+
+  test('it is in Reactions on the finished sheet, not swept as chassis filler', async () => {
+    const m = await buildOnAGhost([A_VALID_REACTION]);
+    const rx = (m.sections?.Reactions ?? []).filter((e) => e?.name).map((e) => String(e.name));
+    expect(rx).toContain('Answering Peal');
+  }, 30000);
+
+  test('and so does one that forces a save through the fields', async () => {
+    const m = await buildOnAGhost([A_REACTION_WITH_A_SAVE]);
+    const row = (m.sections?.Reactions ?? []).filter(Boolean).find((e) => e?.name === 'Answering Peal');
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/\*Response—Wisdom Saving Throw:\*/);
+  }, 30000);
+});
