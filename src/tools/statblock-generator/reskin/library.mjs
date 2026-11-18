@@ -42,7 +42,7 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* Until the start of the creature's next turn, the target has Disadvantage on attack rolls against creatures other than the creature.",
   },
   {
-    key: 'obstacle-pull', keys: ['pull', 'yank', 'reel', 'beckon'],
+    key: 'obstacle-pull', moves: 'toward', keys: ['pull', 'yank', 'reel', 'beckon'],
     // A PULL AT RANGE IS A REACHING HOLD (2026-11-11). Its own text reaches 60 feet and
     // hauls the target in, which is the same body question `hook-drag` and `reel` answer
     // with `hold_shape: 'reach'` — and this seed carried no shape, so the gate the owner
@@ -139,7 +139,7 @@ export const LIBRARY_SEEDS = [
   },
   // ——— forced movement ———
   {
-    key: 'push-prone', imposes: 'Prone', keys: ['shove', 'topple', 'slam', 'bowl'],
+    key: 'push-prone', imposes: 'Prone', moves: 'away', keys: ['shove', 'topple', 'slam', 'bowl'],
     section: 'Actions', archetypes: ['brute', 'defender'],
     name: 'Sundering Shove', // the Topple Foe / push class
     text: '*Strength Saving Throw:* DC {dc}, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.',
@@ -156,7 +156,7 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature. *Failure:* {burst} {damage_type} damage, and the target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
-    key: 'hook-drag', imposes: 'Grappled', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    key: 'hook-drag', moves: 'toward', imposes: 'Grappled', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
     keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Hooked Lash', // the whip-and-drag class
@@ -382,6 +382,13 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
     // prone already): a pure-control seed never draws into a sheet
     // that already imposes its payload condition
     && !(seed.key === 'push-prone' && imposed.includes('Prone'))
+    // A BODY THAT HOLDS IS NOT GIVEN A ROW THAT PUSHES ITS PREY AWAY (item 1.6, 2026-11-18). The
+    // Mire Hound's Bite grapples and then "Sundering Shove" pushed the target 15 feet away from it;
+    // the Well Drowned Worm's Coil did the same. Both drew this seed as a STAND-IN when no template
+    // held the idea — and on the hound the idea was the opposite direction, a Bite that "pulled the
+    // target into the hound's space". `moves` is declared on the three seeds that move a target, so
+    // the pull seeds (obstacle-pull, hook-drag) still deal to a grappler, which is where they belong.
+    && !(seed.moves === 'away' && imposed.includes('Grappled'))
     && !(seed.minCr && (cr ?? scaled.cr ?? 99) < seed.minCr);
   const shelf = LIBRARY_SEEDS.filter((seed) => (!archetype || seed.archetypes.includes(archetype)) && legal(seed));
   if (!shelf.length) return null;
