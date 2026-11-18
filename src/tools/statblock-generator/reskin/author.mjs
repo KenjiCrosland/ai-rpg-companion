@@ -456,7 +456,26 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     passive_effect: PASSIVE_EFFECTS.includes(t?.passive_effect) ? t.passive_effect : null })).filter((t) => t.name && t.effect && t.passive_effect !== 'none');
   // a trait is not a save (a prose save belongs in the save form — the wyrm's "must succeed on a DC 21 Dexterity saving throw" trait, step 7 twelve), and {dc} stands only where a DC stands ("within {dc} feet" is not a DC)
   // an unquantified heal is refused: it must carry {dmg} and a trigger or a limit (critic A8, 2026-10-18 — Heal the Faithful, Harbour-Mud Rising, Gleeful Growth, Waxen Reknitting)
-  const healOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:regains?|restores?|heals?|recovers?)\b[^.]*\bhit points\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && (!!t.trigger || /\b(?:\d\/Day|Recharge|once)\b/i.test(tx)); };
+  // A ROW THAT DENIES HEALING IS NOT A HEAL (fix 3, 2026-11-18).
+  //
+  // This matched "regain ... hit points" and then asked for an amount, so the tollkeeper's trait
+  // was refused twice: "When the tollkeeper hits a creature with Necrotic Clapper, the target is
+  // marked as dying; until the end of the tollkeeper's next turn, the marked creature CANNOT regain
+  // hit points." There is no amount to name, because nothing is healed. It is the Mummy's own
+  // sentence, and since this morning it is also the owner's severe curse.
+  //
+  // The denial is read in the SENTENCE THE VERB SITS IN, so a denial elsewhere in a long trait does
+  // not excuse a heal that names no amount. These words are the owner's own from the handoff.
+  const DENIES_HEALING = /\b(?:can't|cannot|can not|won't|will not|doesn't|does not|unable to|no longer|never)\b|\bgains no benefit\b/i;
+  const healOk = (t) => {
+    const tx = `${t.trigger ?? ''} ${t.effect}`;
+    const m = /\b(?:regains?|restores?|heals?|recovers?)\b[^.]*\bhit points\b/i.exec(tx);
+    if (!m) return true;
+    const from = tx.lastIndexOf('.', m.index) + 1;
+    const to = tx.indexOf('.', m.index + m[0].length);
+    if (DENIES_HEALING.test(tx.slice(from, to === -1 ? undefined : to))) return true;
+    return /\{dmg\}/.test(tx) && (!!t.trigger || /\b(?:\d\/Day|Recharge|once)\b/i.test(tx));
+  };
   // AN ESCALATION NAMES ITS AMOUNT (critic's table read, 2026-10-25: Glacier's
   // Heart, "this bonus increases each time it applies" — no amount, unadjudicable
   // at the table; and "resets when the heart regains Hit Points" beside
