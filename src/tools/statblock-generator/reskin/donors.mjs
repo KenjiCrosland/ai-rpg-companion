@@ -1022,7 +1022,14 @@ export const DONORS = [
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
-        { name: 'Legendary Wrecking Path', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks. During this movement, it can move through Large or smaller objects and structures, destroying them.' },
+        // NOT THE SAME MOVE TWICE (fix 4, 2026-11-18). The owner on the Brass Tyrant: "anvil advance
+        // and forge wreck are almost dupes". Both rows opened "moves up to half its Speed without
+        // provoking Opportunity Attacks", so the pair read as one move done twice — a legendary
+        // menu where two of three options start identically. At its full Speed it is a long charge
+        // through walls beside a short step with a blow, which is print's own pair: the Tarrasque's
+        // Onslaught is half its Speed and an attack, World-Shaking Movement is its full Speed. This
+        // chassis's sibling brute-17-charger already writes its Stampede at full Speed.
+        { name: 'Legendary Wrecking Path', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. During this movement, it can move through Large or smaller objects and structures, destroying them.' },
         { name: 'Legendary Ground Stomp', imposes: 'Prone', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
