@@ -54,7 +54,6 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     `- {dmg} IS DAMAGE AND {dc} IS A SAVE DC. Never write {dmg} where a COUNT belongs — a number of uses, attacks or legendary actions is a plain small integer you write yourself ("can take 3 legendary actions"), because a GM cannot take 4d6 of anything. If a row should be limited, say so with its limit ("1/Day", "Recharge 5-6") and not with a number in the sentence.`,
     `- NEVER PROMISE A LIST YOU DO NOT WRITE. "choosing from the options below", "one of the following" and "as listed below" each require the options to follow IN THIS SAME row's text; a row that promises them and stops is a dead row a GM cannot run.`,
     `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises }.`,
-    `- A REACTION THAT FORCES A SAVE writes the save in FIELDS, never as prose in the response: add "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "damage": true|false, "type": a damage type or null, "condition": one of ${CONDITIONS.join('/')} or null, "success": one line or null }. Leave the response out when the save IS the whole response. The engine writes the DC and the dice and renders it after "Response", the way a published monster does: *Trigger:* … *Response—Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* … A saving throw written as a sentence inside "response" is refused.`,
     `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
     `- "heals" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.`,
     `- "quantities" ON A TRAIT OR REACTION: how many separate NUMBERS the row needs a table to know — every damage amount, every distance or area size, every bonus or penalty. Count them and answer the number. Then WRITE every one of them: {dmg} for damage the engine should fill, {dc} for a save DC, and a literal number for a distance or an area ("a 15-foot Emanation", "within 30 feet"). A row that promises a number and does not write it cannot be run at a table and is refused — "gains Temporary Hit Points" with no amount, "an Emanation" with no size, "deals extra Fire damage" with no amount. If the row needs no numbers at all, answer 0. A BONUS YOU ONLY DESCRIBE IS STILL A NUMBER: "deals extra Fire damage", "gains Temporary Hit Points", "is fiercer while Bloodied" each need an amount a table can read, so COUNT them. If you cannot give the amount as {dmg}, do not promise it.`,
@@ -216,6 +215,15 @@ Write the ability again, in a form that does not have that fault. Keep what the 
 fiction and the mechanic are not the problem — and change only what the reason names. The same
 checks run on this answer, so an answer that repeats the fault is refused and the creature ships
 without the ability.
+
+IF THE REASON SENDS YOU TO A REACTION: answer in "reactions" with { "clause", "name", "trigger": one
+sentence, "response": one sentence }. If the ability forces a saving throw, leave "response" out and
+answer "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "damage":
+true|false, "type": a damage type or null, "condition": one of ${CONDITIONS.join('/')} or null,
+"success": one line or null }. The engine writes the DC and the dice and renders it after
+"Response", the way a published monster does: *Trigger:* … *Response—Wisdom Saving Throw:* DC 15,
+the triggering creature. *Failure:* … A saving throw written as a sentence inside "response" is
+refused.
 
 If the ability genuinely cannot be written as one of these forms, say so the way this prompt
 already describes: name where it belongs instead of writing a row. That is an answer, and it is
