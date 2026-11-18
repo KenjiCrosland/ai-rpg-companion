@@ -160,3 +160,61 @@ describe('a multiattack cites a row as the row is named', () => {
     expect(ma(chimera.sections).text).not.toMatch(/Fire Breath[^.]*\(Recharge/); // and cited bare
   });
 });
+
+/**
+ * THE 2014 CONVERSION DOES NOT CHANGE WHAT THE MULTIATTACK ALLOWS (item 1.5, 2026-11-18).
+ *
+ * The 2024 row grants a free choice — "makes two attacks, using Stone Club or Boulder in any
+ * combination" — and the 2014 renderer turned that into "makes two attacks: one with its Stone Club
+ * and one with its Boulder", which forces one of each. The Barrowstone Exile had to throw a boulder
+ * every round, the Riverbank Reed-Ascetic a dart, Brother Halric a Radiant Flame.
+ *
+ * Measured on the saved sheets: of 37 whose 2024 Multiattack says "in any combination", 19 shipped a
+ * 2014 half that forced one of each — s32, s33 and s40 in every run of the forty. (s34 escaped only
+ * because its conversion call failed into the degraded path, which skips this renderer entirely.)
+ *
+ * `multiattack2014` only ever runs on a row that says "in any combination", so the enumerated form
+ * can never be honest in it, and it is deleted rather than guarded. The `LAUNCHER` word list that
+ * used to carve out the one case anybody had noticed — a bow beside a sword, which forced Sir
+ * Reginald a crossbow shot a round — went with it.
+ */
+describe('the 2014 conversion does not change what the Multiattack allows', () => {
+  const { multiattack2014 } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+  const FREE = /using .* or /;
+
+  test('a two-name, two-attack row keeps the choice instead of forcing one of each', () => {
+    const out = multiattack2014('The exile makes two attacks, using Stone Club or Boulder in any combination.');
+    expect(out).toBe('The exile makes two attacks, using Stone Club or Boulder.');
+    expect(out).not.toMatch(/one with/);
+    expect(out).toMatch(FREE);
+  });
+
+  test('the three sheets that shipped a forced pairing all keep their choice', () => {
+    for (const [src, want] of [
+      ['The exile makes two attacks, using Stone Club or Boulder in any combination.', 'The exile makes two attacks, using Stone Club or Boulder.'],
+      ['The reed-ascetic makes two attacks, using Unarmed Strike or Dart in any combination.', 'The reed-ascetic makes two attacks, using Unarmed Strike or Dart.'],
+      ['Halric makes two attacks, using Mace or Radiant Flame in any combination.', 'Halric makes two attacks, using Mace or Radiant Flame.'],
+    ]) expect(multiattack2014(src)).toBe(want);
+  });
+
+  test('a bow beside a sword needs no word list any more', () => {
+    expect(multiattack2014('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow in any combination.'))
+      .toBe('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow.');
+  });
+
+  test('ONE name is still collapsed, which is print 2014\'s own form', () => {
+    expect(multiattack2014('The bog hound makes two attacks, using Mud-Caked Jaws in any combination. It can replace one attack with a use of Drag Under.'))
+      .toBe('The bog hound makes two Mud-Caked Jaws attacks. It can replace one attack with a use of Drag Under.');
+  });
+
+  test('more attacks than names, and the replace clause, are unchanged', () => {
+    expect(multiattack2014('Meshrin makes three attacks, using Greataxe or Javelin in any combination. It can replace one attack with a use of Frightening Roar.'))
+      .toBe('Meshrin makes three attacks, using Greataxe or Javelin. It can replace one attack with a use of Frightening Roar.');
+    expect(multiattack2014('Meshrin makes two attacks, using Greatsword, Tail Swipe, Razor Claws or Vicious Bite in any combination.'))
+      .toBe('Meshrin makes two attacks, using Greatsword, Tail Swipe, Razor Claws, or Vicious Bite.');
+  });
+
+  test('a row with no combination clause is left to the grammar pass', () => {
+    expect(multiattack2014('The hydra makes as many Bite attacks as it has heads.')).toBe('The hydra makes as many Bite attacks as it has heads.');
+  });
+});

@@ -143,7 +143,12 @@ describe('print on an exact body (step 8 fix round)', () => {
 describe('the 2014 Multiattack is rendered, never translated', () => {
   test('one row, as many names as attacks, and a mixed set', () => {
     expect(multiattack2014('The bog hound makes two attacks, using Mud-Caked Jaws in any combination. It can replace one attack with a use of Drag Under.')).toBe('The bog hound makes two Mud-Caked Jaws attacks. It can replace one attack with a use of Drag Under.');
-    expect(multiattack2014('The knight makes two attacks, using Blade or Shield Bash in any combination.')).toBe('The knight makes two attacks: one with its Blade and one with its Shield Bash.');
+    // THE ENUMERATED FORM IS GONE (item 1.5, 2026-11-18). This line used to expect
+    // "two attacks: one with its Blade and one with its Shield Bash", which commits to both names
+    // where the 2024 row granted a free choice — the Barrowstone Exile had to throw a boulder every
+    // round, Brother Halric a Radiant Flame. 19 of the 37 saved sheets whose 2024 Multiattack says
+    // "in any combination" shipped that forced pairing.
+    expect(multiattack2014('The knight makes two attacks, using Blade or Shield Bash in any combination.')).toBe('The knight makes two attacks, using Blade or Shield Bash.');
     expect(multiattack2014('Grandmother makes three attacks, using Long Black Nails or Hurled Debris in any combination. It can replace one attack with a use of Choke Ash.')).toBe('Grandmother makes three attacks, using Long Black Nails or Hurled Debris. It can replace one attack with a use of Choke Ash.');
     expect(multiattack2014('Meshrin makes two attacks, using Greatsword, Tail Swipe, Razor Claws or Vicious Bite in any combination.')).toBe('Meshrin makes two attacks, using Greatsword, Tail Swipe, Razor Claws, or Vicious Bite.');
     expect(to2014Grammar('One creature within 60 feet must make a DC 14 Constitution saving throw, taking 14 (4d6) necrotic damage on a failed save, and is poisoned until the end of its next turn on a failed save.')).toBe('One creature within 60 feet must make a DC 14 Constitution saving throw, taking 14 (4d6) necrotic damage on a failed save. On a failed save, the target is also poisoned until the end of its next turn.'); // the Ash Choke double (step 6 round three)

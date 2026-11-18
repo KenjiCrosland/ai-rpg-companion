@@ -1678,18 +1678,23 @@ export function multiattack2014(text) {
   const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
   const names = combo[2].split(/,\s*|\s+or\s+/).map((x) => x.trim().replace(/^or\s+/i, '')).filter(Boolean); // an Oxford comma left "or Fiery Mace" as a name → "or or" (check-in 2026-10-11)
   const n = WORDS[combo[1].toLowerCase()] ?? Number(combo[1]);
-  const its = /^(?:The|the) /.test(t) ? 'its ' : ''; // a named person's Multiattack does not say "its"
   const list = (xs, joiner) => (xs.length === 2 ? xs.join(` ${joiner} `) : `${xs.slice(0, -1).join(', ')}, ${joiner} ${xs.at(-1)}`);
-  // THE ENUMERATED FORM COMMITS TO EVERY NAME, so it is only honest when one
-  // creature can use them all in a turn. A launcher beside a melee weapon cannot
-  // be (flagged three times: Sir Reginald's "one with Greatsword and one with
-  // Heavy Crossbow" forced a crossbow shot every round) — print writes those as
-  // a choice. The combination form carries the choice.
-  const LAUNCHER = /\b(?:bow|longbow|shortbow|crossbow|sling|musket|pistol|rifle|blowgun|firearm|gun|cannon)\b/i;
-  const mixedReach = names.some((x) => LAUNCHER.test(x)) && names.some((x) => !LAUNCHER.test(x));
+  // THE CONVERSION DOES NOT CHANGE WHAT THE MULTIATTACK ALLOWS (item 1.5, 2026-11-18).
+  //
+  // THE ENUMERATED FORM IS GONE. It read "makes two attacks: one with its Stone Club and one with
+  // its Boulder" whenever the creature named exactly as many rows as it had attacks — and that
+  // commits to every name, where the 2024 row it came from granted a free choice. The Barrowstone
+  // Exile had to throw a boulder every round, the Riverbank Reed-Ascetic a dart, Brother Halric a
+  // Radiant Flame. Measured on the saved sheets: of 37 whose 2024 Multiattack says "in any
+  // combination", 19 shipped a 2014 half that forced one of each — s32, s33 and s40 in every run.
+  //
+  // It can never be honest here: this function only runs on a row that says "in any combination",
+  // which is the 2024 way of writing a free choice. Print 2014 enumerates only where the 2014 block
+  // itself commits, and ours never does. So the choice form is the only form, and the `LAUNCHER`
+  // word list that used to carve out the one case anybody had noticed — a bow beside a sword, which
+  // forced Sir Reginald a crossbow shot a round — goes with the branch it guarded.
   const rep = names.length === 1 ? `makes ${combo[1]} ${names[0]} attacks`
-    : names.length === n && !mixedReach ? `makes ${combo[1]} attacks: ${list(names.map((x) => `one with ${its}${x}`), 'and')}`
-      : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
+    : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
   return to2014Grammar(t.replace(combo[0], rep));
 }
 // THE ONE CLOSED LOWERCASING RULE for this converter (N4, 2026-11-02). 2024 writes

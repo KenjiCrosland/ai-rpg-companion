@@ -1584,16 +1584,21 @@ describe('the 2014 gate polish (smoke 2026-09-14)', () => {
 // time flagged, still open"). Each of these had been reported across several
 // reads and each is a one-rule fix in the layer that owns it.
 describe('the three the critic flagged three times (2026-10-13)', () => {
-  test('a 2014 Multiattack never forces a launcher shot beside a melee swing', () => {
+  test('a 2014 Multiattack never forces a second weapon, launcher or not', () => {
     const { multiattack2014 } = require('../format-2024/generate.mjs');
     // Sir Reginald read "one with Greatsword and one with Heavy Crossbow" — a crossbow shot every turn
     expect(multiattack2014('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow in any combination.'))
       .toBe('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow.');
     expect(multiattack2014('The guard makes two attacks, using Spear or Shortbow in any combination.'))
       .toMatch(/using Spear or Shortbow\.$/);
-    // print's own enumerated form stands where one body can use them all in a turn (the Chimera)
+    // THE ENUMERATED FORM IS GONE ENTIRELY (item 1.5, 2026-11-18), so this is no longer the
+    // launcher's exception — it is the rule. The 2024 row says "in any combination", which grants a
+    // free choice, and committing to both names changes what the creature may do: 19 of the 37 saved
+    // sheets with that phrase shipped a forced pairing (s32, s33 and s40 in every run of the forty).
+    // Print 2014 enumerates where its own block commits; ours never does. The `LAUNCHER` list this
+    // test was written for went with the branch.
     expect(multiattack2014('The chimera makes two attacks, using Bite or Horns in any combination.'))
-      .toBe('The chimera makes two attacks: one with its Bite and one with its Horns.');
+      .toBe('The chimera makes two attacks, using Bite or Horns.');
     expect(multiattack2014('The ogre makes two attacks, using Greatclub in any combination.'))
       .toBe('The ogre makes two Greatclub attacks.');
   });
