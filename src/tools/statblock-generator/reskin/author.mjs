@@ -552,7 +552,11 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
-    : !r.trigger || !r.response ? 'a reaction needs both a trigger and a response'
+    // A REACTION WHOSE SAVE IS THE WHOLE RESPONSE NEEDS NO PROSE RESPONSE (2026-11-17). The prompt
+    // says to leave it out in that case, and this line refused exactly that — the Drowned Choir's
+    // second answer came back as the Reaction the reason had asked for and was turned away for the
+    // shape the prompt told it to use.
+    : !r.trigger || (!r.response && !r.save) ? 'a reaction needs a trigger, and either a response or a save'
       : !quantitiesOk(r) ? `the call counts ${r.quantities} number(s) the row promises and only ${quantitiesStated(r)} are written — a promised amount, area or bonus with no number cannot be run`
       : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'
       : damagesAndHeals(r) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'

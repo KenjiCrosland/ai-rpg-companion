@@ -6608,6 +6608,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // THE CALL MAY DECLINE, and a decline is an answer: it named where the clause belongs
               // and wrote no row to fault. That is its judgement, and it is not asked again.
               if ((wrote?.unplaced ?? []).length) return { declined: `it belongs in the ${wrote.unplaced[0].where}` };
+              // A REACTION BLOCKED BY AN EXISTING ONE SAYS SO. Without this the reason read "you wrote
+              // no row of the kind asked for (a trait)" when the call had written a perfectly good
+              // Reaction and the sheet simply already had one — so the second ask was told to write
+              // something it had not got wrong (the Vashka roll, 2026-11-17).
+              if (seatKind === 'a trait' && wrote?.reactions?.[0] && !reactionSeatOpen()) {
+                return { declined: `it wrote a Reaction, which this seat can take — but "${String((sections.Reactions ?? []).filter(Boolean)[0]?.name ?? 'a Reaction')}" is already on the sheet and a creature gets one` };
+              }
               return refuse(`you wrote no row of the kind asked for (${seatKind})`); // `seatKind` carries its own article
             } else {
               const row = authoredRow(form.kind, form.f);

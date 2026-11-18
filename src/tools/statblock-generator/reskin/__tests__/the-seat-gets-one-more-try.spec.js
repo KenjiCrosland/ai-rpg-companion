@@ -255,3 +255,22 @@ describe('a Reaction the seat wrote survives a print body', () => {
     expect(row.text).toMatch(/\*Response—Wisdom Saving Throw:\*/);
   }, 30000);
 });
+
+describe('the two things the first live run of this path found', () => {
+  test('a Reaction whose SAVE is the whole response needs no prose response', async () => {
+    // the prompt tells the call to leave the response out when the save is the whole of it, and
+    // `reactionWhy` refused exactly that — so the Drowned Choir's second answer came back in the
+    // form the reason had asked for and was turned away for the shape the prompt told it to use
+    const noProse = { traits: [], reactions: [{ ...A_REACTION_WITH_A_SAVE.reactions[0], response: '' }] };
+    const { monster } = await build([noProse]);
+    const row = Object.values(monster.sections ?? {}).flat().find((e) => e?.name === 'Answering Peal');
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/\*Response—Wisdom Saving Throw:\*/);
+  }, 30000);
+
+  test('a reaction with neither a response nor a save is still refused', async () => {
+    const neither = { traits: [], reactions: [{ ...A_VALID_REACTION.reactions[0], response: '' }] };
+    const { monster } = await build([neither, neither]);
+    expect(Object.values(monster.sections ?? {}).flat().map((e) => e?.name)).not.toContain('Answering Peal');
+  }, 30000);
+});
