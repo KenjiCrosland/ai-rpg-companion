@@ -4,6 +4,14 @@ For the owner, 2026-11-18. Beside `BLOCKS-checkpoint-2026-11-18.md`. Nothing her
 
 **40 of 40 generated. 0 threw, 0 timed out. 10.70 model calls and 30.4 seconds a sheet.**
 
+> **Corrected 2026-11-18**, after the review found three of these numbers unreadable.
+> The second-asks section was LAST round's run — my repointing edit did not match the path it
+> was pointed at, so the figures below it were `run5`'s 10-in-14, not this forty's. A read that
+> came back as a CR string the average could not take (`def: "1/2"`) scored NaN as "within one",
+> so s01, s02 and s19 were counted in band with no read at all. And "not on a printed body" was
+> guessed from the creature's name instead of the sheet's own path, which over-counted the
+> invented outliers at 6 where the row-count script's denominator gives 4.
+
 ## Rows against print's band
 ```
 03-owlbear                    twist         3     2  3-5    2-5      below the median
@@ -54,10 +62,14 @@ For the owner, 2026-11-18. Beside `BLOCKS-checkpoint-2026-11-18.md`. Nothing her
 ```
 
 ## The checker's CR read against the stated CR
+
+On a printed body this gauge does not follow a Multiattack that names several different attacks —
+the Pit Fiend reads 10 against 20, and print's own Purple Worm reads 11.5 against 15. The eight
+printed bodies in the outside list say more about the gauge than about the sheets.
 ```
 sheet                           CR  off  def  read   verdict
-01-dire-wolf                     1    2  1/2   NaN   within one
-02-mire-hound                    1    1  1/4   NaN   within one
+01-dire-wolf                     1    2  1/2   1.3   within one
+02-mire-hound                    1    1  1/4   0.6   within one
 03-owlbear                       3    5    2   3.5   within one
 04-tollkeeper-of-the-chapel      3    5    3     4   within one
 05-air-elemental                 5    5    5     5   within one
@@ -74,7 +86,7 @@ sheet                           CR  off  def  read   verdict
 16-brass-tyrant                 17   24   12    18   within one
 17-pit-fiend                    20   10   20    15   OUTSIDE the band of one (-5)
 18-archlich-of-the-bone-sun     20   20   19  19.5   within one
-19-ancient-gold-dragon          24    0undefined   NaN   within one
+19-ancient-gold-dragon          24    0undefined     0   OUTSIDE the band of one (-24)
 20-trenchsong-leviathan         24   27   24  25.5   OUTSIDE the band of one (+1.5)
 21-owlbear                       3    5    2   3.5   within one
 22-goblin-boss                   1    1    4   2.5   OUTSIDE the band of one (+1.5)
@@ -97,7 +109,10 @@ sheet                           CR  off  def  read   verdict
 39-veteran-sellsword             5    5    5     5   within one
 40-brother-halric                3    3    1     2   within one
 
-  outside the band of one: 11 of 40 — 07-hydra, 11-vampire, 13-purple-worm, 14-glacierheart, 17-pit-fiend, 20-trenchsong-leviathan, 22-goblin-boss, 25-blackiron-sentinel, 28-ilvareth-dusksong, 30-reliquary-vault-ooze, 37-meshrin
+  read at all: 40 of 40
+  outside the band of one: 12 of 40 read — 07-hydra, 11-vampire, 13-purple-worm, 14-glacierheart, 17-pit-fiend, 19-ancient-gold-dragon, 20-trenchsong-leviathan, 22-goblin-boss, 25-blackiron-sentinel, 28-ilvareth-dusksong, 30-reliquary-vault-ooze, 37-meshrin
+  of those, INVENTED (path homebrew): 4 — 14-glacierheart (-2), 20-trenchsong-leviathan (+1.5), 25-blackiron-sentinel (-2), 30-reliquary-vault-ooze (-2.5)
+  on a printed body (twist or exact), where the gauge is known not to follow a multi-weapon Multiattack: 8
 ```
 
 ## The seats
@@ -111,37 +126,40 @@ seat refused twice:                8
 seat stands down:                  1
 ```
 
-## The second asks, by reason and by form
+## The second asks, by reason and by form — THIS forty
 ```
-first-try refusals re-asked: 14
-  landed on the second try: 10
-  refused again:            4
+first-try refusals re-asked: 15
+  landed on the second try: 7
+  refused again:            8
 
 === by the FIRST refusal's reason ===
-  4/5  a trait is not a save
-  3/5  a number promised and not written
-  2/2  no row of the kind asked
-  0/1  other
-  1/1  a condition on a hit written as a trait
+  4/6  a trait is not a save
+  0/2  a number promised and not written
+  0/2  no row of the kind asked
+  2/2  other
+  0/1  a heal naming no amount
+  1/1  a condition two rows already impose
+  0/1  more than one mechanic in a row
 
 === did the second answer repeat the same fault? ===
-  same reason twice: 0 of 4 refused-twice
+  same reason twice: 2 of 8 refused-twice
 
 === each one ===
-  04-chapel-bell-ringer      trait   LANDED         first: a trait is not a save               row: Knell of the Struck Bell
-  08-orchard-ram-golem       trait   refused twice  first: a number promised and not written   second: a trait is not a save
-  10-drowned-choir           trait   LANDED         first: a number promised and not written   row: The Wound Passes Through the Chord
-  11-vampire                 trait   LANDED         first: a trait is not a save               row: Thorn-Quick Revenge
-  14-glacier-heart           action  LANDED         first: a number promised and not written   row: Rimewake
-  16-molten-king             action  LANDED         first: no row of the kind asked            row: Weld to the Hand
-  17-pit-fiend               action  refused twice  first: other                               second: no row of the kind asked
-  22-vashka-the-red          trait   refused twice  first: a trait is not a save               second: other
-  27-ilvareth-dusksong       trait   LANDED         first: a trait is not a save               row: Gloamwake
-  28-unblessed-bell-swarm    trait   LANDED         first: a condition on a hit written as a traitrow: Toll Buries Deep
-  32-steamclaw-ascetic       action  refused twice  first: a number promised and not written   second: other
-  35-meshrin                 action  LANDED         first: no row of the kind asked            row: Bone-Challenge
-  36-unyielded-champion      action  LANDED         first: a number promised and not written   row: Steps Through the Swing
-  38-brother-halric          trait   LANDED         first: a trait is not a save               row: Confession of Seams
+  01-dire-wolf               trait   LANDED         first: a trait is not a save               row: Rimefell Hide
+  04-tollkeeper-of-the-chapel trait   refused twice  first: a heal naming no amount             second: a heal naming no amount
+  05-air-elemental           trait   refused twice  first: a number promised and not written   second: a trait is not a save
+  09-stone-golem             trait   LANDED         first: a trait is not a save               row: Tears of Remorse
+  20-trenchsong-leviathan    trait   refused twice  first: a trait is not a save               second: other
+  23-vashka-the-red          action  refused twice  first: no row of the kind asked            second: other
+  27-oathbroken-warder       action  LANDED         first: other                               row: Hold the Line
+  29-swarm-of-funeral-bells  trait   LANDED         first: a trait is not a save               row: Knellsong
+  31-thunderwall-drake       action  refused twice  first: a trait is not a save               second: no row of the kind asked
+  31-thunderwall-drake       trait   refused twice  first: no row of the kind asked            second: a trait is not a save
+  33-riverbank-reed-ascetic  action  LANDED         first: other                               row: River's Reversal
+  34-krennik-skullstandard   action  LANDED         first: a condition two rows already impose row: Scything Standard
+  35-well-drowned-worm       action  refused twice  first: a number promised and not written   second: other
+  36-brinefast-warden        trait   LANDED         first: a trait is not a save               row: Rooted in the Brine
+  39-veteran-sellsword       action  refused twice  first: more than one mechanic in a row     second: more than one mechanic in a row
 ```
 
 ## The audit's findings
