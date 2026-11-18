@@ -81,9 +81,13 @@ describe('a row written for a typed clause survives the print-canon pass', () =>
    * Purple Worm's clause-bound armoury now stays.
    */
   test('the skip requires the binding — an unbound row is not exempt', () => {
-    const exempt = (row) => !!(row.clauseId || (row.authoredSeat && row.clause));
+    // THE PRODUCT'S OWN PREDICATE, imported. The first version of this declared a copy of the rule
+    // in the test file and asserted on that, so it would have passed with the product line deleted.
+    const { printCanonExempt: exempt } = require('../generate.mjs');
     expect(exempt({ name: 'Vomited Armoury', clauseId: 'cl_bn8lu2' })).toBe(true);
-    expect(exempt({ name: 'Vomited Armoury', authoredSeat: true, clause: "swallowed a war-band's armoury" })).toBe(true);
+    // NARROWED 2026-11-18: a seat row's own `clause` can hold the model's idea rather than the GM's
+    // words, so only the engine's join key exempts a row
+    expect(exempt({ name: 'Molten Seam', authoredSeat: true, clause: 'The Brass Tyrant slams its molten fist into the ground, ' })).toBe(false);
     expect(exempt({ name: 'Area Nova' })).toBe(false);                       // the chassis's own
     expect(exempt({ name: 'Area Nova', authoredSeat: true })).toBe(false);   // written, but for nothing typed
     expect(exempt({ name: 'Breath Weapon', print: true })).toBe(false);      // print's, skipped earlier anyway

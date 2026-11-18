@@ -70,6 +70,24 @@ import { renderForm, resolutionOf } from './forms.mjs';
 export const PRINT_CARD_ROWS = { '0-2': [1, 4], '3-5': [2, 5], '6-9': [3, 5], '10-12': [4, 7], '13-16': [5, 10], '17-20': [7, 9], '21+': [8, 10] };
 export const PRINT_CARD_MEDIAN = { '0-2': 2, '3-5': 3, '6-9': 4, '10-12': 5, '13-16': 5, '17-20': 7, '21+': 8 };
 export const cardBand = (cr) => (cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+/**
+ * A ROW PRINT CANON MAY NOT REPLACE: one written for a clause the GM TYPED (owner's order,
+ * 2026-11-18, narrowed 2026-11-18).
+ *
+ * The first cut read `row.clauseId || (row.authoredSeat && row.clause)`. The second arm is wider
+ * than the order: on a seat-written row `clause` can hold the MODEL's own idea rather than the GM's
+ * words — the Brass Tyrant's "Molten Seam" carries "The Brass Tyrant slams its molten fist into the
+ * ground, ", which matches no clause on its sheet. No row on the forty took that arm, so what it
+ * would do was unmeasured, and an unmeasured widening of an owner's order is not the order.
+ *
+ * `clauseId` is the engine's own join key, set where a seat is handed a clause and resolved against
+ * the sheet's clause record. If a saved sheet ever shows a typed clause reaching this pass with no
+ * id, the binding is what to fix, not this rule.
+ *
+ * Exported so the test asserts on THIS and not on a copy of it.
+ */
+export const printCanonExempt = (row) => !!row?.clauseId;
+
 /** the rows the budget counts against print: Multiattack and the legendary header are not rows */
 export const COUNTED_ROW = (name) => !/^(?:Multiattack|Legendary Action Uses)\b/.test(String(name ?? ''));
 
@@ -9532,7 +9550,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // from Actions, ONE carries a typed clause's id. Five are the chassis's own nova renamed
             // by the model — the trace below said "the seat's nova" for those too, which is what made
             // the fault look six times larger than it is — and one had no provenance at all.
-            if (row.clauseId || (row.authoredSeat && row.clause)) {
+            if (printCanonExempt(row)) {
               trace('print canon: the seat\'s own row STAYS —', `Actions/"${row.name}" answers "${String(row.clause ?? row.clauseId).slice(0, 60)}", which the GM typed; print's nova rides beside it rather than over it`);
               continue;
             }
