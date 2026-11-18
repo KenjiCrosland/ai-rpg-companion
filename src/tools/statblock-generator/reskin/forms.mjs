@@ -32,8 +32,14 @@ const cap = (s) => String(s ?? '').trim().replace(/^./, (c) => c.toUpperCase());
 // cairn-wight" contributes nothing, "Unanswered Thrust" still protects "Thrust".
 const low = (s, keep = []) => {
   const t = String(s ?? '').trim();
-  const kept = new Set(keep.flatMap((k) => String(k ?? '').split(/[^A-Za-z']+/)).filter((w) => /^[A-Z]/.test(w)).map((w) => w.toLowerCase()));
-  return t.replace(/^[A-Za-z][\w']*/, (w) => (kept.has(w.toLowerCase()) ? w : w.charAt(0).toLowerCase() + w.slice(1)));
+  // A POSSESSIVE IS THE SAME NOUN (item 1.3, 2026-11-18). The match below takes the apostrophe
+  // with the word, so Krennik Skullstandard's trait opened "krennik's Iron-Shod Standard attacks
+  // have a reach of 10 feet": the kept set holds "krennik", the word looked up was "krennik's",
+  // and the creature's own name was lowercased in its own trait. The key is normalised, not the
+  // list widened.
+  const key = (w) => String(w).replace(/['\u2019]s$/i, '').toLowerCase();
+  const kept = new Set(keep.flatMap((k) => String(k ?? '').split(/[^A-Za-z']+/)).filter((w) => /^[A-Z]/.test(w)).map(key));
+  return t.replace(/^[A-Za-z][\w']*/, (w) => (kept.has(key(w)) ? w : w.charAt(0).toLowerCase() + w.slice(1)));
 };
 /** a prose rider-save ("each creature within 5 feet must succeed on a DC 12 Dexterity saving throw or take …") becomes the skeleton the lint requires */
 export function skeletonSave(text) {

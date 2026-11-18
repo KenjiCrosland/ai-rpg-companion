@@ -1451,6 +1451,36 @@ export function structureKeptInConversion(srcText, outText) {
   return b.immunity >= a.immunity && b.dice >= a.dice && b.escapes >= a.escapes;
 }
 
+/**
+ * THE CONVERSION DOES NOT RECASE THE CREATURE'S OWN NAME (item 1.3, 2026-11-18).
+ *
+ * Krennik Skullstandard's 2014 card read "While mounted and wielding the standard, krennik's
+ * Iron-Shod Standard attacks …", "when krennik moves at least 20 feet …", "krennik cannot use this
+ * reach …" and, in the attack row, "If krennik moved at least 20 feet …" — four times on one sheet,
+ * the only sheet of the forty with a personal-name inline.
+ *
+ * A NAME IS NOT A KIND, and the engine has already decided which this creature has: `inline` is
+ * "Krennik" for a person and "the drowned choir" for a kind, and print lowercases a kind everywhere
+ * ("the dire wolf"). So a kind is left alone entirely. My first attempt read the case of each Name
+ * word off the 2024 source instead of asking, and it capitalised one word of a kind — the Drowned
+ * Choir's hymn came back "each creature within 60 feet of the drowned Choir". The engine's own
+ * answer is the only thing that separates the two.
+ *
+ * The source must also capitalise the word for it to be restored, so a row that never names the
+ * creature is untouched.
+ */
+export function keepNameCase(srcText, outText, inline) {
+  const name = String(inline ?? '').trim();
+  if (!name || /^the\b/i.test(name)) return outText;   // a KIND speaks lowercase, as print writes it
+  const src = String(srcText ?? ''); let out = String(outText ?? '');
+  if (!out) return outText;
+  for (const w of name.split(/[^A-Za-z']+/).filter((x) => x.length > 2 && /^[A-Z]/.test(x))) {
+    if (!new RegExp(`(?<![A-Za-z])${w}(?![A-Za-z])`).test(src)) continue;
+    out = out.replace(new RegExp(`(?<![A-Za-z])${w.toLowerCase()}(?![A-Za-z])`, 'g'), w);
+  }
+  return out;
+}
+
 export function boundKeptInConversion(srcText, outText) {
   const src = String(srcText ?? '');
   if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) return true;
@@ -1824,7 +1854,7 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
     const out = parsed[s]?.[i]?.text;
     if (!boundKeptInConversion(e.text, out)) return e.text;
     if (!structureKeptInConversion(e.text, out)) return e.text; // Krennik's seam
-    return out ?? e.text;
+    return keepNameCase(e.text, out, model.inline ?? monster.inline) ?? e.text;
   };
   let converted = {
     ...model,
