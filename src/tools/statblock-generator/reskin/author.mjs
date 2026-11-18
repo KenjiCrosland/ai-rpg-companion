@@ -691,7 +691,12 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       ? "a reaction's save deals no damage here, so say what the target suffers as a condition or a forced movement, or write the response with no save"
       // DEAFENED ALONE, on the Reaction path (fix C). Damage is held on a Reaction, so the reason
       // offers the two conditions only.
-      : r.save && DEAFENED_ALONE(r.save)
+      // ON A REACTION THE DAMAGE IS NEVER KEPT, so it cannot excuse Deafened (fix C, corrected).
+      // The bells' Knellsong arrived with `damage: true`, passed this read, and the engine then set
+      // the damage aside — "a Reaction's damage is not counted by the sheet's CR read" — so the row
+      // shipped with Deafened as its whole effect, which is the row the owner named. The flag is
+      // ignored here because the hold is unconditional.
+      : r.save && DEAFENED_ALONE({ ...r.save, damage: false })
         ? 'Deafened alone is too slight to cost a Reaction — choose Frightened or Charmed, whichever fits this creature'
       : !quantitiesOk(r) ? `the call counts ${r.quantities} number(s) the row promises and only ${quantitiesStated(r)} are written — a promised amount, area or bonus with no number cannot be run`
       : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'

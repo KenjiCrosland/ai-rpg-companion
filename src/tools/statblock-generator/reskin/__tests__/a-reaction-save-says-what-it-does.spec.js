@@ -107,3 +107,38 @@ describe("Deafened is never a row's only effect", () => {
     expect(bare).toEqual([]);
   });
 });
+
+/**
+ * AND THE HELD DAMAGE CANNOT EXCUSE IT (fix C, corrected the same day).
+ *
+ * The bells' Knellsong arrived with `damage: true` on its save, passed the read, and the engine then
+ * set that damage aside — "a Reaction's damage is not counted by the sheet's CR read" — so the row
+ * shipped reading only "the target has the Deafened condition until the end of its next turn". It is
+ * the row the owner named as one of the two where Deafened is the whole effect, and my first version
+ * of this fix let it through. A Reaction's damage is held unconditionally, so the flag cannot count
+ * as an effect here.
+ */
+describe('a Reaction cannot buy Deafened with damage it will not keep', () => {
+  const { parseAuthorResponse: parse } = require('../author.mjs');
+  const knellsong = (save) => parse(JSON.stringify({ reactions: [{
+    clause: 'ring themselves over the dying', name: 'Knellsong', trigger: "A creature within the swarm's reach drops to 0 Hit Points",
+    mechanics: 1, quantities: 3, save,
+  }] }), {});
+
+  test("Knellsong as recorded — Deafened with damage set — is refused", () => {
+    const save = { stat: 'Constitution', target: "each other creature of the swarm's choice within 30 feet", damage: true, type: 'Necrotic', condition: 'Deafened' };
+    expect(save.damage).toBe(true);                       // the subject is present: the call DID set damage
+    const p = knellsong(save);
+    expect(p.reactions).toHaveLength(0);
+    expect(p.refused[0].why).toMatch(/Deafened alone is too slight to cost a Reaction/);
+  });
+
+  test('a save ROW may still buy Deafened with damage, because a row keeps its damage', () => {
+    const p = parse(JSON.stringify({ saves: [{ clause: 'x', name: 'Ringing of the Deep', stat: 'Constitution', target: 'each creature in a 30-foot Emanation', damage: true, type: 'Thunder', condition: 'Deafened', success: 'none' }] }), {});
+    expect(p.saves).toHaveLength(1);
+  });
+
+  test('a Reaction with another condition and no damage is still fine', () => {
+    expect(knellsong({ stat: 'Constitution', target: 'the triggering creature', damage: true, type: 'Necrotic', condition: 'Frightened' }).reactions).toHaveLength(1);
+  });
+});

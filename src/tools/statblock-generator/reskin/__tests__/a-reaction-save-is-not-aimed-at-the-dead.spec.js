@@ -33,7 +33,10 @@ const KNELLSONG = {
   clause: "Whenever a creature within the swarm's reach drops to 0 Hit Points, the swarm's bells all toll at once in a final rite",
   name: 'Knellsong',
   trigger: "A creature within the swarm's reach drops to 0 Hit Points.",
-  save: { stat: 'Wisdom', target: "each other creature of the swarm's choice within 30 feet", damage: true, type: 'Necrotic', condition: 'Deafened', success: 'none' },
+  // FRIGHTENED, NOT THE RECORDED DEAFENED: a Reaction's damage is always held, so Deafened alone is
+  // refused at the read (fix C, 2026-11-18) and this file's subject is WHO saves, not the condition.
+  // The recorded Deafened answer is pinned in `a-reaction-save-says-what-it-does.spec.js`.
+  save: { stat: 'Wisdom', target: "each other creature of the swarm's choice within 30 feet", damage: true, type: 'Necrotic', condition: 'Frightened', success: 'none' },
   imposes: 'Deafened', condition_relation: 'inflicts', acts: null, heals: false, mechanics: 1, quantities: 3,
 };
 

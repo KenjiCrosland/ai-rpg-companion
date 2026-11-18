@@ -36,9 +36,11 @@ describe('the number gate and a save in fields', () => {
   // effect is Deafened, which the owner ruled too slight to cost an action. The number gate — what
   // this file is about — still passes it, so the recorded answer is kept and given damage here, and
   // the refusal as recorded is pinned in its own test below.
+  // A REACTION'S DAMAGE IS ALWAYS HELD, so damage cannot buy Deafened here either (fix C corrected,
+  // 2026-11-18) — the condition itself has to change for the numbers to be the thing under test.
   const DEAFENED_ONLY = new Set(['Chorus of Wounds']);
   const numbersOK = (name, over = {}) => answer(name, DEAFENED_ONLY.has(name)
-    ? { save: { ...RECORDED[name].save, damage: true, type: 'Thunder' }, quantities: 2, ...over } : over);
+    ? { save: { ...RECORDED[name].save, damage: true, type: 'Thunder', condition: 'Frightened' }, quantities: 2, ...over } : over);
 
   test.each(Object.keys(RECORDED))('%s comes back as a Reaction', (name) => {
     const p = parseAuthorResponse(numbersOK(name), SEAT);
@@ -62,12 +64,12 @@ describe('the number gate and a save in fields', () => {
   });
 
   test('two declared numbers pass when the save also deals damage', () => {
-    const p = parseAuthorResponse(answer('Chorus of Wounds', { quantities: 2, save: { ...RECORDED['Chorus of Wounds'].save, damage: true, type: 'Thunder' } }), SEAT);
+    const p = parseAuthorResponse(answer('Chorus of Wounds', { quantities: 2, save: { ...RECORDED['Chorus of Wounds'].save, damage: true, type: 'Thunder', condition: 'Frightened' } }), SEAT);
     expect((p?.reactions ?? []).length).toBe(1);
   });
 
   test('three declared numbers with only a DC and dice to write is still refused', () => {
-    const p = parseAuthorResponse(answer('Chorus of Wounds', { quantities: 3, save: { ...RECORDED['Chorus of Wounds'].save, damage: true } }), SEAT);
+    const p = parseAuthorResponse(answer('Chorus of Wounds', { quantities: 3, save: { ...RECORDED['Chorus of Wounds'].save, damage: true, condition: 'Frightened' } }), SEAT);
     expect((p?.reactions ?? []).length).toBe(0);
     expect((p?.refused ?? [])[0].why).toMatch(/number\(s\) the row promises/);
   });
@@ -158,8 +160,10 @@ describe("who saves, and when it ends", () => {
   }, 30000);
 
   test('the condition prints an end, from the same helper a save ROW uses', async () => {
-    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: true, type: 'Thunder', condition: 'Deafened' });
-    expect(row.text).toMatch(/Deafened condition until the end of its next turn/);
+    // Deafened cannot ride a Reaction's held damage, so the ending is shown on another condition;
+    // the same helper writes both.
+    const row = await onASheet({ stat: 'Constitution', target: 'one creature within 10 feet', damage: true, type: 'Thunder', condition: 'Frightened' });
+    expect(row.text).toMatch(/Frightened condition until the end of its next turn/);
   }, 30000);
 
   test('Grappled takes an escape DC and Prone takes no ending, as a save row does', async () => {
