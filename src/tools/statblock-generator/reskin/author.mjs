@@ -656,6 +656,9 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     .replace(/\b\d+\b/g, '#')
     .replace(BY_RELATION, '#')                              // an amount the table can read off something it knows
     .match(/#/g) ?? []).length;
+  // A TRIGGER THAT IS ONE OF THIS CREATURE'S OWN ATTACKS LANDING. Print's own wording for it, and
+  // the shape of every rider and strike: "when it hits", "on a hit", "when its Horn hits".
+  const OWN_ATTACK_HITS = /\b(?:when|whenever|if)\b[^.]*\b(?:it|the \w+|its \w+(?: \w+)?)\s+hits\b|\bon a hit\b|\bwhen (?:it|the \w+) hits\b/i;
   const quantitiesOk = (x) => !Number.isFinite(Number(x?.quantities)) || Number(x.quantities) <= quantitiesStated(x);
   // A SAVE'S OUTCOME IS A SAVE TOO (critic, 2026-11-04). This tested for the words
   // "saving throw", so a row that skipped the form and wrote only its RESULT slipped
@@ -690,6 +693,13 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     // seven traits refused this way on the baseline tape were a response to being HIT, DAMAGED or
     // MOVED, which print writes as a Reaction. The second ask recovered 0 of 7 because the reason
     // said what was wrong and not where to put it.
+    // AND A TRIGGER THAT IS THIS CREATURE'S OWN ATTACK HITTING GOES TO THE STRIKE FORM (Part 1,
+    // 18 November evening). The handoff asked for the same redirect the Reaction already has, and
+    // without it the second ask has nowhere to go: "a trait is not a save" was 11 of the 18
+    // double refusals on Part 1's own probe, and not one of them reached the new boxes. The drake's
+    // Deafening Peal is the case — "when its Horn hits a creature in its breath's wake, a save or
+    // Stunned" — and it is a strike, offered in place of one attack.
+    : traitIsSave(t) && OWN_ATTACK_HITS.test(`${t.trigger ?? ''}`) ? `a trait is not a save, and this fires when one of the creature's OWN attacks hits — answer in "strikes" with "attack" (the exact name of the attack row), "save" (the ability), and "condition" or "movement". The engine writes it as its own row with that attack's numbers and Multiattack offers it in place of one attack. If the hit needs NO save, answer in "riders" instead, with "attack" and a light "condition" (Prone or Grappled) or a "movement"`
     : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (stat, target, damage, condition, success)' : ''}`
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
     // A {dmg} USED AS A BONUS IS A NUMBER THIS ENGINE CANNOT PRICE (2026-11-16). It prices damage,

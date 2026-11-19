@@ -184,3 +184,52 @@ describe('a Reaction may parry, which is the only kind print writes', () => {
     expect(text).toBe('*Trigger:* The warder is hit by a melee attack roll while holding a shield. *Response:* The warder adds 3 to its AC against that attack, possibly causing it to miss.');
   });
 });
+
+/**
+ * AND A REFUSAL SENDS THE SECOND ASK TO THE NEW BOXES (Part 1, the half I missed first time).
+ *
+ * The handoff asked for the same redirect the Reaction already has: "when a trait is refused and its
+ * trigger is one of the creature's own attacks hitting, the reason says to answer in the rider form
+ * and names the fields." I built the boxes without it, and Part 1's own probe showed why that was
+ * not enough — "a trait is not a save" was 11 of the 18 double refusals across 33 rolls and not one
+ * of them reached a rider or a strike, because the reason pointed nowhere near them.
+ */
+describe('a refusal names the form that would have taken the answer', () => {
+  const { parseAuthorResponse: parse } = require('../author.mjs');
+  const peal = (trigger) => parse(JSON.stringify({ traits: [{
+    clause: "breath is a rolling wall of thunder", name: 'Deafening Peal', trigger,
+    effect: 'the target must succeed on a DC {dc} Constitution saving throw or have the Stunned condition until the end of its next turn',
+    passive_effect: 'threat', condition_relation: 'inflicts', imposes: 'Stunned', mechanics: 1, quantities: 1,
+  }] }), { attackNames: ['Horn'] });
+
+  test("a trait whose trigger is the creature's own attack hitting is sent to the strike form", () => {
+    const p = peal('when its Horn hits a creature in the wake of its breath');
+    expect(p.traits).toHaveLength(0);                    // the subject is present: it IS refused
+    expect(p.refused[0].why).toMatch(/answer in "strikes"/);
+    expect(p.refused[0].why).toMatch(/"attack".*"save".*"condition"/);
+    expect(p.refused[0].why).toMatch(/Multiattack offers it in place of one attack/);
+    expect(p.refused[0].why).toMatch(/If the hit needs NO save, answer in "riders"/);
+  });
+
+  test('a trait that responds to something else still goes to the Reaction form', () => {
+    const p = peal('when the drake is hit by a melee attack roll');
+    expect(p.traits).toHaveLength(0);
+    expect(p.refused[0].why).toMatch(/print writes as a REACTION/);
+    expect(p.refused[0].why).not.toMatch(/answer in "strikes"/);
+  });
+
+  // A GAP THAT PREDATES THIS, found by reading the refusal rather than assuming it. The Reaction
+  // redirect matches "takes damage" adjacently, so "takes THUNDER damage" — the Trenchsong
+  // Leviathan's Brinebell Chord, one of the eleven empty seats — reaches neither redirect and gets
+  // the bare reason. Pinned as today's behaviour so the day it changes, it changes here.
+  test('a typed damage trigger reaches NEITHER redirect — recorded, not fixed', () => {
+    const p = peal('when the drake takes Thunder damage');
+    expect(p.refused[0].why).toBe('a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence');
+  });
+
+  test('print\'s own ways of saying it are all recognised', () => {
+    for (const g of ['when it hits a creature with its Bite', 'on a hit, the target is shaken', 'whenever the drake hits with its Horn']) {
+      expect(peal(g).refused[0].why).toMatch(/answer in "strikes"/);
+    }
+  });
+});
