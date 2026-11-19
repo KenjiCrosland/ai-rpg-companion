@@ -89,7 +89,14 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Incapacitated condition and its Speed is 0 {duration}.",
   },
   {
-    key: 'escalating-dread', duration_default: 'source_end', imposes: 'Frightened', keys: ['dread', 'fear', 'wither', 'doom'],
+    // ITS OWN TEXT DEPENDS ON THIS DURATION (2026-11-18). The second sentence — "If the target was
+    // already Frightened BY THIS ABILITY" — can only ever fire if the fear outlasts the creature's
+    // own next turn. The fit call may answer a duration, and on the Air Elemental and the Quarry
+    // Scree-Wyrm it answered `target_end`: the fear then ends before the creature acts again and
+    // the escalation is dead text on the card. `duration_fixed` says the call does not get to
+    // choose here. It is the only template of the 114 with both a {duration} slot and a sentence
+    // that refers back to the condition it just applied.
+    key: 'escalating-dread', duration_default: 'source_end', duration_fixed: true, imposes: 'Frightened', keys: ['dread', 'fear', 'wither', 'doom'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'brute'],
     name: 'Creeping Dread', dpr_frac: 0.5, // the Mummy's Dreadful Glare
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Frightened condition {duration}. If the target was already Frightened by this ability, it also takes {burst} {damage_type} damage.",

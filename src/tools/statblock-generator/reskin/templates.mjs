@@ -741,7 +741,7 @@ export function composedTemplate(pick) {
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
     requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
     requires_row: null, requires_claim: null, requires_size: null, needs_body: null, hold_shape: null, owns_weapon: false, augments: null,
-    family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null,
+    family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null, duration_fixed: false,
     host: null, keys: [], flavor: [],
     // a COPIED frame keeps its own {condition_minor} and {save_stat} slots, so
     // renderTemplate fills them and the save contract (saveStatsFor) runs on the
@@ -1552,6 +1552,7 @@ export const TEMPLATES = [
     // NEEDS_BODY and FAMILY key lands on its template, so this cannot recur.
     mechanic: MECHANIC_OF[seed.key] ?? MECHANIC_OF[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? null,
     duration_default: seed.duration_default ?? null, // a seed declares its own default too, or the frame path's choice never reaches it
+    duration_fixed: !!seed.duration_fixed, // ...and whether the call may override it (the `needs_body` disease again: a declaration that does not reach its template reads complete and is inert)
     hold_shape: seed.hold_shape ?? null, // ...and so does a seed's hold shape: the SHAPES branch read it from line 1453 and this branch dropped it (the `needs_body` disease above, sixth sighting)
     needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
     family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,
@@ -2401,7 +2402,10 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       const askedS = String(fills.duration ?? '').trim();
       const ddS = t.duration_default;
       const fallbackS = (ddS && typeof ddS === 'object' ? (ddS[bandFor(ctx.cr)] ?? ddS.default) : ddS) ?? 'target_end';
-      const pickS = allowedS.includes(askedS) ? askedS : fallbackS;
+      // A TEMPLATE WHOSE OWN TEXT DEPENDS ON ITS DURATION KEEPS IT (2026-11-18). The call's answer
+      // wins everywhere else, which is the 2026-10-23 rule and stays; `duration_fixed` is the one
+      // declared exception, for a row that refers back to the condition it just applied.
+      const pickS = t.duration_fixed ? fallbackS : (allowedS.includes(askedS) ? askedS : fallbackS);
       const clauseS = durationClause(pickS);
       if (!clauseS) return null;
       text = text.split('{duration}').join(clauseS);
