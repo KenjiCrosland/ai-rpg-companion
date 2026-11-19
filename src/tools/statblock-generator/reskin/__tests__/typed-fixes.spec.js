@@ -26,8 +26,12 @@ const rimewake = (over = {}) => ({ name: ROW, authored: true, text: TEXT, ...ove
 const finding = (over = {}) => ({ confidence: 'high', issue: 'the state never ends', span: SPAN, ...over });
 
 describe('the closed list is the owner\'s, and every value is described', () => {
-  test('it is exactly the seven the ruling names', () => {
-    expect(DEFECT_NAMES).toEqual(['misnamed', 'untrackable', 'open_ended', 'dead_reference', 'wording', 'weak', 'other']);
+  // EIGHT SINCE 2026-11-18: `undelivered` was added when the audit was shown what the GM typed
+  // (part 2). It is the owner's commonest reason for a Fix — the sheet does not deliver what was
+  // asked — and until the audit could see the request, only a person reading the sheet could name
+  // it. Nothing acts on it; it is logged and counted like `weak`.
+  test('it is exactly the eight the rulings name, in order', () => {
+    expect(DEFECT_NAMES).toEqual(['misnamed', 'untrackable', 'open_ended', 'dead_reference', 'wording', 'weak', 'undelivered', 'other']);
   });
 
   test('each one says what it means, so the log needs no key', () => {
