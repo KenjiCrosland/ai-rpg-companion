@@ -6878,6 +6878,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the seat writes one on about five sheets a run, so the two meet about once a run. The
             // two it still declines are right to be — s11 and s36 each already had a Reaction FROM
             // THE SEAT, and a creature has one reaction a round.
+            // THE NEW BOXES RETURN THE SHAPE THE PIPELINE READS (2026-11-19). My first cut returned
+            // a thin { row, section }, and the trait path reads `.authoredSeat`, `.row.name`,
+            // `.asked`, `.because` off it — so the Thunderwall Drake threw on 2 of 3 rolls with
+            // "Cannot read properties of null (reading 'authoredSeat')". Same fields as
+            // `authoredSeatShape` below, built once.
+            const seatShape = (row, section) => {
+              const answersGM = !!idea?.clause;
+              row.authoredSeat = true;
+              if (answersGM) { row.clause = row.clause ?? idea.clause; row.clauseId = row.clauseId ?? clauseIdForHanded(idea.clause); }
+              return { row, templateName: null, section, template: null, host: 'melee', supersedes: null,
+                asked: null, because: null, authoredSeat: true, accepted_closest: false };
+            };
             // ONE TABLE SAYS WHAT THIS SEAT TAKES, read here and by the ask (2026-11-19). The ask
             // used to pin one kind and the landing quietly accepted more; now a form the model is
             // invited to write is a form the engine will take, and nothing else.
@@ -6908,7 +6920,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (takesHere.includes('rider') && wrote?.riders?.[0]) {
               const rd = { ...wrote.riders[0], inline: settledInline(), clauseId: clauseIdForHanded(idea?.clause) };
               if (weldRiderOntoAttack(sections, rd, scaled, cr, trace)) {
-                return { landed: { row: Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === rd.attack), section: 'Actions', welded: true } };
+                const welded = Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === rd.attack);
+                // a welded rider adds NO row, so the seat is satisfied without one landing
+                return { landed: { ...seatShape(welded, 'Actions'), welded: true } };
               }
             }
             // A RIDER THAT NEEDS A SAVE IS ITS OWN ATTACK, offered in place of one (his once-a-turn
@@ -6919,7 +6933,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               if (row) {
                 trace('strike written from its attack:', `"${row.name}" clones "${st.attack}" and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the once-a-turn limit (owner's ruling)`);
                 sections.Actions = [...(sections.Actions ?? []), row];
-                return { landed: { row, section: 'Actions' } };
+                return { landed: seatShape(row, 'Actions') };
               }
             }
             // AN AURA IS PRINT'S OWN TRAIT THAT FORCES A SAVE, and the engine writes every word of
@@ -6933,7 +6947,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               };
               trace('aura written from print\'s own form:', `"${row.name}" — a ${au.radius}-foot Emanation, ${au.condition} until the start of the target's next turn, with print's immunity line (the Ghast's Stench)`);
               sections.Traits = [...(sections.Traits ?? []), row];
-              return { landed: { row, section: 'Traits' } };
+              return { landed: seatShape(row, 'Traits') };
             }
             const form = !wrote ? null
               : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' }
@@ -7890,9 +7904,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
       }
+      // THE TRACE IS INSIDE THE GUARD (2026-11-19). `uniqueRowName` sets `actionT = null` on a name
+      // collision a dozen lines up, and this line read `actionT.authoredSeat` outside the `if
+      // (actionT)` that followed it — latent until a strike could collide, which is how the
+      // Thunderwall Drake threw on 2 of 3 rolls: "Cannot read properties of null".
+      if (actionT) {
       trace(actionT.authoredSeat ? 'signature authored:' : 'signature template:', `${actionT.template ?? 'no template — the seat wrote it'} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
       spendKeys(actionT.because);
       if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
+      }
     } else if (wildcardAllowed && !printPlain && !body) { // a BODY chassis (dragon, ooze, swarm) is a complete kit — no blind fallback; a print body reaches the fallback only through the concept's own verbs (the stand-down inside: a verbless print head asks for nothing — the hermit-mage's lantern does ask, 2026-10-01): its own rows are the composition, and only a verb-bound fit adds to them (day-one 2026-09-30) — the claim gate closes the ACTION seat at CR<=2 — the fallback is that seat's, and a material body's open TRAIT seat must not reopen it (review 2026-09-28)
       // the same filtered menu the fit saw (engine families, ownership); the
       // blind library hash is the last resort only when that menu is empty
