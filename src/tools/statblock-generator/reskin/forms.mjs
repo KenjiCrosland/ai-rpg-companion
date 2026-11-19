@@ -106,6 +106,22 @@ export function renderForm(form, edition = '2024', { properNouns = [] } = {}) {
       return `*${form.stat} Saving Throw*: DC ${form.dc}, ${form.target}. *Failure:* ${end(cap(form.failure))}${form.success ? ` *Success:* ${end(cap(form.success))}` : ''}`; // the engine's convention: the asterisk closes before the colon
     }
     case 'trait': return skeletonSave(form.trigger ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.effect))}` : end(cap(form.effect)));
+    // AN AURA, IN PRINT'S OWN SENTENCE (2026-11-19). Three printed auras read identically — the
+    // Ghast's Stench, the Pit Fiend's Fear Aura, the Sea Hag's Vile Appearance:
+    //   "*Constitution Saving Throw*: DC 10, any creature that starts its turn in a 5-foot
+    //    Emanation originating from the ghast. *Failure:* The target has the Poisoned condition
+    //    until the start of its next turn. *Success:* The target is immune to this ghast's Stench
+    //    for 24 hours."
+    // The model supplies the name, the save, the size and the condition; every other word is here.
+    case 'aura': {
+      const who = form.inline ?? 'creature';
+      const body = `DC ${form.dc}, any creature that starts its turn in a ${form.radius}-foot Emanation originating from ${who}.`;
+      const fail = `The target has the ${form.condition} condition until the start of its next turn.`;
+      const succ = `The target is immune to this ${String(who).replace(/^the /, '')}'s ${form.name} for 24 hours.`;
+      return is2014
+        ? `Any creature that starts its turn within ${form.radius} feet of ${who} must succeed on a DC ${form.dc} ${form.stat} saving throw or be ${String(form.condition).toLowerCase()} until the start of its next turn. On a successful save, the creature is immune to this ${String(who).replace(/^the /, '')}'s ${form.name} for 24 hours.`
+        : `*${form.stat} Saving Throw*: ${body} *Failure:* ${fail} *Success:* ${succ}`;
+    }
     case 'reaction': {
       // A REACTION THAT FORCES A SAVE writes it in the save form after "Response", which is how
       // print writes its one example: the Chain Devil's Unnerving Gaze reads

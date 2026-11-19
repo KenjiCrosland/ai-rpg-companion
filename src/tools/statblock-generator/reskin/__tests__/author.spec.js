@@ -1,4 +1,4 @@
-import { parseAuthorResponse, validateAuthorResponse, buildSeatPrompt, buildRepairPrompt } from '../author.mjs';
+import { parseAuthorResponse, validateAuthorResponse, buildSeatPrompt, buildRepairPrompt, AUTHORED_ARRAYS } from '../author.mjs';
 
 describe('authoring into forms (fidelity pipeline step 5): the model never writes a number, the vocabularies are closed, the slots are enforced', () => {
   const keys = ['Melee Attack', 'Hybrid Attack'];
@@ -146,9 +146,36 @@ describe('the authoring envelope asks for every key the prompt talks about', () 
     expect(p.answered).toEqual([{ clause: 'drags fishermen under', row: 'Bite' }]);
   });
 
-  test('the repair keeps its own envelope byte for byte', () => {
-    expect(buildRepairPrompt({ name: 'X', inline: 'Medium Beast', clauses: [{ text: 'c' }], cr: 3, sheet: 'S' }))
-      .toContain('{ "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "answered": [ { "clause": "...", "row": "..." } ], "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator\'s register" } ] }');
+  // REPLACED BY THE DATA-INTEGRITY TEST BELOW (2026-11-19). This asserted the envelope's exact
+  // bytes, which is a test on the words of a prompt: it passed happily on 11 November while
+  // `answered` was missing from the SEAT's copy, and again this week while `riders` and `strikes`
+  // were missing from both. What matters is that every array the parser reads is an array the
+  // model is shown, and that is checked by behaviour now.
+  test('the repair is shown every array it may answer in, and no attack-free seat key', () => {
+    const prompt = buildRepairPrompt({ name: 'X', inline: 'Medium Beast', clauses: [{ text: 'c' }], cr: 3, sheet: 'S' });
+    for (const k of AUTHORED_ARRAYS) expect(prompt).toContain(`"${k}":`);
+    expect(prompt).toContain('"attacks": [ ... ]');   // a repair may still price an attack
+  });
+
+  // THE ONE THAT WOULD HAVE CAUGHT BOTH FAULTS: every array in the one list is an array the parser
+  // actually consumes. No prompt text is read.
+  test('every array in the list is one the parser reads', () => {
+    const row = {
+      attacks: { key: null, clause: 'c', name: 'Claw', mode: 'melee', type: 'Slashing' },
+      saves: { clause: 'c', name: 'Gaze', stat: 'Wisdom', target: 'one creature within 30 feet', condition: 'Frightened', success: 'none' },
+      traits: { clause: 'c', name: 'Keen', trigger: 'always', effect: 'it has Advantage on Perception checks', passive_effect: 'ability' },
+      reactions: { clause: 'c', name: 'Riposte', trigger: 'a creature misses it', response: 'it makes one Claw attack', mechanics: 1, quantities: 0 },
+      riders: { clause: 'c', attack: 'Claw', condition: 'Prone' },
+      strikes: { clause: 'c', name: 'Hamstring', attack: 'Claw', save: 'Strength', condition: 'Prone' },
+      auras: { clause: 'c', name: 'Stench', stat: 'Constitution', radius: 10, condition: 'Poisoned' },
+    };
+    expect(Object.keys(row).sort()).toEqual([...AUTHORED_ARRAYS].sort());   // the fixture covers the list
+    for (const k of AUTHORED_ARRAYS) {
+      const p = parseAuthorResponse(JSON.stringify({ [k]: [row[k]] }), { attackKeys: [null], attackNames: ['Claw'] });
+      const consumed = (p?.[k] ?? []).length > 0 || (p?.refused ?? []).length > 0
+        || (k === 'attacks' && (p?.attacks ?? []).length > 0);
+      expect([k, consumed]).toEqual([k, true]);
+    }
   });
 
   // a repair is handed ONE faulty row and told an empty answer is the worst outcome available;
@@ -158,5 +185,6 @@ describe('the authoring envelope asks for every key the prompt talks about', () 
   // the seat prices no attack: it has no weapon row of its own to clone
   test('the seat is offered no attack array to fill', () => {
     expect(seat()).toContain('{ "attacks": [], "saves": [ ... ]');
+    for (const k of AUTHORED_ARRAYS) expect(seat()).toContain(`"${k}":`);
   });
 });

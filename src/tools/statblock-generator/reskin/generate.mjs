@@ -38,7 +38,7 @@ import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the va
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { routeFinding, renameDropsAGmWord, formatFinding } from './typed-fixes.mjs'; // the audit names the defect; nothing here acts on it
-import { stripUnplacedDmg, manyTargets, REFUSED_FOR_DEAFENED_ALONE, swapDeafenedToFrightened } from './author.mjs'; // one strip rule, shared with the parse
+import { stripUnplacedDmg, manyTargets, REFUSED_FOR_DEAFENED_ALONE, swapDeafenedToFrightened, seatTakes } from './author.mjs'; // one strip rule, shared with the parse
 import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
@@ -6804,9 +6804,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // It is not the end-of-line repair that was deleted. That re-authored FINISHED rows
             // with no check on what it added; this runs where the row is written, before the sheet
             // is priced and budgeted, and its answer faces every gate the first answer faced.
+            // HOISTED ABOVE `askSeat` (2026-11-19): the ask and the landing both read it now, and the
+            // ask runs first — leaving it below put it in the temporal dead zone and every seat threw.
+            const seatWroteAReaction = () => (sections.Reactions ?? []).filter(Boolean).some((e) => e.authoredSeat);
+            const reactionSeatOpen = () => !seatWroteAReaction() && (sections.Reactions ?? []).filter(Boolean).length < 2;
             const askSeat = async (refusedBefore) => {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) , ...(refusedBefore ? { refusedBefore } : {})}), validateAuthorResponse);
+            const rawS = await callLLM(buildSeatPrompt({ takes: seatTakes(seatKind, { reactionOpen: reactionSeatOpen() }), bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) , ...(refusedBefore ? { refusedBefore } : {})}), validateAuthorResponse);
             // THE PARSE IS TOLD WHAT THE SHEET HAS (Box 1, 18 November evening). A rider and a
             // strike each name an attack already on the sheet, so the validator needs the list;
             // `curse` is accepted only where the sheet's declared ask is a curse, and only once.
@@ -6814,7 +6818,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               .filter((e) => e?.name && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')))
               .map((e) => String(e.name).replace(/ \(.*\)$/, '').trim());
             const sheetHasCurse = Object.values(sections ?? {}).flat().some((e) => /\bis cursed\b/i.test(String(e?.text ?? '')));
-            const seatParseOpts = { attackCap: 0, traitSlots: 1, attackNames: sheetAttackNames, declaredAsk: askedT ?? null, hasCurse: sheetHasCurse };
+            const sheetHasAura = Object.values(sections ?? {}).flat().some((e) => /any creature that starts its turn in a \d+-foot Emanation/i.test(String(e?.text ?? '')));
+            const seatParseOpts = { attackCap: 0, traitSlots: 1, attackNames: sheetAttackNames, declaredAsk: askedT ?? null, hasCurse: sheetHasCurse, hasAura: sheetHasAura };
             let wrote = parseAuthorResponse(rawS, seatParseOpts);
             // DEAFENED ALONE IS SWAPPED, NOT DROPPED (owner's ruling, 18 November evening). On the
             // SECOND ask only, and only when that refusal is the whole of what was wrong: the bells
@@ -6873,12 +6878,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the seat writes one on about five sheets a run, so the two meet about once a run. The
             // two it still declines are right to be — s11 and s36 each already had a Reaction FROM
             // THE SEAT, and a creature has one reaction a round.
-            const seatWroteAReaction = () => (sections.Reactions ?? []).filter(Boolean).some((e) => e.authoredSeat);
-            const reactionSeatOpen = () => !seatWroteAReaction() && (sections.Reactions ?? []).filter(Boolean).length < 2;
+            // ONE TABLE SAYS WHAT THIS SEAT TAKES, read here and by the ask (2026-11-19). The ask
+            // used to pin one kind and the landing quietly accepted more; now a form the model is
+            // invited to write is a form the engine will take, and nothing else.
+            const takesHere = seatTakes(seatKind, { reactionOpen: reactionSeatOpen() });
             // A LIGHT RIDER WELDS ONTO ITS ATTACK AND ADDS NO ROW (owner's ruling, 18 November
             // evening). It is not a row, so it does not go through the form selection below: it
             // lands here, and the seat is satisfied by it.
-            if (wrote?.riders?.[0]) {
+            if (takesHere.includes('rider') && wrote?.riders?.[0]) {
               const rd = { ...wrote.riders[0], inline: settledInline(), clauseId: clauseIdForHanded(idea?.clause) };
               if (weldRiderOntoAttack(sections, rd, scaled, cr, trace)) {
                 return { landed: { row: Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === rd.attack), section: 'Actions', welded: true } };
@@ -6886,7 +6893,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
             // A RIDER THAT NEEDS A SAVE IS ITS OWN ATTACK, offered in place of one (his once-a-turn
             // limit). The row carries the attack's own numbers, so the damage read does not move.
-            if (wrote?.strikes?.[0]) {
+            if (takesHere.includes('strike') && wrote?.strikes?.[0]) {
               const st = { ...wrote.strikes[0], clauseId: clauseIdForHanded(idea?.clause) };
               const row = strikeRowFrom(sections, st, scaled, cr);
               if (row) {
@@ -6894,6 +6901,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 sections.Actions = [...(sections.Actions ?? []), row];
                 return { landed: { row, section: 'Actions' } };
               }
+            }
+            // AN AURA IS PRINT'S OWN TRAIT THAT FORCES A SAVE, and the engine writes every word of
+            // it but the four the model chose (2026-11-19). It lands in Traits.
+            if (takesHere.includes('aura') && wrote?.auras?.[0]) {
+              const au = wrote.auras[0];
+              const row = {
+                name: au.name, authored: true, authoredSeat: true, freeRow: true, imposes: au.condition,
+                text: renderForm({ kind: 'aura', name: au.name, stat: au.stat, dc: scaled.dc, radius: au.radius, condition: au.condition, inline: settledInline() }, '2024', {}),
+                ...(clauseIdForHanded(idea?.clause) ? { clauseId: clauseIdForHanded(idea?.clause) } : {}),
+              };
+              trace('aura written from print\'s own form:', `"${row.name}" — a ${au.radius}-foot Emanation, ${au.condition} until the start of the target's next turn, with print's immunity line (the Ghast's Stench)`);
+              sections.Traits = [...(sections.Traits ?? []), row];
+              return { landed: { row, section: 'Traits' } };
             }
             const form = !wrote ? null
               : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' }

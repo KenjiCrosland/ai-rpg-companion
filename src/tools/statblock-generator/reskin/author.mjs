@@ -5,6 +5,12 @@
  * its own field; mechanics are forms. One cross-row reference per sheet is asked for — a rider one row applies and another
  * row exploits — which is where the old blocks' interlock came from.
  */
+/**
+ * WHAT AN AURA MAY HAND OUT (2026-11-19). Print's own two, and two no stronger. A condition that
+ * stops a creature acting is not offered as something that fires on everyone, every round, for
+ * free — print does not write one and neither do we.
+ */
+export const AURA_CONDITIONS = ['Poisoned', 'Frightened', 'Charmed', 'Prone'];
 export const DAMAGE_TYPES = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
 export const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Paralyzed', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
 // A TRAIT IS A POSITIVE OR NEGATIVE PASSIVE EFFECT ON THE CREATURE (owner's
@@ -100,6 +106,11 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     // condition rider'". Print's Ghoul Claw is the shape.
     `- rider (something this creature's own attack does on a hit, light enough to need no save): { "clause", "attack": the EXACT name of an attack row on the sheet above, "condition": one of Prone/Grappled or null, "movement": "pushed up to N feet" | "pulled up to N feet" | null, "curse": true|false }. It adds no row: the engine writes it onto that attack.`,
     `- strike (something this creature's own attack does on a hit that NEEDS a saving throw): { "clause", "name", "attack": the EXACT name of an attack row on the sheet above, "save": one of ${STATS.join('/')}, "condition": one of ${CONDITIONS.join('/')} or null, "movement": "pushed up to N feet" | "pulled up to N feet" | null, "curse": true|false }. The engine writes it as its own row with that attack's numbers, and Multiattack offers it in place of one attack.`,
+    // AN AURA IS PRINT'S OWN TRAIT THAT FORCES A SAVE (2026-11-19). Of 324 printed traits, 12 force
+    // one: six are auras and six are bursts on death. Four auras hand out a condition, and three
+    // read identically — the Ghast's Stench, the Pit Fiend's Fear Aura, the Sea Hag's Vile
+    // Appearance. The model keeps writing this shape as a trait and the engine keeps refusing it.
+    `- aura (creatures near this one save at the start of their turns): { "clause", "name", "stat": one of ${STATS.join('/')}, "radius": 5 | 10 | 20 | 30, "condition": one of ${AURA_CONDITIONS.join('/')} }. The engine writes the whole sentence, the DC, the ending and the immunity line. It deals no damage.`,
     `- "curse" ON A SAVE, A RIDER OR A STRIKE: true only if the creator asked for a curse. The engine writes the curse and chooses what it does; you only say that this row carries one.`,
     `- "response_kind" ON A REACTION: leave it out unless the response is the creature defending itself, in which case the only value is "parry" and the engine writes the sentence. You still write the name and the trigger.`,
     `WHICH FORM`,
@@ -107,6 +118,7 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     `- It happens when one of this creature's own attacks hits, and it does not: a rider.`,
     `- It answers something another creature does: a reaction.`,
     `- It forces a saving throw on this creature's own turn: a save.`,
+    `- It makes creatures near it save at the start of their turns: an aura.`,
     `- It is always true of the creature: a trait. A trait does not force a saving throw.`,
     `- A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".`,
   ].join('\n');
@@ -126,7 +138,39 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
  * only the clause-answering calls may answer `answered` (the free-row repair must never "answer"
  * its way out of repairing the row it was handed).
  */
-const ENVELOPE = ({ attacks = '[ ... ]', answered = false, unplaced = '[ ... ]' } = {}) => `{ "attacks": ${attacks}, "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, ${answered ? '"answered": [ { "clause": "...", "row": "..." } ], ' : ''}"unplaced": ${unplaced} }`;
+/**
+ * THE ARRAYS AN AUTHORING CALL MAY ANSWER IN — ONE LIST, read by the parser and printed in the
+ * skeleton, so the two cannot drift (2026-11-19).
+ *
+ * This is the second time a key missing from the skeleton has made a whole feature unreachable.
+ * On 11 November it was `answered`, and the stand-down fired 0 times in 249 sheets. This week it
+ * was `riders` and `strikes`: both forms were described in `formsSpec`, with a guide saying when to
+ * use each, and the model filled in the skeleton it was shown — which had no place for them — so
+ * across 39 live rolls neither was used once. A skeleton teaches the answer.
+ */
+export const AUTHORED_ARRAYS = ['attacks', 'saves', 'traits', 'reactions', 'riders', 'strikes', 'auras'];
+const ENVELOPE = ({ attacks = '[ ... ]', answered = false, unplaced = '[ ... ]', only = null } = {}) => {
+  const keys = (only ?? AUTHORED_ARRAYS).map((k) => `"${k}": ${k === 'attacks' ? attacks : '[ ... ]'}`);
+  return `{ ${keys.join(', ')}, "crossRef": null, ${answered ? '"answered": [ { "clause": "...", "row": "..." } ], ' : ''}"unplaced": ${unplaced} }`;
+};
+
+/**
+ * WHAT EACH SEAT TAKES. A seat is a place on the sheet, and more than one form can fill it — the
+ * ask used to say "IT IS a trait. Write exactly one row, OF THAT KIND, and leave the other arrays
+ * empty", which no guide downstream could argue with.
+ *
+ * ONE TABLE, read by the ask here and by the landing in generate.mjs, so what the model is invited
+ * to write is what the engine will take.
+ */
+export const SEAT_TAKES = {
+  'a trait': ['trait', 'aura', 'reaction', 'rider', 'strike'],
+  'an action': ['save', 'strike'],
+  'a bonus action': ['save'],
+  'a reaction': ['reaction'],
+};
+/** the same table with the Reaction dropped where the sheet has no room for one */
+export const seatTakes = (kind, { reactionOpen = true } = {}) =>
+  (SEAT_TAKES[kind] ?? ['save']).filter((f) => f !== 'reaction' || reactionOpen || kind === 'a reaction');
 
 export function buildRepairPrompt({ name, inline, clauses, cr, sheet, attackCap = 2, lacks = [], taken = [], bodyFacts = [] }) {
   return `You are repairing the ABILITIES of a D&D monster: the sheet below is finished except that some of what its creator typed has no row yet. Write ONE row per listed clause, into closed forms, in the creator's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
@@ -226,7 +270,8 @@ const SAVE_STAT_RULES = `THE SAVE'S STAT. Published monsters pair a save with th
  * It states the reason. It does not tell the call to get past a check: the second answer faces the
  * same parser and the same gates, and may still be refused, or declined.
  */
-export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [], refusedBefore = null }) {
+export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [], refusedBefore = null, takes = null }) {
+  const forms = takes ?? seatTakes(kind);
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -238,7 +283,7 @@ ${idea}${clause ? `
 
 THE CLAUSE THIS ROW MUST ANSWER — the creator typed these words: **"${clause}"**. FIRST look at THE SHEET SO FAR above and ask whether a row already on it carries this, in different words: a bite that already grapples and holds IS "drags its prey under", a swallow IS "eats them whole". If one does, write NO row — put that clause and that row's exact name in "answered" and leave every form array empty. That is the better answer, not a failure: the creature already does what the creator asked, and a second row for it is the same mechanic told twice. Only when nothing on the sheet carries it, write the row, and the row you write is for this and nothing else. A row that is good in itself and answers something else is the wrong row.` : ''}${missing ? `\n\nWHY YOU ARE WRITING IT RATHER THAN PICKING A READY-MADE ONE — no ready-made ability could do this: ${missing}` : ''}
 
-IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
+THE SEAT IS ${kind}, and more than one form can fill it. Write exactly one row, in whichever of these forms the ability actually is — ${((xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} or ${xs.at(-1)}` : xs[0]))(forms.map((f) => `${/^[aeiou]/.test(f) ? 'an' : 'a'} ${f}`))} — and leave every other array empty. WHICH FORM above tells you which it is: answer the form the ability IS, not the one the seat is named after.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
 ${formsSpec({ name, inline, attackCap: 0 })}${bodyFacts.length ? `\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n${bodyFacts.map((f) => `- ${f}`).join('\n')}` : ''}
 
@@ -449,7 +494,7 @@ export const swapDeafenedToFrightened = (raw) => {
   return swapped ? JSON.stringify(o) : null;
 };
 
-export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1, attackNames = [], declaredAsk = null, hasCurse = false } = {}) {
+export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1, attackNames = [], declaredAsk = null, hasCurse = false, hasAura = false } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
   const str = (v, max = 80) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -658,6 +703,8 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     .match(/#/g) ?? []).length;
   // A TRIGGER THAT IS ONE OF THIS CREATURE'S OWN ATTACKS LANDING. Print's own wording for it, and
   // the shape of every rider and strike: "when it hits", "on a hit", "when its Horn hits".
+  /** a trigger that is a creature starting its turn near this one, or entering its space — print's aura */
+  const STARTS_NEAR = /\b(?:starts? its turn|begins its turn)\b[^.]*\b(?:within|in a|near)\b|\benters? (?:its|the \w+'s) space\b/i;
   const OWN_ATTACK_HITS = /\b(?:when|whenever|if)\b[^.]*\b(?:it|the \w+|its \w+(?: \w+)?)\s+hits\b|\bon a hit\b|\bwhen (?:it|the \w+) hits\b/i;
   const quantitiesOk = (x) => !Number.isFinite(Number(x?.quantities)) || Number(x.quantities) <= quantitiesStated(x);
   // A SAVE'S OUTCOME IS A SAVE TOO (critic, 2026-11-04). This tested for the words
@@ -699,6 +746,9 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     // double refusals on Part 1's own probe, and not one of them reached the new boxes. The drake's
     // Deafening Peal is the case — "when its Horn hits a creature in its breath's wake, a save or
     // Stunned" — and it is a strike, offered in place of one attack.
+    // AND A TRIGGER THAT IS A CREATURE STARTING ITS TURN NEAR THIS ONE GOES TO THE AURA (2026-11-19).
+    // The strike redirect above wins where the trigger is this creature's own attack landing.
+    : traitIsSave(t) && STARTS_NEAR.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? `a trait is not a save, and this fires on creatures NEAR the creature at the start of their turns — that is an aura, which print writes as a trait (the Ghast's Stench). Answer in "auras" with "name", "stat", "radius" (5, 10, 20 or 30) and "condition" (one of ${AURA_CONDITIONS.join('/')}). The engine writes the sentence, the DC, the ending and the immunity line`
     : traitIsSave(t) && OWN_ATTACK_HITS.test(`${t.trigger ?? ''}`) ? `a trait is not a save, and this fires when one of the creature's OWN attacks hits — answer in "strikes" with "attack" (the exact name of the attack row), "save" (the ability), and "condition" or "movement". The engine writes it as its own row with that attack's numbers and Multiattack offers it in place of one attack. If the hit needs NO save, answer in "riders" instead, with "attack" and a light "condition" (Prone or Grappled) or a "movement"`
     : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (stat, target, damage, condition, success)' : ''}`
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
@@ -838,6 +888,21 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     : !r.save ? 'a strike forces a saving throw — name the ability, or answer in the "rider" form if the hit needs none'
     : !r.condition && !r.movement && !r.curse ? 'a strike says what the failed save costs: a condition, a forced movement, or a curse'
     : null);
+  const RADII = [5, 10, 20, 30];
+  const aurasAll = (Array.isArray(p.auras) ? p.auras : []).map((a) => ({
+    clause: str(a?.clause, 120), name: str(a?.name, 40),
+    stat: STATS.includes(a?.stat) ? a.stat : 'Constitution',
+    radius: RADII.includes(Number(a?.radius)) ? Number(a.radius) : 10,
+    condition: CONDITIONS.includes(a?.condition) ? a.condition : null,
+  }));
+  const auraWhy = (a) => (!a.name ? 'an aura needs a name'
+    : !a.condition ? `an aura hands out one of ${AURA_CONDITIONS.join(', ')}`
+      : !AURA_CONDITIONS.includes(a.condition)
+        ? `${a.condition} is too strong to fall on everyone nearby every round for free — an aura hands out one of ${AURA_CONDITIONS.join(', ')}. If the idea is damage near the creature, it is not an aura: leave the arrays empty and the catalog will price it`
+        : null);
+  const refusedAuras = aurasAll.filter((a) => auraWhy(a) !== null);
+  const auras = hasAura ? [] : aurasAll.filter((a) => auraWhy(a) === null).slice(0, 1);
+  if (hasAura && aurasAll.some((a) => auraWhy(a) === null)) refusedAuras.push({ ...aurasAll.find((a) => auraWhy(a) === null), second: true });
   const refusedRiders = ridersAll.filter((r) => riderWhy(r) !== null);
   const refusedStrikes = strikesAll.filter((r) => strikeWhy(r) !== null);
   // ONE RIDER TO AN ATTACK, AND ONE STRIKE TO A SHEET.
@@ -850,10 +915,11 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const refused = [...refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })), ...refusedReactions.map((r) => ({ name: r.name || '(unnamed reaction)', why: reactionWhy(r) })),
     ...refusedSaves.map((s) => ({ name: s.name, why: saveWhy(s) })),
     ...refusedRiders.map((r) => ({ name: r.attack || '(unnamed rider)', why: r.dup ? `"${r.attack}" already carries a rider — one to an attack` : riderWhy(r) })),
-    ...refusedStrikes.map((r) => ({ name: r.name || '(unnamed strike)', why: strikeWhy(r) }))]; // one definition: the reason IS the test
+    ...refusedStrikes.map((r) => ({ name: r.name || '(unnamed strike)', why: strikeWhy(r) })),
+    ...refusedAuras.map((a) => ({ name: a.name || '(unnamed aura)', why: a.second ? 'this sheet already has an aura — one to a creature' : auraWhy(a) }))]; // one definition: the reason IS the test
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
-  return { attacks: attacksKept, saves: saves.slice(0, 1), riders: riders2, strikes, refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
+  return { attacks: attacksKept, saves: saves.slice(0, 1), riders: riders2, strikes, auras, refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
 }
 /**
  * A CONDITION ON A HIT, WRITTEN AS A TRAIT — the second key (owner's ruling 2026-11-13).

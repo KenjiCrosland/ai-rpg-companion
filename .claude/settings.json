@@ -1,8 +1,56 @@
 {
   "permissions": {
     "allow": [
+      "Read",
+      "Glob",
+      "Grep",
       "Bash(npx jest *)",
-      "Bash(node --check *)"
+      "Bash(node --check *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(jq *)",
+      "Bash(wc *)",
+      "Bash(du *)",
+      "Bash(git show *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(basename *)",
+      "Bash(dirname *)",
+      "Bash(pgrep *)",
+      "Bash(curl -s -o /dev/null *)",
+      "Bash(python3 *)",
+      "Bash(node -e *)",
+      "Bash(node --input-type=module *)",
+      "Bash(node --import ./scripts/alias-loader.mjs *)",
+      "Bash(npm run build)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(node scripts/smoke-statblock.mjs *)",
+      "Bash(perl -e *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./wordpress/wp-config.php)",
+      "Bash(cat *.env*)",
+      "Bash(cat *wp-config.php*)",
+      "Bash(grep * .env*)",
+      "Bash(* .env.local *)",
+      "Bash(* wp-config.php *)"
     ]
   }
 }
