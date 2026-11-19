@@ -40,6 +40,10 @@ export const DEFECTS = {
   dead_reference: 'the row names an attack, creature, feature or condition that is not on the sheet',
   wording: 'grammar, format or pronoun. The rule itself is clear',
   weak: 'the row runs as written, and the audit thinks it underpowered or outclassed',
+  // THE OWNER'S FIRST RULE, GIVEN A LABEL (part 2, 2026-11-18). His commonest reason for a Fix is
+  // that the sheet does not deliver what was typed, and until now only a person reading the sheet
+  // could see it. Nothing acts on it: it is logged and counted like `weak`.
+  undelivered: 'the row was written for something the GM asked for, and does not do it',
   other: 'none of the above describes it — the issue sentence carries the rest, and a run where this passes one finding in six means the list needs re-cutting',
 };
 export const DEFECT_NAMES = Object.keys(DEFECTS);
