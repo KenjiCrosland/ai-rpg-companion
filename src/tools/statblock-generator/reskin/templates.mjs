@@ -1318,6 +1318,24 @@ export function orderByStamps(pool, idea = null, askedMechanic = null) {
  * clause declared nothing, or when there are no records — so a one-clause
  * concept behaves exactly as before.
  */
+/**
+ * A CURSE NEEDS THE GM'S OWN WORD (2026-11-19).
+ *
+ * The tollkeeper's creator typed "a chapel bell-ringer's ghost that tolls for the dying" and asked
+ * for no curse. The route call read that clause as `askMechanic: curse`, the seat's lead keyed on
+ * it, and all four rolls shipped Ruinous Curse — a permanent effect needing a spell to lift, on a
+ * sheet whose one declared ask is `drain`.
+ *
+ * So for a curse, and ONLY for a curse, two things must hold: the call says the mechanic is a
+ * curse, AND the clause's own words name one. This is a word list, asked for and reasoned about in
+ * the handoff rather than reached for: the cost of a wrong yes is permanent and the GM never asked.
+ * Everywhere else the call's answer stands alone, as the house rule says.
+ */
+export const CURSE_WORDS = /\b(?:curse[sd]?|cursing|hex(?:es|ed|ing)?|accursed|jinx(?:es|ed|ing)?|malediction|maledict)\b/i;
+export const clauseAsksACurse = (clause) => !!clause
+  && String(clause.askMechanic ?? '') === 'curse'
+  && CURSE_WORDS.test(String(clause.text ?? ''));
+
 export function leadForSeat(seatElement, clauseRecords = [], sheetMechanic = null) {
   const seat = String(seatElement ?? '').toLowerCase();
   if (!seat || !Array.isArray(clauseRecords) || !clauseRecords.length) return sheetMechanic;
@@ -1327,6 +1345,9 @@ export function leadForSeat(seatElement, clauseRecords = [], sheetMechanic = nul
   let best = null; let bestScore = 0;
   for (const c of clauseRecords) {
     if (!c?.askMechanic) continue;
+    // A CURSE NEEDS THE GM'S OWN WORD (2026-11-19). The tollkeeper's "tolls for the dying" was read
+    // as a curse by the call and led the menu to one; nothing in those words names a curse.
+    if (c.askMechanic === 'curse' && !clauseAsksACurse(c)) continue;
     const shared = words(c.text).filter((w) => seatWords.has(w)).length;
     if (shared > bestScore) { bestScore = shared; best = c; }
   }

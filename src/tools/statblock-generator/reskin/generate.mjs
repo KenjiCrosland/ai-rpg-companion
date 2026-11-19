@@ -12,7 +12,7 @@ import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords} from './templates.mjs';
+import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords} from './templates.mjs';
 import { drawLibraryRow, nameHash, curseEffectFor } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
@@ -6882,6 +6882,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // used to pin one kind and the landing quietly accepted more; now a form the model is
             // invited to write is a form the engine will take, and nothing else.
             const takesHere = seatTakes(seatKind, { reactionOpen: reactionSeatOpen() });
+            // THE ENGINE SETS THE CURSE ON THE ROW WRITTEN FOR IT (2026-11-19). In two rolls of
+            // three the marsh witch's curse clause came back as a save that Restrains, with `curse`
+            // unset — asking the model to remember is not working, and the engine already knows
+            // which clause the row was handed. A one-round condition is dropped with it: the curse
+            // IS the row's effect, and the three together are more than one attack buys.
+            {
+              const cl = (clauseRecord ?? []).find((c) => c.id === clauseIdForHanded(idea?.clause));
+              if (cl && clauseAsksACurse(cl) && !sheetHasCurse) {
+                for (const row of [...(wrote?.saves ?? []), ...(wrote?.strikes ?? [])]) {
+                  if (row.curse) continue;
+                  row.curse = true; row.damage = true;
+                  if (row.condition) {
+                    trace('the curse is the row:', `"${row.name}" was written for "${String(cl.text).slice(0, 50)}" and the engine sets its curse; the ${row.condition} it also carried is dropped — a curse, damage and a condition are more than one row buys`);
+                    row.condition = null;
+                  } else {
+                    trace('the curse is the row:', `"${row.name}" was written for "${String(cl.text).slice(0, 50)}" and the engine sets its curse and its damage`);
+                  }
+                }
+              }
+            }
             // A LIGHT RIDER WELDS ONTO ITS ATTACK AND ADDS NO ROW (owner's ruling, 18 November
             // evening). It is not a row, so it does not go through the form selection below: it
             // lands here, and the seat is satisfied by it.
@@ -9443,6 +9463,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // mental save on a damage row with NO imposed mental condition behind it —
       // fear in the flavour, not in the rules.
       if (/has the (?:Frightened|Charmed) condition/.test(t)) continue;
+      // A CURSE ROW KEEPS A SAVE OF THE MIND (2026-11-19). This moved Ruinous Curse from Charisma
+      // to Dexterity "because the row's point is its damage" — and a curse resisted by dodging
+      // reads wrong. Wisdom and Charisma stand; anything else becomes Charisma, the template's own.
+      if (/\bis cursed\b/i.test(t)) {
+        const keep = ['Wisdom', 'Charisma'].includes(sv[1]) ? sv[1] : 'Charisma';
+        if (keep !== sv[1]) { e.text = e.text.replace(sv[0], sv[0].replace(sv[1], keep)); trace('a curse is resisted by the mind:', `${secS}/"${e.name}" ${sv[1]} -> ${keep} — a curse is not dodged`); }
+        continue;
+      }
+
       const want = /\b(?:breath|gas|spores?|cloud|poison|venom|choking|acid|fumes|reek|stench)\b/i.test(`${e.name} ${t}`) ? 'Constitution' : 'Dexterity';
       if (want === sv[1]) continue;
       e.text = t.replace(sv[0], sv[0].replace(sv[1], want));

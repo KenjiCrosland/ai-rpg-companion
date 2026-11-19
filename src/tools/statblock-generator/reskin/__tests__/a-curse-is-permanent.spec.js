@@ -27,7 +27,10 @@ describe('a curse is permanent', () => {
   test('the seed still exists under its own key, with its own keys', () => {
     const seed = LIBRARY_SEEDS.find((s) => s.key === 'curse-debt');
     expect(seed).toBeDefined();
-    expect(seed.keys).toEqual(['curse', 'debt', 'rebuke', 'price']);
+    // NARROWED 2026-11-19: 'debt', 'rebuke' and 'price' were left from the inverted-rebuke mechanic
+    // R2 replaced, and a GM typing "the price of crossing her water" was reaching a permanent curse
+    // through a word about payment.
+    expect(seed.keys).toEqual(['curse', 'hex', 'accursed', 'jinx']);
     expect(seed.text).not.toMatch(/until the end of/);     // the timer is gone
   });
 

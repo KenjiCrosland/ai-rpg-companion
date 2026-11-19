@@ -224,9 +224,16 @@ export const LIBRARY_SEEDS = [
     // gains no benefit from finishing a Short or Long Rest"; the Incubus "the target gains no
     // benefit from finishing Short Rests". No "until", no duration. The curse is a RIDER on damage,
     // never a row whose only effect is the curse.
-    key: 'curse-debt', keys: ['curse', 'debt', 'rebuke', 'price'],
+    // THE KEYS ARE THE CURSE'S OWN NOW (2026-11-19). 'debt', 'rebuke' and 'price' are left from the
+    // inverted-rebuke mechanic this row used to carry, which R2 replaced; a GM typing "the price of
+    // crossing her water" was reaching a permanent curse through a word about payment.
+    key: 'curse-debt', keys: ['curse', 'hex', 'accursed', 'jinx'],
     section: 'Actions', archetypes: ['caster', 'defender'],
-    name: 'Ruinous Curse', dpr_frac: 0.6, // was "Debt of Ruin" — the debt mechanic it named is gone
+    // IT IS WORTH THE ATTACK IT COSTS (owner's ruling on Grave Knell, 17 November; applied here
+    // 2026-11-19). 0.6 is left from the debt this row used to carry, which mattered during the
+    // fight. A curse does not: the moderate and minor tiers do nothing until the fight is over, by
+    // design, so the damage has to carry the row. Offered in an attack's place it deals one hit.
+    name: 'Ruinous Curse', dpr_frac: 1.0,
     text: '*Charisma Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.',
   },
   {
