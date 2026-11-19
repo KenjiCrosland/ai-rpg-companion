@@ -13,7 +13,7 @@ import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, ma
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
 import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords} from './templates.mjs';
-import { drawLibraryRow, nameHash } from './library.mjs';
+import { drawLibraryRow, nameHash, curseEffectFor } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
@@ -1299,6 +1299,72 @@ export const conditionClauseFor = (c, scaled) => (c === 'Grappled' ? `the target
 export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
   ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${escapeDCFor(scaled)}).`
   : `, and ${conditionClauseFor(c, scaled)}.`);
+
+/**
+ * A LIGHT RIDER IS WELDED ONTO THE ATTACK IT NAMES (owner's ruling, 18 November evening).
+ *
+ * Three of the eleven seats that ended empty on the last forty were trying to write one of these —
+ * the drake's Deafening Peal, the tollkeeper's Toll of the Dying — and the form had no box, so the
+ * answer was thrown away. A light effect adds no row: it goes onto the attack, through
+ * `riderTextFor`, which is the same weld the attack form and the hook-rider template use. Print's
+ * Dire Wolf Bite is the shape.
+ *
+ * Returns true when it welded. It refuses silently here only when the row cannot be found — the
+ * parse has already refused a rider that names an attack off the sheet, with its reason.
+ */
+export const weldRiderOntoAttack = (sections, rider, scaled, cr, traceFn = () => {}) => {
+  const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+  const row = Object.values(sections ?? {}).flat()
+    .find((e) => e?.name && bare(e.name) === bare(rider?.attack) && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')));
+  if (!row) return false;
+  const parts = [];
+  if (rider.condition) parts.push(riderTextFor(rider.condition, scaled, Number(cr)));
+  if (rider.movement) parts.push(`, and the target is ${rider.movement} straight away from ${rider.inline ?? 'the creature'}.`);
+  if (rider.curse) parts.push(` If the target is a creature, it is cursed. While cursed, ${curseEffectFor(Number(cr), String(rider.name ?? rider.attack)).effect}.`);
+  if (!parts.length) return false;
+  const text = String(row.text).replace(/\s*$/, '').replace(/\.$/, '') + parts.join('').replace(/^,/, ',');
+  row.text = text.replace(/([^.])$/, '$1.');
+  if (row.text_noRider) row.text_noRider = row.text;
+  if (rider.clauseId) row.clauseId = row.clauseId ?? rider.clauseId;
+  traceFn('rider welded onto its attack:', `"${row.name}" carries the seat's ${rider.condition ?? (rider.curse ? 'curse' : 'forced movement')} — a light effect adds no row (owner's ruling)`);
+  return true;
+};
+
+/**
+ * A RIDER THAT NEEDS A SAVE IS ITS OWN ATTACK (owner's ruling, 18 November evening).
+ *
+ * His words: "once per turn is the creature can replace one attack with 'attack with condition
+ * rider'". So the engine clones the named attack under the strike's name — the same bonus, reach or
+ * range and damage — and writes the save after the hit in print's own form, which is the Ghoul's
+ * Claw: "…Slashing damage. If the target is a creature, it is subjected to the following effect.
+ * *Constitution Saving Throw*: DC 10. *Failure:* The target has the Paralyzed condition until the
+ * end of its next turn."
+ *
+ * Multiattack then offers it in place of one attack, through the replacement clause the engine
+ * already writes, and THAT is the once-a-turn limit. The clone deals the attack's own damage, so
+ * the damage read does not move.
+ */
+export const strikeRowFrom = (sections, strike, scaled, cr) => {
+  const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+  const src = Object.values(sections ?? {}).flat()
+    .find((e) => e?.name && bare(e.name) === bare(strike?.attack) && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')));
+  if (!src || !strike?.save) return null;
+  // the attack's own line, up to and including its damage — the rider on the source attack, if it
+  // has one, does not come along
+  const head = String(src.text_noRider ?? src.text).split(/(?=\s(?:If|While)\b)/)[0].replace(/\s*$/, '');
+  const outcome = [
+    strike.condition ? conditionClauseFor(strike.condition, scaled) : '',
+    strike.movement ? `the target is ${strike.movement} straight away from the creature` : '',
+    strike.curse ? `the target is cursed. While cursed, ${curseEffectFor(Number(cr), String(strike.name)).effect}` : '',
+  ].filter(Boolean);
+  if (!outcome.length) return null;
+  const failure = `${outcome[0].charAt(0).toUpperCase()}${outcome[0].slice(1)}${outcome.length > 1 ? `, and ${outcome.slice(1).join(', and ')}` : ''}`;
+  return {
+    name: String(strike.name), authored: true, authoredSeat: true,
+    text: `${head} If the target is a creature, it is subjected to the following effect. *${strike.save} Saving Throw*: DC ${scaled.dc}. *Failure:* ${failure}.`,
+    ...(strike.clauseId ? { clauseId: strike.clauseId } : {}),
+  };
+};
 
 /**
  * THE MIND FROM THE CALL (item 4, owner's ruling 2026-11-15: "usually right sounds better?").
@@ -6741,14 +6807,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const askSeat = async (refusedBefore) => {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
             const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) , ...(refusedBefore ? { refusedBefore } : {})}), validateAuthorResponse);
-            let wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            // THE PARSE IS TOLD WHAT THE SHEET HAS (Box 1, 18 November evening). A rider and a
+            // strike each name an attack already on the sheet, so the validator needs the list;
+            // `curse` is accepted only where the sheet's declared ask is a curse, and only once.
+            const sheetAttackNames = Object.values(sections ?? {}).flat()
+              .filter((e) => e?.name && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')))
+              .map((e) => String(e.name).replace(/ \(.*\)$/, '').trim());
+            const sheetHasCurse = Object.values(sections ?? {}).flat().some((e) => /\bis cursed\b/i.test(String(e?.text ?? '')));
+            const seatParseOpts = { attackCap: 0, traitSlots: 1, attackNames: sheetAttackNames, declaredAsk: askedT ?? null, hasCurse: sheetHasCurse };
+            let wrote = parseAuthorResponse(rawS, seatParseOpts);
             // DEAFENED ALONE IS SWAPPED, NOT DROPPED (owner's ruling, 18 November evening). On the
             // SECOND ask only, and only when that refusal is the whole of what was wrong: the bells
             // answered Deafened twice and the swarm shipped with no Reaction at all.
             if (refusedBefore && (wrote?.refused ?? []).length
               && wrote.refused.every((r2) => REFUSED_FOR_DEAFENED_ALONE.test(String(r2.why)))) {
               const swapped = swapDeafenedToFrightened(rawS);
-              const again = swapped ? parseAuthorResponse(swapped, { attackCap: 0, traitSlots: 1 }) : null;
+              const again = swapped ? parseAuthorResponse(swapped, seatParseOpts) : null;
               if (again && !(again.refused ?? []).length) {
                 trace('Deafened swapped for Frightened:', `${seat} — the second answer was refused for Deafened alone and for nothing else, so the engine made it Frightened and kept the row (owner's ruling)`);
                 wrote = again;
@@ -6801,6 +6875,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // THE SEAT, and a creature has one reaction a round.
             const seatWroteAReaction = () => (sections.Reactions ?? []).filter(Boolean).some((e) => e.authoredSeat);
             const reactionSeatOpen = () => !seatWroteAReaction() && (sections.Reactions ?? []).filter(Boolean).length < 2;
+            // A LIGHT RIDER WELDS ONTO ITS ATTACK AND ADDS NO ROW (owner's ruling, 18 November
+            // evening). It is not a row, so it does not go through the form selection below: it
+            // lands here, and the seat is satisfied by it.
+            if (wrote?.riders?.[0]) {
+              const rd = { ...wrote.riders[0], inline: settledInline(), clauseId: clauseIdForHanded(idea?.clause) };
+              if (weldRiderOntoAttack(sections, rd, scaled, cr, trace)) {
+                return { landed: { row: Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === rd.attack), section: 'Actions', welded: true } };
+              }
+            }
+            // A RIDER THAT NEEDS A SAVE IS ITS OWN ATTACK, offered in place of one (his once-a-turn
+            // limit). The row carries the attack's own numbers, so the damage read does not move.
+            if (wrote?.strikes?.[0]) {
+              const st = { ...wrote.strikes[0], clauseId: clauseIdForHanded(idea?.clause) };
+              const row = strikeRowFrom(sections, st, scaled, cr);
+              if (row) {
+                trace('strike written from its attack:', `"${row.name}" clones "${st.attack}" and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the once-a-turn limit (owner's ruling)`);
+                sections.Actions = [...(sections.Actions ?? []), row];
+                return { landed: { row, section: 'Actions' } };
+              }
+            }
             const form = !wrote ? null
               : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' }
                 : wrote.reactions[0] && reactionSeatOpen() ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions', fromTraitSeat: true } : null)

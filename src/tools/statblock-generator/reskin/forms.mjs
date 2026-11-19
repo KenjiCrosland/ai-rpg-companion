@@ -112,6 +112,17 @@ export function renderForm(form, edition = '2024', { properNouns = [] } = {}) {
       //   *Trigger:* … *Response—Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* …
       // A save as PROSE inside the response is the 2014 wording and is refused upstream, so this
       // renders the fields or nothing.
+      // A DEFENSIVE RESPONSE THE ENGINE WRITES (Box 2, 18 November evening). The model supplies the
+      // name and the trigger; the sentence is print's own, from the Bandit Captain, the Warrior
+      // Veteran, the Pirate Captain and the Mummy Lord — four rows, one wording. `pb` is the
+      // creature's Proficiency Bonus, which is what print's "+2"/"+3" is.
+      if (form.response_kind === 'parry') {
+        const bump = Number(form.pb) || 2;
+        const sentence = `The ${form.inline ?? 'creature'} adds ${bump} to its AC against that attack, possibly causing it to miss.`;
+        return is2014
+          ? `${end(cap(form.trigger))} ${sentence}`
+          : `*Trigger:* ${end(cap(form.trigger))} *Response:* ${sentence}`;
+      }
       if (form.save) {
         const sv = form.save;
         const head2024 = `*Trigger:* ${end(cap(form.trigger))} *Response—${sv.stat} Saving Throw:* DC ${sv.dc}, ${sv.target}. *Failure:* ${end(cap(sv.failure))}${sv.success ? ` *Success:* ${end(cap(sv.success))}` : ''}`;

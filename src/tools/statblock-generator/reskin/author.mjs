@@ -90,6 +90,24 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     `- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.`,
     `- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").`,
     `- "condition_relation" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: "a creature that has the Prone condition", "a creature it is grappling") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for "imposes" too). A word that merely DESCRIBES is not the condition: "a frightening ruin", "a horrifying stench", "a paralysing cold" are prose, not rules — answer none unless the row names the condition as a game effect.`,
+    // THE TWO BOXES FOR A ROW THAT HANGS OFF THIS CREATURE'S OWN ATTACK (owner's ruling,
+    // 18 November evening). Eleven seats ended empty on the last forty and three of them were
+    // trying to write one of these; the form had no box, so the engine threw the answer away.
+    //
+    // A LIGHT effect welds onto the attack and adds no row — print's Dire Wolf Bite. One that needs
+    // a SAVE becomes its own named row that Multiattack offers in place of one attack, which is the
+    // once-a-turn limit: "once per turn is the creature can replace one attack with 'attack with
+    // condition rider'". Print's Ghoul Claw is the shape.
+    `- rider (something this creature's own attack does on a hit, light enough to need no save): { "clause", "attack": the EXACT name of an attack row on the sheet above, "condition": one of Prone/Grappled or null, "movement": "pushed up to N feet" | "pulled up to N feet" | null, "curse": true|false }. It adds no row: the engine writes it onto that attack.`,
+    `- strike (something this creature's own attack does on a hit that NEEDS a saving throw): { "clause", "name", "attack": the EXACT name of an attack row on the sheet above, "save": one of ${STATS.join('/')}, "condition": one of ${CONDITIONS.join('/')} or null, "movement": "pushed up to N feet" | "pulled up to N feet" | null, "curse": true|false }. The engine writes it as its own row with that attack's numbers, and Multiattack offers it in place of one attack.`,
+    `- "curse" ON A SAVE, A RIDER OR A STRIKE: true only if the creator asked for a curse. The engine writes the curse and chooses what it does; you only say that this row carries one.`,
+    `- "response_kind" ON A REACTION: leave it out unless the response is the creature defending itself, in which case the only value is "parry" and the engine writes the sentence. You still write the name and the trigger.`,
+    `WHICH FORM`,
+    `- It happens when one of this creature's own attacks hits, and it needs a saving throw: a strike.`,
+    `- It happens when one of this creature's own attacks hits, and it does not: a rider.`,
+    `- It answers something another creature does: a reaction.`,
+    `- It forces a saving throw on this creature's own turn: a save.`,
+    `- It is always true of the creature: a trait. A trait does not force a saving throw.`,
     `- A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".`,
   ].join('\n');
 }
@@ -431,7 +449,7 @@ export const swapDeafenedToFrightened = (raw) => {
   return swapped ? JSON.stringify(o) : null;
 };
 
-export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
+export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1, attackNames = [], declaredAsk = null, hasCurse = false } = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
   const str = (v, max = 80) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -626,7 +644,11 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // would refuse 4 rows and 2 of them state their amount this way — the warder's, and the Well
   // Drowned Worm's "moves up to its speed toward the nearest body of water".
   const BY_RELATION = /\bequal to\b|\bhalf (?:of |the |its )?|\b(?:twice|double)\b|\bmaximum damage\b|\bits (?:Speed|reach|Hit Point maximum)\b/gi;
-  const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''} ${theEngineWrites(x?.save)}`)
+  // A PARRY'S BONUS IS THE ENGINE'S TOO (Box 2, 18 November evening). `response_kind: 'parry'` means
+  // the engine writes the whole sentence, Proficiency Bonus and all, so the model's prose carries no
+  // numeral and the gate refused a correct answer — the same shape as the save's fields below and as
+  // the relational amounts above.
+  const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''} ${theEngineWrites(x?.save)}${x?.response_kind === 'parry' ? ' #' : ''}`)
     .replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, '#')  // a filled damage expression
     .replace(/\{dmg\}|\{dc\}/g, '#')                        // an unfilled engine slot
     .replace(/\d+d\d+/g, '#')
@@ -710,7 +732,17 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       // nothing after it and was cut at ship. Same validator as the save form's, one line over.
       movement: moveForm(r.save.movement),
       success: str(r.save.success, 120) || null,
-    } } : {}) }));
+    } } : {}),
+    // A DEFENSIVE RESPONSE FROM A CLOSED LIST (Box 2, 18 November evening). Measured on
+    // srd52-monsters.json: print writes PARRY four times — the Bandit Captain, the Warrior Veteran,
+    // the Pirate Captain and the Mummy Lord — in one sentence, "adds N to its AC against that
+    // attack, possibly causing it to miss".
+    //
+    // THE OTHER TWO VALUES ARE NOT OFFERED, because print has no row of either kind: 0 Reactions
+    // halve the damage of the triggering attack and 0 impose Disadvantage on it. The nearest print
+    // shape is the Stone Giant's Deflect Missile, which reduces the damage by a die rather than by
+    // half, and that needs an amount the form has no field for. Reported rather than invented.
+    ...(r?.response_kind === 'parry' ? { response_kind: 'parry' } : {}) }));
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
@@ -759,11 +791,59 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // `unplaced`, so a sheet that lost its ramp to escalationOk and a sheet whose
   // call never wrote one looked identical from outside. The reason rides out
   // for the caller to trace; nothing about the refusal itself changes.
+  // A RIDER ON THIS CREATURE'S OWN ATTACK, AND A STRIKE THAT NEEDS A SAVE (owner's ruling,
+  // 18 November evening). Both name an attack already on the sheet; neither invents one.
+  //
+  // WHICH EFFECTS MAY RIDE WITH NO SAVE: Prone, Grappled, and a push or pull. That is print's own
+  // line — the Dire Wolf's Bite and the Giant Crocodile's. Anything heavier needs a save, and the
+  // refusal says to answer in the strike form, which Multiattack then offers in place of one
+  // attack. That replacement IS the once-a-turn limit, and it is why a strike is a row and a rider
+  // is not.
+  const LIGHT_CONDITIONS = ['Prone', 'Grappled'];
+  const onTheSheet = (nm) => attackNames.map((x) => String(x).replace(/ \(.*\)$/, '').trim().toLowerCase())
+    .includes(String(nm ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase());
+  const curseAsked = declaredAsk === 'curse';
+  const ridersAll = (Array.isArray(p.riders) ? p.riders : []).map((r) => ({
+    clause: str(r?.clause, 120), attack: str(r?.attack, 40),
+    condition: CONDITIONS.includes(r?.condition) ? r.condition : null,
+    movement: moveForm(r?.movement),
+    curse: !!r?.curse && curseAsked && !hasCurse,
+  }));
+  const strikesAll = (Array.isArray(p.strikes) ? p.strikes : []).map((r) => ({
+    clause: str(r?.clause, 120), name: str(r?.name, 40), attack: str(r?.attack, 40),
+    save: STATS.includes(r?.save) ? r.save : null,
+    condition: CONDITIONS.includes(r?.condition) ? r.condition : null,
+    movement: moveForm(r?.movement),
+    curse: !!r?.curse && curseAsked && !hasCurse,
+  }));
+  const riderWhy = (r) => (!r.attack ? 'a rider names the attack it rides on'
+    : !onTheSheet(r.attack) ? `"${r.attack}" is not an attack on this sheet — name one of: ${attackNames.join(', ') || '(none)'}`
+    : !r.condition && !r.movement && !r.curse ? 'a rider says what the hit does: a condition, a forced movement, or a curse'
+    : r.condition && !LIGHT_CONDITIONS.includes(r.condition)
+      ? `${r.condition} is too heavy to ride on every hit with no saving throw — answer in the "strike" form instead, with "attack", "save" and "condition", and Multiattack will offer it in place of one attack`
+      : null);
+  const strikeWhy = (r) => (!r.name ? 'a strike needs a name'
+    : !r.attack ? 'a strike names the attack whose numbers it uses'
+    : !onTheSheet(r.attack) ? `"${r.attack}" is not an attack on this sheet — name one of: ${attackNames.join(', ') || '(none)'}`
+    : !r.save ? 'a strike forces a saving throw — name the ability, or answer in the "rider" form if the hit needs none'
+    : !r.condition && !r.movement && !r.curse ? 'a strike says what the failed save costs: a condition, a forced movement, or a curse'
+    : null);
+  const refusedRiders = ridersAll.filter((r) => riderWhy(r) !== null);
+  const refusedStrikes = strikesAll.filter((r) => strikeWhy(r) !== null);
+  // ONE RIDER TO AN ATTACK, AND ONE STRIKE TO A SHEET.
+  const riders2 = [];
+  for (const r of ridersAll.filter((x) => riderWhy(x) === null)) {
+    if (riders2.some((x) => x.attack.toLowerCase() === r.attack.toLowerCase())) { refusedRiders.push({ ...r, dup: true }); continue; }
+    riders2.push(r);
+  }
+  const strikes = strikesAll.filter((r) => strikeWhy(r) === null).slice(0, 1);
   const refused = [...refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })), ...refusedReactions.map((r) => ({ name: r.name || '(unnamed reaction)', why: reactionWhy(r) })),
-    ...refusedSaves.map((s) => ({ name: s.name, why: saveWhy(s) }))]; // one definition: the reason IS the test
+    ...refusedSaves.map((s) => ({ name: s.name, why: saveWhy(s) })),
+    ...refusedRiders.map((r) => ({ name: r.attack || '(unnamed rider)', why: r.dup ? `"${r.attack}" already carries a rider — one to an attack` : riderWhy(r) })),
+    ...refusedStrikes.map((r) => ({ name: r.name || '(unnamed strike)', why: strikeWhy(r) }))]; // one definition: the reason IS the test
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
-  return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
+  return { attacks: attacksKept, saves: saves.slice(0, 1), riders: riders2, strikes, refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
 }
 /**
  * A CONDITION ON A HIT, WRITTEN AS A TRAIT — the second key (owner's ruling 2026-11-13).
