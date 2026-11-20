@@ -893,19 +893,79 @@ export const templatesForDeclaredAsk = (askedMechanic, menu = [], declinedAsWord
  * or drops the clause, which is pinned behaviour in `a-cited-ability-takes-its-parenthetical.spec.js`.
  * This pass acts only where the cited row still EXISTS, so the two cannot fight.
  */
-const CITATION_TAIL = '(?:\\s*\\((?:Recharge [\\d\u2013-]+|\\d\\/Day|Costs? \\d+ Actions?)\\))?(?:\\s+if available)?';
+const CITATION_GATE = /\((Recharge [\d–-]+|\d+\/Day|Costs? \d+ Actions?)\)/;
+/** the replacement clause, and everything it cites, as one span */
+const CITATION_CLAUSE = /\b(?:can replace (?:one|two|three|the \w+) attacks? with|replace the \w+ attack with)\s+a use of\s+([^.]*)/i;
+
+/**
+ * THE ONE CITATION READER (fault 2, 2026-11-20). Print writes a replacement clause in three
+ * forms, and the sync only knew the first:
+ *
+ *     a use of Molten Seam                                  — plain
+ *     a use of Molten Seam or Shattering Ice                 — two rows
+ *     a use of (A) Gravewake or (B) Spellcasting to cast X   — the lettered list
+ *
+ * The sync anchored on "use of <name>", so in the lettered form the name is preceded by "(A) "
+ * and nothing matched. The Leviathan shipped "(A) Gravewake (Recharge 5-6)" over a row named
+ * "Gravewake" — the Brass Tyrant's fault of 18 November, which the owner graded a Fix, returning
+ * through the one form the fix did not read.
+ *
+ * One reader, used by the sync below and by the `citation-gate-mismatch` lint. If the lint had its
+ * own, the two would disagree exactly as the sync and the lettered form did.
+ *
+ * Each citation comes back as the text that introduces it (a letter marker, or nothing), the row
+ * name it points at, the gate written INSIDE the citation, and whether it says "if available".
+ */
+export const citationsIn = (text) => {
+  const m = CITATION_CLAUSE.exec(String(text ?? ''));
+  if (!m) return [];
+  return m[1].split(/\s+or\s+/).map((segment) => {
+    const lead = /^\s*\(([A-Z])\)\s*/.exec(segment);
+    const body = lead ? segment.slice(lead[0].length) : segment;
+    const gate = CITATION_GATE.exec(body);
+    return {
+      segment,
+      letter: lead ? lead[1] : null,
+      name: body.replace(CITATION_GATE, '').replace(/\s+if available\b/i, '').replace(/\s+/g, ' ').trim(),
+      gate: gate ? gate[1] : null,
+      ifAvailable: /\bif available\b/i.test(body),
+    };
+  }).filter((c) => c.name);
+};
+
+/**
+ * A CITATION IS THE ROW'S BARE NAME, PLUS "IF AVAILABLE" WHEN THE ROW IS GATED.
+ *
+ * Measured on srd52-monsters.json: of the 27 "use of X" citations whose row resolves, ZERO carry a
+ * usage parenthetical — including the one whose row IS gated, the Chimera's "Fire Breath
+ * (Recharge 5-6)", which print cites bare. Instead print says the row MIGHT NOT BE THERE, in two
+ * words: "It can replace the Claw attack with a use of Fire Breath IF AVAILABLE." All three of
+ * print's "if available" citations point at a gated row — the Chimera's Recharge 5-6, the
+ * Doppelganger's Unsettling Visage (Recharge 6), the Aboleth's Dominate Mind (2/Day) — and no
+ * citation of an ungated row says it. So:
+ *
+ *     row gated   ->  "a use of Molten Seam if available"
+ *     row ungated ->  "a use of Molten Seam"
+ *
+ * (My first pass dropped the gate and stopped there, which is the Brass Tyrant's mismatch the other
+ * way round: a GM reading a bare citation has no idea the row may be spent.)
+ *
+ * A citation whose row was RENAMED is `sweepDeadName`'s — it re-points the citation when the row is
+ * still on the sheet and drops it when the row has left. This pass acts only on a citation whose
+ * row EXISTS, so the two cannot fight.
+ */
 export const syncMultiattackCitations = (sectionsMap, traceFn = () => {}) => {
   const bare = (n) => String(n ?? '').replace(ROW_GATE, '').trim();
   const rows = Object.values(sectionsMap ?? {}).flat().filter((e) => e?.name);
   for (const mm of rows.filter((r) => /^Multiattack/.test(String(r.name)))) {
     const before = String(mm.text ?? '');
     let after = before;
-    for (const row of rows) {
-      const name = bare(row.name);
-      if (!name) continue;
-      const gated = ROW_GATE.test(String(row.name));
-      const re = new RegExp(`\\buse of ${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${CITATION_TAIL}`, 'g');
-      after = after.replace(re, `use of ${name}${gated ? ' if available' : ''}`);
+    for (const c of citationsIn(before)) {
+      const row = rows.find((r) => bare(r.name).toLowerCase() === c.name.toLowerCase());
+      if (!row) continue; // a citation of something that is not a row (a spell) is not ours
+      const want = `${c.letter ? `(${c.letter}) ` : ''}${c.name}${ROW_GATE.test(String(row.name)) ? ' if available' : ''}`;
+      if (c.segment.trim() === want) continue;
+      after = after.replace(c.segment, c.segment.startsWith(' ') ? ` ${want}` : want);
     }
     if (after === before) continue;
     mm.text = after;
