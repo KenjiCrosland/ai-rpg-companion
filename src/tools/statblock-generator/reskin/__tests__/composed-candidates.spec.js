@@ -23,7 +23,12 @@ import { pickDonor, scaleDonor } from '@/tools/statblock-generator/reskin/scale.
 const ctx = (cr = 15, size = 'Huge') => ({ scaled: scaleDonor(pickDonor(cr, null, 'brute'), cr, { mechanics: [] }), archetype: 'brute', cr, size, imposed: [], name: 'C', energy: 'Cold', mix: 'both', meleeName: 'Slam' });
 const plain = (t) => String(t).replace(/\*/g, '');
 const render = (t, c) => renderTemplate(t, c, t.fills ?? {});
-const ZONE_DMG = { section: 'trait', trigger: 'start_of_turn', effect: 'damage', family: 'zone' };
+// A CONDITION ZONE NOW NEEDS THE IDEA TO NAME ITS CONDITION (fault 4, owner 2026-11-20), so the
+// fixture carries an idea that names all three the family can still impose. Without one, a
+// condition candidate is correctly enumerated as none — which is what the Dire Wolf's frost hide
+// and the Glacier Heart's cold wake should have got instead of Deafened and Poisoned.
+const NAMES_ALL = 'a poisonous, frightening, blinding reek';
+const ZONE_DMG = { section: 'trait', trigger: 'start_of_turn', effect: 'damage', family: 'zone', idea: NAMES_ALL };
 
 describe('the factory enumerates candidates, and the bans are enforced there', () => {
   // PRE-PICKED BY THE IDEA'S OWN EFFECT, so a damage idea sees the damage

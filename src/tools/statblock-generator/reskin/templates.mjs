@@ -682,7 +682,12 @@ export const GRAMMARS = {
     requires: [null, null, null, 'line-move'],
     id_of: ['damage', 'condition', 'terrain', 'lane'], // the id segment per payload — `effect` alone would collide (terrain and lane are both movement)
     condition_for: 1,
-    conditions: ['Poisoned', 'Frightened', 'Deafened', 'Blinded'],
+    // DEAFENED LEAVES THIS FAMILY (owner's ruling, 2026-11-20). His rule is that Deafened is never
+    // a row's only effect, and a condition zone's condition IS its only effect. The Dire Wolf's
+    // "frost-rimed hide" composed `composed:zone:condition:deafened` and shipped a frost aura that
+    // deafens. I told him on 18 November that the catalog's uses of Deafened all ride on damage;
+    // that was wrong, and this family is where it is handed out alone.
+    conditions: ['Poisoned', 'Frightened', 'Blinded'],
     bans: [],
     ban_notes: [
       'Damage OR a condition, never both: every aura in print that does both is a Recharge action, not an always-on trait.',
@@ -804,6 +809,20 @@ export function composedReason(idea, { can = [] } = {}) {
   return null;
 }
 
+/**
+ * Does this idea's own text name the condition? Print's condition names are a closed fact, and a
+ * condition is named by its own word or an ordinary form of it — "poison", "poisoned", "poisons",
+ * "poisonous"; "fear", "frightened", "frightening"; "blind", "blinded", "blinding". Nothing here
+ * decides what the GM meant: it reads whether the word the row would print is in the idea.
+ */
+const CONDITION_STEM = { Poisoned: 'poison', Frightened: /\b(?:frighten|fear|terrif|dread|panic)/i, Blinded: 'blind', Charmed: /\b(?:charm|enthrall|beguil)/i, Prone: /\b(?:prone|knock\w* down|topple)/i };
+export const namesTheCondition = (idea, cond) => {
+  const text = `${idea?.idea ?? ''} ${idea?.clause ?? ''} ${idea?.element ?? ''}`.toLowerCase();
+  const stem = CONDITION_STEM[cond];
+  if (!stem) return false;
+  return stem instanceof RegExp ? stem.test(text) : text.includes(stem);
+};
+
 export function composedCandidates(idea, { can = [] } = {}) {
   const g = GRAMMARS[idea?.family];
   if (!g || g.section !== idea.section) return [];
@@ -822,6 +841,21 @@ export function composedCandidates(idea, { can = [] } = {}) {
       const ix = { ...Object.fromEntries(others.map((k) => [k, g[k].indexOf(c[k])])), [payloadSlot]: i };
       if (g.bans?.some((b) => g.slots.every((k) => b[k] === undefined || b[k] === ix[k]))) continue;
       for (const cond of condition) {
+        // THE IDEA HAS TO NAME THE CONDITION (owner's ruling, 2026-11-20). A condition zone fit by
+        // SHAPE alone took whatever condition the template held, and the trace said so in as many
+        // words — "[shape fit, no verb match]". The Dire Wolf's frost hide got Deafened; the
+        // Glacier Heart's "wake of killing cold" got Poisoned, which the audit called "neither
+        // cold-themed nor consistent with the creature".
+        //
+        // This is not a keyword table guessing what the GM meant: the condition names are print's
+        // own closed list, and the test is whether the idea's own words contain the one this
+        // candidate would impose. Where they do not, the candidate is not offered and the seat
+        // goes on as it does for any other miss.
+        // SCOPED TO THE ZONE FAMILY, which is where the fault was measured and what the owner
+        // ordered. `body-reaction` composes a condition too, and the same drift is possible there;
+        // it has not been measured on a forty, and widening a gate past its evidence is how the
+        // last three of these went wrong. Raised in the report instead.
+        if (cond && idea?.family === 'zone' && !namesTheCondition(idea, cond)) continue;
         const t = composedTemplate({ family: idea.family, ...c, [payloadSlot]: g[payloadSlot][i], condition: cond });
         if (!t) continue;
         // THE ID NAMES THE WHOLE COMBINATION, not just the payload: three

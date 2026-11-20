@@ -33,12 +33,16 @@ const plain = (t) => String(t).replace(/\*/g, '');
 // there is nothing for a parser to reject. What was parse-time is now factory-time.
 describe('the zone candidates, and the bans enforced where they are built', () => {
   const { composedCandidates } = require('@/tools/statblock-generator/reskin/templates.mjs');
-  const idea = (effect) => ({ section: 'trait', trigger: 'start_of_turn', effect, family: 'zone' });
+  // THE IDEA NAMES THE CONDITION (fault 4, owner 2026-11-20). A condition candidate is offered
+  // only when the idea's own words name the condition it would impose, so the fixture carries an
+  // idea that names all three the family can still hand out. The Dire Wolf's frost hide named
+  // none and got Deafened; the Glacier Heart's cold wake named none and got Poisoned.
+  const idea = (effect) => ({ section: 'trait', trigger: 'start_of_turn', effect, family: 'zone', idea: 'a poisonous, frightening, blinding reek' });
 
   it('one candidate per condition it may name, and never Prone', () => {
     const c = composedCandidates(idea('condition'), {});
     expect(c.length).toBe(Z().conditions.length);
-    expect(Z().conditions).toEqual(['Poisoned', 'Frightened', 'Deafened', 'Blinded']);
+    expect(Z().conditions).toEqual(['Poisoned', 'Frightened', 'Blinded']); // Deafened left the family (owner, 2026-11-20): a condition zone's condition is its only effect
     const texts = c.flatMap((t) => Object.values(t.frames).map(String)).join(' ');
     expect(texts).not.toMatch(/Prone condition/);
   });
