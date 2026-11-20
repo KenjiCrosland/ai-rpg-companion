@@ -1169,6 +1169,32 @@ export function areaDamage(row) {
  * copy of this grammar, so widening the exclusion here fixed neither of them
  * and the gate failed a sheet the engine saw nothing wrong with.
  */
+/**
+ * A STRIKE THAT ADDS NOTHING TO THE ATTACK IT CLONES (fault 5, owner 2026-11-20).
+ *
+ * A strike is its host attack plus a saving throw, offered in place of one attack. When what the
+ * save hands out is a condition the host ALREADY applies on a hit, the trade is a loss: the GM
+ * gives up an attack that grapples outright for one that grapples only on a failed save.
+ *
+ *   s35  Tendril         — hit: Grappled, and while Grappled, Restrained
+ *        Wellwater Drag  — hit, then a DC 13 Strength save: Grappled, and pulled 5 feet
+ *   s36  Gray Coil       — hit: Grappled, and while Grappled, Restrained
+ *        Granite Manacle — hit, then a DC 13 Strength save: Grappled, and nothing else
+ *
+ * A FORCED MOVEMENT DOES NOT RESCUE IT. s35 adds a 5-foot pull and is still the worse row, which
+ * is why the predicate reads the condition alone. The refusal in `generate.mjs` and the
+ * `strike-adds-nothing` lint both read this one function — if they had one each they would
+ * disagree, and the lint would report a row the refusal had let through.
+ *
+ * Both halves are declared: the strike's own `condition` field off its form, and the host's
+ * through `imposedConditions`.
+ */
+export const strikeAddsNothing = (strike, host) => {
+  const cond = String(strike?.condition ?? '');
+  if (!cond || !host) return false;
+  return imposedConditions(host).includes(cond);
+};
+
 export function imposedConditions(row) {
   // the record may name one condition or several — hook-drag's victim is
   // Grappled AND Restrained, and masking the second would hide a real triple

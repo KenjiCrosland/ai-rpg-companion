@@ -33,7 +33,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor, D4_MAX } from '../format-2024/dice.mjs';
-import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENIAL, KO_CONDITIONS } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, strikeAddsNothing, TURN_DENIAL, KO_CONDITIONS } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -7144,6 +7144,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               if (!cond) return null;
               return Object.values(sections).flat().some((e) => /Attack Roll/.test(String(e.text ?? '')) && imposedConditions(e).includes(cond)) ? cond : null;
             })();
+            // A STRIKE IS READ AGAINST ITS OWN HOST (fault 5, 2026-11-20). The rule above reads
+            // `form.f.imposes`, which a strike does not carry — its condition is on `condition` —
+            // so a strike never reached it, and two shipped: Wellwater Drag and Granite Manacle,
+            // each cloning an attack that already grapples and handing out Grappled on a save.
+            // It reads the HOST the strike names, not any attack on the sheet, because a strike
+            // is the trade for that one attack.
+            const strikeDup = form?.kind === 'strike' && (() => {
+              const host = Object.values(sections).flat().find((e) => String(e?.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(form.f.attack ?? '').toLowerCase());
+              return strikeAddsNothing(form.f, host) ? String(form.f.condition) : null;
+            })();
             const denies = form && form.section === 'Bonus Actions' && TURN_DENIAL.includes(String(form.kind === 'save' ? form.f.condition : form.f.imposes));
             if (stoodDown) {
               trace('seat stands down:', `${seat} — "${String(idea?.clause ?? '').slice(0, 60)}" is already carried by a row on this sheet; no second row is written for it`);
@@ -7154,6 +7164,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             } else if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
               trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329)`);
               return refuse('the row imposes a condition two rows on this sheet already impose');
+            } else if (strikeDup) {
+              trace('seat authoring refused:', `${seat} — the strike clones "${form.f.attack}", which already applies ${strikeDup} on a hit, so the save hands out what the attack it replaces already does; the trade is a loss for the GM`);
+              return refuse(`the strike's save hands out ${strikeDup}, which "${form.f.attack}" already applies on a hit — a strike has to add something to the attack it replaces`);
             } else if (dupOfAttack) {
               trace('seat authoring refused:', `${seat} — the authored row re-imposes ${dupOfAttack}, which this sheet's own attack row already applies; that fiction belongs in the attack's rider and the nearest template stands in`);
               return refuse("the row re-imposes a condition this sheet's own attack already applies");
