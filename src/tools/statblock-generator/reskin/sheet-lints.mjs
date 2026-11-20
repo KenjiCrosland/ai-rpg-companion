@@ -381,6 +381,35 @@ export const SHEET_LINTS = [
   // 'leading-flavor-sentence' (5 of 6 hits were print's own grammar) and
   // 'double-space-label' (invisible after normalisation) — three in one feature.
 
+  // AN INSTRUMENT FOR A CLASS NOTHING ELSE SEES (owner, 2026-11-20). All three faults of
+  // 20 November were a LATER pass undoing an earlier one, and not one of them showed in the
+  // seat's own trace: the one-nova pass at ship took a strike's Recharge back off, and the
+  // rename pass took its citation away. The seat's trace said the row was written correctly,
+  // and it was — and then the sheet shipped without it.
+  //
+  // These two read the FINISHED sheet, at the very end of the line, and only count. Nothing
+  // repairs here, because nothing acts after this point. The count belongs in every report
+  // and it should be 0.
+  {
+    rule: 'uncited-replacement-row',
+    reads: 'the finished sheet',
+    why: 'a row the engine wrote a replacement clause for, still on the sheet, that the finished Multiattack does not offer. The GM cannot reach it. Caused on 20 November by a rename the citation did not follow, and standing unexplained on three sheets of the 18 November forty',
+    run: (rows) => {
+      const ma = rows.find(({ r }) => /^Multiattack/.test(BARE(r.name)));
+      if (!ma) return [];
+      const line = TEXT(ma.r);
+      return rows.filter(({ r }) => (r.strike || r.authoredSeat) && !/^Multiattack/.test(BARE(r.name)) && r.replacementClause === true)
+        .filter(({ r }) => !new RegExp(`\\b${BARE(r.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(line))
+        .map(({ sec, r }) => `${sec}/${BARE(r.name)}: a replacement clause was written for this row and the finished Multiattack does not name it — "${line.slice(0, 90)}"`);
+    },
+  },
+  {
+    rule: 'ungated-turn-denial',
+    reads: 'the finished sheet',
+    why: "a strike that stuns, paralyzes or incapacitates and carries no Recharge. The owner's 18 November ruling is that a row taking a creature's whole turn away is gated; the one-nova rule stripped it at ship on 3 of 3 drake rolls and the seat's trace showed the gate being written",
+    run: (rows) => rows.filter(({ r }) => r.strike && /\b(?:Stunned|Paralyzed|Incapacitated)\b/.test(TEXT(r)) && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(String(r.name ?? '')))
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: takes a creature's turn away and carries no Recharge`),
+  },
 ];
 
 /** Every finding on one sheet, as `{ rule, reads, message }`. */
