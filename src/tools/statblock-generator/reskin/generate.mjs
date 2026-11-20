@@ -8256,6 +8256,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('trait renamed:', `"${tt.row.name}" already names a row — the trait ships as "${altT}", its template's own name`);
           tt.row.name = altT;
         }
+        // A ROW THAT NEEDS A HIT IS NOT A TRAIT (fault 3, owner 2026-11-20). The marsh witch
+        // shipped "Spiteful Curse. If the target is a creature and isn't already Poisoned by this
+        // creature, it is subjected to the following effect. Constitution Saving Throw: DC 14 …"
+        // — the text that follows an attack's hit, standing alone as a trait, with no target and
+        // nothing saying when it fires. The audit called it at high confidence.
+        //
+        // The template declares it: `trigger: 'on_hit'`. All thirteen such templates also declare
+        // `section: 'rider'`, so `templatesFor`'s legality already excluded them — but the
+        // DECLARED-MECHANIC lead injects a template into the menu by id, past that filter, and
+        // that is the route contagion took ("declared mechanic leads the menu: trait — curse:
+        // affliction, contagion"). The landing is the one place every route passes through.
+        //
+        // It welds to an attack if there is one to ride, and otherwise the seat goes on as it does
+        // for any other miss, rather than shipping a row a GM cannot run.
+        {
+          const tpl = TEMPLATE_BY_ID.get(tt.template?.id ?? tt.template ?? tt.row?.template);
+          if (tpl?.trigger === 'on_hit') {
+            trace('trait declined — it needs a hit:', `"${tt.row.name}" is a ${tpl.id} row, whose own declared trigger is on_hit — as a trait it is a saving throw with no target and nothing saying when it fires, so the seat goes on as it does for any other miss (fault 3). It is not welded here: which attack it would ride is a choice the engine does not get to make, and the rider form exists for a call that answers it`);
+            return;
+          }
+        }
         tt.row.bound = bound; tt.row.boundKeys = [...new Set([...keysOf(tt.because), ...(tt.row.boundKeys ?? []), ...userKeysFor(tt.template?.id ?? tt.row?.template)])];
         supersedeByTrait(tt); slotYield(tt.template, tt.row);
         if (!uniqueRowName(tt.row, tt.templateName)) { trace('trait declined — the name is taken:', `"${tt.row.name}" collides at ship and the engine will not mint a name`); return; }

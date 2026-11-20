@@ -1840,6 +1840,18 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     ],
     ['section', (t) => (!section || t.section === section)
     ],
+    // A ROW THAT NEEDS A HIT IS NOT A TRAIT (fault 3, 2026-11-20). `contagion` landed on the marsh
+    // witch's TRAIT seat and the sheet shipped "Spiteful Curse. If the target is a creature and
+    // isn't already Poisoned by this creature, it is subjected to the following effect.
+    // Constitution Saving Throw: DC 14 …" — the text that follows an attack's hit, standing alone,
+    // with no target and nothing saying when it fires. The audit called it at high confidence:
+    // "nothing on the sheet says when or at whom this saving throw occurs, so a GM cannot run it."
+    //
+    // The template says so itself: its declared trigger is `on_hit`. Such a template rides an
+    // attack through the rider weld, which is a different landing — as a trait-seat ROW it has no
+    // hit to hang on. Declared data, not a reading of its text.
+    ['needs-a-hit', (t) => !(section === 'trait' && t.trigger === 'on_hit')
+    ],
     ['trigger', (t) => triggerCompatible(trigger, t.trigger, t.section)
     ],
     ['denied-clause', (t) => !(text && deniedBy(t, text).length)
