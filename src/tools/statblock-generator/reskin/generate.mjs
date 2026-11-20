@@ -913,7 +913,19 @@ export const syncMultiattackCitations = (sectionsMap, traceFn = () => {}) => {
   }
 };
 
-export const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
+/**
+ * A RENAMED ROW KEEPS ITS CITATIONS (owner's ruling, 2026-11-20; fix D3).
+ *
+ * `renamed: true` says the row is STILL ON THE SHEET under a new name — not gone. The two cases
+ * reach this function looking identical: in both, nothing on the sheet answers to the dead name.
+ * A row that LEFT must lose its citations; a row merely RENAMED must keep them, pointing at the
+ * new name. Without the distinction the Multiattack branch below did the removal thing to a
+ * rename: `name follows content` renamed the drake's strike Charge-Wake -> Stagger-Wake, the
+ * sweep stripped the dead name, and the "a replacement clause without its object is nonsense"
+ * rule then deleted the whole clause. The sheet shipped a strike that stuns with nothing offering
+ * it — Fault 1 regressing by a different road, one round after it was fixed.
+ */
+export const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn, { renamed = false } = {}) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
   // A NAME TWO ROWS SHARE IS NOT DEAD (the orc pin, 2026-10-13: the model named
@@ -930,6 +942,18 @@ export const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
       if (row === keepRow || !hit.test(row.text ?? '')) continue;
       // the keeper OWNS the throw: a citation of the dead attack row becomes a citation of the keeper (the Thunderhead lost its Multiattack and its Storm Volley kept only a recharge clause — critic's regressions brief 2026-10-04)
       const keepBare = keepRow && /Attack Roll/.test(keepRow.text ?? '') ? String(keepRow.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim() : null;
+      // A RENAME RE-POINTS, AND NOTHING ELSE HAPPENS. Every line that cites the row follows it to
+      // its new name — the attack list, the replacement clause, a bare mention. The removal
+      // machinery below is for a row that has actually left the sheet.
+      if (renamed && keepRow) {
+        const freshName = String(keepRow.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
+        if (freshName && freshName.toLowerCase() !== bare.toLowerCase()) {
+          const was = row.text;
+          row.text = String(row.text ?? '').replace(new RegExp(`\\b${esc}\\b`, 'g'), freshName);
+          if (row.text !== was) traceFn('citation follows the rename:', `"${row.name}" cited "${bare}", which is still on this sheet as "${freshName}" — the citation re-points rather than going`);
+          continue;
+        }
+      }
       if (/^Multiattack/.test(row.name ?? '')) { // A MULTIATTACK IS NEVER SWEPT: it re-reads over the rows that remain (the Gladiator lost its Multiattack with the shed Crossbow and attacked once a turn — the critic's fourth read) — and it re-reads BEFORE a keeper's name is stamped anywhere, or it reads "using Greataxe or Greataxe"
         const re1 = new RegExp(`makes (\\w+) attacks, using (.+?) or ${esc} in any combination`); const re2 = new RegExp(`makes (\\w+) attacks, using ${esc} or (.+?) in any combination`);
         const t0 = row.text;
@@ -10803,6 +10827,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (clause && alreadyUsed) trace('multiattack replacement clause withheld:', `the Multiattack already uses it — "${multi.text.slice(0, 80)}" (the Vampire's print line names Bite; a second clause named it again, twist-ten 2026-10-19)`);
       else if (clause) {
         multi.text = `${multi.text.replace(/\s*$/, '')} ${clause}`;
+        // THE ROW REMEMBERS THAT A CLAUSE WAS WRITTEN FOR IT (2026-11-20). The end-of-line lint
+        // reads this: a row with the mark that the finished Multiattack does not name is a row
+        // the GM cannot reach. Nothing after this point acts, so the lint only counts.
+        if (saveAction) saveAction.replacementClause = true;
         trace('multiattack replacement clause:', clause);
       }
     }
@@ -11084,7 +11112,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         && !Object.values(sections).flat().some((o) => o !== e && String(o.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === stripped.toLowerCase())) {
         trace('name follows content:', `${sec}/"${bareN}" carries ${elem} the row never deals — "${stripped}" (the element word drops; the call's own noun stays)`);
         e.name = `${stripped}${gate}`;
-        sweepDeadName(sections, bareN, e, trace);
+        sweepDeadName(sections, bareN, e, trace, { renamed: true });
         continue;
       }
     }
@@ -11111,7 +11139,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!canon || taken.has(canon.toLowerCase()) || canon.toLowerCase() === bareN.toLowerCase()) continue;
       trace('name follows content:', `${sec}/"${bareN}" promises ${unkept} the row never delivers and no honest noun was free — it takes its template's own name, "${canon}" (${e.template})`);
       e.name = `${canon}${gate}`;
-      sweepDeadName(sections, bareN, e, trace);
+      sweepDeadName(sections, bareN, e, trace, { renamed: true });
       continue;
     }
     trace('name follows content:', `${sec}/"${bareN}" promises ${unkept} the row never delivers — "${renamed}" (the call's modifier kept, the claim word swapped for a noun the row earns)`);
@@ -11121,7 +11149,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // existed: the Shadowblade shipped "using Poisoned Blade or Shuriken or
     // Slash Blade" with no Poisoned Blade on the sheet (stage3 18-17-20).
     e.name = `${renamed}${gate}`;
-    sweepDeadName(sections, bareN, e, trace);
+    sweepDeadName(sections, bareN, e, trace, { renamed: true });
   }
   // THE SAVE FOLLOWS THE CONDITION IT IMPOSES (critic's new hold 2, 2026-10-16).
   // Both save-fit FAILs in holds2-17-11-11 have one root: a row's damage type or
