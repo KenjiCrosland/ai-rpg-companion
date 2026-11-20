@@ -6373,7 +6373,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const uniqueRowName = (row, templateName) => {
       const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').toLowerCase();
       const gate = / \((?:Recharge [\d–-]+|\d\/Day)\)$/.exec(row.name ?? '')?.[0] ?? '';
-      const taken = new Set(Object.values(sections).flat().map((e) => bare(e.name)));
+      // A ROW DOES NOT COLLIDE WITH ITSELF (fault 1, 2026-11-20). The forms that land early —
+      // a strike, an aura — push their row into `sections` as they land, so by the time this
+      // runs the row IS on the sheet and `taken` holds its own name. Five strikes on the forty
+      // were refused for colliding with themselves, which is also why the trace read as
+      // nonsense: "collides with a row on this sheet" when the row it named was itself.
+      const taken = new Set(Object.values(sections).flat().filter((e) => e !== row).map((e) => bare(e.name)));
       if (!taken.has(bare(row.name))) return true;
       const alt = templateName && !isPlaceholderRowName(templateName) && !taken.has(bare(templateName)) ? `${templateName}${gate}` : null;
       if (!alt) {
@@ -7997,7 +8002,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       slotYield(actionT.template ?? actionT.row?.template, actionT.row);
       actionT.row.boundKeys = [...new Set([...keysOf(actionT.because), ...(actionT.row.boundKeys ?? []), ...userKeysFor(actionT.template ?? actionT.row?.template)])]; // provenance (step 8): the user's words this row binds to, by the fit's reason and by the template's own keys
       { const yk = (scaled.speciesYielded ?? []).find((y) => y.shape === (actionT.template ?? actionT.row?.template)); if (yk) { const gateSuffix = (/ \(.*\)$/.exec(actionT.row.name) ?? [''])[0]; actionT.row.name = `${yk.name}${gateSuffix}`; actionT.row.kit = yk.kit; actionT.row.clause = yk.clause; actionT.row.free = true; trace('kit credited:', `the signature bound ${yk.shape}, the shape the ${yk.kit} kit yielded to the cap — the row is the kit's ("${yk.name}"), free tier`); } } // (the tortle's Bulwark Withdrawal was Shell Defense — the critic's second species read)
-      (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
+      // ONE PUSH. A form that landed early (a strike, an aura) is already in `sections`; pushing
+      // again put the same row on the sheet twice.
+      if (!(sections[actionT.section] ?? []).includes(actionT.row)) (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
       }
       // THE TRACE IS INSIDE THE GUARD (2026-11-19). `uniqueRowName` sets `actionT = null` on a name
@@ -9375,7 +9382,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // leaves (the Shield Guardian has Fist; the chassis's Shattering Blow stood beside it wearing the same
         // text — "Heavy Fist", goldens 2026-10-03); Multiattack reads print's "makes two Fist attacks"
         if (printBody && pc.meleeRows.length === 1 && meleeRows.length > 1) {
-          const keep = meleeRows[0]; const extra = meleeRows.slice(1).filter((e) => !e.print && !e.rules && !e.engine && !e.part); // the user's own part stays beside print's one melee row (Grik's Nasty Bite left the Kobold Warrior, sprint run 2026-10-12)
+          // A STRIKE IS NOT A SECOND MELEE ROW (fault 1, 2026-11-20). Print's attack list is
+          // locked on a print body — the owner's ruling of 8 November — and that is about the
+          // attacks the Multiattack NAMES. A strike is never named among them: it is offered in
+          // place of one attack by the replacement clause, so it takes no extra swing and does
+          // not widen print's list. Counting it here deleted three of the seven strikes the
+          // forty wrote — the Dire Wolf's Flank the Herd, the Vampire's Crimson Bramble Stalk,
+          // the Skeleton's Leg-Cutting Sweep — and each of those sheets shipped with no
+          // signature row at all. The two that survived (s35, s36) survived only because their
+          // bodies are not print's.
+          const keep = meleeRows[0]; const extra = meleeRows.slice(1).filter((e) => !e.print && !e.rules && !e.engine && !e.part && !e.strike); // the user's own part stays beside print's one melee row (Grik's Nasty Bite left the Kobold Warrior, sprint run 2026-10-12)
           for (const e of extra) for (const es3 of Object.values(monster.sections)) { const ix = es3.indexOf(e); if (ix !== -1) es3.splice(ix, 1); }
           for (const e of extra) { const bare = String(e.name ?? '').replace(/ \(.*\)$/, ''); const re = new RegExp(`\\b${bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'); for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (re.test(e3.text ?? '')) e3.text = e3.text.replace(re, keep.name); }
           const ma = Object.values(monster.sections).flat().find((o) => o.name === 'Multiattack');
