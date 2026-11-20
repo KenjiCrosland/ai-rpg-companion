@@ -1509,6 +1509,26 @@ export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = nu
   return { stats: out, moves, held, ran: true };
 }
 
+/**
+ * THE ONE-NOVA RULE NEVER ACTS ON A STRIKE (owner's ruling, 2026-11-20).
+ *
+ * A sheet carries one Recharge nova — 0 of 2 corpora carry two — so a second gated save row is
+ * un-gated and priced to the ceiling instead. A STRIKE IS NOT A NOVA: it is one attack of two,
+ * offered in place of one attack, and the 18 November ruling puts a Recharge on it when it takes
+ * a creature's turn away. It is also nova-SHAPED — gated, with a saving throw and damage dice —
+ * so every site that counts or strips novas would claim it on sight.
+ *
+ * FOUR sites apply the rule, and teaching one is not teaching the rule. Fix A taught the value
+ * check (`hasChassisNova`, and the strip beside it); the pass at ship, in `settleSheetBudgets`
+ * below, un-gated the drake's strike anyway and the sheet shipped a Stunned-at-will row with
+ * nothing offering it. The ruling lives here now and all four read it:
+ *   1. `novaRows`, in `settleSheetBudgets` — counts AND strips, at ship
+ *   2. `hasChassisNova`, inside `generateReskin` — counts, for the value check
+ *   3. the strip beside that value check
+ *   4. the strip on a drawn seed
+ */
+export const exemptFromOneNova = (e) => e?.strike === true;
+
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // LEGENDARY MACHINERY STARTS AT CR 10 (R10 · H3, 2026-11-03). Measured over the
@@ -1804,7 +1824,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // (14d12) emanation read as "nova none". The checker cannot be imported back
   // — it imports this file — so the predicate is kept deliberately identical.
   const nameGateOf = (e) => !!gateOf(e); // the recorded gate; the name remains the fallback inside gateOf
-  const novaRows = (sections.Actions ?? []).filter((e) => (nameGateOf(e) || TEXT_GATE.test(e.text ?? '')) && /Saving Throw/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
+  const novaRows = (sections.Actions ?? []).filter((e) => !exemptFromOneNova(e) && (nameGateOf(e) || TEXT_GATE.test(e.text ?? '')) && /Saving Throw/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   if (novaRows.length > 1) {
     // Keep, in order: print's own row; then a row whose gate is in its TEXT,
     // which a rename cannot un-gate; then a chassis row.
@@ -5244,7 +5264,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // Counting it here did two wrong things at once: a strike could stand in as the sheet's nova and
   // un-gate the real one, and a real nova could strip the strike's Recharge — which is what
   // shipped, on 3 of 3 drake rolls, as a Stunned-at-will row.
-  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !e.library && !e.template && !e.strike && !!gateOf(e) && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
+  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !exemptFromOneNova(e) && !e.library && !e.template && !!gateOf(e) && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   function slotYield(templateId, keeper) { // hoisted: the authored landing above calls it before this line (step 6)
     const declared = Array.isArray(templateId) ? templateId[0] : TEMPLATE_BY_ID.get(templateId)?.replaces; // an array names the slot outright (an authored Recharge save is the nova slot — the Glacier Wyrm shipped two breaths, critic's step-5 read)
     // a template whose rendered row ROLLS a ranged attack claims the ranged slot whatever it declares (throw-retrieve declares `signature`)
@@ -7894,8 +7914,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // prices it against a single attack, not against the sheet's big row — so it is neither
       // counted as the chassis nova nor stripped by one. A sheet may show two Recharges, the
       // nova and the strike, and that is accepted.
-      if (hasChassisNova(sections) && !actionT.row.strike && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
-      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections) && !actionT.row.strike, template: actionT.template ?? actionT.row?.template ?? null });
+      if (hasChassisNova(sections) && !exemptFromOneNova(actionT.row) && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
+      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null });
       if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; if (vc.widened) actionT.row.widened = true; } // the rename reads `widened` (N4)
       const vcSection = actionT.section; const vcName = actionT.row.name; // what the floor judged, so a re-slot is recognisable below
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
@@ -8045,7 +8065,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (drawn && Object.values(sections).flat().filter((e) => e.part || e.feature).length >= 3) { trace('fallback skipped:', `"${drawn.row.name}" — the user's own rows fill the sheet (three or more parts and features); no seed stands in (Meshrin's Chain Hook, critic's step-8 read)`); drawn = null; }
       if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
       if (drawn) {
-        if (hasChassisNova(sections) && / \(Recharge [\d–-]+\)$/.test(drawn.row.name ?? '')) { drawn.row.name = drawn.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); drawn.row.gate = undefined; trace('one nova:', `"${drawn.row.name}" — the seed's gate leaves; the chassis nova stands`); }
+        if (hasChassisNova(sections) && !exemptFromOneNova(drawn.row) && / \(Recharge [\d–-]+\)$/.test(drawn.row.name ?? '')) { drawn.row.name = drawn.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); drawn.row.gate = undefined; trace('one nova:', `"${drawn.row.name}" — the seed's gate leaves; the chassis nova stands`); }
         const vc = valueCheck(drawn.row, { scaled, sections, cr, section: drawn.section, noGate: hasChassisNova(sections), template: drawn.seed ?? drawn.row?.template ?? null });
         if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; if (vc.gate) drawn.row.gate = vc.gate; }
         trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
