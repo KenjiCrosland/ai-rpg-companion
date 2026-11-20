@@ -10425,7 +10425,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const text = exactHere ? asInline(r.text).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${Number(d) + pbDiffP}`) : asInline(r.text).replace(/\bDC \d+\b/g, `DC ${rowDc}`);
           const rowP = { name: r.name, text: text.charAt(0).toUpperCase() + text.slice(1), rules: true, print: true };
           // ONE BREATH: print's gated save row and the chassis nova fill the same slot — the chassis nova (priced at this sheet's CR) carries print's name and print's row stays out (Flame Breath beside Fire Breath, critic form-ten 2026-10-01)
-          if (/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? '') && /\d+ \(\d+d\d+/.test(r.text ?? '')) {
+          // PRINT'S NAME COMES OFF PRINT'S NOVA (fault 6, owner 2026-11-20). This gate asked only
+          // that the printed row be gated, force a save and roll damage — never which SECTION it
+          // was in. The Stone Giant's "Deflect Missile (Recharge 5-6)" is a REACTION, and it
+          // satisfies all three, so s32's chassis nova took its name and the sheet shipped a
+          // 30-foot bludgeoning cone called Deflect Missile. The audit's rename was then blocked
+          // because the name is "print's own row".
+          //
+          // Measured over srd52-monsters.json: 67 printed rows are gated + a save + damage dice,
+          // and 63 of them are Actions. The four that are not are exactly the wrong ones — the
+          // Centaur Trooper's Trampling Charge, the Incubus's Nightmare and the Nalfeshnee's
+          // Horror Nimbus (all Bonus Actions) and the Stone Giant's Deflect Missile. The section
+          // is the whole discriminator. (Requiring an AREA as well, as the handoff's wording
+          // suggested, would also drop 2 of the 63 legitimate single-target novas, so it is the
+          // section and not the geometry.)
+          //
+          // Where the printed creature has no nova of its own, the chassis nova keeps the name the
+          // model gave it.
+          if (r.section === 'Actions' && / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? '') && /\d+ \(\d+d\d+/.test(r.text ?? '')) {
             const chassisNova = (sections.Actions ?? []).find((o) => !o.library && !o.print && /\(Recharge [\d–-]+\)|\d\/Day/.test(o.name ?? '') && /Saving Throw/.test(o.text ?? ''));
             if (chassisNova && printNumbersHere) {
               // at print's CR, print's own breath is the one breath: the chassis nova leaves and print's row lands below
