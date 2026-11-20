@@ -4375,6 +4375,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // CR 13 against print's 31 (unproven-twelve, third run — the last row standing
       // after the other two writers were fixed). The target phrase is handed to the one
       // shared reader rather than re-deciding "is this an area" a third time.
+      // A CURSE ROW IS FINISHED BEFORE ITS NUMBERS ARE READ (fault 5 and fix B, 2026-11-20).
+      // This block used to sit BELOW `saveType`, so the Necrotic default was set after the type
+      // had already fallen through the word table to Bludgeoning — the hex that only bludgeons,
+      // on 3 of 3 rolls, with the fix in place and inert. It runs first now.
+      //
+      // Three things are the engine's on a curse row, whatever else the call wrote:
+      //   the damage (a curse that does nothing on a failure is not a row),
+      //   the type — Necrotic unless the call named one,
+      //   the save — of the mind (3.3), and it KEEPS it: the re-derive below reads a forced
+      //     movement and picks Strength by print's grammar, which is right about movement and
+      //     blind to the curse, and roll 2 shipped a Strength save because of it.
+      // And a forced movement leaves with the one-round condition 3.2 already drops: damage, a
+      // 10-foot pull and a curse is three things one row buys. The row is the damage and the curse.
+      if (s.curse) {
+        s.damage = true;
+        if (!s.type) s.type = 'Necrotic';
+        if (!['Wisdom', 'Charisma'].includes(s.stat)) s.stat = 'Charisma';
+        if (s.movement) { trace('the curse is the row:', `"${s.name}" also pushed or pulled the target — the movement leaves with the condition, as a curse, damage and a third thing are more than one row buys`); s.movement = null; }
+      }
       const wantSave = Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1)));
       const dice = engineDiceFor(capSingleTargetSave(wantSave, `Saving Throw ${s.target}`, cr));
       const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
@@ -4384,11 +4403,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the tier and the type are the engine's: a curse rides on Necrotic unless the call named
       // a type, and its save is of the mind (3.3), which `save follows the effect` honours once
       // the words "is cursed" are actually on the row.
-      if (s.curse) {
-        s.damage = true;
-        if (!s.type) s.type = 'Necrotic';
-        if (!['Wisdom', 'Charisma'].includes(s.stat)) s.stat = 'Charisma';
-      }
       const curseSentence = s.curse ? `the target is cursed. While cursed, ${curseEffectFor(Number(cr), String(s.name ?? p.name)).effect}` : '';
       const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : '', curseSentence].filter(Boolean);
       const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, anchor: inlineGuessRef(), failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024', { properNouns: ownNouns() });
@@ -4399,7 +4413,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // Nothing downstream could tell a condition the row IMPOSES from one it
       // merely REQUIRES, so the save pass was reading it back out of the prose.
       // Keeping the field is what lets that matcher be deleted.
-      return { name: `${s.name}${s.recharge ? ' (Recharge 5-6)' : ''}`, text, authored: true, clause: s.clause, gate: s.recharge ? 'Recharge 5-6' : undefined, ...(s.condition ? { imposes: s.condition } : {}), ...(s.movement ? { imposesMovement: true } : {}) };
+      return { name: `${s.name}${s.recharge ? ' (Recharge 5-6)' : ''}`, text, authored: true, clause: s.clause, gate: s.recharge ? 'Recharge 5-6' : undefined, ...(s.curse ? { curse: true } : {}), ...(s.condition ? { imposes: s.condition } : {}), ...(s.movement ? { imposesMovement: true } : {}) };
     }
     if (kind === 'trait') {
       const t = f;
@@ -11143,6 +11157,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     if (!imposed && !e.imposesMovement) continue;
+    // A CURSE ROW KEEPS ITS SAVE OF THE MIND (fix B, owner 2026-11-20). This pass is right about
+    // what it knows — a row that shoves or hauls takes Strength by print's grammar — and blind to
+    // the fact that the row is a curse, whose save 3.3 fixes to the mind. Roll 2 of the marsh
+    // witch shipped a Strength save for exactly this reason. The row says what it is, so the pass
+    // can tell; the same shape as `writtenForATypedClause`, which stops the audit renaming a row
+    // the GM typed.
+    if (e.curse) { trace('save kept on a curse row:', `${sec}/${String(e.name).replace(/ \(.*\)$/, '')} — a curse keeps its save of the mind (3.3); the re-derive does not retype it`); continue; }
     if (fromText) trace('save stat from print grammar:', `${sec}/${String(e.name).replace(/ \(.*\)$/, '')} imposes ${imposed} by its own text — no record on the row, so the grammar stood in (A2 gap)`);
     // PRONE IN A DAMAGING AREA IS A DEXTERITY SAVE; STRENGTH IS FOR SHOVES
     // (critic's package-seven review, 2026-10-22: Glacier's Killing Cold 13d10

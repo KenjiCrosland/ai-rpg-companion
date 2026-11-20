@@ -122,3 +122,34 @@ describe('a save that names no effect is refused, not filled', () => {
     expect(p.refused.filter((r) => /Fen-Whisper/.test(String(r.name)))).toEqual([]);
   });
 });
+
+/**
+ * FIX B (owner, 2026-11-20). The engine's half of a curse row — the Necrotic default, the save of
+ * the mind kept against the re-derive, and the forced movement dropped — lives inside
+ * `generateReskin` and its acceptance is the live check on s26 that the handoff prescribes.
+ * What IS reachable here is the input that engine half reads, and that is where fault 5 actually
+ * broke: `savesAll` built every other field of a save and dropped `curse` on the floor, so 3.2
+ * set the flag on an object the renderer never saw. These pin the fields the row must arrive with.
+ */
+describe('a curse row arrives with the fields the engine finishes it from', () => {
+  const { parseAuthorResponse } = require('../author.mjs');
+  const ask = { declaredAsk: 'curse' };
+  const save = (extra) => JSON.stringify({ saves: [{ clause: 'curses trespassers', name: 'Mirebrand Hex', stat: 'Wisdom', target: 'one creature within 60 feet', damage: true, ...extra }] });
+
+  test('the save KEEPS its curse — the field the prompt has shown since 18 November', () => {
+    const p = parseAuthorResponse(save({ curse: true }), ask);
+    expect(p.saves).toHaveLength(1);                 // the subject is present
+    expect(p.saves[0].curse).toBe(true);
+  });
+
+  test('and keeps a forced movement beside it, so the engine is the one that drops it', () => {
+    const p = parseAuthorResponse(save({ curse: true, movement: 'pulled up to 10 feet' }), ask);
+    expect(p.saves[0].curse).toBe(true);
+    expect(p.saves[0].movement).toBe('pulled up to 10 feet');
+  });
+
+  test('a save with no curse keeps the flag off — the engine must not curse an unasked row', () => {
+    expect(parseAuthorResponse(save({}), ask).saves[0].curse).toBeFalsy();
+    expect(parseAuthorResponse(save({ curse: true }), { declaredAsk: 'condition' }).saves[0].curse).toBeFalsy();
+  });
+});
