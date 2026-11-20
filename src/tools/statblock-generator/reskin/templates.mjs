@@ -3298,8 +3298,16 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // ladder's top rung is the NOVA budget (2x the round), not the attack's die.
   const maEV = attackEV * ma.attacks;
   const free = section === 'Bonus Actions' || section === 'Reactions';
-  const replaced = free ? 0 : gated ? maEV : attackEV;
-  const label = free ? `a ${section === 'Reactions' ? 'reaction' : 'bonus action'} (free)` : gated ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
+  // A STRIKE IS PRICED AGAINST THE ONE ATTACK IT REPLACES (owner's ruling, 2026-11-20).
+  // A gate means "this is a nova" here, and the floor follows: a nova replaces the whole round,
+  // so it must beat the whole Multiattack. A strike does not. It is offered in place of ONE
+  // attack, and its gate says how often it may be taken, not how much of the round it costs.
+  // The moment the one-nova fix let a strike keep its Recharge, this line began asking it for
+  // nova-sized value — the drake's went from "EV 9.9 vs floor 9.4, worth the trade" to "vs floor
+  // 19.9, still under", a floor it can never clear. The same ruling, needed by a second reader.
+  const novaFloor = gated && !row?.strike;
+  const replaced = free ? 0 : novaFloor ? maEV : attackEV;
+  const label = free ? `a ${section === 'Reactions' ? 'reaction' : 'bonus action'} (free)` : novaFloor ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
   // a BONUS ACTION trades for nothing: no floor, no ladder, ceiling only (a gated
   // bonus action is not a nova — Bedrock Grasp 2/Day climbed to 45 dice, 2026-09-22)
   const bonus = section === 'Bonus Actions' || section === 'Reactions'; // a reaction's cost is the reaction, not an action: a free row too
@@ -3346,12 +3354,16 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // Read off DECLARED data, never the text: `row.imposes` is the condition the row says
   // it applies, and the condition in a TARGETING frame ("one creature that is Grappled")
   // is a prerequisite rather than a payload — the mistake `rowValue` records above.
-  const gatedControl = gated && !!row.imposes;
+  const gatedControl = novaFloor && !!row.imposes;
   const floor = freeUtility ? 0
     : bonus ? 0.25 * attackEV
-      : gated ? (gatedControl ? 0.8 * attackEV : GATED_FLOOR * maEV)
+      : novaFloor ? (gatedControl ? 0.8 * attackEV : GATED_FLOOR * maEV)
         : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
-  const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
+  // The floor and the ceiling read `novaFloor`, not `gated`, for the reason above: a strike's
+  // Recharge says how OFTEN it may be taken, not how much of the round it costs. It is held to
+  // the one attack it replaces at both ends — which is what it was held to before the one-nova
+  // fix let it keep its gate, and what the drake's "EV 9.9 vs floor 9.4, worth the trade" read.
+  const ceiling = bonus ? 1.5 * attackEV : novaFloor ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
   // `let`, not `const`: the widening rung below can turn a single-target control
   // row into an area one, and the EV closure reads this.
   let area = /each creature/i.test(row.text);
