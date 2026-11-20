@@ -281,6 +281,16 @@ describe('faults 2 and 3 — what a strike may hand out', () => {
 describe('fault 4 — the fields shown are the fields accepted', () => {
   const { REACTION_SAVE_FIELDS, reactionSaveSpec, parseAuthorResponse: parse } = require('../author.mjs');
 
+  test('THE FIRST ASK SHOWS THE SAME BOX (fix C) — one list, both asks, no third copy', () => {
+    const { reactionSaveObject } = require('../author.mjs');
+    const box = reactionSaveObject();
+    // every field the parse accepts is offered, in the box the model fills
+    for (const f of REACTION_SAVE_FIELDS) expect(box).toContain(`"${f}"`);
+    // and nothing the gate refuses
+    expect(box).not.toContain('"damage"');
+    expect(box).not.toContain('"type"');
+  });
+
   test("the one list holds no damage, and holds the movement the gate accepts", () => {
     expect(REACTION_SAVE_FIELDS).toEqual(['stat', 'target', 'condition', 'movement', 'success']);
     expect(REACTION_SAVE_FIELDS).not.toContain('damage');

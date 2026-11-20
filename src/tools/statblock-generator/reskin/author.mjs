@@ -24,6 +24,24 @@
  */
 export const REACTION_SAVE_FIELDS = ['stat', 'target', 'condition', 'movement', 'success'];
 export const reactionSaveSpec = () => `${REACTION_SAVE_FIELDS.join(', ')} — a Reaction's save hands out a condition or a forced movement and deals NO damage`;
+/**
+ * THE SAVE BOX ITSELF, written once (fix C, owner 2026-11-20). The first ask offered a Reaction
+ * only `trigger` and `response`, with nowhere to put a saving throw — so a Reaction that forces
+ * one was written as prose inside "response" and refused for exactly that. Three of the probe's
+ * nineteen refusals were the warder's "Hold the Line", failing on every roll because the form had
+ * no box for what the idea is. The redirect then showed the proper box, which is why the fix made
+ * for fault 4 could only ever help on the second ask.
+ *
+ * The arrows are lazy, so STATS and CONDITIONS below are in scope by the time this is called.
+ */
+const REACTION_SAVE_FIELD_SPEC = {
+  stat: () => `one of ${STATS.join('/')}`,
+  target: () => 'as a save row writes it, usually "the triggering creature"',
+  condition: () => `one of ${CONDITIONS.join('/')} or null`,
+  movement: () => '"pushed up to N feet" | "pulled up to N feet" | null',
+  success: () => 'one line or null',
+};
+export const reactionSaveObject = () => `{ ${REACTION_SAVE_FIELDS.map((f) => `"${f}": ${REACTION_SAVE_FIELD_SPEC[f]()}`).join(', ')} }`;
 export const AURA_CONDITIONS = ['Poisoned', 'Frightened', 'Charmed', 'Prone'];
 export const DAMAGE_TYPES = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
 export const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Paralyzed', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
@@ -102,7 +120,7 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
     // is not heeded, not the rule itself.
     `- {dmg} IS DAMAGE AND {dc} IS A SAVE DC. Never write {dmg} where a COUNT belongs — a number of uses, attacks or legendary actions is a plain small integer you write yourself ("can take 3 legendary actions"), because a GM cannot take 4d6 of anything. If a row should be limited, say so with its limit ("1/Day", "Recharge 5-6") and not with a number in the sentence.`,
     `- NEVER PROMISE A LIST YOU DO NOT WRITE. "choosing from the options below", "one of the following" and "as listed below" each require the options to follow IN THIS SAME row's text; a row that promises them and stops is a dead row a GM cannot run.`,
-    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises }.`,
+    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises }. If the reaction forces a SAVING THROW, leave "response" out and answer "save": ${reactionSaveObject()} instead — a saving throw written as a sentence inside "response" is refused. A REACTION'S SAVE DEALS NO DAMAGE: it hands out a condition or a forced movement, and has no "damage" and no "type". The engine writes the DC and renders it after "Response", the way a published monster does.`,
     `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
     `- "heals" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.`,
     `- "quantities" ON A TRAIT OR REACTION: how many separate NUMBERS the row needs a table to know — every damage amount, every distance or area size, every bonus or penalty. Count them and answer the number. Then WRITE every one of them: {dmg} for damage the engine should fill, {dc} for a save DC, and a literal number for a distance or an area ("a 15-foot Emanation", "within 30 feet"). A row that promises a number and does not write it cannot be run at a table and is refused — "gains Temporary Hit Points" with no amount, "an Emanation" with no size, "deals extra Fire damage" with no amount. If the row needs no numbers at all, answer 0. A BONUS YOU ONLY DESCRIBE IS STILL A NUMBER: "deals extra Fire damage", "gains Temporary Hit Points", "is fiercer while Bloodied" each need an amount a table can read, so COUNT them. If you cannot give the amount as {dmg}, do not promise it.`,
@@ -324,9 +342,7 @@ without the ability.
 
 IF THE REASON SENDS YOU TO A REACTION: answer in "reactions" with { "clause", "name", "trigger": one
 sentence, "response": one sentence }. If the ability forces a saving throw, leave "response" out and
-answer "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "condition":
-one of ${CONDITIONS.join('/')} or null, "movement": "pushed up to N feet" | "pulled up to N feet" |
-null, "success": one line or null }. A REACTION'S SAVE DEALS NO DAMAGE — it hands out a condition
+answer "save": ${reactionSaveObject()}. A REACTION'S SAVE DEALS NO DAMAGE — it hands out a condition
 or a forced movement, and has no "damage" and no "type". The engine writes the DC and renders it after
 "Response", the way a published monster does: *Trigger:* … *Response—Wisdom Saving Throw:* DC 15,
 the triggering creature. *Failure:* … A saving throw written as a sentence inside "response" is
