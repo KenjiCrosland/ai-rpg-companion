@@ -302,3 +302,30 @@ describe('fault 4 — the fields shown are the fields accepted', () => {
     expect(p.refused[0].why).toMatch(/deals no damage here/);
   });
 });
+
+describe('fix A — a strike is not a nova (owner, 2026-11-20)', () => {
+  const { strikeRowFrom: build } = require('../generate.mjs');
+  const scaled = { cr: 5, dc: 15, pb: 3, per_hit: 11, mod: { STR: 4 } };
+  const body = () => ({ Actions: [
+    { name: 'Multiattack', text: 'The drake makes two Horn attacks.' },
+    { name: 'Horn', text: '*Melee Attack Roll:* +7, reach 10 ft. 12 (2d6 + 5) Piercing damage.' },
+    // the chassis nova — what stripped the strike's Recharge on 3 of 3 drake rolls
+    { name: 'Storm Breath (Recharge 5-6)', text: '*Dexterity Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 27 (6d8) Lightning damage.' },
+  ] });
+
+  test('the strike declares itself, which is what both one-nova guards read', () => {
+    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Stunned' }, scaled, 5);
+    expect(row.strike).toBe(true);
+    expect(row.name).toBe('Brand-Wake (Recharge 5-6)');
+    expect(row.gate).toBe('Recharge 5-6');
+  });
+
+  test("and a strike is not itself counted as the sheet's nova — it carries an Attack Roll, not a nova's shape", () => {
+    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Stunned' }, scaled, 5);
+    // `hasChassisNova` looks for a gated row with a save AND damage dice; a strike has all three,
+    // which is why it had to be excluded by name rather than by shape.
+    expect(row.text).toMatch(/Attack Roll/);
+    expect(row.text).toMatch(/Saving Throw/);
+    expect(row.text).toMatch(/\d+ \(\d+d\d+/);
+  });
+});

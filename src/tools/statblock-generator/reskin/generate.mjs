@@ -5223,7 +5223,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // chassis rows yield (never print's, a seed's, or another template's); the keeper owns the evicted row's citations.
   const userKeysFor = (tid) => { const tpl = tid ? TEMPLATES.find((t) => t.id === tid || t.key === tid) : null; return tpl ? (rankByVerb([tpl], readPhrases(String(options.userConcept ?? concept ?? '')), '')[0]?.concept ?? []) : []; }; // the keys the USER's words matched on the template — a row the idea call placed still answers the user's clause (the Gullet-Wyrm's Swallow, the scarecrow's flinch; sprint run 2026-10-12)
   const keysOf = (because) => [...String(because ?? '').matchAll(/([a-z][a-z' -]*?):(?:concept|idea)\b/g)].map((mm) => mm[1].trim()); // the keys a fit bound on, from its annotated reason
-  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !e.library && !e.template && !!gateOf(e) && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '')); // one Recharge nova per sheet (0 of 2 corpora carry two): a fitted row on a dragon stays ungated at the ceiling
+  // ONE RECHARGE NOVA A SHEET (0 of 2 corpora carry two): a fitted row on a dragon stays ungated
+  // at the ceiling rather than becoming a second one. A STRIKE IS NOT A NOVA (owner's ruling,
+  // 20 November) — it is one attack of two, priced by the value check against a single attack,
+  // and the 18 November ruling puts a Recharge on it when it takes a creature's turn away.
+  // Counting it here did two wrong things at once: a strike could stand in as the sheet's nova and
+  // un-gate the real one, and a real nova could strip the strike's Recharge — which is what
+  // shipped, on 3 of 3 drake rolls, as a Stunned-at-will row.
+  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !e.library && !e.template && !e.strike && !!gateOf(e) && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   function slotYield(templateId, keeper) { // hoisted: the authored landing above calls it before this line (step 6)
     const declared = Array.isArray(templateId) ? templateId[0] : TEMPLATE_BY_ID.get(templateId)?.replaces; // an array names the slot outright (an authored Recharge save is the nova slot — the Glacier Wyrm shipped two breaths, critic's step-5 read)
     // a template whose rendered row ROLLS a ranged attack claims the ranged slot whatever it declares (throw-retrieve declares `signature`)
@@ -7867,8 +7874,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     if (actionT && actionT.section !== 'Rider' && actionT.section !== 'Traits' && !closedPath) { // a re-seated TRAIT never climbs the ladder; the TWIST path has no value floor — its one row is the GM's ask, priced by print's CR (pipeline 2) (Wounded Tolling: 27 per hit, no save — fresh ten)
       // THE VALUE CHECK — the row must be worth the attack it replaces
-      if (hasChassisNova(sections) && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
-      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null });
+      // A STRIKE IS NOT A NOVA (owner's ruling, 20 November). The one-nova rule stripped the
+      // Recharge the 18 November ruling puts on a turn-denying strike, and the drake shipped a
+      // Stunned-at-will row on 3 of 3 rolls. A strike is one attack of two — the value check
+      // prices it against a single attack, not against the sheet's big row — so it is neither
+      // counted as the chassis nova nor stripped by one. A sheet may show two Recharges, the
+      // nova and the strike, and that is accepted.
+      if (hasChassisNova(sections) && !actionT.row.strike && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
+      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections) && !actionT.row.strike, template: actionT.template ?? actionT.row?.template ?? null });
       if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; if (vc.widened) actionT.row.widened = true; } // the rename reads `widened` (N4)
       const vcSection = actionT.section; const vcName = actionT.row.name; // what the floor judged, so a re-slot is recognisable below
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
