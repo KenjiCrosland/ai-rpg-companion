@@ -714,7 +714,13 @@ export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}) => 
   const esAct = sections.Actions ?? [];
   for (let i = esAct.length - 1; i >= 0; i -= 1) {
     const e = esAct[i];
-    if (/^Multiattack/.test(e.name ?? '') || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules) continue;
+    // A STRIKE IS NOT A CHASSIS ROW (fault 1, 2026-11-20). s01's "Flank the Herd (Recharge 5-6)"
+    // was written, survived the collision fix, and was then taken HERE: gated, it reads as the
+    // chassis's own nova, and this pass drops a chassis row print has no slot for. The row carries
+    // `authored`, which should already have skipped it, so some pass between the landing and here
+    // drops that flag; `strike` is the row's own declaration and is checked on its own rather than
+    // trusting a flag that demonstrably does not survive the trip.
+    if (/^Multiattack/.test(e.name ?? '') || e.strike || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules) continue;
     if (!/Attack Roll|Saving Throw/.test(e.text ?? '')) continue;
     if (/Attack Roll/.test(e.text ?? '')
         && !Object.values(sections).flat().some((o) => o !== e && /Attack Roll/.test(o.text ?? ''))) {
@@ -7044,11 +7050,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // limit). The row carries the attack's own numbers, so the damage read does not move.
             if (takesHere.includes('strike') && wrote?.strikes?.[0]) {
               const st = { ...wrote.strikes[0], clauseId: clauseIdForHanded(idea?.clause) };
+              // A REDUNDANT STRIKE NEVER LANDS (fault 5, 2026-11-20). The refusal for it lives in
+              // the authoring block below — which runs AFTER this landing, so it never saw a
+              // strike and Wellwater Drag shipped anyway with the fix in place. Checked here, the
+              // row is not landed and the seat falls through to that block, which refuses it with
+              // the reason and asks again.
+              const hostOf = Object.values(sections).flat().find((e2) => String(e2?.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(st.attack ?? '').toLowerCase());
+              if (strikeAddsNothing(st, hostOf)) {
+                trace('strike not landed — it adds nothing:', `"${st.name}" clones "${st.attack}", which already applies ${st.condition} on a hit; the seat is asked again rather than trading an attack for a worse one`);
+              } else {
               const row = strikeRowFrom(sections, st, scaled, cr);
               if (row) {
                 trace('strike written from its attack:', `"${row.name}" clones "${st.attack}" and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the once-a-turn limit (owner's ruling)`);
                 sections.Actions = [...(sections.Actions ?? []), row];
                 return { landed: seatShape(row, 'Actions') };
+              }
               }
             }
             // AN AURA IS PRINT'S OWN TRAIT THAT FORCES A SAVE, and the engine writes every word of
