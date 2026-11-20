@@ -12,7 +12,7 @@ import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords} from './templates.mjs';
+import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords, citationsIn} from './templates.mjs';
 import { drawLibraryRow, nameHash, curseEffectFor } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
@@ -893,46 +893,6 @@ export const templatesForDeclaredAsk = (askedMechanic, menu = [], declinedAsWord
  * or drops the clause, which is pinned behaviour in `a-cited-ability-takes-its-parenthetical.spec.js`.
  * This pass acts only where the cited row still EXISTS, so the two cannot fight.
  */
-const CITATION_GATE = /\((Recharge [\d–-]+|\d+\/Day|Costs? \d+ Actions?)\)/;
-/** the replacement clause, and everything it cites, as one span */
-const CITATION_CLAUSE = /\b(?:can replace (?:one|two|three|the \w+) attacks? with|replace the \w+ attack with)\s+a use of\s+([^.]*)/i;
-
-/**
- * THE ONE CITATION READER (fault 2, 2026-11-20). Print writes a replacement clause in three
- * forms, and the sync only knew the first:
- *
- *     a use of Molten Seam                                  — plain
- *     a use of Molten Seam or Shattering Ice                 — two rows
- *     a use of (A) Gravewake or (B) Spellcasting to cast X   — the lettered list
- *
- * The sync anchored on "use of <name>", so in the lettered form the name is preceded by "(A) "
- * and nothing matched. The Leviathan shipped "(A) Gravewake (Recharge 5-6)" over a row named
- * "Gravewake" — the Brass Tyrant's fault of 18 November, which the owner graded a Fix, returning
- * through the one form the fix did not read.
- *
- * One reader, used by the sync below and by the `citation-gate-mismatch` lint. If the lint had its
- * own, the two would disagree exactly as the sync and the lettered form did.
- *
- * Each citation comes back as the text that introduces it (a letter marker, or nothing), the row
- * name it points at, the gate written INSIDE the citation, and whether it says "if available".
- */
-export const citationsIn = (text) => {
-  const m = CITATION_CLAUSE.exec(String(text ?? ''));
-  if (!m) return [];
-  return m[1].split(/\s+or\s+/).map((segment) => {
-    const lead = /^\s*\(([A-Z])\)\s*/.exec(segment);
-    const body = lead ? segment.slice(lead[0].length) : segment;
-    const gate = CITATION_GATE.exec(body);
-    return {
-      segment,
-      letter: lead ? lead[1] : null,
-      name: body.replace(CITATION_GATE, '').replace(/\s+if available\b/i, '').replace(/\s+/g, ' ').trim(),
-      gate: gate ? gate[1] : null,
-      ifAvailable: /\bif available\b/i.test(body),
-    };
-  }).filter((c) => c.name);
-};
-
 /**
  * A CITATION IS THE ROW'S BARE NAME, PLUS "IF AVAILABLE" WHEN THE ROW IS GATED.
  *

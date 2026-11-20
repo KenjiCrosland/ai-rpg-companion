@@ -9,7 +9,8 @@
  *
  * One reader for all three forms, used by the sync and by the `citation-gate-mismatch` lint.
  */
-import { citationsIn, syncMultiattackCitations } from '../generate.mjs';
+import { syncMultiattackCitations } from '../generate.mjs';
+import { citationsIn } from '../templates.mjs'; // the one reader lives where both the sync and the lint can see it
 import srd from '@/data/srd52-monsters.json';
 
 const ma = (sections) => Object.values(sections).flat().find((r) => /^Multiattack/.test(r.name));

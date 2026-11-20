@@ -1,4 +1,6 @@
-import { isPlaceholderRowName } from './templates.mjs';
+import { isPlaceholderRowName, citationsIn } from './templates.mjs'; // ONE citation reader, shared with the Multiattack sync (fault 2)
+import { strikeAddsNothing, CONDITIONS } from './author.mjs';   // ONE redundancy predicate, shared with the seat's refusal (fault 5)
+import { LIBRARY_SEEDS } from './library.mjs';                  // the catalog's own names, never a list of my own (fault 7)
 /**
  * LINTS OVER A FINISHED SHEET — the §8 R1 layer.
  *
@@ -409,6 +411,114 @@ export const SHEET_LINTS = [
     why: "a strike that stuns, paralyzes or incapacitates and carries no Recharge. The owner's 18 November ruling is that a row taking a creature's whole turn away is gated; the one-nova rule stripped it at ship on 3 of 3 drake rolls and the seat's trace showed the gate being written",
     run: (rows) => rows.filter(({ r }) => r.strike && /\b(?:Stunned|Paralyzed|Incapacitated)\b/.test(TEXT(r)) && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(String(r.name ?? '')))
       .map(({ sec, r }) => `${sec}/${BARE(r.name)}: takes a creature's turn away and carries no Recharge`),
+  },
+  // ───────────────────────────────────────────────────────────────────────────────────────────
+  // THE SIX RULES FOR WHAT A GM TRIPS ON (owner, 2026-11-20). The forty passed every check the
+  // engine had and still held four to six sheets a GM would trip on; they were found by reading
+  // forty sheets, which does not scale. Each of the day's faults is a pattern on the FINISHED
+  // sheet, so the finished sheet can be read for it.
+  //
+  // They log and count. None of them changes a sheet, because nothing acts after this point.
+  // ───────────────────────────────────────────────────────────────────────────────────────────
+  {
+    rule: 'citation-gate-mismatch',
+    reads: 'the finished sheet',
+    why: "a row cited by name whose gate in the citation is not the gate on the row. s20 shipped \"a use of (A) Gravewake (Recharge 5-6)\" over a row named \"Gravewake\" — the Brass Tyrant's fault of 18 November returning through the lettered form",
+    run: (rows) => {
+      const ma = rows.find(({ r }) => /^Multiattack/.test(BARE(r.name)));
+      if (!ma) return [];
+      const out = [];
+      for (const c of citationsIn(TEXT(ma.r))) {
+        const hit = rows.find(({ r }) => BARE(r.name).toLowerCase() === c.name.toLowerCase());
+        if (!hit) continue;                       // a citation of a spell is not a row's citation
+        const onRow = (/\((Recharge [\d–-]+|\d+\/Day|Costs? \d+ Actions?)\)/.exec(String(hit.r.name ?? '')) ?? [])[1] ?? null;
+        if ((c.gate ?? null) !== onRow && c.gate !== null) out.push(`${BARE(ma.r.name)}: cites "${c.name}" as "${c.gate}" and the row is ${onRow ? `"${onRow}"` : 'not gated'}`);
+        else if (onRow && !c.ifAvailable) out.push(`${BARE(ma.r.name)}: cites "${c.name}", which is gated (${onRow}), without "if available"`);
+      }
+      return out;
+    },
+  },
+  {
+    rule: 'deafened-alone',
+    reads: 'the finished sheet',
+    why: "the owner's ruling is that Deafened is never a row's only effect. s01's frost-rimed Dire Wolf shipped an aura whose whole payload was Deafened",
+    run: (rows) => rows.filter(({ r }) => {
+      const t = TEXT(r);
+      if (!/\bDeafened\b/.test(t)) return false;
+      if (DICE.test(t)) return false;                                        // it rides on damage
+      if (/\b(?:pushed|pulled|moved|knocked)\b/i.test(t)) return false;      // or on a forced movement
+      // PRINT'S ONE DEAFENED ROW IS THE EXCEPTION, AND IT SAYS WHY. Run over all 329 printed
+      // creatures, this rule fired once: the Swarm of Ravens' Cacophony, which hands out Deafened
+      // and then states what it costs — "While Deafened, the target also has Disadvantage on
+      // ability checks and attack rolls." That is Deafened made to matter, and it is exactly what
+      // the Dire Wolf's aura does NOT do: its whole payload is the condition, with a success
+      // clause and nothing else. So the rule reads for the consequence, and print stops firing it
+      // without the true positive moving.
+      if (/\bWhile Deafened\b/i.test(t)) return false;
+      return !CONDITIONS.some((c) => c !== 'Deafened' && new RegExp(`\\b${c}\\b`).test(t)); // or beside another condition
+    }).map(({ sec, r }) => `${sec}/${BARE(r.name)}: Deafened is the only thing this row does`),
+  },
+  {
+    rule: 'rider-without-an-attack',
+    reads: 'the finished sheet',
+    why: "a row that is not an attack, has no area, no trigger and names no creature, and still speaks of \"the target\" — the sentence that follows a hit, standing alone. s26 shipped contagion's body as a trait",
+    run: (rows) => rows.filter(({ r }) => {
+      const t = TEXT(r);
+      // A RIDER'S BODY OPENS ONE WAY: "If the target …", the sentence that follows an attack's
+      // hit. Reading for "the target" anywhere in the row was far too loose — it fired on the Air
+      // Elemental's Whirlwind ("one Medium or smaller creature … and the target is pushed"), on
+      // the Vampire's Charm and on the Archlich's Paralyzing Touch, all of which say when and at
+      // whom perfectly well. The opening is the tell, and it is what s26 shipped.
+      if (!/^(?:\*+)?If the target\b/i.test(t)) return false;
+      if (/Attack Roll|Weapon Attack/.test(t)) return false;                 // it IS the attack
+      if (/\*?Trigger:\*?/i.test(t)) return false;                           // a reaction says when
+      return true;
+    }).map(({ sec, r }) => `${sec}/${BARE(r.name)}: opens as a rider does — "If the target …" — with no attack, no trigger and nothing saying at whom`),
+  },
+  {
+    rule: 'strike-adds-nothing',
+    reads: 'the finished sheet',
+    why: "a strike whose save hands out a condition the attack it clones already applies on a hit — the GM gives up an attack that grapples outright for one that grapples on a failed save. s35 and s36",
+    run: (rows) => {
+      const out = [];
+      for (const { sec, r } of rows.filter(({ r }) => r.strike)) {
+        const cond = (/has the (\w+) condition/.exec(TEXT(r)) ?? [])[1];
+        if (!cond) continue;
+        // the host is the attack this strike clones: same damage line, not itself
+        const dmg = (/(\d+ \(\d+d\d+[^)]*\))/.exec(TEXT(r)) ?? [])[1];
+        const host = rows.find(({ r: h }) => h !== r && /Attack Roll/.test(TEXT(h)) && dmg && TEXT(h).includes(dmg));
+        if (host && strikeAddsNothing({ condition: cond }, host.r)) out.push(`${sec}/${BARE(r.name)}: its save hands out ${cond}, which "${BARE(host.r.name)}" already applies on a hit`);
+      }
+      return out;
+    },
+  },
+  {
+    rule: 'stock-template-name',
+    reads: 'the finished sheet',
+    why: "a row wearing the default name of the catalog template that landed it. On a reskinned creature that reads as catalog furniture — s18's \"Ruinous Curse\", s24's \"Creeping Dread\". Counted, not fixed: the engine does not mint names and the owner decides what such a row should do",
+    run: (rows) => {
+      const stock = new Map(LIBRARY_SEEDS.map((sd) => [BARE(sd.name).toLowerCase(), sd.key]));
+      return rows.filter(({ r }) => !r.print && stock.has(BARE(r.name).toLowerCase()))
+        .map(({ sec, r }) => `${sec}/${BARE(r.name)}: is the stock name of the "${stock.get(BARE(r.name).toLowerCase())}" template`);
+    },
+  },
+  {
+    rule: 'two-recharge-rows',
+    reads: 'the finished sheet',
+    why: "more than one row on a Recharge. One of the two being a turn-denying strike is accepted (owner, 18 November); neither being one is s31, which ships Thunder Breath and Shockwave Wings. A printed body whose two are both print's own is listed apart and is not a finding",
+    run: (rows) => {
+      // A RECHARGE, not any usage limit: "Legendary Resistance (3/Day)" is a defensive trait and
+      // not a second nova to track. And a sheet carries its rows TWICE — the 2024 sections and the
+      // 2014 arrays — so the same row must not count as two, which is what made this read 16 of 40.
+      const seen = new Set();
+      const gated = rows.filter(({ r }) => /\(Recharge [\d–-]+\)/.test(String(r.name ?? '')) || /^Recharge/.test(String(r.gate ?? '')))
+        .filter(({ r }) => { const k = BARE(r.name).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+      if (gated.length < 2) return [];
+      if (gated.every(({ r }) => r.print)) return [];                        // print's own pair is print's business
+      const strikes = gated.filter(({ r }) => r.strike && /\b(?:Stunned|Paralyzed|Incapacitated)\b/.test(TEXT(r))).length;
+      const kind = strikes ? 'one is a turn-denying strike, which is accepted (owner, 18 November)' : 'neither is a strike';
+      return [`${gated.map(({ r }) => `"${BARE(r.name)}"`).join(' and ')}: ${gated.length} rows on a Recharge — ${kind}`];
+    },
   },
 ];
 
