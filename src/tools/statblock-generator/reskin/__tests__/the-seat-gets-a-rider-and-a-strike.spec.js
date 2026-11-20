@@ -92,7 +92,9 @@ describe('a strike is its own attack, offered in place of one', () => {
     expect(p.strikes).toHaveLength(1);
     const row = strikeRowFrom(body(), p.strikes[0], scaled, 5);
     expect(row).toBeTruthy();
-    expect(row.name).toBe('Deafening Peal');
+    // A TURN-DENYING CONDITION CARRIES A RECHARGE (fault 2, 2026-11-20): Stunned at will, on a save
+    // against losing a whole turn, is what eight of the nine landed strikes shipped.
+    expect(row.name).toBe('Deafening Peal (Recharge 5-6)');
     expect(row.text).toContain('*Melee Attack Roll:* +7, reach 10 ft. 12 (2d6 + 5) Piercing damage');  // the attack's own numbers
     expect(row.text).toContain('If the target is a creature, it is subjected to the following effect.'); // the Ghoul's wording
     expect(row.text).toMatch(/\*Constitution Saving Throw\*: DC 15\. \*Failure:\* The target has the Stunned condition until the end of its next turn\./);
@@ -231,5 +233,72 @@ describe('a refusal names the form that would have taken the answer', () => {
     for (const g of ['when it hits a creature with its Bite', 'on a hit, the target is shaken', 'whenever the drake hits with its Horn']) {
       expect(peal(g).refused[0].why).toMatch(/answer in "strikes"/);
     }
+  });
+});
+
+/**
+ * THE FIVE FAULTS READING THE ROWS FOUND (2026-11-20). Two of the five passed their tests last
+ * session because the test stopped at the parse, so the ones that are about a row assert on what
+ * `strikeRowFrom` actually produces, and the Multiattack ones on a finished sheet in the probe.
+ */
+describe('faults 2 and 3 — what a strike may hand out', () => {
+  const { strikeRowFrom: build } = require('../generate.mjs');
+  const { parseAuthorResponse: parse, swapDeafenedToFrightened: swap } = require('../author.mjs');
+  const scaled = { cr: 5, dc: 15, pb: 3, per_hit: 11, mod: { STR: 4 } };
+  const body = () => ({ Actions: [
+    { name: 'Multiattack', text: 'The drake makes two Horn attacks.' },
+    { name: 'Horn', text: '*Melee Attack Roll:* +7, reach 10 ft. 12 (2d6 + 5) Piercing damage.' },
+  ] });
+  const SEAT = { attackNames: ['Horn', 'Flukes'] };
+
+  test('a turn-denying condition is named with a Recharge, and its citation will read "if available"', () => {
+    for (const c of ['Stunned', 'Paralyzed', 'Incapacitated']) {
+      const row = build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5);
+      expect([c, row.name]).toEqual([c, 'Peal (Recharge 5-6)']);
+      expect(row.gate).toBe('Recharge 5-6');
+    }
+  });
+
+  test('every other condition stays at will, once a turn', () => {
+    for (const c of ['Frightened', 'Prone', 'Grappled', 'Poisoned', 'Restrained']) {
+      const row = build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5);
+      expect([c, row.name]).toEqual([c, 'Peal']);
+      expect(row.gate).toBeUndefined();
+    }
+  });
+
+  test('DEAFENED IS NOT A STRIKE\'S EFFECT — refused, and the swap reaches it', () => {
+    const p = parse(JSON.stringify({ strikes: [{ clause: 'x', name: 'Brineplate Detonation', attack: 'Flukes', save: 'Constitution', condition: 'Deafened' }] }), SEAT);
+    expect(p.strikes).toHaveLength(0);                   // the subject is present and refused
+    expect(p.refused[0].why).toMatch(/Deafened alone is too slight to be what a strike adds/);
+    // the swap walks every array now, not three by name — a strike was invisible to it
+    const again = parse(swap(JSON.stringify({ strikes: [{ clause: 'x', name: 'Brineplate Detonation', attack: 'Flukes', save: 'Constitution', condition: 'Deafened' }] })), SEAT);
+    expect(again.strikes).toHaveLength(1);
+    expect(again.strikes[0].condition).toBe('Frightened');
+  });
+});
+
+describe('fault 4 — the fields shown are the fields accepted', () => {
+  const { REACTION_SAVE_FIELDS, reactionSaveSpec, parseAuthorResponse: parse } = require('../author.mjs');
+
+  test("the one list holds no damage, and holds the movement the gate accepts", () => {
+    expect(REACTION_SAVE_FIELDS).toEqual(['stat', 'target', 'condition', 'movement', 'success']);
+    expect(REACTION_SAVE_FIELDS).not.toContain('damage');
+    expect(REACTION_SAVE_FIELDS).not.toContain('type');
+    expect(reactionSaveSpec()).toMatch(/deals NO damage/);
+  });
+
+  test('a Reaction save with exactly those fields is accepted', () => {
+    const p = parse(JSON.stringify({ reactions: [{ clause: 'x', name: 'Engulfing Wake', trigger: 'a Frightened creature Disengages', mechanics: 1, quantities: 1,
+      save: { stat: 'Strength', target: 'the triggering creature', condition: null, movement: 'dragged up to 15 feet', success: 'none' } }] }), {});
+    expect(p.reactions).toHaveLength(1);
+    expect(p.reactions[0].save.movement).toBe('pulled up to 15 feet');
+  });
+
+  test('and one written with damage is still refused, which is what the model was being told to write', () => {
+    const p = parse(JSON.stringify({ reactions: [{ clause: 'x', name: 'Tears of Remorse', trigger: 'a creature attacks it', mechanics: 1, quantities: 1,
+      save: { stat: 'Wisdom', target: 'the triggering creature', damage: true, type: 'Psychic', condition: null } }] }), {});
+    expect(p.reactions).toHaveLength(0);
+    expect(p.refused[0].why).toMatch(/deals no damage here/);
   });
 });

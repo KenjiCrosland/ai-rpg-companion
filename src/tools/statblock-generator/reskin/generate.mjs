@@ -1359,8 +1359,21 @@ export const strikeRowFrom = (sections, strike, scaled, cr) => {
   ].filter(Boolean);
   if (!outcome.length) return null;
   const failure = `${outcome[0].charAt(0).toUpperCase()}${outcome[0].slice(1)}${outcome.length > 1 ? `, and ${outcome.slice(1).join(', and ')}` : ''}`;
+  // A STRIKE THAT TAKES A TURN AWAY CARRIES A RECHARGE (fault 2, 2026-11-20). Eight of the nine
+  // strikes that landed handed out Stunned, at will, on a save against losing a whole turn. The
+  // owner's 18 November ruling — a turn-denying condition is allowed only on a row that has a
+  // Recharge — was made for the Deafened swap and applies here as it stands. The row is still
+  // offered in place of one attack, and its citation reads "if available" as any gated row's does.
+  const TURN_DENYING = ['Stunned', 'Paralyzed', 'Incapacitated'];
+  const gate = TURN_DENYING.includes(strike.condition) ? ' (Recharge 5-6)' : '';
   return {
-    name: String(strike.name), authored: true, authoredSeat: true,
+    // THE ROW SAYS WHAT IT IS (fault 1, 2026-11-20). A strike is an attack row, so the Multiattack
+    // writer listed it with the others and every one shipped "using Horn or Charged Brand in any
+    // combination" — which lets the drake use it with BOTH attacks, every turn, the opposite of the
+    // ruling it was built for. It is offered by the replacement clause instead, and `strike` is how
+    // both passes tell it from a weapon.
+    name: `${String(strike.name)}${gate}`, authored: true, authoredSeat: true, strike: true,
+    ...(gate ? { gate: 'Recharge 5-6' } : {}),
     text: `${head} If the target is a creature, it is subjected to the following effect. *${strike.save} Saving Throw*: DC ${scaled.dc}. *Failure:* ${failure}.`,
     ...(strike.clauseId ? { clauseId: strike.clauseId } : {}),
   };
@@ -4365,7 +4378,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const wantSave = Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1)));
       const dice = engineDiceFor(capSingleTargetSave(wantSave, `Saving Throw ${s.target}`, cr));
       const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
-      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : ''].filter(Boolean);
+      // A CURSE ROW WRITES ITS CURSE (fault 5, 2026-11-20). The flag reached this point and the
+      // failure clause never had a sentence for it, so the marsh witch's row shipped as damage
+      // alone — the hex that only bludgeons, which is where 18 November started. The sentence,
+      // the tier and the type are the engine's: a curse rides on Necrotic unless the call named
+      // a type, and its save is of the mind (3.3), which `save follows the effect` honours once
+      // the words "is cursed" are actually on the row.
+      if (s.curse) {
+        s.damage = true;
+        if (!s.type) s.type = 'Necrotic';
+        if (!['Wisdom', 'Charisma'].includes(s.stat)) s.stat = 'Charisma';
+      }
+      const curseSentence = s.curse ? `the target is cursed. While cursed, ${curseEffectFor(Number(cr), String(s.name ?? p.name)).effect}` : '';
+      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : '', curseSentence].filter(Boolean);
       const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, anchor: inlineGuessRef(), failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024', { properNouns: ownNouns() });
       // THE CONDITION THE ROW IMPOSES IS KEPT ON THE ROW (owner, 2026-10-20:
       // "we want the llm to categorize when possible"). The authoring call
@@ -4510,7 +4535,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const ma = esA.find((e) => /^Multiattack/.test(e.name));
     // the Multiattack keeps every row it already cited and gains the new rows (a repair adds to the list; it never shrinks it — the step-5 Wyrm lost its chassis rows this way)
     const cited = Object.values(sections).flat().filter((e) => /Attack Roll/.test(e.text ?? '') && !e.authored && ma && new RegExp(`\\b${String(e.name).replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(ma.text)).map((e) => String(e.name).replace(/ \(.*\)$/, ''));
-    const attackNames = [...cited, ...Object.values(sections).flat().filter((e) => e.authored && /Attack Roll/.test(e.text ?? '')).map((e) => String(e.name).replace(/ \(.*\)$/, '')).filter((n) => !cited.includes(n))];
+    const attackNames = [...cited, ...Object.values(sections).flat().filter((e) => e.authored && !e.strike && /Attack Roll/.test(e.text ?? '')).map((e) => String(e.name).replace(/ \(.*\)$/, '')).filter((n) => !cited.includes(n))];
     if (ma && attackNames.length) { const count = (/makes (\w+)/.exec(ma.text) ?? [])[1] ?? 'two'; ma.text = `${ma.text.split(/\.\s*/)[0].replace(/makes (\w+) .*$/, attackNames.length === 1 ? `makes ${count} ${attackNames[0]} attacks` : `makes ${count} attacks, using ${attackNames.slice(0, -1).join(', ')} or ${attackNames.at(-1)} in any combination`)}.${(ma.text.match(/\. It can replace[^.]*\./) ?? [''])[0]}`; } // "in any combination" needs two rows (Wearwretch, Bog Hound — critic's step-5 read)
     for (const s of authored.saves) {
       const saveRow = authoredRow('save', s, { fallbackType: authored.placed[0]?.type ?? null });
@@ -10652,7 +10677,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   {
     const multi = (sections.Actions ?? []).find((e2) => e2.name.startsWith('Multiattack'));
     const hasSpellcasting = (sections.Actions ?? []).some((e2) => e2.name.startsWith('Spellcasting'));
-    let saveAction = (sections.Actions ?? []).find((e2) => !e2.name.startsWith('Multiattack') && !e2.name.startsWith('Spellcasting')
+    // A STRIKE IS WHAT THE CLAUSE OFFERS, BEFORE ANY SAVE ROW (fault 1, 2026-11-20). It was built
+    // to be the thing a creature gives up one attack for; the clause is the once-a-turn limit the
+    // trace already claimed, and until now the sheet never said it.
+    let saveAction = (sections.Actions ?? []).find((e2) => e2.strike)
+      ?? (sections.Actions ?? []).find((e2) => !e2.name.startsWith('Multiattack') && !e2.name.startsWith('Spellcasting')
       // the or-form dialect counts too (the split tar-splash class,
       // 2026-09-15: "Saving Throw or have..." has no colon and the
       // finder skipped every wrapper sighting)
@@ -10741,7 +10770,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // Harpoon"). A Multiattack naming NO row is fixed from the sheet's own rows.
   {
     const atkNames = Object.values(monster.sections ?? {}).flat()
-      .filter((e) => /Attack Roll/.test(e.text ?? '') && !/^Multiattack/.test(e.name ?? '') && !/\((?:Recharge [\d\u2013-]+|\d\/Day)\)/.test(e.name ?? ''))
+      // A STRIKE IS NOT ONE OF THE ATTACKS (fault 1, 2026-11-20). The THIRD pass that lists them,
+      // and the one that actually shipped "using Horn, Storm Row 1, or Charged Brand in any
+      // combination": it rebuilds the line from every attack row on the sheet. A strike is offered
+      // by the replacement clause instead, which is the once-a-turn limit it exists for.
+      .filter((e) => /Attack Roll/.test(e.text ?? '') && !e.strike && !/^Multiattack/.test(e.name ?? '') && !/\((?:Recharge [\d\u2013-]+|\d\/Day)\)/.test(e.name ?? ''))
       .map((e) => String(e.name).replace(/ \(.*\)$/, ''));
     const joinNames = (ns) => (ns.length === 2 ? ns.join(' or ') : `${ns.slice(0, -1).join(', ')}, or ${ns.at(-1)}`);
     for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
@@ -12152,7 +12185,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (ma && ((!ma.print && !printExact) || gmOrphan)) {
         const cited = () => String(ma.text ?? '').toLowerCase();
         for (const e of esM) {
-          if (e === ma || !/Attack Roll/.test(e.text ?? '') || (ma.print && e.print && !e.gmArmed) || /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) continue; // a print row stands outside only PRINT'S OWN Multiattack; on a chassis Multiattack it is an attack row like any other (the Scout's Longbow on "a scout with a javelin", 2026-10-18)
+          // A STRIKE IS NOT ONE OF THE ATTACKS (fault 1, 2026-11-20). This late pass re-lists every
+          // attack row that the line does not already name, and it is what put "or Charged Brand in
+          // any combination" back after the writer above had left it out. A strike is offered by the
+          // replacement clause, which is the once-a-turn limit it was built for.
+          if (e === ma || e.strike || !/Attack Roll/.test(e.text ?? '') || (ma.print && e.print && !e.gmArmed) || /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) continue; // a print row stands outside only PRINT'S OWN Multiattack; on a chassis Multiattack it is an attack row like any other (the Scout's Longbow on "a scout with a javelin", 2026-10-18)
           const n = String(e.name ?? '').replace(/ \(.*\)$/, ''); if (!n || cited().includes(n.toLowerCase())) continue;
           const combo = /makes (\w+) attacks, using ([^.]*?) in any combination/.exec(ma.text ?? '');
           const single = /makes (\w+) ([A-Z][\w' -]*?) attacks?/.exec(ma.text ?? '');

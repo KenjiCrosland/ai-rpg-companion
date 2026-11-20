@@ -10,6 +10,20 @@
  * stops a creature acting is not offered as something that fires on everyone, every round, for
  * free — print does not write one and neither do we.
  */
+/**
+ * THE FIELDS A REACTION'S SAVE HAS — ONE LIST (fault 4, 2026-11-20).
+ *
+ * Three places told the model a Reaction's save carries `damage`, and none of them mentioned
+ * `movement`, which the parse has accepted since 18 November. A Reaction's save deals no damage by
+ * the owner's ruling, so the model was being offered a field the gate refuses and denied one it
+ * accepts — and it learned the rule only from the last refusal, when there is no third ask. 9 of
+ * the 18 seats that ended empty ended exactly there.
+ *
+ * The prompt and both redirects read this, so the three cannot drift again. Same cure as the
+ * skeleton's.
+ */
+export const REACTION_SAVE_FIELDS = ['stat', 'target', 'condition', 'movement', 'success'];
+export const reactionSaveSpec = () => `${REACTION_SAVE_FIELDS.join(', ')} — a Reaction's save hands out a condition or a forced movement and deals NO damage`;
 export const AURA_CONDITIONS = ['Poisoned', 'Frightened', 'Charmed', 'Prone'];
 export const DAMAGE_TYPES = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
 export const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Paralyzed', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
@@ -310,9 +324,10 @@ without the ability.
 
 IF THE REASON SENDS YOU TO A REACTION: answer in "reactions" with { "clause", "name", "trigger": one
 sentence, "response": one sentence }. If the ability forces a saving throw, leave "response" out and
-answer "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "damage":
-true|false, "type": a damage type or null, "condition": one of ${CONDITIONS.join('/')} or null,
-"success": one line or null }. The engine writes the DC and the dice and renders it after
+answer "save": { "stat": one of ${STATS.join('/')}, "target": as a save row writes it, "condition":
+one of ${CONDITIONS.join('/')} or null, "movement": "pushed up to N feet" | "pulled up to N feet" |
+null, "success": one line or null }. A REACTION'S SAVE DEALS NO DAMAGE — it hands out a condition
+or a forced movement, and has no "damage" and no "type". The engine writes the DC and renders it after
 "Response", the way a published monster does: *Trigger:* … *Response—Wisdom Saving Throw:* DC 15,
 the triggering creature. *Failure:* … A saving throw written as a sentence inside "response" is
 refused.
@@ -484,7 +499,10 @@ export const swapDeafenedToFrightened = (raw) => {
   let o; try { o = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!o || typeof o !== 'object') return null;
   let swapped = 0;
-  for (const key of ['saves', 'reactions', 'traits']) {
+  // EVERY ARRAY, FROM THE ONE LIST (2026-11-20). This walked three by name and so returned null for
+  // a strike, which is the form the Leviathan's Deafened answer came back in — the refusal fired
+  // and the swap could not act on it. The same drift the skeleton had.
+  for (const key of AUTHORED_ARRAYS) {
     for (const row of Array.isArray(o[key]) ? o[key] : []) {
       if (row?.condition === 'Deafened') { row.condition = 'Frightened'; swapped += 1; }
       if (row?.save?.condition === 'Deafened') { row.save.condition = 'Frightened'; swapped += 1; }
@@ -522,6 +540,10 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const savesAll = (Array.isArray(p.saves) ? p.saves : []).map((s) => ({
     clause: str(s?.clause, 120), name: str(s?.name, 40), stat: STATS.includes(s?.stat) ? s.stat : 'Dexterity', target: TARGET_OK.test(str(s?.target, 80)) ? str(s?.target, 80) : 'one creature within 30 feet',
     damage: !!s?.damage, type: DAMAGE_TYPES.includes(s?.type) ? s.type : null, condition: CONDITIONS.includes(s?.condition) ? s.condition : null, movement: (/\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(str(s?.movement, 80)) ?? null) && (([, verb, n]) => `${/pull|drag/i.test(verb) ? 'pulled' : 'pushed'} up to ${n} feet`)(/\b(pushed|pulled|dragged|knocked back|moved) (?:up to )?(\d+) feet\b/i.exec(str(s?.movement, 80))), success: s?.success === 'half' ? 'half' : 'none', recharge: !!s?.recharge,
+    // A SAVE CARRIES ITS CURSE (fault 5, 2026-11-20). `formsSpec` has shown a "curse" field on the
+    // save form since 18 November and this parse never kept it, so 3.2 set the flag on an object
+    // nothing renders and the witch's row shipped as a hex that only bludgeons.
+    curse: !!s?.curse && declaredAsk === 'curse' && !hasCurse,
   }));
   // A SAVE THAT NAMES NO EFFECT IS REFUSED, NOT FILLED (item 2.2, 2026-11-18).
   //
@@ -750,7 +772,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     // The strike redirect above wins where the trigger is this creature's own attack landing.
     : traitIsSave(t) && STARTS_NEAR.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? `a trait is not a save, and this fires on creatures NEAR the creature at the start of their turns — that is an aura, which print writes as a trait (the Ghast's Stench). Answer in "auras" with "name", "stat", "radius" (5, 10, 20 or 30) and "condition" (one of ${AURA_CONDITIONS.join('/')}). The engine writes the sentence, the DC, the ending and the immunity line`
     : traitIsSave(t) && OWN_ATTACK_HITS.test(`${t.trigger ?? ''}`) ? `a trait is not a save, and this fires when one of the creature's OWN attacks hits — answer in "strikes" with "attack" (the exact name of the attack row), "save" (the ability), and "condition" or "movement". The engine writes it as its own row with that attack's numbers and Multiattack offers it in place of one attack. If the hit needs NO save, answer in "riders" instead, with "attack" and a light "condition" (Prone or Grappled) or a "movement"`
-    : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (stat, target, damage, condition, success)' : ''}`
+    : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (${reactionSaveSpec()})' : ''}`
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
     // A {dmg} USED AS A BONUS IS A NUMBER THIS ENGINE CANNOT PRICE (2026-11-16). It prices damage,
     // and a bonus to AC or to a roll is not damage — so the token is neither fillable nor safely
@@ -838,7 +860,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       // not print. Print writes the save in the form: "*Response—Wisdom Saving Throw:* DC 15, the
       // triggering creature. *Failure:* …" (the Chain Devil). The reason says so.
         : (!r.save && traitForcesASave(`${r.trigger ?? ''} ${r.response ?? ''}`))
-          ? 'the response writes a saving throw as prose — put it in the "save" object (stat, target, damage, condition, success) and the engine renders it after "Response", as print does'
+          ? `the response writes a saving throw as prose — put it in the "save" object (${reactionSaveSpec()}) and the engine renders it after "Response", as print does`
           : null);
   const refusedReactions = reactionsAll.filter((r) => reactionWhy(r) !== null);
   const reactions = reactionsAll.filter((r) => reactionWhy(r) === null).slice(0, 1);
@@ -883,6 +905,13 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
       ? `${r.condition} is too heavy to ride on every hit with no saving throw — answer in the "strike" form instead, with "attack", "save" and "condition", and Multiattack will offer it in place of one attack`
       : null);
   const strikeWhy = (r) => (!r.name ? 'a strike needs a name'
+    // DEAFENED IS NOT A STRIKE'S EFFECT (fault 3, 2026-11-20). The Leviathan's Brineplate
+    // Detonation cloned Flukes and added a save against Deafened — and on a strike the save's
+    // effect is the whole of what the row adds, so the owner's "never a row's only effect" rule
+    // bites here exactly as it does on a save. Same predicate, and the same swap to Frightened on
+    // the second ask.
+    : DEAFENED_ALONE({ condition: r.condition, damage: false, movement: r.movement })
+      ? 'Deafened alone is too slight to be what a strike adds — choose Frightened or Charmed, whichever fits this creature'
     : !r.attack ? 'a strike names the attack whose numbers it uses'
     : !onTheSheet(r.attack) ? `"${r.attack}" is not an attack on this sheet — name one of: ${attackNames.join(', ') || '(none)'}`
     : !r.save ? 'a strike forces a saving throw — name the ability, or answer in the "rider" form if the hit needs none'
