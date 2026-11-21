@@ -9,13 +9,13 @@
  * glaive, the halberd and the whip. `arms?` is NOT added — it is in "men-at-arms", "takes up arms"
  * and "a coat of arms" — and "scythe-arms" is caught by `scythe`.
  *
- * AND THE NOUN IS ONLY HALF OF IT. A part with no damage type never ships (`if (!type) continue`),
- * and the type comes from the weapon table: `sickle` is an SRD weapon and has one, `scythe` is not
- * and has none. So the scythe is RECOGNISED here and still does not become a part. Reported to the
- * owner rather than fixed: his exception was for this list and these two words, and the type table
- * is a different list.
+ * AND THE NOUN WAS ONLY HALF OF IT. A part with no damage type never ships (`if (!type) continue`),
+ * and the type comes from the weapon table: `sickle` is an SRD weapon and has one, `scythe` is not.
+ * So the scythe was recognised and still did not become a part. The owner read his own ruling as
+ * covering the type — it was given so the four scythe-arms would become an attack — and
+ * `scythe: 'Slashing'` sits beside the glaive and the halberd in PART_TYPE.
  */
-import { partRows, TYPE_BY_NOUN } from '../generate.mjs';
+import { partRows } from '../generate.mjs';
 
 const parts = (text) => partRows([{ text, kind: 'mechanical', head: false, polarity: null }]).map((p) => p.name);
 
@@ -24,10 +24,10 @@ describe('the two words the owner added', () => {
     expect(parts('a reaper with a sickle')).toEqual(['Sickle']);
   });
 
-  test('a scythe is RECOGNISED as a noun and still has no damage type, so no part ships', () => {
-    expect(TYPE_BY_NOUN.sickle).toBe('Slashing');
-    expect(TYPE_BY_NOUN.scythe).toBeUndefined();       // the gap, named
-    expect(parts('It has four scythe-arms')).toEqual([]);
+  test('a scythe yields a part, with a damage type — s24\'s four scythe-arms', () => {
+    const got = partRows([{ text: 'It has four scythe-arms', kind: 'mechanical', head: false, polarity: null }]);
+    expect(got).toHaveLength(1);
+    expect([got[0].name, got[0].type, got[0].mode]).toEqual(['Scythe', 'Slashing', 'melee']);
   });
 });
 
