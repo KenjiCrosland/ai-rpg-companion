@@ -1419,14 +1419,41 @@ export const weldRiderOntoAttack = (sections, rider, scaled, cr, traceFn = () =>
  * already writes, and THAT is the once-a-turn limit. The clone deals the attack's own damage, so
  * the damage read does not move.
  */
-export const strikeRowFrom = (sections, strike, scaled, cr) => {
+/**
+ * A STRIKE POINTS AT ITS ATTACK (owner's ruling, 2026-11-21). It does not copy it.
+ *
+ * The copied version shipped the Headless Horseman's Saber twice over — the whole attack line,
+ * charge rider and all, under a second name — and the owner's words were "We don't need it. I
+ * don't want to duplicate it." The once-a-turn limit is the exchange in Multiattack and nothing
+ * else: "once per turn is the multiattack exchange. if that doesn't exist we don't do it."
+ *
+ *   The Hunted Road. The headless horseman makes one Saber attack. If it hits a creature, that
+ *   creature is subjected to the following effect. *Wisdom Saving Throw*: DC 17. *Failure:* …
+ *
+ * Print points at an attack the same way: the Vampire's Deathless Strike "makes one Grave Strike
+ * attack", and s06's Screeburst Emergence ends "then makes one Rubble Lash attack".
+ *
+ * NOTHING IS DERIVED, SO NOTHING CAN DRIFT. The row holds no attack line of its own, which is what
+ * the derivation at ship existed to keep in step; that pass and the `strike-differs-from-host` lint
+ * go with it. What remains is the NAME: on a printed body the host is renamed after the seat
+ * (Thornblade became Grave Strike), so `strikeHost` travels with the rename and the row's own
+ * sentence is rewritten with it.
+ *
+ * Returns null when the row cannot be written, and the caller refuses the answer and asks again:
+ *   - no Multiattack on the sheet, so there is no exchange to limit it (the Dire Wolf)
+ *   - a condition that takes a creature's turn away, which belongs in `saves` on a Recharge
+ *   - a save that hands out nothing
+ */
+export const TURN_DENYING_STRIKE = ['Stunned', 'Paralyzed', 'Incapacitated'];
+export const strikeRowFrom = (sections, strike, scaled, cr, inlineRef = null) => {
   const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
-  const src = Object.values(sections ?? {}).flat()
-    .find((e) => e?.name && bare(e.name) === bare(strike?.attack) && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')));
+  const rows = Object.values(sections ?? {}).flat();
+  const src = rows.find((e) => e?.name && bare(e.name) === bare(strike?.attack) && /Attack Roll|Weapon Attack/.test(String(e.text ?? '')));
   if (!src || !strike?.save) return null;
-  // the attack's own line, up to and including its damage — the rider on the source attack, if it
-  // has one, does not come along
-  const head = String(src.text_noRider ?? src.text).split(/(?=\s(?:If|While)\b)/)[0].replace(/\s*$/, '');
+  // NO MULTIATTACK, NO STRIKE. The exchange IS the limit, so without one the row is an extra
+  // attack every turn and the seat is asked for something else.
+  if (!rows.some((e) => /^Multiattack/.test(String(e?.name ?? '')))) return null;
+  if (TURN_DENYING_STRIKE.includes(strike.condition)) return null;
   const outcome = [
     strike.condition ? conditionClauseFor(strike.condition, scaled) : '',
     strike.movement ? `the target is ${strike.movement} straight away from the creature` : '',
@@ -1434,22 +1461,11 @@ export const strikeRowFrom = (sections, strike, scaled, cr) => {
   ].filter(Boolean);
   if (!outcome.length) return null;
   const failure = `${outcome[0].charAt(0).toUpperCase()}${outcome[0].slice(1)}${outcome.length > 1 ? `, and ${outcome.slice(1).join(', and ')}` : ''}`;
-  // A STRIKE THAT TAKES A TURN AWAY CARRIES A RECHARGE (fault 2, 2026-11-20). Eight of the nine
-  // strikes that landed handed out Stunned, at will, on a save against losing a whole turn. The
-  // owner's 18 November ruling — a turn-denying condition is allowed only on a row that has a
-  // Recharge — was made for the Deafened swap and applies here as it stands. The row is still
-  // offered in place of one attack, and its citation reads "if available" as any gated row's does.
-  const TURN_DENYING = ['Stunned', 'Paralyzed', 'Incapacitated'];
-  const gate = TURN_DENYING.includes(strike.condition) ? ' (Recharge 5-6)' : '';
+  const host = String(src.name ?? '').replace(/ \(.*\)$/, '').trim();
   return {
-    // THE ROW SAYS WHAT IT IS (fault 1, 2026-11-20). A strike is an attack row, so the Multiattack
-    // writer listed it with the others and every one shipped "using Horn or Charged Brand in any
-    // combination" — which lets the drake use it with BOTH attacks, every turn, the opposite of the
-    // ruling it was built for. It is offered by the replacement clause instead, and `strike` is how
-    // both passes tell it from a weapon.
-    name: `${String(strike.name)}${gate}`, authored: true, authoredSeat: true, strike: true, strikeHost: String(src.name ?? '').replace(/ \(.*\)$/, '').trim(),
-    ...(gate ? { gate: 'Recharge 5-6' } : {}),
-    text: `${head} If the target is a creature, it is subjected to the following effect. *${strike.save} Saving Throw*: DC ${scaled.dc}. *Failure:* ${failure}.`,
+    name: String(strike.name), authored: true, authoredSeat: true, strike: true, strikeHost: host,
+    text: `${inlineRef ?? 'The creature'} makes one ${host} attack. If it hits a creature, that creature is subjected to the following effect. *${strike.save} Saving Throw*: DC ${scaled.dc}. *Failure:* ${failure}.`,
+    ...(strike.condition ? { imposes: strike.condition } : {}),
     ...(strike.clauseId ? { clauseId: strike.clauseId } : {}),
   };
 };
@@ -7040,6 +7056,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // used to pin one kind and the landing quietly accepted more; now a form the model is
             // invited to write is a form the engine will take, and nothing else.
             const takesHere = seatTakes(seatKind, { reactionOpen: reactionSeatOpen() });
+            let strikeRefusal = null; // why a strike answer could not be written, said back on the second ask
             // THE ENGINE SETS THE CURSE ON THE ROW WRITTEN FOR IT (2026-11-19). In two rolls of
             // three the marsh witch's curse clause came back as a save that Restrains, with `curse`
             // unset — asking the model to remember is not working, and the engine already knows
@@ -7084,12 +7101,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               if (strikeAddsNothing(st, hostOf)) {
                 trace('strike not landed — it adds nothing:', `"${st.name}" clones "${st.attack}", which already applies ${st.condition} on a hit; the seat is asked again rather than trading an attack for a worse one`);
               } else {
-              const row = strikeRowFrom(sections, st, scaled, cr);
+              const row = strikeRowFrom(sections, st, scaled, cr, settledInline());
               if (row) {
-                trace('strike written from its attack:', `"${row.name}" clones "${st.attack}" and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the once-a-turn limit (owner's ruling)`);
+                trace('strike points at its attack:', `"${row.name}" makes one ${row.strikeHost} attack and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the exchange and the whole limit (owner's ruling, 21 November)`);
                 sections.Actions = [...(sections.Actions ?? []), row];
                 return { landed: seatShape(row, 'Actions') };
               }
+              // WHY THE ROW COULD NOT BE WRITTEN, said back to the call so the second ask is about
+              // the right thing. Each is the owner's ruling of 21 November.
+              const noMulti = !Object.values(sections).flat().some((e2) => /^Multiattack/.test(String(e2?.name ?? '')));
+              const why = noMulti ? 'this creature has no Multiattack, and the exchange in Multiattack is the only thing that limits a strike to once a turn — write it as a save, a trait or a reaction instead'
+                : TURN_DENYING_STRIKE.includes(st.condition) ? `a strike cannot hand out ${st.condition}: a condition that takes a creature's whole turn belongs in "saves" on a Recharge, not on a row the creature may use every turn`
+                  : null;
+              if (why) trace('strike refused:', `"${st.name}" — ${why}`);
+              strikeRefusal = why;
               }
             }
             // AN AURA IS PRINT'S OWN TRAIT THAT FORCES A SAVE, and the engine writes every word of
@@ -7165,6 +7190,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             } else if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
               trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329)`);
               return refuse('the row imposes a condition two rows on this sheet already impose');
+            } else if (strikeRefusal) {
+              trace('seat authoring refused:', `${seat} — ${strikeRefusal}`);
+              return refuse(strikeRefusal);
             } else if (strikeDup) {
               trace('seat authoring refused:', `${seat} — the strike clones "${form.f.attack}", which already applies ${strikeDup} on a hit, so the save hands out what the attack it replaces already does; the trade is a loss for the GM`);
               return refuse(`the strike's save hands out ${strikeDup}, which "${form.f.attack}" already applies on a hit — a strike has to add something to the attack it replaces`);
@@ -9479,6 +9507,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the host with print's own row and name; a strike cloned from it must keep pointing at
             // it, or the re-derivation below has nothing to read. s11's trace still said it cloned
             // "Thornblade", a name no longer on the sheet.
+            // A STRIKE FOLLOWS ITS HOST'S RENAME, in its pointer AND in its own sentence: the row
+            // says "makes one <host> attack", and the text replace above already rewrote that
+            // mention, so the two stay in step.
             if (e3.strikeHost && e3.strikeHost.toLowerCase() === String(from).toLowerCase()) e3.strikeHost = to;
           }
           e.print = true; // print's named melee row carries the flag the ranged rename already sets — one reader (the gates skip print's composition) saw the Lich's Paralyzing Touch unflagged and failed it (forty, 2026-10-18)
@@ -12853,34 +12884,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
-  // A STRIKE IS ITS HOST PLUS A SAVE (owner's ruling, 2026-11-20). The row is written at the seat
-  // from the attack as it stood THEN, and print canon afterwards restamps the host with print's own
-  // row — numbers, reach, damage types and all — leaving the clone behind. Once a strike survives
-  // on a printed body, which it never did before this round, the two drift apart:
-  //
-  //   s11  Grave Strike 8 (1d8 + 4) Bludgeoning + 7 (2d6) Necrotic, and the target is Grappled
-  //        Crimson Bramble Stalk 13 (2d8 + 4) Slashing + 9 (2d8) Necrotic, no grapple
-  //   s01  Bite 8 (1d10 + 3) Piercing, and the target has the Prone condition
-  //        Flank the Herd 6 (1d6 + 3) Piercing, no Prone
-  //
-  // On the Vampire the strike out-damages the attack it replaces by half again; on the wolf it is
-  // weaker and drops the Bite's Prone. Neither is the attack plus a save.
-  //
-  // ONE DERIVATION, HERE, after everything that renames or restamps a row: the head is the host's
-  // whole line as the finished sheet has it — bonus, reach, dice, damage types and whatever it does
-  // on a hit — and the strike's own save clause follows it unchanged. The seat's version is a draft
-  // and this is the one that ships.
-  for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
-    if (!e?.strike || !e.strikeHost) continue;
-    const bareOf = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
-    const host = Object.values(monster.sections).flat().find((h) => h !== e && bareOf(h?.name) === bareOf(e.strikeHost) && /Attack Roll|Weapon Attack/.test(String(h?.text ?? '')));
-    if (!host) { trace('strike host missing:', `"${e.name}" was cloned from "${e.strikeHost}", which is no longer an attack row on this sheet — its line is left as written`); continue; }
-    const saveClause = String(e.text ?? '').match(/\s(If the target is a creature, it is subjected[\s\S]*)$/);
-    if (!saveClause) continue;
-    const before = String(e.text ?? '');
-    e.text = `${String(host.text ?? '').replace(/\s*$/, '')} ${saveClause[1]}`;
-    if (e.text !== before) trace('strike derived from its host:', `"${e.name}" takes "${host.name}" as the finished sheet has it — ${String(host.text ?? '').slice(0, 70)}…`);
-  }
   syncMultiattackCitations(monster.sections, trace); // every citation reads its row, after everything that renames
   stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
@@ -12895,6 +12898,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // A sheet with ONE attack row and a Multiattack naming it is correct and passes. A sheet with no
   // Multiattack at all is not this bug.
   assertSomethingToRoll(monster.sections);
+  // A STRIKE IS CHECKED ONCE MORE AT THE END (owner's rules 2 and 7, 2026-11-21).
+  //
+  // Neither condition is knowable at the seat on a printed body. The Dire Wolf HAS a Multiattack
+  // when the seat is asked — it is the chassis's — and print canon removes it afterwards, because
+  // print gives the wolf one melee row and no Multiattack. And the host is still the chassis's row
+  // then, so what it applies on a hit is not yet print's.
+  //
+  // So the finished sheet is read for both: no Multiattack to make the exchange, or a save that
+  // hands out what the host it points at already applies. Either way the row goes, and its clause
+  // in the Multiattack goes with it.
+  for (const [sec, es] of Object.entries(monster.sections ?? {})) {
+    for (let i = es.length - 1; i >= 0; i -= 1) {
+      const e = es[i];
+      if (!e?.strike) continue;
+      const all = Object.values(monster.sections).flat();
+      const bareOf = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+      const host = all.find((h) => h !== e && bareOf(h?.name) === bareOf(e.strikeHost));
+      const why = !all.some((x) => /^Multiattack/.test(String(x?.name ?? ''))) ? 'this sheet has no Multiattack, and the exchange is the only thing that limits it to once a turn'
+        : !host ? `the attack it points at, "${e.strikeHost}", is not on this sheet`
+          : strikeAddsNothing({ condition: e.imposes }, host) ? `its save hands out ${e.imposes}, which "${host.name}" already applies on a hit`
+            : null;
+      if (!why) continue;
+      es.splice(i, 1);
+      sweepDeadName(monster.sections, e.name, null, trace);
+      trace('strike removed at ship:', `${sec}/"${e.name}" — ${why}; the row and its clause in the Multiattack leave`);
+    }
+  }
   // THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).
   //
   // The sheet lints read the finished sheet — that is the whole premise of the instrument — and

@@ -86,51 +86,36 @@ describe('a light rider welds onto its attack', () => {
   });
 });
 
-describe('a strike is its own attack, offered in place of one', () => {
-  test("it clones the attack's numbers and writes the save in print's form", () => {
-    const p = strike({ save: 'Constitution', condition: 'Stunned' });
-    expect(p.strikes).toHaveLength(1);
-    const row = strikeRowFrom(body(), p.strikes[0], scaled, 5);
-    expect(row).toBeTruthy();
-    // A TURN-DENYING CONDITION CARRIES A RECHARGE (fault 2, 2026-11-20): Stunned at will, on a save
-    // against losing a whole turn, is what eight of the nine landed strikes shipped.
-    expect(row.name).toBe('Deafening Peal (Recharge 5-6)');
-    expect(row.text).toContain('*Melee Attack Roll:* +7, reach 10 ft. 12 (2d6 + 5) Piercing damage');  // the attack's own numbers
-    expect(row.text).toContain('If the target is a creature, it is subjected to the following effect.'); // the Ghoul's wording
-    expect(row.text).toMatch(/\*Constitution Saving Throw\*: DC 15\. \*Failure:\* The target has the Stunned condition until the end of its next turn\./);
+/**
+ * A STRIKE POINTS AT ITS ATTACK (owner's ruling, 2026-11-21). It is a short row naming the attack
+ * it exchanges for, not a copy of it. The owner's Headless Horseman shipped the Saber's whole line
+ * twice over: "We don't need it. I don't want to duplicate it."
+ */
+describe('a strike points at its attack, offered in place of one', () => {
+  const { strikeRowFrom: build } = require('../generate.mjs');
+  const scaled = { cr: 5, dc: 15, pb: 3, per_hit: 11, mod: { STR: 4 } };
+  const body = () => ({ Actions: [
+    { name: 'Multiattack', text: 'The horseman makes three attacks, using Saber or Flaming Skull in any combination.' },
+    { name: 'Saber', text: '*Melee Attack Roll:* +9, reach 5 ft. 18 (3d8 + 5) Slashing damage. If the horseman moved at least 20 feet in a straight line toward the target, the target has the Prone condition.' },
+  ] });
+
+  test('it names its host and holds no attack line of its own', () => {
+    const row = build(body(), { name: 'The Hunted Road', attack: 'Saber', save: 'Wisdom', condition: 'Frightened' }, scaled, 5, 'the headless horseman');
+    expect(row).toBeDefined();                                        // the subject is present
+    expect(row.text).toBe('the headless horseman makes one Saber attack. If it hits a creature, that creature is subjected to the following effect. *Wisdom Saving Throw*: DC 15. *Failure:* The target has the Frightened condition until the end of its next turn.');
+    expect(row.text).not.toMatch(/Attack Roll/);                      // it does not repeat the attack
+    expect(row.text).not.toMatch(/18 \(3d8 \+ 5\)/);
+    expect(row.strikeHost).toBe('Saber');
   });
 
-  test('a strike with no save is refused, and the reason names the rider form', () => {
-    const p = strike({ condition: 'Stunned' });
-    expect(p.strikes).toHaveLength(0);
-    expect(why(p)).toMatch(/forces a saving throw/);
-    expect(why(p)).toMatch(/"rider" form/);
+  test('and the host\'s own rider is not repeated either', () => {
+    const row = build(body(), { name: 'The Hunted Road', attack: 'Saber', save: 'Wisdom', condition: 'Frightened' }, scaled, 5, 'the horseman');
+    expect(row.text).not.toMatch(/moved at least 20 feet/);
   });
 
-  test('a strike whose save does nothing is refused', () => {
-    expect(strike({ save: 'Constitution' }).strikes).toHaveLength(0);
-    expect(why(strike({ save: 'Constitution' }))).toMatch(/what the failed save costs/);
-  });
-
-  test('a strike naming an attack off the sheet is refused', () => {
-    expect(strike({ save: 'Constitution', condition: 'Stunned', attack: 'Tail' }).strikes).toHaveLength(0);
-    expect(strikeRowFrom(body(), { name: 'x', attack: 'Tail', save: 'Constitution', condition: 'Stunned' }, scaled, 5)).toBeNull();
-  });
-
-  test('ONE STRIKE TO A SHEET', () => {
-    const p = parseAuthorResponse(JSON.stringify({ strikes: [
-      { clause: 'a', name: 'One', attack: 'Horn', save: 'Constitution', condition: 'Stunned' },
-      { clause: 'b', name: 'Two', attack: 'Bite', save: 'Strength', condition: 'Prone' },
-    ] }), SEAT);
-    expect(p.strikes).toHaveLength(1);
-    expect(p.strikes[0].name).toBe('One');
-  });
-
-  test("the source attack's own rider does not come along", () => {
-    const s = body();
-    horn(s).text += ' If the target is a Large or smaller creature, it has the Prone condition.';
-    const row = strikeRowFrom(s, { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: 'Stunned' }, scaled, 5);
-    expect(row.text).not.toMatch(/Prone/);
+  test('NO MULTIATTACK, NO STRIKE — the exchange is the whole limit', () => {
+    const noMa = { Actions: [body().Actions[1]] };
+    expect(build(noMa, { name: 'The Hunted Road', attack: 'Saber', save: 'Wisdom', condition: 'Frightened' }, scaled, 5, 'it')).toBeNull();
   });
 });
 
@@ -236,13 +221,8 @@ describe('a refusal names the form that would have taken the answer', () => {
   });
 });
 
-/**
- * THE FIVE FAULTS READING THE ROWS FOUND (2026-11-20). Two of the five passed their tests last
- * session because the test stopped at the parse, so the ones that are about a row assert on what
- * `strikeRowFrom` actually produces, and the Multiattack ones on a finished sheet in the probe.
- */
-describe('faults 2 and 3 — what a strike may hand out', () => {
-  const { strikeRowFrom: build } = require('../generate.mjs');
+describe('a strike may not take a creature\'s turn away', () => {
+  const { strikeRowFrom: build, TURN_DENYING_STRIKE } = require('../generate.mjs');
   const { parseAuthorResponse: parse, swapDeafenedToFrightened: swap } = require('../author.mjs');
   const scaled = { cr: 5, dc: 15, pb: 3, per_hit: 11, mod: { STR: 4 } };
   const body = () => ({ Actions: [
@@ -251,17 +231,17 @@ describe('faults 2 and 3 — what a strike may hand out', () => {
   ] });
   const SEAT = { attackNames: ['Horn', 'Flukes'] };
 
-  test('a turn-denying condition is named with a Recharge, and its citation will read "if available"', () => {
-    for (const c of ['Stunned', 'Paralyzed', 'Incapacitated']) {
-      const row = build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5);
-      expect([c, row.name]).toEqual([c, 'Peal (Recharge 5-6)']);
-      expect(row.gate).toBe('Recharge 5-6');
+  test('Stunned, Paralyzed and Incapacitated are refused outright — they belong in saves on a Recharge', () => {
+    // This replaces the 20 November call that such a strike carries a Recharge: the limit is the
+    // exchange, and a row the creature may take every turn cannot take a turn away.
+    for (const c of TURN_DENYING_STRIKE) {
+      expect([c, build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5, 'the drake')]).toEqual([c, null]);
     }
   });
 
-  test('every other condition stays at will, once a turn', () => {
+  test('every other condition is written, and carries no gate', () => {
     for (const c of ['Frightened', 'Prone', 'Grappled', 'Poisoned', 'Restrained']) {
-      const row = build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5);
+      const row = build(body(), { name: 'Peal', attack: 'Horn', save: 'Constitution', condition: c }, scaled, 5, 'the drake');
       expect([c, row.name]).toEqual([c, 'Peal']);
       expect(row.gate).toBeUndefined();
     }
@@ -269,9 +249,8 @@ describe('faults 2 and 3 — what a strike may hand out', () => {
 
   test('DEAFENED IS NOT A STRIKE\'S EFFECT — refused, and the swap reaches it', () => {
     const p = parse(JSON.stringify({ strikes: [{ clause: 'x', name: 'Brineplate Detonation', attack: 'Flukes', save: 'Constitution', condition: 'Deafened' }] }), SEAT);
-    expect(p.strikes).toHaveLength(0);                   // the subject is present and refused
+    expect(p.strikes).toHaveLength(0);
     expect(p.refused[0].why).toMatch(/Deafened alone is too slight to be what a strike adds/);
-    // the swap walks every array now, not three by name — a strike was invisible to it
     const again = parse(swap(JSON.stringify({ strikes: [{ clause: 'x', name: 'Brineplate Detonation', attack: 'Flukes', save: 'Constitution', condition: 'Deafened' }] })), SEAT);
     expect(again.strikes).toHaveLength(1);
     expect(again.strikes[0].condition).toBe('Frightened');
@@ -313,29 +292,24 @@ describe('fault 4 — the fields shown are the fields accepted', () => {
   });
 });
 
-describe('fix A — a strike is not a nova (owner, 2026-11-20)', () => {
+describe('a strike is not a nova (owner, 2026-11-20)', () => {
   const { strikeRowFrom: build } = require('../generate.mjs');
   const scaled = { cr: 5, dc: 15, pb: 3, per_hit: 11, mod: { STR: 4 } };
   const body = () => ({ Actions: [
     { name: 'Multiattack', text: 'The drake makes two Horn attacks.' },
     { name: 'Horn', text: '*Melee Attack Roll:* +7, reach 10 ft. 12 (2d6 + 5) Piercing damage.' },
-    // the chassis nova — what stripped the strike's Recharge on 3 of 3 drake rolls
     { name: 'Storm Breath (Recharge 5-6)', text: '*Dexterity Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 27 (6d8) Lightning damage.' },
   ] });
 
-  test('the strike declares itself, which is what both one-nova guards read', () => {
-    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Stunned' }, scaled, 5);
+  test('the strike declares itself, which is what every one-nova guard reads', () => {
+    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Frightened' }, scaled, 5, 'the drake');
     expect(row.strike).toBe(true);
-    expect(row.name).toBe('Brand-Wake (Recharge 5-6)');
-    expect(row.gate).toBe('Recharge 5-6');
+    expect(row.gate).toBeUndefined();                                 // it carries no gate at all now
   });
 
-  test("and a strike is not itself counted as the sheet's nova — it carries an Attack Roll, not a nova's shape", () => {
-    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Stunned' }, scaled, 5);
-    // `hasChassisNova` looks for a gated row with a save AND damage dice; a strike has all three,
-    // which is why it had to be excluded by name rather than by shape.
-    expect(row.text).toMatch(/Attack Roll/);
+  test('and it holds no damage dice of its own, so it cannot read as the chassis nova', () => {
+    const row = build(body(), { name: 'Brand-Wake', attack: 'Horn', save: 'Constitution', condition: 'Frightened' }, scaled, 5, 'the drake');
+    expect(row.text).not.toMatch(/\d+ \(\d+d\d+/);
     expect(row.text).toMatch(/Saving Throw/);
-    expect(row.text).toMatch(/\d+ \(\d+d\d+/);
   });
 });

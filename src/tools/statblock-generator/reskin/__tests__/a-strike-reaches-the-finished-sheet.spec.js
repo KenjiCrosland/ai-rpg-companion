@@ -104,14 +104,52 @@ describe('a strike survives on a printed body', () => {
   }, 30000);
 });
 
-describe('a strike is its host plus a save', () => {
-  test("its text up to the save clause is the host's own text", async () => {
+describe('a strike points at its attack and does not copy it', () => {
+  test("its text names the host and holds no attack roll of its own", async () => {
     const { monster } = await build([A_STRIKE()]);
-    const strike = named(monster, 'Leg-Cutting Sweep');
+    const strike = strikeOf(monster);
     const host = named(monster, 'Greatsword');
     expect([strike, host].every(Boolean)).toBe(true);                    // both present
-    const head = String(strike.text).split(/\s(?=If the target is a creature, it is subjected)/)[0].trim();
-    expect(head).toBe(String(host.text).trim());
+    expect(strike.text).toMatch(/makes one Greatsword attack/);
+    expect(strike.text).not.toMatch(/Attack Roll/);
+    expect(strike.text).not.toMatch(/\d+ \(\d+d\d+/);
+  }, 30000);
+
+  test("and the host's own row is untouched — the same as when the seat declines", async () => {
+    const withStrike = await build([A_STRIKE()]);
+    const without = await build([A_PLAIN_TRAIT]);
+    expect(named(withStrike.monster, 'Greatsword').text).toBe(named(without.monster, 'Greatsword').text);
+  }, 30000);
+
+  test('A SHEET WITH NO MULTIATTACK TAKES NO STRIKE — the exchange is the whole limit', async () => {
+    // the Dire Wolf's case: print gives it one melee row and no Multiattack
+    // The attack must be named as the SEAT sees it — print canon renames it afterwards — so the
+    // answer reads the name the prompt offers, or the strike is refused for naming a row that is
+    // not there and the test passes for the wrong reason.
+    const onOffered = (p) => ({ attacks: [], saves: [], traits: [], reactions: [], riders: [], auras: [], crossRef: null, unplaced: [],
+      strikes: [{ clause: CONCEPT, name: 'Flank the Herd', attack: attacksOffered(p)[0], save: 'Constitution', condition: 'Frightened', movement: null, curse: false }] });
+    const { monster } = await build([onOffered], {
+      concept: 'a dire wolf with a frost-rimed hide', cr: 1,
+      path: { path: 'twist', print_body: 'Dire Wolf', relation: 'is', class: null },
+    });
+    // print gives the wolf one melee row and no Multiattack, and removes the chassis's AFTER the
+    // seat — so this is settled at ship, not at the seat
+    expect(rows(monster).some((e) => /^Multiattack/.test(String(e.name)))).toBe(false); // the premise
+    expect(strikeOf(monster)).toBeUndefined();
+  }, 30000);
+
+  test('A STRIKE THAT TAKES A TURN AWAY IS REFUSED, and the seat is asked again', async () => {
+    const { monster, seatAsks } = await build([A_STRIKE({ condition: 'Stunned' }), A_PLAIN_TRAIT]);
+    expect(strikeOf(monster)).toBeUndefined();
+    expect(seatAsks).toBe(2);
+  }, 30000);
+
+  test("and on a printed body it names the host as the FINISHED sheet has it, after the rename", async () => {
+    const { monster } = await build([A_STRIKE()]);
+    const strike = strikeOf(monster);
+    const host = rows(monster).find((e) => String(e.name).replace(/ \(.*\)$/, '') === strike.strikeHost);
+    expect(host).toBeDefined();                                          // the name it prints resolves
+    expect(strike.text).toContain(`makes one ${strike.strikeHost} attack`);
   }, 30000);
 });
 

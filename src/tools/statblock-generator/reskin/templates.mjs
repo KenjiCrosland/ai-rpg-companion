@@ -3392,7 +3392,13 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // The moment the one-nova fix let a strike keep its Recharge, this line began asking it for
   // nova-sized value — the drake's went from "EV 9.9 vs floor 9.4, worth the trade" to "vs floor
   // 19.9, still under", a floor it can never clear. The same ruling, needed by a second reader.
-  const novaFloor = gated && !row?.strike;
+  // A STRIKE IS NEVER UNDER THE FLOOR (owner's ruling, 2026-11-21). The row reads as a save row —
+  // it carries a saving throw and no attack roll of its own — so `rowValue` priced the save alone:
+  // s06's Scree Snare read EV 2.3 against a floor of 8.8 and was "dropped by the floor", while the
+  // attack it points at prices 12.1. A strike IS that attack with a save added, so it is worth at
+  // least the attack it replaces, and the floor has nothing to say about it.
+  const isStrike = !!row?.strike;
+  const novaFloor = gated && !isStrike;
   const replaced = free ? 0 : novaFloor ? maEV : attackEV;
   const label = free ? `a ${section === 'Reactions' ? 'reaction' : 'bonus action'} (free)` : novaFloor ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
   // a BONUS ACTION trades for nothing: no floor, no ladder, ceiling only (a gated
@@ -3442,10 +3448,11 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // it applies, and the condition in a TARGETING frame ("one creature that is Grappled")
   // is a prerequisite rather than a payload — the mistake `rowValue` records above.
   const gatedControl = novaFloor && !!row.imposes;
-  const floor = freeUtility ? 0
-    : bonus ? 0.25 * attackEV
-      : novaFloor ? (gatedControl ? 0.8 * attackEV : GATED_FLOOR * maEV)
-        : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
+  const floor = isStrike ? 0
+    : freeUtility ? 0
+      : bonus ? 0.25 * attackEV
+        : novaFloor ? (gatedControl ? 0.8 * attackEV : GATED_FLOOR * maEV)
+          : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
   // The floor and the ceiling read `novaFloor`, not `gated`, for the reason above: a strike's
   // Recharge says how OFTEN it may be taken, not how much of the round it costs. It is held to
   // the one attack it replaces at both ends — which is what it was held to before the one-nova

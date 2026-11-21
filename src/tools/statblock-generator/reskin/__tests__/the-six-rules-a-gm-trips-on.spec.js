@@ -122,41 +122,6 @@ describe('and none of the eight fires on a printed creature', () => {
   });
 });
 
-/**
- * THE NINTH RULE (owner, 2026-11-20). A strike IS the named attack with a save added. Once a
- * strike survives on a printed body — which it never did before this round — print canon restamps
- * the host with print's own row and the clone is left behind.
- */
-describe('strike-differs-from-host', () => {
-  const GRAVE_STRIKE = { name: 'Grave Strike', text: '*Melee Attack Roll:* +9, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 7 (2d6) Necrotic damage. If the target is a Medium or smaller creature, it has the Grappled condition (escape DC 14).' };
-  const sheet = (head) => ({ name: 'Vampire', sections: { Actions: [GRAVE_STRIKE, {
-    name: 'Crimson Bramble Stalk', strike: true, strikeHost: 'Grave Strike',
-    text: `${head} If the target is a creature, it is subjected to the following effect. *Strength Saving Throw*: DC 17. *Failure:* The target has the Restrained condition.`,
-  }] } });
-
-  test('fires when the strike carries numbers its host does not — the s11 case', () => {
-    const h = hits(sheet('*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 9 (2d8) Necrotic damage.'), 'strike-differs-from-host');
-    expect(h).toHaveLength(1);
-    expect(h[0].message).toMatch(/its attack line is not "Grave Strike"/);
-  });
-
-  test('is silent when the strike is its host plus a save', () => {
-    expect(hits(sheet(GRAVE_STRIKE.text), 'strike-differs-from-host')).toHaveLength(0);
-  });
-
-  test('and names a host that is no longer on the sheet', () => {
-    const s = sheet(GRAVE_STRIKE.text);
-    s.sections.Actions[1].strikeHost = 'Thornblade';
-    expect(hits(s, 'strike-differs-from-host')[0].message).toMatch(/not an attack row on this sheet/);
-  });
-});
-
-/**
- * AND THE CASE THE RULE MISREAD (owner, 2026-11-21). Since a strike is derived from its host, its
- * text opens with the host's line — so reading the FIRST "has the X condition" in the row found the
- * host's own rider and compared the host with itself. s06's Scree Buckle knocks Prone on a host
- * that grapples, which is the ruling working, and the rule called it redundant.
- */
 describe('strike-adds-nothing reads what the save hands out', () => {
   const RUBBLE_LASH = { name: 'Rubble Lash', text: '*Melee Attack Roll:* +6, reach 5 ft. 16 (3d8 + 3) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14). While Grappled, the target has the Restrained condition.' };
   const derived = (saveCondition, record) => ({ name: 'Scree Buckle', sections: { Actions: [RUBBLE_LASH, {
