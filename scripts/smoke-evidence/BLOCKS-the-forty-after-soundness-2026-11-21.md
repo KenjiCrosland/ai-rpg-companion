@@ -1,10 +1,18 @@
-# BLOCKS — the soundness round (2026-11-21)
+# BLOCKS — the forty after the soundness round (2026-11-21)
 
-All forty, replayed against the six items. **NOTHING WAS RE-RECORDED**: the strict replay missed on
-13 sheets, above the handoff's stop line of eight, so the round stops before recording and these
-sheets are the replay's output rather than a new baseline. `baseline-2026-11-20` is untouched.
+All forty, from a strict replay of `baseline-2026-11-20` after the six items, the curse gate at
+the landing, and the two weapons added to the parts reader.
 
-s22 and s36 cannot replay and are carried from their own earlier recordings, as before.
+**38 of 40 reproduce.** s22 (Goblin Boss, the route call) and s36 (blank, the seed call) miss in
+the PROMPT and are carried from their own recordings, as they have been since 18 November.
+
+This file replaces `BLOCKS-soundness-2026-11-21.md`, which held eight sheets that are not sheets:
+the fit call had no recorded answer for the changed prompt, so a library seed stood in and the
+engine printed something the product would never make.
+
+Three sheets were re-recorded from the call that missed, keeping every answer before it: s01 (the
+audit call), s06 and s11 (the seat call). Twenty-two had their stored sheet updated for one field,
+`ideaEffect`, with no call re-recorded.
 
 
 ---
@@ -165,19 +173,22 @@ Delete
 [reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 1) — "Herding Snap" [no template]
 [reskin] lint: 0 findings
 [reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
-[reskin] record recounted: free_rows 1 -> 1, expressed_rows undefined -> 1 — a pass after the budget removed a free row, and the record is the finished sheet's
+[reskin] element claim revoked: "Herding Snap" claims "frost-rimed hide" but the audit judged that nothing in the row carries it; the name advertises nothing, so the row stands as decoration
+[reskin] sameness: 1 of 1 free row(s) express nothing their rules carry — counted as decoration ("Herding Snap")
+audit span not verbatim, dropped: Pack Tactics unless you've disabled it by signing
+[reskin] audit: [Herding Snap (Recharge 5-6): The row was authored …tened condition until the end of its next turn."), Herding Snap (Recharge 5-6): The row is named for …tened condition until the end of its next turn.")]
+[reskin] audit rename blocked — "Frost Snap" claims an element "Herding Snap (Recharge 5-6)" does not pay (no damage)
+[reskin] audit defect: Actions/"Herding Snap" [model-written] medium undelivered — The row was authored for the 'frost-rimed hide' ask but its rules carry nothing cold or frost-related, so the feature is undelivered. — Have the snap's hide or frost actually do something in the rules — e.g. a cold damage type tied to the frost-rimed hide. (about: "The target has the Frightened condition until the end of its next turn.")
+[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] done: "Dire Wolf" — donor skirmisher-1, CR 1
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the audit call (buildAuditPrompt) — first differs at line 17 of 278
-  nearest recorded prompt: the same call in this generation, 998 characters shared
-     16 | - OFFICIAL — copied word for word from the published Monster Manual: Traits/Pack Tactics, Actions/Bite
-  -  17 | - WRITTEN FOR THIS CREATURE — ours, authored for this sheet: Traits/Frozen Shape
-  +  17 | - WRITTEN FOR THIS CREATURE — ours, authored for this sheet: Actions/Herding Snap
-     18 | 
-[harness] the whole prompt, and every recorded one, is in 01-REPLAY-MISS.txt
-[harness] 3 prompt(s) had no recorded answer during this entry: audit x3
+!! [ENRICHMENT] Failed to enrich Dire Wolf: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 01-dire-wolf.json
 ```
 
 ---
@@ -263,12 +274,6 @@ Muck-Lunge: Each creature in a 15-foot cone must make a DC 13 Strength saving th
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Dire Wolf: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
 [harness] restored 1 taken name(s) the recording carried
 [path] homebrew — "a mud-caked bog hound that drags fishermen under" (call)
 [route] brute-grappler type=Beast mechanics=grapple, engulf — casts: the call reads no worked magic here | hold_shape: grip on the GM's own words "drags fishermen under" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-grappler: ✓ ("drags fishermen under") | brute-grappler: no line key in the words — the model's read of its quote
@@ -343,14 +348,8 @@ audit finding below confidence gate: Multiattack Because Muck-Lunge is a cone th
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Bog Hound" — donor brute-5-grappler, CR 1
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-!! [ENRICHMENT] Failed to enrich Bog Hound: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 02-bog-hound.json — fields: other_edition
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 02-bog-hound.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -361,7 +360,7 @@ audit finding below confidence gate: Multiattack Because Muck-Lunge is a cone th
 
 **Input:** `name: Owlbear | that has learned to climb`
 **Donor:** skirmisher-3 -> CR 3
-**Signature:** library · **elapsed** 1s
+**Signature:** library · **elapsed** 2s
 
 ### Block
 ```
@@ -434,6 +433,12 @@ Rend: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5)
 
 ### Trace
 ```
+!! [ENRICHMENT] Failed to enrich Bog Hound: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 2 taken name(s) the recording carried
 [concept] thin but a print creature — keeping route-first: Owlbear — that has learned to climb
 [path] twist — Owlbear (is) — "Name field: Owlbear" (code)
@@ -465,7 +470,7 @@ Rend: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5)
 [reskin] idea unanchored: trait — "Hooked Climbing Foreclaws. The owlbear can climb sheer surfaces and ha" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 33 of 33 answered; not true of this body: snare, shield-bash, random-ray, spew, snare-bolt, blink, coating, phase-slip, heated-body, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, terrain-walk, aberrant-ground, faultless-tracker, web-walker, energy-aura, noxious-aura, uncanny-sense, marking-light, relic-object, warded-mending, mimicry, gaze-aura, blurred-form, death-burst, kill-denial, life-drain
 [reskin] menu: taste stands down — action answers the GM's "has learned to climb", so role and style do not filter the menu (legality still does); 10 template(s) offered
-[reskin] signature idea (action): "As a bonus action, the owlbear launches itself up a wall, cliff, or trunk within reach and perches there, its claws hooked into the stone; while perched it is out of melee reach of creatures without a climb speed, and the first creature that ends its turn more than arm's length from its allies is marked as prey — the owlbear drops on that target, landing in its space without provoking Opportunity " [bonus_action/always/movement] [family: mark] — menu: rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, shell-withdraw, lay-on-hands, rally (+ shelf: trample, leap, gaze-single, lure, ground-burst, sensory-strike, disarm, thrown-burst-seed, delayed-brand, zone, execute, seal, wail, active-toll, pacify, escalating-dread, terror-pulse, slow-bolt, push-prone, herd, drain, zone-seed, reveal, wind-up, blighted-ground, riposte, answering-strike, affliction, contagion, charge-push, hook-rider, pounce, isolation, charge)
+[reskin] signature idea (action): "As a bonus action, the owlbear launches itself up a wall, cliff, or trunk within reach and perches there, its claws hooked into the stone; while perched it is out of melee reach of creatures without a climb speed, and the first creature that ends its turn more than arm's length from its allies is marked as prey — the owlbear drops on that target, landing in its space without provoking Opportunity " [bonus_action/always/movement] [family: mark] — menu: rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, shell-withdraw, lay-on-hands, rally (+ shelf: trample, leap, gaze-single, lure, ground-burst, sensory-strike, disarm, thrown-burst-seed, delayed-brand, zone, execute, seal, wail, active-toll, pacify, escalating-dread, terror-pulse, slow-bolt, push-prone, herd, drain, curse-debt, zone-seed, reveal, wind-up, blighted-ground, riposte, answering-strike, affliction, contagion, charge-push, hook-rider, pounce, isolation, charge)
 [reskin] composed candidates: none action — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires always/does movement; leading: self-invisibility (always/movement), focus (always/movement), feint-slip (always/movement)
 [reskin] classification handed to the fit call: shape=movement when=at_will often=at_will
@@ -505,8 +510,8 @@ Rend: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5)
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
 [reskin] done: "Owlbear" — donor skirmisher-3, CR 3
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 03-owlbear.json — fields: other_edition
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 03-owlbear.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -619,9 +624,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Owlbear: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 3 taken name(s) the recording carried
 [path] twist — Ghost (is) — "ghost" (call)
 [route] lurker-phantom type=Undead mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | lurker-phantom: ✓ ("chapel bell-ringer's ghost") | lurker-phantom: key "ghost" (class body)
@@ -703,8 +708,8 @@ Delete
 [reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
 [reskin] done: "Passing Bell Ringer" — donor lurker-2, CR 3
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 04-passing-bell-ringer.json — fields: sections
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 04-passing-bell-ringer.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -715,7 +720,7 @@ Delete
 
 **Input:** `name: Air Elemental | that carries stolen voices`
 **Donor:** brute-5 -> CR 5
-**Signature:** dropped · **elapsed** 1s
+**Signature:** library · **elapsed** 1s
 
 ### Block
 ```
@@ -775,15 +780,17 @@ CR 5 (XP 1,800; PB +3)
 
 Traits
 
-Mimicry. The air elemental can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC 13 Wisdom (Insight) check.
+Mimicry. The air elemental can mimic stolen voices. A creature that hears the sounds can tell they are imitations only with a successful DC 13 Wisdom (Insight) check.
 
 Air Form. The air elemental can enter a creature's space and stop there. It can move through a space as narrow as 1 inch without expending extra movement to do so.
 
 Actions
 
-Multiattack. The air elemental makes two Thunderous Slam attacks.
+Multiattack. The air elemental makes two Thunderous Slam attacks. It can replace one attack with a use of Storm of Voices.
 
 Thunderous Slam. Melee Attack Roll: +8, reach 10 ft. 14 (2d8 + 5) Thunder damage.
+
+Storm of Voices. Charisma Saving Throw: DC 13, one creature within 10 feet. Failure: The target has the Frightened condition until the end of its next turn.
 
 Whirlwind (Recharge 4-6). Strength Saving Throw: DC 13, one Medium or smaller creature in the air elemental's space. Failure: 24 (4d10 + 2) Thunder damage, and the target is pushed up to 20 feet straight away from the air elemental and has the Prone condition. Success: Half damage only.
 
@@ -808,9 +815,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Passing Bell Ringer: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] twist — Air Elemental (is) — "Name field: Air Elemental" (code)
 [route] brute-juggernaut type=Elemental mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-juggernaut: ✓ ("Air Elemental") | brute-juggernaut: no line key in the words — the model's read of its quote
@@ -839,23 +846,26 @@ Delete
 [reskin] idea anchored: action — "The air elemental's Storm of Voices is a gale of screaming wind that e" answers the GM's "carries stolen voices"
 [reskin] idea unanchored: trait — "Cage of Stolen Voices: the air elemental can perfectly mimic any voice" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 33 of 33 answered; not true of this body: shield-bash, active-toll, random-ray, spew, herd, drain, shell-withdraw, rally, coating, heated-body, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, energy-aura, noxious-aura, uncanny-sense, marking-light, sealed-body, relic-object, warded-mending, gaze-aura, death-burst, kill-denial, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "carries stolen voices", so role and style do not filter the menu (legality still does); 16 template(s) offered
-[reskin] signature idea (action): "The air elemental's Storm of Voices is a gale of screaming wind that engulfs one creature within 10 feet, forcing a Charisma saving throw. On a failure, the target is Deafened and Frightened by the howling chorus that drowns out all thought and breath." [action/save/condition] [family: zone] — menu: trample, leap, ground-burst, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, execute, wail, lure, pacify, slow-bolt, sensory-strike, disarm, reveal (+ shelf: delayed-brand, rampage, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, charge, isolation)
+[reskin] menu: taste stands down — action answers the GM's "carries stolen voices", so role and style do not filter the menu (legality still does); 17 template(s) offered
+[reskin] signature idea (action): "The air elemental's Storm of Voices is a gale of screaming wind that engulfs one creature within 10 feet, forcing a Charisma saving throw. On a failure, the target is Deafened and Frightened by the howling chorus that drowns out all thought and breath." [action/save/condition] [family: zone] — menu: trample, leap, ground-burst, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, execute, wail, lure, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal (+ shelf: delayed-brand, rampage, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, charge, isolation)
 [reskin] composed candidates: none action — the zone family composes a trait and this is the action seat
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: escalating-dread (save/condition), terror-pulse (save/condition), push-prone (save/condition)
 [reskin] classification handed to the fit call: shape=save_single
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] fallback stands down: the twist path has no shelf — the Air Elemental's rows plus the receipted seat are the composition
-[reskin] signature dropped — no template held the idea and no seed is legal on this sheet
+[reskin] word match declined by the call: escalating-dread, terror-pulse, sensory-strike, wail, curse-debt — the key word does not mean the mechanic here
+[reskin] closest refused: action — "curse-debt" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: a Charisma save that inflicts Deafened and Frightened on one target)
+[reskin] authored row answers the GM: action — "Storm of Voices" was written for "carries stolen voices", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it
+[reskin] seat authored the row: action — the call refused every template for no_fit ("a Charisma save that inflicts Deafened and Frightened on one target") and wrote an action instead: "Storm of Voices" -> Actions. *Charisma Saving Throw*: DC 13, one creature within 10 feet. *Failure:* The target has the Frightened condition until th
+[reskin] authored row numbers: "Storm of Voices" — the call declared (unanswered) number(s) promised
+[reskin] seat takes its clause: "Storm of Voices" is HANDED "carries stolen voices" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template
+[reskin] signature authored: no template — the seat wrote it -> Actions/"Storm of Voices" ("The air elemental's Storm of Voices is a gale of screaming wind that engulfs one creature within 10 feet, forcing a Charisma saving throw. On a failure, the tar [authored: the catalog held no shape for it]")
 [reskin] signature idea (trait): "Cage of Stolen Voices: the air elemental can perfectly mimic any voice it has stolen, and when it speaks, it can vent a stolen scream as a Thunder crack that Deafens one creature it can see within 10 feet." [trait/start_of_turn/condition] [family: mark] — menu: phobia, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, mimicry, truth-aura, fear-aura (+ shelf: weapon-lodge)
 [reskin] lead by this seat's own clause: trait — "dazzle" from the clause this seat serves, not the sheet's "none"
 [reskin] composed candidates: none trait — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: trait — idea fires start_of_turn/does condition; leading: truth-aura (start_of_turn/condition), fear-aura (start_of_turn/condition), phobia (always/condition)
 [reskin] keys would have bound: trait — mimicry (stolen voice, stolen voices, voices)
 [reskin] classification handed to the fit call: shape=save_single
-[reskin] signature fit call failed — trait: Failed to generate a valid response. Please try again later.
-[reskin] trait bound to the concept's verb (concept-first): mimicry — stolen voice+stolen voices+voices in the user's words; the idea path had nothing
-[reskin] signature template (trait): mimicry -> Traits/"Mimicry" ("exact concept match [verb: stolen voice:concept, stolen voices:concept, voices:concept]")
+[reskin] word match declined by the call: truth-aura, fear-aura — the key word does not mean the mechanic here
+[reskin] signature template (trait): mimicry -> Traits/"Mimicry" ("the creature can perfectly mimic any voice it has stolen [verb: stolen voice:concept, stolen voices:concept, voices:concept]")
 [reskin] weapons answered: Slam = none
 [reskin] languages by mind: "None" -> "Primordial" (sapient)
 [reskin] print canon languages: "Primordial" -> "Primordial (Auran)" — the Air Elemental's
@@ -868,28 +878,19 @@ Delete
 [reskin] print canon defenses: immunities Poison; Exhaustion, Poisoned -> Poison, Thunder; Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious; resistances none -> Bludgeoning, Lightning, Piercing, Slashing — the Air Elemental's own header lines
 [reskin] print canon trait: Air Form — "Air Elemental — that carries stolen voices" is the Air Elemental (print's own row)
 [reskin] print canon row: Actions/Whirlwind (Recharge 4-6) — the Air Elemental's own
+[reskin] multiattack replacement clause: It can replace one attack with a use of Storm of Voices.
+[reskin] free-row budget by card size: CR 5 sits in band 3-5, where print runs 2-5 rows (p20-p90, Multiattack excluded); this card already carries 5 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
 [reskin] row binds its clause: "Mimicry" answers "carries stolen voices" — the keys it matched came from that clause, so the coverage credit has a receipt
 [reskin] lint: 0 findings
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] audit: [Mimicry: The trait's text never says what the mimi…ut: "The air elemental can mimic stolen voices."), Storm of Voices: Frightened carries no cause-of-fe…tened condition until the end of its next turn.")]
+[reskin] audit defect: Traits/"Mimicry" [catalog] medium open_ended — The trait's text never says what the mimicry accomplishes mechanically (the Deception-style benefit or the lure it enables) — the Insight check is stated but the thing being checked against is undefined, so nothing is actually being mimicked for a purpose. — State the concrete mechanical benefit of mimicking voices (what it lets the elemental do) rather than only how to see through it. (about: "The air elemental can mimic stolen voices.")
+[reskin] audit defect: Actions/"Storm of Voices" [model-written] low other — Frightened carries no cause-of-fear requirement here and the row imposes it on a saving throw rather than a sight/hearing trigger, so the 'voices' carry no sensory requirement and the Frightened condition's normal 'can't move closer' clause keys to nothing named. — Anchor the fear in hearing the stolen voices so the condition has a defined trigger and the fiction matches. (about: "The target has the Frightened condition until the end of its next turn.")
 [reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Air Elemental" — donor brute-5, CR 5
-[harness] enrichment not run (5 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-!! [ENRICHMENT] Failed to enrich Air Elemental: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 51 of 64
-  nearest recorded prompt: the same call in this generation, 8228 characters shared
-     50 | - disarm [Actions] (fires: save, does: movement): Strength Saving Throw: DC {dc}, one creature within 5 feet that is holding a weapon or another object. Failure: {burst} {damage_type} damage, and the target drops the held object, which lands in its space.
-  -  51 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  51 | - wail [Actions, 1/Day] (fires: once_per_fight, does: damage): Constitution Saving Throw: DC {dc}, each creature in a 30-foot Emanation originating from the creature that can hear it. Failure: {avg_half} ({dice_half}) {damage_type} damage, and if the target has 20 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. Success: Half damage only.
-     52 | - wail [Actions, 1/Day] (fires: once_per_fight, does: damage): Constitution Saving Throw: DC {dc}, each creature in a 30-foot Emanation originating from the creature that can hear it. Failure: {avg_half} ({dice_half}) {damage_type} damage, and if the target has 20 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. Success: Half damage only.
-[harness] the whole prompt, and every recorded one, is in 05-REPLAY-MISS.txt
-[harness] 9 prompt(s) had no recorded answer during this entry: fit x6, audit x3
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 05-air-elemental.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -975,16 +976,28 @@ Proficiency Bonus:
 
 +3
 
-Entomb (Bonus Action).The lurker entombs one Medium or smaller creature it is grappling. While entombed, the target is blinded and restrained, has Total Cover against attacks and other effects outside the lurker, and takes 7 (2d6) bludgeoning damage at the start of each of the lurker's turns. The lurker can have only one creature entombed at a time. If the lurker takes 15 damage or more in a single turn from the entombed creature, the lurker must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the lurker. If the lurker dies, an entombed creature breaks free Prone by using 5 feet of movement.
+Entomb (Bonus Action).The lurker entombs one Medium or smaller creature it is grappling. While entombed, the target is blinded and restrained, has Total Cover against attacks and other effects outside the lurker, and takes 7 (2d6) bludgeoning damage at the start of each of the lurker's turns. The lurker can have only one creature entombed at a time. If the lurker takes 15 damage or more in a single turn from the entombed creature, the lurker must release the target at the end of that turn, and the target exits prone in an unoccupied space within 5 feet of the lurker. If the lurker dies, an entombed creature breaks free prone by using 5 feet of movement.
 
 Actions
 Multiattack: The lurker makes two Rubble Lash attacks. It can replace one attack with a use of Scree Snare.
-Rubble Lash: Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 16 (3d8 + 3) bludgeoning damage. If the target is a Large or smaller creature, it is grappled (escape DC 14). While Grappled, the target is restrained.
-Scree Snare: The lurker makes one Rubble Lash attack. If it hits a creature, that creature is subjected to the following effect. The target must make a DC 14 Strength saving throw. On a failed save, the target is knocked prone.
+Rubble Lash: Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 16 (3d8 + 3) bludgeoning damage. If the target is a Large or smaller creature, it is grappled (escape DC 14). While grappled, the target is restrained.
+Scree Snare: Each creature in a 30-foot cone must succeed on a DC 14 Strength saving throw or be knocked prone.
 ```
 
 ### Trace
 ```
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Air Elemental: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 5 taken name(s) the recording carried
 [path] homebrew — "a quarry-pit thing of living scree that buries what it catches" (call)
 [route] brute-grappler type=Elemental mechanics=grapple, engulf — casts: the call reads no worked magic here | hold_shape: contain on the GM's own words "buries what it catches" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-grappler: ✓ ("buries what it catches") | brute-grappler: no line key in the words — the model's read of its quote
@@ -1021,59 +1034,54 @@ Scree Snare: The lurker makes one Rubble Lash attack. If it hits a creature, tha
 [reskin] classification handed to the fit call: mechanic=grapple, engulf shape=condition when=on_hit
 [reskin] word match declined by the call: stunning-strike, charge-push, condition-payoff — the key word does not mean the mechanic here
 [reskin] closest refused: action — "pounce" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: prone plus halved speed on a hit while standing on broken ground, clea)
-[reskin] clause already answered: "a quarry-pit thing of living scree" is carried by "Avalanche Clutch" — the seat read the sheet and declined to write a second row for it
+[reskin] seat answered, but: the call said "When the lurker hits a creature with Rubble Lash while that creature is Braced — standing on rubble, scree, or broken gr" is carried by "Scree Snare", and no such row is on this sheet — the clause stays open
 [reskin] seat authored nothing: action — the call was asked to write an action for "When the lurker hits a creature with Rubble Lash while that creature i" and wrote no row of that kind
 [reskin] seat asked again: action — the first answer was refused (you wrote no row of the kind asked for (an action)); asking once more with the reason
 [reskin] seat answered, but: the call said "When the lurker hits a creature with Rubble Lash while that creature is Braced — standing on rubble, scree, or broken gr" is carried by "Scree Snare", and no such row is on this sheet — the clause stays open
-[reskin] strike points at its attack: "Scree Snare" makes one Rubble Lash attack and adds a Strength save — Multiattack offers it in place of one attack, which is the exchange and the whole limit (owner's ruling, 21 November)
+[reskin] seat authored the row: action — the call refused every template for no_fit ("prone plus halved speed on a hit while standing on broken ground, clea") and wrote an action instead: "Scree Snare" -> Actions. *Strength Saving Throw*: DC 14, one creature within 5 feet. *Failure:* The target has the Prone condition.
+[reskin] authored row numbers: "Scree Snare" — the call declared (unanswered) number(s) promised
 [reskin] seat landed on the second try: action — "Scree Snare" after "you wrote no row of the kind asked for (an action)"
-[reskin] value check: "Scree Snare" EV 13.4 vs floor 0 (one attack of 2) — worth the trade
-[reskin] signature authored: no template — the seat wrote it -> Actions/"Scree Snare" ("null")
+[reskin] value check: "Scree Snare" EV 18.7 vs floor 8.8 (one attack of 2) — widened to a 30-foot Cone (print writes this row as an area: Repulsion Breath, Blinding Breath); over the ceiling but a control row (no damage, no KO) — print leaves these ungated
+[reskin] signature authored: no template — the seat wrote it -> Actions/"Scree Snare" ("When the lurker hits a creature with Rubble Lash while that creature is Braced — standing on rubble, scree, or broken ground, or having just climbed or scramble [authored: the catalog held no shape for it]")
 [reskin] signature idea (trait): "Loose Scree: the lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures, and it ignores Difficult Terrain made of rubble, gravel, or broken quarry ground. Anything in such a space it moves through is unsettled: a creature that starts its turn in that space has its Speed reduced by half until the end of its turn as the ground shifts out from" [trait/always/movement] [family: zone] — menu: false-appearance, phobia, terrain-walk, aberrant-ground, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, uncanny-sense, earth-glide, tunneler, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura (+ shelf: weapon-lodge)
 [reskin] composed candidates on the menu: trait — composed:zone:terrain (the zone family's options, built before the call looks)
 [reskin] menu ordered by the idea's stamps: trait — idea fires always/does movement; leading: terrain-walk (always/movement), aberrant-ground (always/movement), earth-glide (always/movement)
 [reskin] keys would have bound: trait — terrain-walk, aberrant-ground (scree)
 [reskin] classification handed to the fit call: mechanic=grapple, engulf shape=condition when=on_hit
-[reskin] word match declined by the call: terrain-walk, aberrant-ground, tunneler, relentless-pursuit, bound — the key word does not mean the mechanic here
-[reskin] closest refused: trait — "earth-glide" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: moving through other creatures' spaces and halving the Speed of creatu)
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "Loose Scree: the lurker can squeeze through any gap wider than a pavin" and wrote no row of that kind
-[reskin] seat asked again: trait — the first answer was refused (you wrote no row of the kind asked for (a trait)); asking once more with the reason
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "Loose Scree: the lurker can squeeze through any gap wider than a pavin" and wrote no row of that kind
-[reskin] seat refused twice: trait — first: you wrote no row of the kind asked for (a trait); second: you wrote no row of the kind asked for (a trait); the seat stays empty
-[reskin] closest refused — subject flipped: trait — the call named "earth-glide" nearest and judged its subject FLIPPED against the clause (moving through other creatures' spaces and halving the Speed of creatu); a row that turns the clause around is worse than no row, so the seat stays empty (the critic's §3, homebrew40 2026-11-05)
-[reskin] decline reason: trait — the call answered none and names it "no_fit" — the GM's words key terrain-walk, aberrant-ground, which the pool did not offer for this idea's declared trigger (since 2026-10-27 the keys rank and gate but no longer inject)
-[reskin] key match declined: trait — "terrain-walk" is keyed by the GM's scree and was on the call's menu, which the call read as a collision, not the mechanic; since 2026-10-26 the words no longer seat it first — the idea's stamps order the menu — so this records a decline, not an overruled nomination
-[reskin] signature miss: trait — "Loose Scree: the lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures, and it ignores Difficult Terrain made of rubble, gravel, or broken quarry ground. Anything in such a space it moves through is unsettled: a creature that starts its turn in that space has its Speed reduced by half until the end of its turn as the ground shifts out from" [trait/always/movement] — the model found no template that holds it (offered: terrain-walk, aberrant-ground, earth-glide, tunneler, relentless-pursuit, bound, false-appearance, phobia, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, uncanny-sense, berserk, shielded-mind, undead-fortitude, composed:zone:terrain, truth-aura, fear-aura)
-[reskin] concept-first trait skipped: terrain-walk — the call read its match as a collision (the word is a modifier, or the sheet already answers it)
-[reskin] concept-first trait skipped: aberrant-ground — the call read its match as a collision (the word is a modifier, or the sheet already answers it)
+[reskin] word match declined by the call: terrain-walk, earth-glide, tunneler, relentless-pursuit — the key word does not mean the mechanic here
+[reskin] closest refused: trait — "aberrant-ground" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: churns rubble it passes through into difficult ground that halves the )
+[reskin] seat answered, but: the call said "the lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures, an" is carried by "Loose Scree", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("churns rubble it passes through into difficult ground that halves the ") and wrote a trait instead: "Loose Scree" -> Traits. The lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures and
+[reskin] authored row numbers: "Loose Scree" — the call declared 0 number(s) promised
+[reskin] free signature row: "Loose Scree" — the trait seat cannot quote the GM, and the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit
+[reskin] signature authored (trait): no template — the seat wrote it -> Traits/"Loose Scree" ("Loose Scree: the lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures, and it ignores Difficult Terr [authored: the catalog held no shape for it]")
 [reskin] weapons answered: Rubble Lash = none
 [reskin] immunities stamped for type: Elemental -> Poison; Exhaustion, Poisoned
 [reskin] name-canon stands down: the path answered homebrew on "a quarry-pit thing of living scree that " and named no print body — no published trait lands on a word alone (owner's ruling)
 [reskin] multiattack replacement clause: It can replace one attack with a use of Scree Snare.
+[reskin] free row over budget: Traits/"Loose Scree" leaves at ship — this sheet's free-row budget (1) is spent by a row that SHIPPED
+[reskin] free-row budget: 2 candidate(s) reached the finished sheet, 1 kept (budget 1) — "Scree Snare" [no template]
 [reskin] ask vs row MISMATCH: "buries what it catches" -> "Entomb" — trigger: asked on_hit, row reads at_will
 [reskin] lint: 0 findings
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] [gap] moving through other creatures' spaces and halving the Speed of creatures whose ground it unsettles — "Loose Scree: the lurker can squeeze through any gap wider than a paving stone and move through spaces occupied by other creatures, and it ignores Difficult Terrain made of rubble, gravel, or broken quarry ground. Anything in such a space it moves through is unsettled: a creature that starts its turn in that space has its Speed reduced by half until the end of its turn as the ground shifts out from" — Spoilheap Lurker [seat: trait [trait/always/movement]] (closest offered: earth-glide) [effect: movement] [menu: terrain-walk aberrant-ground earth-glide tunneler relentless-pursuit bound false-appearance phobia bloodied-fury blood-frenzy pack-tactics death-restoration uncanny-sense berserk shielded-mind undead-fortitude composed:zone:terrain truth-aura fear-aura] [same-cell unoffered: blink spider-climb web-walker self-invisibility rally focus feint-slip phase-slip] [same-seat rejected: adhesive:body-verdict spider-climb:body-verdict faultless-tracker:body-verdict web-walker:body-verdict evasion:role marking-light:body-verdict sealed-body:body-verdict relic-object:body-verdict guarded-stance:role mimicry:body-verdict assassinate:role blurred-form:role death-burst:body-verdict kill-denial:body-verdict] [row dropped]
-[reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
-[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
+[reskin] element expressed: Scree Snare carries "a body of shifting loose quarry stone" — "each creature in a 30-foot Cone"
+audit finding below confidence gate: Entomb The release clause forces the GM to track damage dealt by one specific creature over an entire round (across the entombed creature's action and any reactions), a per-turn tally the block gives no way to monitor.
+[reskin] audit: [Entomb: The only stated escape from entombment is … breaks free Prone by using 5 feet of movement."), Scree Snare: Scree Snare's entire payload is Prone…e. (about: "The target has the Prone condition."), Scree Snare: As written the row is a dead payload:…trade. (about: "each creature in a 30-foot Cone"), Scree Snare: The name promises a snare (something …use that actually snares. (about: "Scree Snare.")]
+[reskin] audit rename blocked — "Scree Snare" -> "Rubble Spray" would drop the GM's own word "scree"
+[reskin] audit defect: Bonus Actions/"Entomb" [print] high open_ended — The only stated escape from entombment is the lurker's death or taking 15 damage from the victim; a creature that cannot deal 15 damage in a turn (or while its allies cannot reach it through Total Cover) has no rules-legal path out across an indefinitely long entombment. — Give the entombed creature a per-turn check or escape clause written in the entry itself, independent of the lurker's death trigger. (about: "If the lurker dies, an entombed creature breaks free Prone by using 5 feet of movement.")
+[reskin] audit defect: Actions/"Scree Snare" [model-written] high undelivered — Scree Snare's entire payload is Prone with no damage, no restraint, and no lasting snare — a target simply stands, so the row delivers none of the burial or hold the creature is built around. — Give the snare a payload with teeth — e.g. half-speed or a Restrained/Grappled effect with an escape — rather than Prone alone. (about: "The target has the Prone condition.")
+[reskin] audit defect: Actions/"Scree Snare" [model-written] medium weak — As written the row is a dead payload: it spends one of the lurker's two Multiattack attacks to impose only Prone, which any target removes on its next turn at no cost to its action economy. — Give the snare a consequence that persists past the target's next turn so replacing an attack with it is a real trade. (about: "each creature in a 30-foot Cone")
+[reskin] clause unresolved: "Scree Snare" carries "When the lurker hits a creature with Rubble Lash while t", which matches no clause on the sheet — no coverage credit by id
+[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Spoilheap Lurker" — donor brute-5-grappler, CR 5
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (4 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 !! [ENRICHMENT] Failed to enrich Spoilheap Lurker: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the seat call (buildSeatPrompt) — first differs at line 43 of 82
-  nearest recorded prompt: the same call in this generation, 3040 characters shared
-     42 | 
-  -  43 | NAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: "Multiattack", "Rubble Lash", "Scree Snare", "Erupting Ambush", "Entomb".
-  +  43 | NAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: "Multiattack", "Rubble Lash", "Scree Snare", "Entomb".
-     44 | 
-[harness] the whole prompt, and every recorded one, is in 06-REPLAY-MISS.txt
-[harness] 8 prompt(s) had no recorded answer during this entry: seat x2, audit x3, legacy x3
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+[harness] replay identical to 06-spoilheap-lurker.json
 ```
 
 ---
@@ -1084,7 +1092,7 @@ Scree Snare: The lurker makes one Rubble Lash attack. If it hits a creature, tha
 
 **Input:** `name: Hydra | whose stumps smoke instead of regrowing`
 **Donor:** brute-5 -> CR 8
-**Signature:** dropped · **elapsed** 1s
+**Signature:** library · **elapsed** 2s
 
 ### Block
 ```
@@ -1131,6 +1139,10 @@ Skills:
 
 Perception +6
 
+Damage Resistances: 
+
+fire
+
 Condition Immunities: 
 
 blinded, charmed, deafened, frightened, stunned, unconscious
@@ -1151,6 +1163,7 @@ Proficiency Bonus:
 
 +3
 
+Searing Stumps.When the hydra takes piercing or slashing damage from a melee attack, one of its necks is severed and its stump smokes; until the end of its next turn its bite attacks deal an extra 13 (3d8) fire damage, but it has disadvantage on attack rolls against creatures other than the one that severed the head.
 Hold Breath.The hydra can hold its breath for 1 hour.
 Multiple Heads.The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead.
 Reactive Heads.For each head the hydra has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.
@@ -1158,6 +1171,7 @@ Reactive Heads.For each head the hydra has beyond one, it gets an extra Reaction
 Actions
 Multiattack: The hydra makes as many Bite attacks as it has heads.
 Bite: Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 10 (1d10 + 5) piercing damage.
+Choking Reek (Recharge 5-6): Each creature in a 30-foot cone must make a DC 16 Constitution saving throw, taking 35 (10d6) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also blinded until the end of its next turn.
 ```
 
 ### Trace
@@ -1193,23 +1207,33 @@ Bite: Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 10 (1d10 + 
 [reskin] idea anchored: action — "The hydra rears back all its necks and vents a thick, scalding smoke f" answers the GM's "Hydra — whose stumps smoke instead of regrowing"
 [reskin] idea unanchored: trait — "When the hydra takes Piercing or Slashing damage from a melee attack, " names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 35 of 35 answered; not true of this body: shield-bash, active-toll, random-ray, herd, drain, shell-withdraw, rally, coating, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, uncanny-sense, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, death-burst, kill-denial, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "Hydra — whose stumps smoke instead of regrowing", so role and style do not filter the menu (legality still does); 19 template(s) offered
-[reskin] signature idea (action): "The hydra rears back all its necks and vents a thick, scalding smoke from every mouth and smoking stump in a cone. Each creature in the cone must make a Constitution saving throw; on a failure, it takes Fire damage and is Blinded until the end of its next turn as the fumes sear its eyes and fill its lungs." [action/save/condition] [family: nova] — menu: trample, leap, thrown-burst, ground-burst, spew, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, zone, execute, lure, pacify, slow-bolt, sensory-strike, disarm, zone-seed, reveal (+ shelf: delayed-brand, rampage, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, affliction, contagion, stunning-strike, charge-push, pounce, charge, isolation)
+[reskin] menu: taste stands down — action answers the GM's "Hydra — whose stumps smoke instead of regrowing", so role and style do not filter the menu (legality still does); 20 template(s) offered
+[reskin] signature idea (action): "The hydra rears back all its necks and vents a thick, scalding smoke from every mouth and smoking stump in a cone. Each creature in the cone must make a Constitution saving throw; on a failure, it takes Fire damage and is Blinded until the end of its next turn as the fumes sear its eyes and fill its lungs." [action/save/condition] [family: nova] — menu: trample, leap, thrown-burst, ground-burst, spew, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, zone, execute, lure, pacify, slow-bolt, sensory-strike, disarm, curse-debt, zone-seed, reveal (+ shelf: delayed-brand, rampage, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, affliction, contagion, stunning-strike, charge-push, pounce, charge, isolation)
 [reskin] lead by this seat's own clause: action — "breath" from the clause this seat serves, not the sheet's "escalate"
 [reskin] composed candidates: none action — the nova family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — breath: spew
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: spew (save/damage), escalating-dread (save/condition), terror-pulse (save/condition)
 [reskin] keys would have bound: action — zone, zone-seed (smoke)
 [reskin] classification handed to the fit call: shape=save_area when=at_will often=at_will
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] fallback stands down: the twist path has no shelf — the Hydra's rows plus the receipted seat are the composition
-[reskin] signature dropped — no template held the idea and no seed is legal on this sheet
+[reskin] word match declined by the call: spew, ground-burst, sensory-strike — the key word does not mean the mechanic here
+[reskin] closest refused: action — "sensory-strike" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: a cone-shaped area that both deals Fire damage and Blinds on a failed )
+[reskin] authored row answers the GM: action — "Choking Reek (Recharge 5-6)" was written for "Hydra — whose stumps smoke instead of regrowing", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it
+[reskin] seat authored the row: action — the call refused every template for no_fit ("a cone-shaped area that both deals Fire damage and Blinds on a failed ") and wrote an action instead: "Choking Reek (Recharge 5-6)" -> Actions. *Constitution Saving Throw*: DC 16, each creature in a 30-foot Cone. *Failure:* 35 (10d6) Fire damage, and the target ha
+[reskin] authored row numbers: "Choking Reek (Recharge 5-6)" — the call declared (unanswered) number(s) promised
+[reskin] seat takes its clause: "Choking Reek (Recharge 5-6)" is HANDED "Hydra — whose stumps smoke instead of regrowing" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template
+[reskin] signature authored: no template — the seat wrote it -> Actions/"Choking Reek (Recharge 5-6)" ("The hydra rears back all its necks and vents a thick, scalding smoke from every mouth and smoking stump in a cone. Each creature in the cone must make a Constit [authored: the catalog held no shape for it]")
 [reskin] signature idea (trait): "When the hydra takes Piercing or Slashing damage from a melee attack, one of its necks is severed and its stump immediately begins to smoke. Until the end of its next turn, the hydra's Bite attacks deal extra Fire damage, but it has disadvantage on attack rolls against creatures other than the one that severed the head, as its remaining heads lash out in frenzied, blinding pain." [trait/on_being_hit/damage] [family: payoff] — menu: heated-body, weapon-lodge (+ shelf: phobia, energy-aura, noxious-aura, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura)
 [reskin] composed candidates: none trait — the payoff family composes a rider and this is the trait seat
 [reskin] menu ordered by the idea's stamps: trait — idea fires on_being_hit/does damage; leading: heated-body (on_being_hit/damage), weapon-lodge (on_being_hit/resource)
 [reskin] classification handed to the fit call: shape=save_area when=at_will often=at_will
-[reskin] signature fit call failed — trait: Failed to generate a valid response. Please try again later.
+[reskin] word match declined by the call: heated-body — the key word does not mean the mechanic here
+[reskin] closest refused: trait — "heated-body" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: a punishes-the-attacker rider that also buffs the hydra's own Bite and)
+[reskin] seat answered, but: the call said "When the hydra takes Piercing or Slashing damage from a melee attack, one of its necks is severed and its stump immediat" is carried by "Searing Stumps", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("a punishes-the-attacker rider that also buffs the hydra's own Bite and") and wrote a trait instead: "Searing Stumps" -> Traits. When the hydra takes Piercing or Slashing damage from a melee attack, one of its necks is severed and its stump smokes; 
+[reskin] authored row numbers: "Searing Stumps" — the call declared 1 number(s) promised
+[reskin] signature authored (trait): no template — the seat wrote it -> Traits/"Searing Stumps" ("When the hydra takes Piercing or Slashing damage from a melee attack, one of its necks is severed and its stump immediately begins to smoke. Until the end of it [authored: the catalog held no shape for it]")
 [reskin] weapons answered: Bite = none
+[reskin] chassis nova: "Choking Reek (Recharge 5-6)" — the brute-5's own nova row; geometry, cap and rider lines below are its edits
 [reskin] speed by concept: added Swim 40 ft. — the concept's movement set decides
 [reskin] print canon multiattack: "the hydra makes as many Bite attacks as it has heads." — the Hydra's own
 [reskin] languages held: None stands — INT 2 on a Monstrosity speaks nothing, whatever the mind read said
@@ -1219,26 +1243,29 @@ Bite: Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 10 (1d10 + 
 [reskin] print canon saves: proficient in nothing — the Hydra's own set, at this sheet's stats and PB 3 (changed STR, CON)
 [reskin] print canon skills: "Athletics +8, Perception +3" -> "Perception +6" — the Hydra's own skills, each derived from this sheet's stat and PB
 [reskin] print canon defenses: immunities Fire -> Blinded, Charmed, Deafened, Frightened, Stunned, Unconscious — the Hydra's own header lines
+[reskin] resistances derived: Fire
 [reskin] print canon trait: Hold Breath — "Hydra — whose stumps smoke instead of regrowing" is the Hydra (print's own row)
 [reskin] print canon trait: Multiple Heads — "Hydra — whose stumps smoke instead of regrowing" is the Hydra (print's own row)
 [reskin] print canon trait: Reactive Heads — "Hydra — whose stumps smoke instead of regrowing" is the Hydra (print's own row)
-[reskin] asked but unanswered: "Hydra — whose stumps smoke instead of regrowing" asked for at_will/at_will and no row binds the clause
+[reskin] print canon: the seat's own row STAYS — Actions/"Choking Reek (Recharge 5-6)" answers "Hydra — whose stumps smoke instead of regrowing", which the GM typed; print's nova rides beside it rather than over it
+[reskin] free-row budget by card size: CR 8 sits in band 6-9, where print runs 3-5 rows (p20-p90, Multiattack excluded); this card already carries 5 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 0) — "Searing Stumps" [no template]
+[reskin] 2024 caps: "Searing Stumps" — a condition or game term shipped lowercase
+[reskin] ask vs row MISMATCH: "Hydra — whose stumps smoke instead of regrowing" -> "Choking Reek" — limit: asked at_will, row reads recharge
 [reskin] lint: 0 findings
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] element expressed: Searing Stumps carries "stumps that smoke instead of regrowing" — "one of its necks is severed and its stump smokes; until the end of its next turn"
+audit finding below confidence gate: Multiattack With five heads this is five separate attack rolls in one action, more than a GM can resolve inside a turn without slowing play, and it makes the single Bite action never worth taking.
+[reskin] audit: [Searing Stumps: This trait severs a head on any qu…ne of its necks is severed and its stump smokes"), Searing Stumps: The trait keys its Disadvantage to…atures other than the one that severed the head")]
+[reskin] audit defect: Traits/"Searing Stumps" [model-written] high other — This trait severs a head on any qualifying hit, while Multiple Heads severs a head only on 25+ damage in a turn and regrows heads two per death — two entries give two incompatible rules for how heads die, so the GM cannot tell which governs. — Make Searing Stumps grant its smoke/Fire rider off the head-death already defined by Multiple Heads rather than inventing a second severance trigger. (about: "When the hydra takes Piercing or Slashing damage from a melee attack, one of its necks is severed and its stump smokes")
+[reskin] audit defect: Traits/"Searing Stumps" [model-written] medium untrackable — The trait keys its Disadvantage to "the one that severed the head," a creature the trait never identifies, and on a Multiattack of five Bites it gives the GM no way to track which head was severed by whom within a turn. — Replace the per-severer reference with a condition the block can track (e.g., Disadvantage against all creatures but one named target the hydra can see). (about: "its Bite attacks deal an extra 13 (3d8) Fire damage, but it has Disadvantage on attack rolls against creatures other than the one that severed the head")
+[reskin] clause unresolved: "Searing Stumps" carries "When the hydra takes Piercing or Slashing damage from a ", which matches no clause on the sheet — no coverage credit by id
+[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] lacks clause: Traits/"Multiple Heads" keeps its blow, loses the regeneration — "Hydra — whose stumps smoke instead of regrowing"
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Hydra" — donor brute-5, CR 8
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 55 of 69
-  nearest recorded prompt: the same call in this generation, 8996 characters shared
-     54 | - disarm [Actions] (fires: save, does: movement): Strength Saving Throw: DC {dc}, one creature within 5 feet that is holding a weapon or another object. Failure: {burst} {damage_type} damage, and the target drops the held object, which lands in its space.
-  -  55 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  55 | - zone [Actions, 1/Day] (fires: once_per_fight, does: condition): The creature creates {zone_effect} in a 20-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. Each creature in the area {zone_rule}. — you fill: {zone_effect}, {zone_rule} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")
-     56 | - zone [Actions, 1/Day] (fires: once_per_fight, does: condition): The creature creates {zone_effect} in a 20-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. Each creature in the area {zone_rule}. — you fill: {zone_effect}, {zone_rule} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")
-[harness] the whole prompt, and every recorded one, is in 07-REPLAY-MISS.txt
-[harness] 12 prompt(s) had no recorded answer during this entry: fit x6, audit x3, legacy x3
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 07-hydra.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -1307,17 +1334,19 @@ CR 8 (XP 3,900; PB +3)
 
 Traits
 
+Lurching Stride. The siege-golem ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squeezing, paying no extra movement and never provoking Opportunity Attacks.
+
 Immutable Form. The siege-golem can't shape-shift.
 
 Magic Resistance. The siege-golem has Advantage on saving throws against spells and other magical effects.
 
 Actions
 
-Multiattack. The siege-golem makes two Ram-Timber attacks. It can replace one attack with a use of Horrid Display.
+Multiattack. The siege-golem makes two Ram-Timber attacks. It can replace one attack with a use of Breach Shove.
 
 Ram-Timber. Melee Attack Roll: +8, reach 10 ft. 27 (5d8 + 5) Bludgeoning damage.
 
-Horrid Display. Wisdom Saving Throw: DC 16, each creature of the siege-golem's choice in a 30-foot Emanation originating from the siege-golem that can see or hear it. Failure: The target has the Frightened condition until the end of its next turn. Success: The target is immune to this creature's terror for 24 hours.
+Breach Shove. Strength Saving Throw: DC 16, each creature in a 30-foot-long, 5-foot-wide Line. Failure: The target is pushed up to 10 feet straight away from Siege-Golem, and the target has the Prone condition.
 
 ✏️
 Edit
@@ -1340,9 +1369,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Hydra: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 7 taken name(s) the recording carried
 [path] homebrew — "a siege-engine golem of lashed timber that shoulders through walls" (call)
 [route] brute-juggernaut type=Construct mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-juggernaut: ✓ ("siege-engine golem of lashed timber") | brute-juggernaut: no line key in the words — the model's read of its quote
@@ -1374,15 +1403,19 @@ Delete
 [reskin] idea anchored: action — "The siege-golem lurches in a straight, unstoppable line and shoulders " answers the GM's "shoulders through walls"
 [reskin] idea unanchored: trait — "The golem's joints are corded green timber bound in iron bands, and ea" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 33 of 33 answered; not true of this body: shield-bash, active-toll, random-ray, spew, herd, drain, shell-withdraw, rally, coating, phase-slip, heated-body, false-appearance, bloodied-burst, resonant-body, adhesive, spider-climb, aberrant-ground, faultless-tracker, web-walker, energy-aura, noxious-aura, uncanny-sense, marking-light, relic-object, warded-mending, mimicry, gaze-aura, death-burst, kill-denial, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "shoulders through walls", so role and style do not filter the menu (legality still does); 17 template(s) offered
-[reskin] signature idea (action): "The siege-golem lurches in a straight, unstoppable line and shoulders through everything in its path — creatures, barricades, and the soft stone of walls alike — each creature in that line must succeed on a Strength saving throw or be shoved aside and knocked Prone, and the golem's movement is not slowed or stopped by them." [action/save/condition] [family: breach] — menu: leap, throw-retrieve, ground-burst, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, trample, thrown-burst, execute, lure, pacify, slow-bolt, sensory-strike, disarm, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, rampage, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
+[reskin] menu: taste stands down — action answers the GM's "shoulders through walls", so role and style do not filter the menu (legality still does); 18 template(s) offered
+[reskin] signature idea (action): "The siege-golem lurches in a straight, unstoppable line and shoulders through everything in its path — creatures, barricades, and the soft stone of walls alike — each creature in that line must succeed on a Strength saving throw or be shoved aside and knocked Prone, and the golem's movement is not slowed or stopped by them." [action/save/condition] [family: breach] — menu: leap, throw-retrieve, ground-burst, escalating-dread, terror-pulse, push-prone, thrown-burst-seed, wind-up, trample, thrown-burst, execute, lure, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, rampage, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
 [reskin] composed candidates: none action — the breach family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — shove: push-prone, disarm
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: push-prone (save/condition), disarm (save/movement), escalating-dread (save/condition)
 [reskin] classification handed to the fit call: shape=save_single when=at_will often=at_will
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] value check: "Horrid Display (2/Day)" EV 14.9 vs floor 14 (the whole Multiattack (2 attacks)) — worth the trade
-[reskin] library seed drawn: terror-pulse -> Actions/"Horrid Display (2/Day)" (no template held the idea; a proven shape stands in)
+[reskin] word match declined by the call: push-prone, ground-burst, leap, thrown-burst, wind-up, thrown-burst-seed — the key word does not mean the mechanic here
+[reskin] closest refused: action — "trample" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: moves the golem in a straight line through every space in its path, fo)
+[reskin] authored row answers the GM: action — "Breach Charge" was written for "shoulders through walls", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it
+[reskin] seat authored the row: action — the call refused every template for no_fit ("moves the golem in a straight line through every space in its path, fo") and wrote an action instead: "Breach Charge" -> Actions. *Strength Saving Throw*: DC 16, each creature in a 30-foot Line. *Failure:* The target is pushed up to 10 feet straight 
+[reskin] authored row numbers: "Breach Charge" — the call declared (unanswered) number(s) promised
+[reskin] value check: "Breach Charge" EV 29.7 vs floor 14 (one attack of 2) — over the ceiling but a control row (no damage, no KO) — print leaves these ungated
+[reskin] signature authored: no template — the seat wrote it -> Actions/"Breach Charge" ("The siege-golem lurches in a straight, unstoppable line and shoulders through everything in its path — creatures, barricades, and the soft stone of walls alike  [authored: the catalog held no shape for it]")
 [reskin] signature idea (trait): "The golem's joints are corded green timber bound in iron bands, and each lurching stride drives the whole mass forward: it ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squeezing, paying no extra movement and never provoking." [trait/always/movement] [family: breach] — menu: phobia, terrain-walk, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura (+ shelf: absorption, weapon-lodge)
 [reskin] verb gate stands down: trait — no template shares a verb, but 3 template(s) whose declared stamps match the idea (always/movement): terrain-walk, relentless-pursuit, bound; the declared data is the warrant and the call is worth making
 [reskin] composed candidates: none trait — the breach family has no grammar — composable families are payoff, body-reaction, zone
@@ -1390,12 +1423,11 @@ Delete
 [reskin] classification handed to the fit call: shape=save_single when=at_will often=at_will
 [reskin] word match declined by the call: phobia, bound, relentless-pursuit — the key word does not mean the mechanic here
 [reskin] closest refused: trait — "terrain-walk" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ignores Difficult Terrain of all kinds and passes through smaller crea)
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "The golem's joints are corded green timber bound in iron bands, and ea" and wrote no row of that kind
-[reskin] seat asked again: trait — the first answer was refused (you wrote no row of the kind asked for (a trait)); asking once more with the reason
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "The golem's joints are corded green timber bound in iron bands, and ea" and wrote no row of that kind
-[reskin] seat refused twice: trait — first: you wrote no row of the kind asked for (a trait); second: you wrote no row of the kind asked for (a trait); the seat stays empty
-[reskin] decline reason: trait — the call answered none and names it "no_fit"
-[reskin] signature miss: trait — "The golem's joints are corded green timber bound in iron bands, and each lurching stride drives the whole mass forward: it ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squeezing, paying no extra movement and never provoking." [trait/always/movement] — the model found no template that holds it (offered: terrain-walk, relentless-pursuit, bound, phobia, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, undead-fortitude, truth-aura, fear-aura)
+[reskin] seat answered, but: the call said "ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squeezing, paying no " is carried by "Lurching Stride", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("ignores Difficult Terrain of all kinds and passes through smaller crea") and wrote a trait instead: "Lurching Stride" -> Traits. The siege-golem ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squee
+[reskin] authored row numbers: "Lurching Stride" — the call declared 0 number(s) promised
+[reskin] free signature row: "Lurching Stride" — the trait seat cannot quote the GM, and the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit
+[reskin] signature authored (trait): no template — the seat wrote it -> Traits/"Lurching Stride" ("The golem's joints are corded green timber bound in iron bands, and each lurching stride drives the whole mass forward: it ignores Difficult Terrain and can mov [authored: the catalog held no shape for it]")
 [reskin] weapons answered: Ram-Timber = none
 [reskin] languages by body: a trap-line Construct with no voice in the concept
 [reskin] absorption dropped: "Lightning Absorption" — the concept names no energy, so the chassis's organ has no warrant (a timber ram does not eat lightning; critic 2026-10-30)
@@ -1403,27 +1435,25 @@ Delete
 [reskin] immunities stamped for type: Construct -> Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned
 [reskin] name-canon stands down: the path answered homebrew on "a siege-engine golem of lashed timber th" and named no print body — no published trait lands on a word alone (owner's ruling)
 [reskin] reach follows the body: Actions/"Ram-Timber" reach 5 → 10 ft. on a Huge body (print's modal reach at that size)
-[reskin] dead control row: "Horrid Display" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead
-[reskin] multiattack replacement clause: It can replace one attack with a use of Horrid Display.
-[reskin] asked but unanswered: "shoulders through walls" asked for at_will/at_will and no row binds the clause
-[reskin] sheet lint: stock-template-name: Actions/Horrid Display: is the stock name of the "terror-pulse" template
-[reskin] lint: stock-template-name: Actions/Horrid Display: is the stock name of the "terror-pulse" template
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] seed share: 1 of 1 signature row(s) came from a seed (Horrid Display) — the sameness metric
-[reskin] [gap] ignores Difficult Terrain of all kinds and passes through smaller creatures' spaces without provoking — "The golem's joints are corded green timber bound in iron bands, and each lurching stride drives the whole mass forward: it ignores Difficult Terrain and can move through the space of any creature smaller than Huge without squeezing, paying no extra movement and never provoking." — Lashed Siege-Golem [seat: trait [trait/always/movement]] (closest offered: terrain-walk) [effect: movement] [menu: terrain-walk relentless-pursuit bound phobia bloodied-fury blood-frenzy pack-tactics death-restoration berserk shielded-mind undead-fortitude truth-aura fear-aura] [same-cell unoffered: blink spider-climb aberrant-ground web-walker earth-glide tunneler self-invisibility rally focus feint-slip phase-slip] [same-seat rejected: false-appearance:body-verdict adhesive:body-verdict spider-climb:body-verdict aberrant-ground:body-verdict faultless-tracker:body-verdict web-walker:body-verdict uncanny-sense:body-verdict earth-glide:movement tunneler:movement evasion:role marking-light:body-verdict sealed-body:engine-family relic-object:body-verdict guarded-stance:role mimicry:body-verdict assassinate:role blurred-form:role death-burst:body-verdict kill-denial:body-verdict] [row dropped]
-[reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
-[reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
+[reskin] multiattack replacement clause: It can replace one attack with a use of Breach Charge.
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 1) — "Lurching Stride" [no template]
+[reskin] ask vs row ok: "shoulders through walls" -> "Breach Charge" — trigger at_will, limit at_will
+[reskin] name follows content: Actions/"Breach Charge" promises movement the row never delivers — "Breach Shove" (the call's modifier kept, the claim word swapped for a noun the row earns)
+[reskin] citation follows the rename: "Multiattack" cited "Breach Charge", which is still on this sheet as "Breach Shove" — the citation re-points rather than going
+[reskin] lint fixed: line-dimensions — the lint's own deterministic surgery, applied before the gate reads the sheet
+[reskin] lint: 0 findings
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] element expressed: Lurching Stride carries "shouldering through walls" — "can move through the space of any creature smaller than Huge without squeezing"
+[reskin] audit: [Breach Shove: The entry refers to the creature by …k does. (about: "straight away from Siege-Golem"), Breach Shove: A shove meant to shoulder through wa…ch creature in a 30-foot-long, 5-foot-wide Line"), Breach Shove: Targets are pushed up to 10 feet str…ed. (about: "the target has the Prone condition"), Breach Shove: As a substitute for one Ram-Timber a…-Golem, and the target has the Prone condition.")]
+[reskin] audit defect: Actions/"Breach Shove" [model-written] high wording — The entry refers to the creature by a shortened name, 'Siege-Golem', that is not this creature's name ('Lashed Siege-Golem'). — Use the full creature name or 'the siege-golem' as the rest of the block does. (about: "straight away from Siege-Golem")
+[reskin] audit defect: Actions/"Breach Shove" [model-written] medium undelivered — A shove meant to shoulder through walls is aimed as a narrow forward line that can miss the wall entirely and pushes targets away rather than breaching anything; the fiction is a body-check against a barrier, not a 30-ft ranged strip of falling bodies. — Rework so the mechanic expresses ramming a barrier or the space directly ahead rather than a long thin line of pushed creatures. (about: "each creature in a 30-foot-long, 5-foot-wide Line")
+[reskin] audit defect: Actions/"Breach Shove" [model-written] low weak — Targets are pushed up to 10 feet straight away and knocked Prone with no save-based rider distinction — but a target immune to Prone (or already Prone) gains nothing from the damage-less shove, so the row's only condition payload has no fallback. — Make the push the primary effect with the Prone as an additional outcome, so the row still functions when Prone is denied. (about: "the target has the Prone condition")
+[reskin] audit defect: Actions/"Breach Shove" [model-written] medium weak — As a substitute for one Ram-Timber attack, Breach Shove deals no damage and only imposes a 10-foot push plus Prone, which the target simply stands up from, so it is a strictly weaker choice than the attack it replaces. — Give the shove a payload worth trading a damage attack for (e.g., a knock-down that persists or affects the creature's movement) rather than a push-and-stand. (about: "The target is pushed up to 10 feet straight away from Siege-Golem, and the target has the Prone condition.")
+[reskin] clause unresolved: "Lurching Stride" carries "The golem's joints are corded green timber bound in iron", which matches no clause on the sheet — no coverage credit by id
+[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Lashed Siege-Golem" — donor brute-5-juggernaut, CR 8
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 61 of 74
-  nearest recorded prompt: the same call in this generation, 8911 characters shared
-     60 | - slow-bolt [Actions] (fires: save, does: movement): Constitution Saving Throw: DC {dc}, one creature within 60 feet. Failure: The target's Speed is halved and it can't take Reactions until the end of the creature's next turn.
-  -  61 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  61 | - throw-retrieve [Actions] (fires: always, does: damage): The creature hurls {projectile}. Ranged Attack Roll: {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature's Speed is halved and it can't use this action. — you fill: {projectile}
-     62 | - throw-retrieve [Actions] (fires: always, does: damage): The creature hurls {projectile}. Ranged Attack Roll: {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature's Speed is halved and it can't use this action. — you fill: {projectile}
-[harness] the whole prompt, and every recorded one, is in 08-REPLAY-MISS.txt
-[harness] 8 prompt(s) had no recorded answer during this entry: fit x3, seat x2, audit x3
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 08-lashed-siege-golem.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -1531,9 +1561,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Lashed Siege-Golem: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 8 taken name(s) the recording carried
 [path] twist — Stone Golem (is) — "Name field: Stone Golem" (code)
 [route] brute-juggernaut type=Construct mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-juggernaut: ✓ ("carved as a weeping saint") | brute-juggernaut: no line key in the words — the model's read of its quote
@@ -1612,14 +1642,8 @@ Delete
 [reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
 [reskin] signature tally: 1 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] done: "Stone Golem" — donor brute-9, CR 10
-[harness] enrichment not run (4 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-!! [ENRICHMENT] Failed to enrich Stone Golem: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] REPLAY DIFFERS from 09-stone-golem.json — fields: sections
+[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 09-stone-golem.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -1720,6 +1744,18 @@ Drowned Hymn: Each creature of the antiphon's choice in a 60-foot radius origina
 
 ### Trace
 ```
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Stone Golem: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 9 taken name(s) the recording carried
 [path] homebrew — "a drowned cathedral choir that sings in one voice" (call)
 [route] lurker-phantom type=Undead mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | lurker-phantom: ✓ ("drowned cathedral choir") | lurker-phantom: key "drowned" (class body)
@@ -1804,8 +1840,8 @@ audit finding below confidence gate: Drowned Hymn The area is an Emanation that 
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
 [reskin] done: "Drowned Antiphon" — donor lurker-5-phantom, CR 10
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 10-drowned-antiphon.json — fields: other_edition
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 10-drowned-antiphon.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -1906,12 +1942,13 @@ Sunlight: the vampire takes 20 radiant damage if it starts its turn in sunlight.
 Shape-Shift (Bonus Action).If the vampire isn't in sunlight or running water, it shape-shifts into a Tiny bat (Speed 5 ft., Fly Speed 30 ft.) or a Medium cloud of mist (Speed 5 ft., Fly Speed 20 ft. [hover]), or it returns to its vampire form. Anything it is wearing transforms with it.
 While in bat form, the vampire can't speak. Its game statistics, other than its size and Speed, are unchanged.
 While in mist form, the vampire can't take any actions, speak, or manipulate objects. It is weightless and can enter an enemy's space and stop there. If air can pass through a space, the mist can do so, but it can't pass through liquid. It has Resistance to all damage, except the damage it takes from sunlight.
-Charm (Recharge 5-6) (Bonus Action).The vampire casts Charm Person, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 17), and the duration is 24 hours. The Charmed target is a willing recipient of the vampire's Bite, the damage of which doesn't end the spell. When the spell ends, the target is unaware it was Charmed by the vampire.
+Charm (Recharge 5-6) (Bonus Action).The vampire casts Charm Person, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 17), and the duration is 24 hours. The charmed target is a willing recipient of the vampire's Bite, the damage of which doesn't end the spell. When the spell ends, the target is unaware it was charmed by the vampire.
+Briar Blood (Reaction).When the vampire takes damage from a melee weapon, the triggering creature must succeed on a DC 17 Constitution saving throw or be poisoned until the end of its next turn.
 
 Actions
 Multiattack (Vampire Form Only): The vampire makes two Grave Strike attacks and uses Bite.
 Grave Strike: Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 8 (1d8 + 4) bludgeoning damage plus 7 (2d6) necrotic damage. If the target is a Large or smaller creature, it is grappled (escape DC 17) from one of two hands.
-Bite (Bat or Vampire Form Only): One creature within 5 feet that is willing or that has the Grappled, Incapacitated, or Restrained condition must make a DC 17 Constitution saving throw, taking 6 (1d4 + 4) piercing damage on a failed save, plus 13 (3d8) necrotic damage. The target's Hit Point maximum decreases by an amount equal to the necrotic damage taken, and the vampire regains hit points equal to that amount. A Humanoid reduced to 0 hit points by this damage and then buried rises the following sunset as a Vampire Spawn under the vampire's control.
+Bite (Bat or Vampire Form Only): One creature within 5 feet that is willing or that has the grappled, incapacitated, or restrained condition must make a DC 17 Constitution saving throw, taking 6 (1d4 + 4) piercing damage on a failed save, plus 13 (3d8) necrotic damage. The target's Hit Point maximum decreases by an amount equal to the necrotic damage taken, and the vampire regains hit points equal to that amount. A Humanoid reduced to 0 hit points by this damage and then buried rises the following sunset as a Vampire Spawn under the vampire's control.
 Legendary Actions
 
 The vampire can take 3 legendary actions, choosing from the options below. Only one legendary action option can be used at a time and only at the end of another creature's turn. The vampire regains spent legendary actions at the start of its turn.
@@ -1925,9 +1962,9 @@ Beguile: The vampire casts Command, requiring no spell components and using Char
 !! [ENRICHMENT] Failed to enrich Drowned Antiphon: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] twist — Vampire (is) — "Name field: Vampire" (code)
 [route] lurker type=Undead mechanics=snare — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | caster-binder: the call reads no worked magic in these words | lurker-trap: ✓ ("a garden of thorns") | lurker-trap: no line key in the words — the model's read of its quote | lurker-trap -> lurker: a trap is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it
@@ -1972,14 +2009,16 @@ Beguile: The vampire casts Command, requiring no spell components and using Char
 [reskin] classification handed to the fit call: mechanic=snare
 [reskin] word match declined by the call: composed:body-reaction:condition:t0:poisoned, composed:body-reaction:condition:t1:poisoned, composed:body-reaction:condition:t2:poisoned — the key word does not mean the mechanic here
 [reskin] closest refused: trait — "composed:body-reaction:condition:t1:pois" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: plants and maintains a patch of thorned briars that snare or hinder cr)
-[reskin] seat answered, but: the call said "When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black blood; the att" is carried by "Briar Blood", and no such row is on this sheet — the clause stays open
+[reskin] seat answered, but: the call said "Briar Blood. When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black b" is carried by "Briar Blood", and no such row is on this sheet — the clause stays open
 [reskin] seat authored nothing: trait — the call was asked to write a trait for "Briar Blood. When the vampire takes damage from a melee weapon, its ve" and wrote no row of that kind (refused: "Briar Blood" — a trait cannot put the Poisoned condition on another creature with no saving throw, and a trait has nowhere to hold one. Where it fires because the creature was HIT, answer in "reactions" with a trigger and a "save" object; where it fires on creatures NEAR it, answer in "auras") (it belongs in the description)
 [reskin] seat asked again: trait — the first answer was refused ("Briar Blood" — a trait cannot put the Poisoned condition on another creature with no saving throw, and a trai); asking once more with the reason
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "Briar Blood. When the vampire takes damage from a melee weapon, its ve" and wrote no row of that kind
-[reskin] seat refused twice: trait — first: "Briar Blood" — a trait cannot put the Poisoned condition on another creature with no savi; second: you wrote no row of the kind asked for (a trait); the seat stays empty
-[reskin] closest refused — subject flipped: trait — the call named "composed:body-reaction:condition:t1:pois" nearest and judged its subject FLIPPED against the clause (plants and maintains a patch of thorned briars that snare or hinder cr); a row that turns the clause around is worse than no row, so the seat stays empty (the critic's §3, homebrew40 2026-11-05)
-[reskin] decline reason: trait — the call answered none and names it "no_fit"
-[reskin] signature miss: trait — "Briar Blood. When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black blood; the attacker is Splattered — it has the Poisoned condition as briar-dust-laced blood burns into its wounds until the end of its next turn. The thorns are the vampire's surface as much as its claws, and every cut opens the veins wider." [trait/on_being_hit/condition] — the model found no template that holds it (offered: composed:body-reaction:condition:t0:poisoned, composed:body-reaction:condition:t0:deafened, composed:body-reaction:condition:t1:poisoned, composed:body-reaction:condition:t1:deafened, composed:body-reaction:condition:t2:poisoned, composed:body-reaction:condition:t2:deafened, bloodied-fury, blood-frenzy)
+[reskin] seat answered, but: the call said "Briar Blood. When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black b" is carried by "Briar Blood", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("plants and maintains a patch of thorned briars that snare or hinder cr") and wrote a trait instead: "Briar Blood" -> Reactions. *Trigger:* The vampire takes damage from a melee weapon. *Response—Constitution Saving Throw:* DC 17, the triggering cre
+[reskin] authored row numbers: "Briar Blood" — the call declared (unanswered) number(s) promised
+[reskin] seat landed on the second try: trait — "Briar Blood" after ""Briar Blood" — a trait cannot put the Poisoned condition on another creature wi"
+[reskin] free signature row: "Briar Blood" — the trait seat cannot quote the GM, and the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit
+[reskin] seat takes its clause: "Briar Blood" is HANDED "keeps a garden of thorns" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template
+[reskin] signature authored (trait): no template — the seat wrote it -> Reactions/"Briar Blood" ("Briar Blood. When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black blood; the attacker is Splattered — it ha [authored: the catalog held no shape for it]")
 [reskin] weapons answered: Thorn Claw = none
 [reskin] languages by mind: "None" -> "Common plus the languages it knew in life" (sapient)
 [reskin] print canon type: the call answered type_source=user for undead, but the GM's words do not name it — the Vampire's own type stands
@@ -2002,24 +2041,20 @@ Beguile: The vampire casts Command, requiring no spell components and using Char
 [reskin] print canon legendary: Deathless Strike, Beguile — the Vampire's own kit stands where the chassis's stood
 [reskin] multiattack replacement clause withheld: the Multiattack already uses it — "The vampire makes two Grave Strike attacks and uses Bite." (the Vampire's print line names Bite; a second clause named it again, twist-ten 2026-10-19)
 [reskin] free-row budget by card size: CR 13 sits in band 13-16, where print runs 5-10 rows (p20-p90, Multiattack excluded); this card already carries 11 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 0) — "Briar Blood" [no template]
+[reskin] lint fixed: success-no-effect — the lint's own deterministic surgery, applied before the gate reads the sheet
 [reskin] lint: orphan-condition-ref: "Charmed" is referenced as a state but nothing on the sheet applies it | orphan-condition-ref: "Restrained" is referenced as a state but nothing on the sheet applies it
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] [gap] plants and maintains a patch of thorned briars that snare or hinder creatures in it — "Briar Blood. When the vampire takes damage from a melee weapon, its veins split the skin in a spray of thorn and black blood; the attacker is Splattered — it has the Poisoned condition as briar-dust-laced blood burns into its wounds until the end of its next turn. The thorns are the vampire's surface as much as its claws, and every cut opens the veins wider." — Vampire [seat: trait [trait/on_being_hit/condition]] (closest offered: composed:body-reaction:condition:t1:pois — NOT ON THE MENU) [effect: movement] [menu: composed:body-reaction:condition:t0:poisoned composed:body-reaction:condition:t0:deafened composed:body-reaction:condition:t1:poisoned composed:body-reaction:condition:t1:deafened composed:body-reaction:condition:t2:poisoned composed:body-reaction:condition:t2:deafened bloodied-fury blood-frenzy] [same-cell unoffered: none] [same-seat rejected: heated-body:body-verdict absorption:body-verdict bloodied-burst:body-verdict resonant-body:body-verdict weapon-lodge:role] [row dropped]
-[reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
-[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path twist
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] element claim revoked: "Briar Blood" claims "a garden of thorned briars" but the audit judged that nothing in the row carries it; the name carries "briars" and may not advertise what the rules do not do — flagged decoration for the rename pass
+[reskin] sameness: 1 of 1 free row(s) express nothing their rules carry — counted as decoration ("Briar Blood")
+[reskin] audit: [Briar Blood: Nothing in the row delivers briars or…soned condition until the end of its next turn.")]
+[reskin] audit rename blocked — "Briar Blood" -> "Thornbite" would drop the GM's own word "blood"
+[reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] escape dc: Grave Strike → DC 17 (8 + PB + STR; a late row wore another number)
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Vampire" — donor lurker-13, CR 13
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
-[harness] enrichment not run (4 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the seat call (buildSeatPrompt) — first differs at line 97 of 120
-  nearest recorded prompt: the same call in this generation, 13953 characters shared
-     96 | IF THE ABILITY CANNOT BE WRITTEN AS ONE OF THESE FORMS — it is speech, or lore, or it needs a second row beside it to make sense — answer with every array empty and say where it belongs in "unplaced". That is a real answer and costs nothing: the sheet has a ready-made ability to fall back on, and a row that does not work at a table is worse than one that is merely close.
-  -  97 | (end of prompt)
-  +  97 | 
-     98 | YOUR FIRST ANSWER WAS REFUSED. This is the second and last ask for this ability.
-[harness] the whole prompt, and every recorded one, is in 11-REPLAY-MISS.txt
-[harness] 7 prompt(s) had no recorded answer during this entry: seat x1, audit x3, legacy x3
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 11-vampire.json
 ```
 
 ---
@@ -2124,12 +2159,18 @@ Delete
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Vampire: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Vampire: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "a plague-bearing archon of flies that commands lesser swarms" (call)
 [route] defender-leader type=Celestial mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | defender-leader: ✓ ("commands lesser swarms") | defender-leader: key "commands" (class verb)
@@ -2160,7 +2201,7 @@ Delete
 [reskin] idea unanchored: trait — "Whenever a creature within 10 feet of the archon fails a saving throw " names none of the 2 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 31 of 31 answered; not true of this body: seal, shield-bash, active-toll, random-ray, shell-withdraw, heated-body, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, energy-aura, uncanny-sense, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, kill-denial, hook-rider, life-drain
 [reskin] menu: taste stands down — action answers the GM's "commands lesser swarms", so role and style do not filter the menu (legality still does); 10 template(s) offered
-[reskin] signature idea (action): "As a bonus action, the archon commands a cloud of plague-flies to descend on one creature it can see within 60 feet. The target must succeed on a Constitution saving throw or have the Poisoned condition until the end of the archon's next turn." [bonus_action/save/condition] [family: mark] — menu: patient-defense, lay-on-hands, second-wind, volley-order, aggro-curse, self-invisibility, rally, focus, feint-slip, coating (+ shelf: throw-retrieve, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, herd, reveal, wind-up, thrown-burst, execute, lure, pacify, escalating-dread, sensory-strike, thrown-burst-seed, delayed-brand, riposte, answering-strike, stunning-strike, charge-push, contagion, pounce, isolation, charge)
+[reskin] signature idea (action): "As a bonus action, the archon commands a cloud of plague-flies to descend on one creature it can see within 60 feet. The target must succeed on a Constitution saving throw or have the Poisoned condition until the end of the archon's next turn." [bonus_action/save/condition] [family: mark] — menu: patient-defense, lay-on-hands, second-wind, volley-order, aggro-curse, self-invisibility, rally, focus, feint-slip, coating (+ shelf: throw-retrieve, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, thrown-burst, execute, lure, pacify, escalating-dread, sensory-strike, thrown-burst-seed, delayed-brand, riposte, answering-strike, stunning-strike, charge-push, contagion, pounce, isolation, charge)
 [reskin] composed candidates: none action — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — command: volley-order, rally
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: volley-order (always/resource), rally (always/movement), aggro-curse (save/movement)
@@ -2219,7 +2260,7 @@ Delete
 [reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
 [reskin] record reconciled: "Pack Tactics" no longer imposes Poisoned — the clause left, so the record goes with it
 [reskin] done: "Plague Archon" — donor defender-8-leader, CR 13
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 12-plague-archon.json — 1 recorded answer(s) unused
 ```
 
@@ -2231,7 +2272,7 @@ Delete
 
 **Input:** `name: Purple Worm | that swallowed a war-band's armoury`
 **Donor:** brute-13 -> CR 15 (invented — no printed peer)
-**Signature:** dropped · **elapsed** 1s
+**Signature:** library · **elapsed** 1s
 
 ### Block
 ```
@@ -2293,16 +2334,17 @@ Tunneler. The purple worm can burrow through solid rock at half its Burrow Speed
 
 Actions
 
-Multiattack. The purple worm makes one Bite attack and one Tail Stinger attack.
+Multiattack. The purple worm makes one Bite attack and one Tail Stinger attack. It can replace one attack with a use of Swallow.
 
 Bite. Melee Attack Roll: +14, reach 10 ft. 22 (3d8 + 9) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 22), and it has the Restrained condition until the grapple ends.
 
 Tail Stinger. Melee Attack Roll: +14, reach 10 ft. 16 (2d6 + 9) Piercing damage plus 35 (10d6) Poison damage.
 
-Bonus Actions
+Swallow. Dexterity Saving Throw: DC 21, one Large or smaller creature within 10 feet that the purple worm hit with a melee attack this turn. Failure: The target is swallowed. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the purple worm, and takes 21 (6d6) Acid damage at the start of each of the purple worm's turns. If the purple worm takes 40 damage or more on a single turn from a creature inside it, it must succeed on a DC 21 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the purple worm and has the Prone condition. If the purple worm dies, a swallowed creature is no longer Restrained and can escape from the corpse using 15 feet of movement, exiting with the Prone condition.
 
-Swallow. Strength Saving Throw: DC 21, one Large or smaller creature Grappled by the purple worm (it can have up to three creatures swallowed at a time). Failure: The target is swallowed by the purple worm, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the purple worm, and takes 17 (5d6) Acid damage at the start of each of the purple worm's turns.
-If the purple worm takes 30 damage or more on a single turn from a creature inside it, the purple worm must succeed on a DC 21 Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the purple worm and has the Prone condition. If the purple worm dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 20 feet of movement, exiting Prone.
+Reactions
+
+Vented Armoury. Trigger: The purple worm takes damage from a piercing or slashing weapon. Response—Constitution Saving Throw: DC 21, the triggering creature. Failure: The target has the Blinded condition until the end of its next turn.
 
 ✏️
 Edit
@@ -2322,12 +2364,8 @@ Delete
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Plague Archon: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+!! Error generating response: TypeError: Failed to fetch
+!! [ENRICHMENT] Failed to enrich Plague Archon: TypeError: Failed to fetch
 [harness] restored 12 taken name(s) the recording carried
 [path] twist — Purple Worm (is) — "Name field: Purple Worm" (code)
 [route] brute-grappler type=Monstrosity mechanics=grapple, engulf — casts: the call reads no worked magic here | hold_shape: contain on the GM's own words "swallowed" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-grappler: ✓ ("swallowed") | brute-grappler: no line key in the words — the model's read of its quote
@@ -2358,28 +2396,35 @@ Delete
 [reskin] idea anchored: action — "When the purple worm bursts up from below, it doesn't just surface — i" answers the GM's "swallowed a war-band's armoury"
 [reskin] idea unanchored: trait — "The swallowed armoury is never still inside it. Whenever the purple wo" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 30 of 30 answered; not true of this body: shield-bash, herd, drain, shell-withdraw, rally, heated-body, false-appearance, absorption, resonant-body, adhesive, spider-climb, aberrant-ground, web-walker, energy-aura, noxious-aura, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "swallowed a war-band's armoury", so role and style do not filter the menu (legality still does); 15 template(s) offered
+[reskin] menu: taste stands down — action answers the GM's "swallowed a war-band's armoury", so role and style do not filter the menu (legality still does); 16 template(s) offered
 [reskin] menu pruned: action — thrown-burst-seed (the sheet cannot render them)
-[reskin] signature idea (action): "When the purple worm bursts up from below, it doesn't just surface — it takes the ground with it. Each creature in a cylinder centred on the breach must make a Dexterity saving throw; on a failure it is pulled down into the collapsing burrow, lands Prone, and is Restrained in the churned earth until it or an ally digs it free. The worm feeds on the loudest cluster, so the victim is marked as its n" [action/save/condition] [family: drag] — menu: swallow, condition-payoff, burrow-ambush, escalating-dread, terror-pulse, push-prone, exploiter, execute, lure, pull-through, pacify, slow-bolt, sensory-strike, disarm, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, coating, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, contagion, stunning-strike, charge-push, pounce, charge, isolation)
+[reskin] signature idea (action): "When the purple worm bursts up from below, it doesn't just surface — it takes the ground with it. Each creature in a cylinder centred on the breach must make a Dexterity saving throw; on a failure it is pulled down into the collapsing burrow, lands Prone, and is Restrained in the churned earth until it or an ally digs it free. The worm feeds on the loudest cluster, so the victim is marked as its n" [action/save/condition] [family: drag] — menu: swallow, condition-payoff, burrow-ambush, escalating-dread, terror-pulse, push-prone, exploiter, execute, lure, pull-through, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, coating, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, contagion, stunning-strike, charge-push, pounce, charge, isolation)
 [reskin] composed candidates: none action — the drag family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — swallow: swallow
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: swallow (save/condition), escalating-dread (save/condition), terror-pulse (save/condition)
 [reskin] keys would have bound: action — swallow (swallow, swallows, swallowed)
 [reskin] classification handed to the fit call: mechanic=grapple, engulf shape=attack
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] fallback stands down: the twist path has no shelf — the Purple Worm's rows plus the receipted seat are the composition
-[reskin] signature dropped — no template held the idea and no seed is legal on this sheet
-[reskin] signature idea (trait): "The swallowed armoury is never still inside it. Whenever the purple worm takes damage from a piercing or slashing weapon, the wound vents a gout of chewed steel and powder — the attacker must succeed on a Dexterity saving throw or be Blinded by the shrapnel until the end of its next turn." [trait/on_being_hit/condition] [family: body-reaction] — menu: bloodied-burst, weapon-lodge (+ shelf: phobia, terrain-walk, faultless-tracker, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, uncanny-sense, earth-glide, tunneler, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura, death-burst, kill-denial)
+[reskin] word match declined by the call: burrow-ambush, pull-through, disarm, push-prone — the key word does not mean the mechanic here
+[reskin] signature template: swallow -> Actions/"Swallow Whole" ("swallowed a war-band's armoury — the worm engulfs and holds creatures inside it [verb: swallow:concept, swallows:concept, swallowed:concept]")
+[reskin] keys spent by the action: swallow, swallows, swallowed
+[reskin] signature idea (trait): "The … armoury is never still inside it. Whenever the purple worm takes damage from a piercing or slashing weapon, the wound vents a gout of chewed steel and powder — the attacker must succeed on a Dexterity saving throw or be Blinded by the shrapnel until the end of its next turn." [trait/on_being_hit/condition] [family: body-reaction] — menu: bloodied-burst, weapon-lodge (+ shelf: phobia, terrain-walk, faultless-tracker, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, uncanny-sense, earth-glide, tunneler, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura, death-burst, kill-denial)
 [reskin] composed candidates on the menu: trait — composed:body-reaction:condition:t0:poisoned, composed:body-reaction:condition:t0:deafened, composed:body-reaction:condition:t1:poisoned, composed:body-reaction:condition:t1:deafened, composed:body-reaction:condition:t2:poisoned, composed:body-reaction:condition:t2:deafened (the body-reaction family's options, built before the call looks)
 [reskin] menu ordered by the idea's stamps: trait — idea fires on_being_hit/does condition; leading: composed:body-reaction:condition:t0:poisoned (on_being_hit/condition), composed:body-reaction:condition:t0:deafened (on_being_hit/condition), composed:body-reaction:condition:t1:poisoned (on_being_hit/condition)
 [reskin] keys would have bound: trait — tunneler (worm)
 [reskin] classification handed to the fit call: mechanic=grapple, engulf shape=attack
-[reskin] signature fit call failed — trait: Failed to generate a valid response. Please try again later.
-[reskin] trait bound to the concept's verb (concept-first): tunneler — worm in the user's words; the idea path had nothing
-[reskin] signature template (trait): tunneler -> Traits/"Tunneler" ("exact concept match [verb: worm:concept]")
-[reskin] repair: 1 clause(s) with no row — "swallowed a war-band's armoury"; one targeted call with the sheet as context
-[reskin] repair answer: attacks 0, saves 0, traits 0, reactions 0, answered [], unplaced []
-[reskin] repair: the answer held no rows for 1 owed clause(s) — "swallowed a war-band's armoury": a print body plus a clause the sheet never answers is the stock monster (1e)
+[reskin] word match declined by the call: composed:body-reaction:condition:t0:poisoned, composed:body-reaction:condition:t0:deafened, composed:body-reaction:condition:t1:poisoned, composed:body-reaction:condition:t1:deafened, composed:body-reaction:condition:t2:poisoned, composed:body-reaction:condition:t2:deafened, bloodied-burst, weapon-lodge — the key word does not mean the mechanic here
+[reskin] closest refused: trait — "composed:body-reaction:condition:t1:deaf" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: on taking piercing or slashing damage, forces the attacker to make a D)
+[reskin] seat answered, but: the call said "The … armoury is never still inside it. Whenever the purple worm takes damage from a piercing or slashing weapon, the wo" is carried by "Vented Armoury", and no such row is on this sheet — the clause stays open
+[reskin] seat authored nothing: trait — the call was asked to write a trait for "The … armoury is never still inside it. Whenever the purple worm takes" and wrote no row of that kind (refused: "Vented Armoury" — a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response's "save" object (${reactionSaveSpec()})) (it belongs in the description)
+[reskin] seat asked again: trait — the first answer was refused ("Vented Armoury" — a trait is not a save — the save form takes stat, target and effect as fields and the engin); asking once more with the reason
+[reskin] seat answered, but: the call said "The … armoury is never still inside it. Whenever the purple worm takes damage from a piercing or slashing weapon, the wo" is carried by "Vented Armoury", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("on taking piercing or slashing damage, forces the attacker to make a D") and wrote a trait instead: "Vented Armoury" -> Reactions. *Trigger:* The purple worm takes damage from a piercing or slashing weapon. *Response—Dexterity Saving Throw:* DC 21, th
+[reskin] authored row numbers: "Vented Armoury" — the call declared 0 number(s) promised
+[reskin] seat landed on the second try: trait — "Vented Armoury" after ""Vented Armoury" — a trait is not a save — the save form takes stat, target and "
+[reskin] free signature row: "Vented Armoury" — the trait seat cannot quote the GM, and the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit
+[reskin] seat takes its clause: "Vented Armoury" is HANDED "swallowed a war-band's armoury" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template
+[reskin] signature authored (trait): no template — the seat wrote it -> Reactions/"Vented Armoury" ("The … armoury is never still inside it. Whenever the purple worm takes damage from a piercing or slashing weapon, the wound vents a gout of chewed steel and pow [authored: the catalog held no shape for it]")
+[reskin] one mechanic, one name: Actions/"Swallow Whole" -> "Swallow" — this row is swallow and does what every swallow row does; a bespoke name would promise more than the text delivers
 [reskin] weapons answered: Bite = none
 [reskin] chassis nova: "Shrapnel Spray (Recharge 5-6)" — the brute-13's own nova row (its "Area Nova", renamed by the model); geometry, cap and rider lines below are its edits
 [reskin] print canon speed: 40 ft. -> 50 ft. — the Purple Worm's walk; the concept's other modes stay
@@ -2391,26 +2436,26 @@ Delete
 [reskin] element immunity: Acid (merged into the header write)
 [reskin] immunities stamped for type: Monstrosity -> Acid
 [reskin] print canon saves: proficient in CON, WIS — the Purple Worm's own set, at this sheet's stats and PB 5 (changed STR, WIS)
-[reskin] print canon trait: Tunneler — print's text replaces the chassis's (the Troll regenerates 15, not the chassis's 10 — critic's audit 2026-10-02)
+[reskin] print canon trait: Tunneler — "Purple Worm — that swallowed a war-band's armoury" is the Purple Worm (print's own row)
 [reskin] print canon: chassis row leaves — Actions/"Shrapnel Spray (Recharge 5-6)" is the chassis's own nova (the model renamed it), not the Purple Worm's
-[reskin] print canon row: Bonus Actions/Swallow — the Purple Worm's own
+[reskin] print canon row withheld: Bonus Actions/"Swallow" — the sheet's row of that name answers the GM ("swallowed a war band's armoury"), and the GM's words outrank print's name
+[reskin] multiattack replacement clause: It can replace one attack with a use of Swallow.
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 1) — "Vented Armoury" [no template]
+[reskin] row binds its clause: "Swallow" answers "swallowed a war-band's armoury" — the keys it matched came from that clause, so the coverage credit has a receipt
+[reskin] save re-derived after a retype: Reactions/Vented Armoury — a Dexterity save for a condition the row IMPOSES, which calls for Constitution (A2: a condition the row merely requires does not pick the stat)
+[reskin] lint fixed: success-no-effect — the lint's own deterministic surgery, applied before the gate reads the sheet
 [reskin] lint: 0 findings
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] element claim revoked: "Vented Armoury" claims "venting caustic, shrapnel-laced bile when its gut is struck" but the audit judged that nothing in the row carries it; the name advertises nothing, so the row stands as decoration
+[reskin] sameness: 1 of 1 free row(s) express nothing their rules carry — counted as decoration ("Vented Armoury")
+[reskin] audit: [Vented Armoury: The trigger names a weapon class r…akes damage from a piercing or slashing weapon.")]
+[reskin] audit defect: Reactions/"Vented Armoury" [model-written] high untrackable — The trigger names a weapon class rather than a damage type, which fails for natural weapons, spell attacks, and any table that cannot agree what counts as a weapon. — Trigger on taking Piercing or Slashing damage, which the resolution already checks. (about: "The purple worm takes damage from a piercing or slashing weapon.")
 [reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
-[reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
-[reskin] owed and unanswered: "swallowed a war-band's armoury" — the checker fails this block (1e)
+[reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] escape dc: Bite → DC 22 (8 + PB + STR; a late row wore another number)
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Purple Worm" — donor brute-13, CR 15
 [harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 54 of 68
-  nearest recorded prompt: the same call in this generation, 10450 characters shared
-     53 | - disarm [Actions] (fires: save, does: movement): Strength Saving Throw: DC {dc}, one creature within 5 feet that is holding a weapon or another object. Failure: {burst} {damage_type} damage, and the target drops the held object, which lands in its space.
-  -  54 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  54 | - aggro-curse [Bonus Actions] (fires: save, does: movement): Wisdom Saving Throw: DC {dc}, one creature within 30 feet. Failure: Until the start of the creature's next turn, the target has Disadvantage on attack rolls against creatures other than the creature.
-     55 | - aggro-curse [Bonus Actions] (fires: save, does: movement): Wisdom Saving Throw: DC {dc}, one creature within 30 feet. Failure: Until the start of the creature's next turn, the target has Disadvantage on attack rolls against creatures other than the creature.
-[harness] the whole prompt, and every recorded one, is in 13-REPLAY-MISS.txt
-[harness] 10 prompt(s) had no recorded answer during this entry: fit x6, repair x1, audit x3
+[harness] replay identical to 13-purple-worm.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -2501,10 +2546,10 @@ Cold Absorption.Whenever the heart is subjected to cold damage, it takes no dama
 Siege Monster.The heart deals double damage to objects and structures.
 
 Actions
-Multiattack: The heart makes two Icehaul Limb attacks. It can replace one attack with a use of Horrid Display.
+Multiattack: The heart makes two Icehaul Limb attacks. It can replace one attack with a use of Splintering Slick.
 Icehaul Limb: Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 21 (4d8 + 3) bludgeoning damage plus 13 (3d8) cold damage.
-Killing Cold (Recharge 5-6): Each creature in a 30-foot cone must make a DC 18 Constitution saving throw, taking 66 (12d10) cold damage on a failed save, or half as much damage on a successful one. On a failed save, the target is knocked prone.
-Horrid Display: Each creature of the heart's choice in a 30-foot radius originating from the heart that can see or hear it must make a DC 18 Wisdom saving throw. On a failed save, the target is frightened until the end of its next turn. On a successful save, the target is immune to this creature's terror for 24 hours.
+Killing Cold (Recharge 5-6): Each creature in a 30-foot cone must make a DC 18 Constitution saving throw, taking 66 (12d10) cold damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also knocked prone.
+Splintering Slick: One creature within 30 feet of the heart must succeed on a DC 18 Dexterity saving throw or take 31 (9d6) cold damage and be knocked prone.
 ```
 
 ### Trace
@@ -2512,9 +2557,9 @@ Horrid Display: Each creature of the heart's choice in a 30-foot radius originat
 !! [ENRICHMENT] Failed to enrich Purple Worm: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "a glacier's heart given legs, trailing a wake of killing cold" (call)
 [route] brute-juggernaut type=Elemental mechanics=aura — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-juggernaut: ✓ ("a glacier's heart given legs") | brute-juggernaut: no line key in the words — the model's read of its quote
@@ -2544,16 +2589,20 @@ Horrid Display: Each creature of the heart's choice in a 30-foot radius originat
 [reskin] idea anchored: action — "The heart never turns. It moves in a straight line on its turn, and ea" answers the GM's "trailing a wake of killing cold"
 [reskin] idea unanchored: trait — "The heart's core is blue glacier ice, and the cold bleeds out of it: a" names none of the 2 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 29 of 29 answered; not true of this body: shield-bash, herd, drain, shell-withdraw, rally, coating, heated-body, false-appearance, bloodied-burst, adhesive, spider-climb, faultless-tracker, web-walker, noxious-aura, uncanny-sense, marking-light, relic-object, warded-mending, mimicry, gaze-aura, death-burst, kill-denial, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "trailing a wake of killing cold", so role and style do not filter the menu (legality still does); 11 template(s) offered
+[reskin] menu: taste stands down — action answers the GM's "trailing a wake of killing cold", so role and style do not filter the menu (legality still does); 12 template(s) offered
 [reskin] menu pruned: action — push-prone, thrown-burst-seed (the sheet cannot render them)
-[reskin] signature idea (action): "The heart never turns. It moves in a straight line on its turn, and each time it enters a creature's space that creature must make a Dexterity saving throw; on a failure it is knocked Prone and the heart's heavy bulk grinds over it, dealing Cold damage that leaves the ground beneath slick and splintered, an area of difficult terrain that lasts until the heart moves on." [action/always/movement] [family: zone] — menu: condition-payoff, escalating-dread, terror-pulse, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
+[reskin] signature idea (action): "The heart never turns. It moves in a straight line on its turn, and each time it enters a creature's space that creature must make a Dexterity saving throw; on a failure it is knocked Prone and the heart's heavy bulk grinds over it, dealing Cold damage that leaves the ground beneath slick and splintered, an area of difficult terrain that lasts until the heart moves on." [action/always/movement] [family: zone] — menu: condition-payoff, escalating-dread, terror-pulse, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
 [reskin] composed candidates: none action — the zone family composes a trait and this is the action seat
 [reskin] menu ordered by the idea's stamps: action — idea fires always/does movement; leading: slow-bolt (save/movement), disarm (save/movement), condition-payoff (save/damage)
 [reskin] keys would have bound: action — slow-bolt, execute (cold, kill)
 [reskin] classification handed to the fit call: mechanic=aura shape=attack when=at_will
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] value check: "Horrid Display (2/Day)" EV 17.6 vs floor 16.6 (the whole Multiattack (2 attacks)) — worth the trade
-[reskin] library seed drawn: terror-pulse -> Actions/"Horrid Display (2/Day)" (no template held the idea; a proven shape stands in)
+[reskin] word match declined by the call: charge, sensory-strike, reveal — the key word does not mean the mechanic here
+[reskin] closest refused: action — "charge" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: a lingering zone of cold-slicked difficult terrain dropped behind it a)
+[reskin] authored row answers the GM: action — "Splintering Slick" was written for "trailing a wake of killing cold", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it
+[reskin] seat authored the row: action — the call refused every template for no_fit ("a lingering zone of cold-slicked difficult terrain dropped behind it a") and wrote an action instead: "Splintering Slick" -> Actions. *Dexterity Saving Throw*: DC 18, one creature within 30 feet. *Failure:* 31 (9d6) Cold damage, and the target has the Pr
+[reskin] authored row numbers: "Splintering Slick" — the call declared (unanswered) number(s) promised
+[reskin] value check: "Splintering Slick" EV 21.5 vs floor 16.6 (one attack of 2) — worth the trade
+[reskin] signature authored: no template — the seat wrote it -> Actions/"Splintering Slick" ("The heart never turns. It moves in a straight line on its turn, and each time it enters a creature's space that creature must make a Dexterity saving throw; on  [authored: the catalog held no shape for it]")
 [reskin] signature idea (trait): "The heart's core is blue glacier ice, and the cold bleeds out of it: at the start of each of the heart's turns, every creature within its reach that is touching the ground must succeed on a Constitution saving throw or take Cold damage and have its Speed reduced until the end of its next turn, as the frost creeps up its legs." [trait/start_of_turn/condition] [family: zone] — menu: phobia, terrain-walk, aberrant-ground, energy-aura, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, undead-fortitude, truth-aura, fear-aura (+ shelf: absorption, resonant-body, weapon-lodge)
 [reskin] declared mechanic leads the menu: trait — zone: aberrant-ground, energy-aura
 [reskin] menu ordered by the idea's stamps: trait — idea fires start_of_turn/does condition; leading: aberrant-ground (always/movement), energy-aura (start_of_turn/damage), truth-aura (start_of_turn/condition)
@@ -2571,28 +2620,21 @@ Horrid Display: Each creature of the heart's choice in a 30-foot radius originat
 [reskin] element immunity: Cold (merged into the header write)
 [reskin] immunities stamped for type: Elemental -> Cold, Poison; Exhaustion, Poisoned
 [reskin] name-canon stands down: the path answered homebrew on "a glacier's heart given legs, trailing a" and named no print body — no published trait lands on a word alone (owner's ruling)
-[reskin] dead control row: "Horrid Display" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead
-[reskin] multiattack replacement clause: It can replace one attack with a use of Horrid Display.
+[reskin] multiattack replacement clause: It can replace one attack with a use of Splintering Slick.
 [reskin] asked but unanswered: "a glacier's heart given legs" asked for at_will and no row binds the clause
-[reskin] asked but unanswered: "trailing a wake of killing cold" asked for at_will and no row binds the clause
+[reskin] ask vs row ok: "trailing a wake of killing cold" -> "Splintering Slick" — trigger at_will
 [reskin] lint fixed: prone-duration — the lint's own deterministic surgery, applied before the gate reads the sheet
-[reskin] sheet lint: stock-template-name: Actions/Horrid Display: is the stock name of the "terror-pulse" template
-[reskin] lint: stock-template-name: Actions/Horrid Display: is the stock name of the "terror-pulse" template
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] seed share: 1 of 2 signature row(s) came from a seed (Horrid Display) — the sameness metric
-[reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path homebrew
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
+[reskin] lint: 0 findings
+[reskin] audit sees the ask: 1 row(s) shown with the clause they were written for
+[reskin] audit: [Splintering Slick: Splintering Slick is a near-exa…damage, and the target has the Prone condition."), Splintering Slick: The name describes a slick or s…ing Throw*: DC 18, one creature within 30 feet.")]
+[reskin] audit rename held — "Splintering Slick" was written for the GM's own clause (cl_18mzopc: "trailing a wake of killing cold"), so "Splintering Shard" does not land; the finding stands as logged
+[reskin] audit defect: Actions/"Splintering Slick" [model-written] medium weak — Splintering Slick is a near-exact duplicate of the Icehaul Limb's damage band with the same Prone rider as two other rows, so it adds nothing the Multiattack and Killing Cold do not already deliver, and 'slick' promises a movement or terrain effect that the text never creates. — Give the clause a unique payload tied to ice on the ground (difficult terrain, Speed reduction, or a slip effect) instead of a second Prone rider. (about: "*Failure:* 31 (9d6) Cold damage, and the target has the Prone condition.")
+[reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
+[reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Heart of the Glacier" — donor brute-9-juggernaut, CR 15
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 57 of 71
-  nearest recorded prompt: the same call in this generation, 8135 characters shared
-     56 | - sensory-strike [Actions] (fires: save, does: condition): Constitution Saving Throw: DC {dc}, one creature within 60 feet. Failure: The target has the Blinded condition {duration}. — choose: {duration} ∈ target_end/target_start/source_end/source_start; "duration" ∈ target_end/target_start/source_end/source_start — how long the condition lasts
-  -  57 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  57 | - reveal [Actions] (fires: save, does: condition): Dexterity Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and until the end of the creature's next turn the target sheds dim light in a 10-foot radius, it can't benefit from the Invisible condition, and attack rolls against it have Advantage.
-     58 | - reveal [Actions] (fires: save, does: condition): Dexterity Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and until the end of the creature's next turn the target sheds dim light in a 10-foot radius, it can't benefit from the Invisible condition, and attack rolls against it have Advantage.
-[harness] the whole prompt, and every recorded one, is in 14-REPLAY-MISS.txt
-[harness] 9 prompt(s) had no recorded answer during this entry: fit x3, audit x3, legacy x3
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 14-heart-of-the-glacier.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -2698,9 +2740,9 @@ Pounce: The red dragon moves up to half its Speed, and it makes one Rend attack.
 !! [ENRICHMENT] Failed to enrich Heart of the Glacier: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 14 taken name(s) the recording carried
 [path] twist — Adult Red Dragon (is) — "Name field: Adult Red Dragon" (code)
 [route] dragon type=Dragon mechanics=breath — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | dragon: ✓ ("Adult Red Dragon") | dragon: key "dragon" (class body)
@@ -2735,7 +2777,7 @@ Pounce: The red dragon moves up to half its Speed, and it makes one Rend attack.
 [reskin] idea unanchored: trait — "The dragon has learned to fight half-blind: it is not subjected to dis" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 34 of 34 answered; not true of this body: snare, seal, shield-bash, herd, drain, shell-withdraw, rally, coating, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, blurred-form, death-burst, hook-rider, life-drain
 [reskin] menu: taste stands down — action answers the GM's "Adult Red Dragon — blind in one eye from an old lance", so role and style do not filter the menu (legality still does); 3 template(s) offered
-[reskin] menu pruned: action — escalating-dread, terror-pulse, push-prone, thrown-burst-seed, exploiter, pacify, slow-bolt, sensory-strike, disarm, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
+[reskin] menu pruned: action — escalating-dread, terror-pulse, push-prone, thrown-burst-seed, exploiter, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
 [reskin] signature idea (action): "The red dragon turns its scarred side toward a creature it can hear but not see and lashes out along the memory of that sound — a single Claw attack against a creature it cannot see but that has made noise since the end of the dragon's last turn, made without the usual disadvantage for attacking an unseen target." [action/always/damage] [family: sentinel] — menu: condition-payoff, execute, throw-retrieve (+ shelf: lure, lay-on-hands, second-wind, patient-defense, answering-strike, riposte, contagion, stunning-strike, charge-push, pounce, charge, isolation)
 [reskin] composed candidates: none action — the sentinel family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires always/does damage; leading: throw-retrieve (always/damage), condition-payoff (save/damage), execute (save/damage)
@@ -2871,13 +2913,13 @@ Siege Monster. The brass tyrant deals double damage to objects and structures.
 
 Actions
 
-Multiattack. The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Driving Bellow.
+Multiattack. The brass tyrant makes two Brass Fist attacks. It can replace one attack with a use of Forge-Bell Decree.
 
 Brass Fist. Melee Attack Roll: +12, reach 10 ft. 19 (3d8 + 6) Bludgeoning damage plus 14 (4d6) Fire damage.
 
 Furnace Vent (Recharge 5-6). Constitution Saving Throw: DC 19, each creature in a 60-foot Cone. Failure: 66 (12d10) Fire damage. Success: Half damage only.
 
-Driving Bellow. Dexterity Saving Throw: DC 19, each creature of the brass tyrant's choice in a 30-foot Emanation originating from the brass tyrant. Failure: 11 (2d10) Fire damage, and the target immediately moves up to half its Speed in a direction of the brass tyrant's choice, using the safest available route.
+Forge-Bell Decree. Wisdom Saving Throw: DC 19, each creature of the brass tyrant's choice in a 90-foot Emanation originating from the brass tyrant that can see or hear the brass tyrant. Failure: The target has the Charmed condition until the end of its next turn, and while Charmed this way, it must move toward the brass tyrant by the safest available route on its turn and can't take Reactions. Success: The target is immune to this creature's lure for 24 hours.
 
 Legendary Actions
 
@@ -2910,9 +2952,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Adult Red Dragon: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — title tyrant — "a tyrant of burning brass who rules a city of forges" (call)
 [route] brute-juggernaut type=Construct mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-juggernaut: ✓ ("a tyrant of burning brass") | brute-juggernaut: no line key in the words — the model's read of its quote | bane refused: the words carry no weakness clause and the call did not claim one, so "cold" is a guess from what the creature is, not the GM's ask
@@ -2941,16 +2983,17 @@ Delete
 [reskin] idea anchored: action — "The Brass Tyrant's voice is the forge-bell of its own throne-city, and" answers the GM's "rules a city of forges"
 [reskin] idea unanchored: trait — "The tyrant's brass hide runs molten when it is pressed: whenever a cre" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 29 of 29 answered; not true of this body: shield-bash, drain, shell-withdraw, coating, false-appearance, absorption, bloodied-burst, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, uncanny-sense, relic-object, warded-mending, mimicry, gaze-aura, death-burst, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "rules a city of forges", so role and style do not filter the menu (legality still does); 12 template(s) offered
+[reskin] menu: taste stands down — action answers the GM's "rules a city of forges", so role and style do not filter the menu (legality still does); 13 template(s) offered
 [reskin] menu pruned: action — push-prone, thrown-burst-seed (the sheet cannot render them)
-[reskin] signature idea (action): "The Brass Tyrant's voice is the forge-bell of its own throne-city, and when it speaks, molten law runs through the ground. *Charisma Saving Throw*: each creature of the tyrant's choice within range that can hear it. *Failure:* the target has the Frightened condition and must use its reaction, if available, to move toward the tyrant or kneel (Prone). A creature that fails by enough is instead Charm" [action/save/condition] [family: mark] — menu: condition-payoff, escalating-dread, terror-pulse, herd, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, rally, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
+[reskin] signature idea (action): "The Brass Tyrant's voice is the forge-bell of its own throne-city, and when it speaks, molten law runs through the ground. *Charisma Saving Throw*: each creature of the tyrant's choice within range that can hear it. *Failure:* the target has the Frightened condition and must use its reaction, if available, to move toward the tyrant or kneel (Prone). A creature that fails by enough is instead Charm" [action/save/condition] [family: mark] — menu: condition-payoff, escalating-dread, terror-pulse, herd, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal (+ shelf: delayed-brand, second-wind, aggro-curse, self-invisibility, rally, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte, stunning-strike, charge-push, pounce, isolation, charge)
 [reskin] composed candidates: none action — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — command: herd
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: herd (save/damage), escalating-dread (save/condition), terror-pulse (save/condition)
 [reskin] classification handed to the fit call: shape=condition
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] value check: "Driving Bellow" EV 25.8 vs floor 18.2 (one attack of 2) — worth the trade
-[reskin] library seed drawn: herd -> Actions/"Driving Bellow" (no template held the idea; a proven shape stands in)
+[reskin] word match declined by the call: terror-pulse, escalating-dread, pacify, condition-payoff — the key word does not mean the mechanic here
+[reskin] free signature row: action — "lure" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "ruling a subjugated city of forges" — a receipt the trait seat can produce. Earns no clause credit; the homebrew path allows 1 and this is number 1
+[reskin] value check: "Forge-Bell Decree (Recharge 5-6)" EV 38.5 vs floor 18.2 (one attack of 2) — over the ceiling — gated Recharge 5-6
+[reskin] signature template: lure -> Actions/"Forge-Bell Decree (Recharge 5-6)" ("when it speaks, molten law runs through the ground, drawing those who hear it in [shape fit, no verb match]")
 [reskin] signature idea (trait): "The tyrant's brass hide runs molten when it is pressed: whenever a creature Grapples it or hits it with a melee attack from within its reach while the tyrant is not Incapacitated, a seam of the tyrant's burning brass bursts open, searing the offender and leaving the tyrant's surface glowing white-hot until the end of its next turn." [trait/on_being_hit/damage] [family: body-reaction] — menu: heated-body, resonant-body, weapon-lodge (+ shelf: phobia, energy-aura, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, marking-light, undead-fortitude, truth-aura, fear-aura, kill-denial)
 [reskin] composed candidates on the menu: trait — composed:body-reaction:damage:t0, composed:body-reaction:damage:t1, composed:body-reaction:damage:t2 (the body-reaction family's options, built before the call looks)
 [reskin] menu ordered by the idea's stamps: trait — idea fires on_being_hit/does damage; leading: heated-body (on_being_hit/damage), resonant-body (on_being_hit/damage), composed:body-reaction:damage:t0 (on_being_hit/damage)
@@ -2958,46 +3001,32 @@ Delete
 [reskin] classification handed to the fit call: shape=condition
 [reskin] word match declined by the call: heated-body, composed:body-reaction:damage:t0, composed:body-reaction:damage:t1, resonant-body — the key word does not mean the mechanic here
 [reskin] row composed from the family's own options: trait — composed:body-reaction:damage:t2: the call picked it off the menu (what no printed template did: unstated)
-[reskin] free signature row: trait — "composed:body-reaction:damage:t2" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "burning brass hide that sears on contact" — a receipt the trait seat can produce. Earns no clause credit; the homebrew path allows 1 and this is number 1
+[reskin] free signature row: trait — "composed:body-reaction:damage:t2" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "burning brass hide that sears on contact" — a receipt the trait seat can produce. Earns no clause credit; the homebrew path allows 1 and this is number 2
 [reskin] fear moved to a row that deals no damage: the sheet declared Frightened and a Fire row cannot carry it by print — fear-aura carries it instead ("Fear Aura" in Traits)
 [reskin] signature template (trait): fear-aura -> Traits/"Fear Aura" ("the sheet declared Frightened and its Fire damage cannot carry it by print")
-[reskin] free signature row: "Molten Brass" — the trait seat cannot quote the GM, but the call names the element it expresses: "burning brass hide that sears on contact". Earns no clause credit; the homebrew path allows 1 and this is number 2
+[reskin] free signature row: "Molten Brass" — the trait seat cannot quote the GM, but the call names the element it expresses: "burning brass hide that sears on contact". Earns no clause credit; the homebrew path allows 1 and this is number 3
 [reskin] trait ceiling: "Molten Brass" does not ship — 4 traits already, and print's ceiling for a material body is 4
-[reskin] repair: 1 clause(s) with no row — "rules a city of forges"; one targeted call with the sheet as context
-[reskin] repair answer: attacks 0, saves 0, traits 0, reactions 0, answered [], unplaced []
-[reskin] repair: the answer held no rows — the clauses stay unplaced
 [reskin] weapons answered: Brass Fist = none
 [reskin] chassis nova: "Furnace Vent (Recharge 5-6)" — the brute-17-juggernaut's own nova row (its "Area Nova", renamed by the model); geometry, cap and rider lines below are its edits
 [reskin] languages by mind: "None" -> "Common" (sapient)
-[reskin] save follows the effect: Actions/"Driving Bellow" Wisdom -> Dexterity — the row's point is its damage; a condition it hands out alongside does not pick the stat
 [reskin] element immunity: Fire — the call read this creature's energy as Fire and print gives a body of its element immunity to it (Winter Wolf, Hell Hound, Remorhaz: 8 of 8 immune, 0 resistant); its melee rows stay physical
 [reskin] element immunity: Fire (merged into the header write)
 [reskin] immunities stamped for type: Construct -> Fire, Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned
 [reskin] name-canon stands down: the path answered homebrew on "a tyrant of burning brass who rules a ci" and named no print body — no published trait lands on a word alone (owner's ruling)
-[reskin] multiattack replacement clause: It can replace one attack with a use of Driving Bellow.
-[reskin] free-row budget by card size: CR 17 sits in band 17-20, where print runs 7-9 rows (p20-p90, Multiattack excluded); this card already carries 11 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
-[reskin] sheet lint: stock-template-name: Actions/Driving Bellow: is the stock name of the "herd" template
-[reskin] lint: stock-template-name: Actions/Driving Bellow: is the stock name of the "herd" template
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] seed share: 1 of 2 signature row(s) came from a seed (Driving Bellow) — the sameness metric
-[reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path homebrew
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
+[reskin] dead control row: "Forge-Bell Decree" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead
+[reskin] multiattack replacement clause: It can replace one attack with a use of Forge-Bell Decree.
+[reskin] free-row budget by card size: CR 17 sits in band 17-20, where print runs 7-9 rows (p20-p90, Multiattack excluded); this card already carries 10 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 0) — "Forge-Bell Decree" [action/save/condition]
+[reskin] lint: 0 findings
+audit finding below confidence gate: Seismic Stomp A stomp by a Large brass tyrant that knocks targets Prone but shakes nothing else is disconnected from the creature's forge-city fiction and from Foundry Breaker, whose own text destroys structures.
+[reskin] audit: [Forge-Bell Decree: Compelled movement toward the t…able route on its turn and can't take Reactions"), Forge-Bell Decree: Rider refers to a 'lure' that n…is immune to this creature's lure for 24 hours.")]
+[reskin] audit defect: Actions/"Forge-Bell Decree" [model-written] high open_ended — Compelled movement toward the tyrant with no escape clause, repeat save, or interior-escape clause strands affected creatures in its melee reach with no rules-legal way out — the Charmed condition's own ends do not end the movement compulsion within the turn. — Give the forced-movement clause its own escape: e.g. it ends at the end of the target's turn or if the target takes damage, or allow a repeat save when the target is damaged. (about: "while Charmed this way, it must move toward the brass tyrant by the safest available route on its turn and can't take Reactions")
+[reskin] audit defect: Actions/"Forge-Bell Decree" [model-written] high dead_reference — Rider refers to a 'lure' that no entry in the block defines or names. — Replace 'lure' with a reference to this entry (e.g. 'immune to Forge-Bell Decree'). (about: "The target is immune to this creature's lure for 24 hours.")
+[reskin] seed share: 0 of 2 signature row(s) came from a seed — the sameness metric
+[reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Brass Tyrant" — donor brute-17-juggernaut, CR 17
-!! [ENRICHMENT] Failed to enrich Brass Tyrant: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] enrichment not run (4 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 67 of 79
-  nearest recorded prompt: the same call in this generation, 9514 characters shared
-     66 | - disarm [Actions] (fires: save, does: movement): Strength Saving Throw: DC {dc}, one creature within 5 feet that is holding a weapon or another object. Failure: {burst} {damage_type} damage, and the target drops the held object, which lands in its space.
-  -  67 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  67 | THE CLASSIFICATION DECIDES, AND THE IDEA'S OWN TAGS ORDER THE LIST. Each template shows (fires: <when>, does: <what>) — its own declared cells — and the list is sorted by how well those agree with the tags THIS idea already carries (fires: save, does: condition). A template marked "matches the idea" agrees on both. That ordering is a HINT, not a verdict: it is a comparison of two labels, not a reading of your idea. Judge each template's printed rules against the classification above, the clause, and what the idea actually describes — and answer none when nothing carries it.
-     68 | THE CLASSIFICATION DECIDES, AND THE IDEA'S OWN TAGS ORDER THE LIST. Each template shows (fires: <when>, does: <what>) — its own declared cells — and the list is sorted by how well those agree with the tags THIS idea already carries (fires: save, does: condition). A template marked "matches the idea" agrees on both. That ordering is a HINT, not a verdict: it is a comparison of two labels, not a reading of your idea. Judge each template's printed rules against the classification above, the clause, and what the idea actually describes — and answer none when nothing carries it.
-[harness] the whole prompt, and every recorded one, is in 16-REPLAY-MISS.txt
-[harness] 7 prompt(s) had no recorded answer during this entry: fit x3, repair x1, audit x3
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 16-brass-tyrant.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -3112,6 +3141,18 @@ Delete
 
 ### Trace
 ```
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Brass Tyrant: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] twist — Pit Fiend (is) — "Name field: Pit Fiend" (code)
 [route] defender-leader type=Fiend mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | caster-binder: the call reads no worked magic in these words | defender-leader: ✓ ("Pit Fiend — who collects the oaths of dy") | defender: the call read "knights" as not meaning that mechanic here — no override | defender-leader stands: every key that would override it was read as a figure of speech | defender-leader: no line key in the words — the model's read of its quote
@@ -3207,14 +3248,8 @@ Delete
 [reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path twist
 [reskin] done: "Pit Fiend" — donor defender-17, CR 20
-[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-!! [ENRICHMENT] Failed to enrich Pit Fiend: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] REPLAY DIFFERS from 17-pit-fiend.json — fields: sections
+[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 17-pit-fiend.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -3327,6 +3362,18 @@ Frightening Gaze: The archlich casts Fear, using the same spellcasting ability a
 
 ### Trace
 ```
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Pit Fiend: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] twist — Lich (is) — "archlich" (call)
 [route] caster (artillery) type=Undead mechanics=aura — casts: implied by the kind — "archlich" | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | caster: ✓ ("archlich enthroned") | caster: no line key in the words — the model's read of its quote
@@ -3431,8 +3478,8 @@ Frightening Gaze: The archlich casts Fear, using the same spellcasting ability a
 [reskin] record reconciled: "Paralyzing Touch" no longer imposes Poisoned — the clause left, so the record goes with it
 [reskin] done: "Bone-Sun Archlich" — donor caster-21, CR 20
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 18-bone-sun-archlich.json — fields: other_edition
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 18-bone-sun-archlich.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -3540,12 +3587,18 @@ Wing Attack (Costs 2 Actions): The dragon beats its wings. Each creature within 
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Bone-Sun Archlich: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+!! [ENRICHMENT] Failed to enrich Bone-Sun Archlich: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 18 taken name(s) the recording carried
 [concept] thin but a print creature — keeping route-first: Ancient Gold Dragon
 [path] exact — Ancient Gold Dragon (is) — "Ancient Gold Dragon" (code)
@@ -3558,13 +3611,7 @@ Wing Attack (Costs 2 Actions): The dragon beats its wings. Each creature within 
 [concept] identity: The ancient gold dragon begins combat with its frightful presence and a blast of superheated, molten-gold flame breath that clings and sears. Each round after, it closes to melee, striking with gilded claws and bite while using its overwhelming size and cunning to reposition, protect its hoard, and pin the fight where its breath can catch the most foes. It is not a mindless beast—under pressure it fights to the death with calculated fury, never fleeing, because its hoard is itself.
 [concept] lore: An ancient gold dragon is the living memory of a mountain's wealth, a creature that has slept beneath the earth so long it has become gilded by its own hoard, and it wants only to be left alone with its treasures or to prove its worth against any who dare disturb them.
 [reskin] 2014 exact: "Ancient Gold Dragon" served from the SRD 5.1 corpus — no call, nothing rephrased (owner's ruling; the 2014 book's own creature)
-!! [ENRICHMENT] Failed to enrich Ancient Gold Dragon: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] enrichment not run (5 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 19-ancient-gold-dragon.json — 1 recorded answer(s) unused
 ```
 
@@ -3676,6 +3723,12 @@ Delete
 
 ### Trace
 ```
+!! [ENRICHMENT] Failed to enrich Ancient Gold Dragon: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "a leviathan of the trench whose song drowns fleets" (call)
 [route] brute type=Beast mechanics=aura — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-grappler: ✓ ("a leviathan of the trench") | brute-grappler: no line key in the words — the model's read of its quote | brute-grappler -> brute: a grappler is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it
@@ -3709,7 +3762,7 @@ Delete
 [reskin] menu: taste stands down — action answers the GM's "a leviathan of the trench whose song drowns fleets", so role and style do not filter the menu (legality still does); 5 template(s) offered
 [reskin] menu pruned: action — push-prone, thrown-burst-seed (the sheet cannot render them)
 [reskin] condition rider rides the attack: action — the payoff family composes a rider, so the idea is re-seated action/save -> rider/on_hit; a condition imposed on a hit belongs on the attack row, with print's escape DC
-[reskin] signature idea (action): "The siren's subsonic verse settles into the timbers and bone of every creature that can hear it, filling them with a creeping dread that leaves them Frightened of the siren until the end of its next turn; a creature that succeeds on the saving throw is instead Deafened until the end of its next turn as the verse rings in its skull." [rider/on_hit/condition] [family: payoff] — menu: stunning-strike, charge-push, pounce, charge, isolation (+ shelf: escalating-dread, terror-pulse, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, delayed-brand, reveal, shell-withdraw, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte)
+[reskin] signature idea (action): "The siren's subsonic verse settles into the timbers and bone of every creature that can hear it, filling them with a creeping dread that leaves them Frightened of the siren until the end of its next turn; a creature that succeeds on the saving throw is instead Deafened until the end of its next turn as the verse rings in its skull." [rider/on_hit/condition] [family: payoff] — menu: stunning-strike, charge-push, pounce, charge, isolation (+ shelf: escalating-dread, terror-pulse, exploiter, execute, lure, pacify, slow-bolt, sensory-strike, disarm, delayed-brand, curse-debt, reveal, shell-withdraw, second-wind, aggro-curse, self-invisibility, focus, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte)
 [reskin] lead by this seat's own clause: action — "dazzle" from the clause this seat serves, not the sheet's "none"
 [reskin] composed candidates on the menu: action — composed:payoff:condition (the payoff family's options, built before the call looks)
 [reskin] declared mechanic leads the menu: action — dazzle: sensory-strike
@@ -3752,7 +3805,7 @@ audit finding below confidence gate: Wave Slam Wave Slam costs a legendary actio
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Trench Siren" — donor brute-21, CR 24
 [harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 20-trench-siren.json — fields: sections
+[harness] replay identical to 20-trench-siren.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -3844,15 +3897,15 @@ Delete
 !! Error generating response: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 !! [ENRICHMENT] Failed to enrich Trench Siren: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 20 taken name(s) the recording carried
 [concept] thin but a print creature — keeping route-first: Owlbear
 [path] exact — Owlbear (is) — "Owlbear" (code)
@@ -3896,13 +3949,13 @@ Delete
 [reskin] audit: nothing flagged
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path exact
 [reskin] done: "Owlbear" — donor brute-2, CR 3
+[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 !! [ENRICHMENT] Failed to enrich Owlbear: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-[harness] enrichment not run (5 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] replay identical to 21-owlbear.json
 ```
 
@@ -4181,7 +4234,7 @@ Delete
 [reskin] body verdicts: 27 of 27 answered; not true of this body: seal, active-toll, random-ray, shell-withdraw, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, uncanny-sense, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, kill-denial, hook-rider, life-drain
 [reskin] menu: taste stands down — action answers the GM's "never breaks ranks", so role and style do not filter the menu (legality still does); 10 template(s) offered
 [reskin] menu pruned: action — snap-shot (the sheet cannot render them)
-[reskin] signature idea (action): "When Vashka hits a creature with War Pick, he slams his shield into it in the same motion; the target must succeed on a Strength saving throw or be pushed back out of the wall's reach and knocked Prone. A creature Vashka pushes this way cannot move closer to him until the end of its next turn — the wall does not let the line be crossed." [rider/on_hit/condition] [family: sentinel] — menu: stunning-strike, charge-push, affliction, contagion, pounce, isolation, bolt-restrain, bolt-drag, bolt-mark, charge (+ shelf: throw-retrieve, shield-bash, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, herd, reveal, wind-up, thrown-burst, execute, lure, pacify, escalating-dread, sensory-strike, thrown-burst-seed, delayed-brand, patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, rally, rampage, focus, feint-slip)
+[reskin] signature idea (action): "When Vashka hits a creature with War Pick, he slams his shield into it in the same motion; the target must succeed on a Strength saving throw or be pushed back out of the wall's reach and knocked Prone. A creature Vashka pushes this way cannot move closer to him until the end of its next turn — the wall does not let the line be crossed." [rider/on_hit/condition] [family: sentinel] — menu: stunning-strike, charge-push, affliction, contagion, pounce, isolation, bolt-restrain, bolt-drag, bolt-mark, charge (+ shelf: throw-retrieve, shield-bash, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, thrown-burst, execute, lure, pacify, escalating-dread, sensory-strike, thrown-burst-seed, delayed-brand, patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, rally, rampage, focus, feint-slip)
 [reskin] lead by this seat's own clause: action — "zone" from the clause this seat serves, not the sheet's "none"
 [reskin] composed candidates: none action — the sentinel family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires on_hit/does condition; leading: stunning-strike (on_hit/condition), affliction (on_hit/condition), contagion (on_hit/condition)
@@ -4345,15 +4398,15 @@ Delete
 !! Error generating response: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 !! [ENRICHMENT] Failed to enrich Vashka the Red: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell t" (call)
 [route] brute-grappler type=Monstrosity mechanics=grapple, engulf — casts: the call reads no worked magic here | hold_shape: grip on the GM's own words "pinning prey with two arms" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute-grappler: ✓ ("pinning prey with two arms and carving w") | brute-grappler: no line key in the words — the model's read of its quote
@@ -4386,7 +4439,7 @@ Delete
 [reskin] engulf engine withheld: Bonus Actions/"Cocoon" leaves — the route call read this creature's hold as grip, not contain; the grapple stands and citations of the row are swept
 [reskin] menu: taste stands down — action answers the GM's "It fights by pinning prey with two arms", so role and style do not filter the menu (legality still does); 7 template(s) offered
 [reskin] menu pruned: action — push-prone, exploiter (the sheet cannot render them)
-[reskin] signature idea (action): "When the scythe hits a creature with its Spitting Maw, the caustic gob clings and hardens, and two of its scythe-arms scissor shut on the same instant — the target has the Grappled condition (escape DC 16) as the barbs bite and lock. The scythe does not need to keep a hand committed: the pinned flesh is pinned by barbs, not grip, so both carving arms stay free." [rider/on_hit/condition] [family: mark] — menu: affliction, contagion, stunning-strike, charge-push, pounce, isolation, charge (+ shelf: leap, condition-payoff, ground-burst, spew, escalating-dread, terror-pulse, thrown-burst-seed, wind-up, trample, thrown-burst, execute, lure, pull-through, pacify, slow-bolt, sensory-strike, disarm, delayed-brand, reveal, shell-withdraw, second-wind, aggro-curse, self-invisibility, focus, coating, rampage, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte)
+[reskin] signature idea (action): "When the scythe hits a creature with its Spitting Maw, the caustic gob clings and hardens, and two of its scythe-arms scissor shut on the same instant — the target has the Grappled condition (escape DC 16) as the barbs bite and lock. The scythe does not need to keep a hand committed: the pinned flesh is pinned by barbs, not grip, so both carving arms stay free." [rider/on_hit/condition] [family: mark] — menu: affliction, contagion, stunning-strike, charge-push, pounce, isolation, charge (+ shelf: leap, condition-payoff, ground-burst, spew, escalating-dread, terror-pulse, thrown-burst-seed, wind-up, trample, thrown-burst, execute, lure, pull-through, pacify, slow-bolt, sensory-strike, disarm, delayed-brand, curse-debt, reveal, shell-withdraw, second-wind, aggro-curse, self-invisibility, focus, coating, rampage, patient-defense, lay-on-hands, feint-slip, answering-strike, riposte)
 [reskin] composed candidates: none action — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires on_hit/does condition; leading: affliction (on_hit/condition), contagion (on_hit/condition), stunning-strike (on_hit/condition)
 [reskin] keys would have bound: action — spew, escalating-dread, sensory-strike, shell-withdraw (spits, horror, spit, shell)
@@ -4533,13 +4586,14 @@ Proficiency Bonus:
 
 Ward Bond.The bulwark is magically bound to a ward of its choosing, and it can have only one ward at a time. While the bulwark is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the bulwark.
 Regeneration.The bulwark regains 10 hit points at the start of each of its turns if it has at least 1 Hit Point.
-Binding Mark (Bonus Action).One creature within 30 feet must make a DC 17 Wisdom saving throw. On a failed save, until the start of the bulwark's next turn, the target has disadvantage on attack rolls against creatures other than the bulwark.
+Oathkeeper's Backhand (Reaction).When a hostile creature moves within 10 feet of the bulwark's ward while the bulwark is within 10 feet of that creature, the triggering creature must succeed on a DC 17 Strength saving throw or be knocked prone and pushed up to 10 feet straight away from the bulwark. A prone creature is not pushed.
 Interpose (Reaction).When a creature within 5 feet of the bulwark that it guards is hit by an attack roll, the attack hits the bulwark instead, and the bulwark has Resistance to the attack's damage.
 
 Actions
-Multiattack: The bulwark makes two Fist attacks.
+Multiattack: The bulwark makes two Fist attacks. It can replace one attack with a use of Iron Advance.
 Fist: Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 22 (4d8 + 4) bludgeoning damage.
-Iron Ward (2/Day): The bulwark targets itself or one creature it can see within 60 feet. The target gains 24 (7d6) Temporary hit points, and its AC increases by 2 until the end of the bulwark's next turn.
+Iron Ward (2/Day): The bulwark targets itself or one creature it can see within 60 feet. The target gains 24 (7d6) temporary hit points, and it gains a +2 bonus to AC until the end of the bulwark's next turn.
+Iron Advance: Each creature in a 30-foot cone must make a DC 17 Strength saving throw. On a failed save, the target is pushed up to 15 feet away from the bulwark and is knocked prone.
 ```
 
 ### Trace
@@ -4547,9 +4601,9 @@ Iron Ward (2/Day): The bulwark targets itself or one creature it can see within 
 !! [ENRICHMENT] Failed to enrich Titan-Hollow Scythe: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 24 taken name(s) the recording carried
 [path] homebrew — "a sentinel of black iron, AC 20, Huge, speed 20 feet" (call)
 [route] defender-warden type=Construct mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | defender-warden: ✓ ("a sentinel of black iron") | defender-warden stands on the homebrew path: the call ranked it and quoted "a sentinel of black iron" — the key "sentinel" is the menu, not the decision (step 7) | defender-warden: no line key in the words — the model's read of its quote | asked_mechanic harden: quote not found
@@ -4580,13 +4634,13 @@ Iron Ward (2/Day): The bulwark targets itself or one creature it can see within 
 [reskin] idea unanchored: action — "As the bulwark grinds forward into an enemy, it lowers its shoulder an" names none of the 0 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] idea unanchored: trait — "The bulwark will not abandon its post. While it remains closer to its " names none of the 0 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 31 of 31 answered; not true of this body: seal, shield-bash, active-toll, random-ray, herd, shell-withdraw, rally, heated-body, false-appearance, absorption, bloodied-burst, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, energy-aura, noxious-aura, uncanny-sense, marking-light, relic-object, mimicry, gaze-aura, kill-denial, hook-rider, life-drain
-[reskin] signature idea (action): "As the bulwark grinds forward into an enemy, it lowers its shoulder and drives the foe back, not to kill but to clear its ground — the target must give way and be shoved from the sentinel's path or be knocked Prone beneath its advance. A creature that will not yield is flattened, and the bulwark steps over it." [action/save/condition] [family: sentinel] — menu: ground-burst, terror-pulse, slow-bolt, disarm, push-prone, reveal, wind-up, lure, pacify, escalating-dread, sensory-strike (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, ward-retaliation, riposte, answering-strike, interpose, stunning-strike, charge-push)
+[reskin] signature idea (action): "As the bulwark grinds forward into an enemy, it lowers its shoulder and drives the foe back, not to kill but to clear its ground — the target must give way and be shoved from the sentinel's path or be knocked Prone beneath its advance. A creature that will not yield is flattened, and the bulwark steps over it." [action/save/condition] [family: sentinel] — menu: ground-burst, terror-pulse, slow-bolt, disarm, push-prone, curse-debt, reveal, wind-up, lure, pacify, escalating-dread, sensory-strike (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, ward-retaliation, riposte, answering-strike, interpose, stunning-strike, charge-push)
 [reskin] composed candidates: none action — the sentinel family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: terror-pulse (save/condition), push-prone (save/condition), reveal (save/condition)
 [reskin] keys would have bound: action — ward-retaliation (sentinel)
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] value check: "Binding Mark" EV 7.2 vs floor 0 (a bonus action (free)) — worth the trade
-[reskin] library seed drawn: aggro-curse -> Bonus Actions/"Binding Mark" (no template held the idea; a proven shape stands in)
+[reskin] word match declined by the call: terror-pulse, lure, pacify, escalating-dread, sensory-strike — the key word does not mean the mechanic here
+[reskin] value check: "Iron Advance" EV 26.4 vs floor 12.5 (one attack of 2) — widened to a 30-foot Cone (print writes this row as an area: Repulsion Breath, Blinding Breath); over the ceiling but a control row (no damage, no KO) — print leaves these ungated
+[reskin] signature template: push-prone -> Actions/"Iron Advance" ("the bulwark drives the foe back and knocks it Prone beneath its advance [verb: knock:idea]")
 [reskin] trait gated by AC: "guarded-stance" is off the menu — AC 18 already beats print's 17 at CR 11, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)
 [reskin] menu pruned: trait — guarded-stance (the sheet cannot render them)
 [reskin] signature idea (trait): "The bulwark will not abandon its post. While it remains closer to its ward than any hostile creature, it has advantage on attack rolls, and it can react to a creature that tries to slip past it toward the ward with a sweeping backhand. Its oath tightens the instant something threatens what it guards." [trait/always/defense] [family: payoff] — menu: phobia, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, relentless-pursuit, bound, sealed-body, warded-mending, guarded-stance, undead-fortitude, truth-aura, fear-aura, evasion (+ shelf: resonant-body, weapon-lodge)
@@ -4595,40 +4649,43 @@ Iron Ward (2/Day): The bulwark targets itself or one creature it can see within 
 [reskin] keys would have bound: trait — resonant-body (iron)
 [reskin] word match declined by the call: bound, guarded-stance — the key word does not mean the mechanic here
 [reskin] closest refused: trait — "bound" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: grants advantage on its attacks while it stays nearer its ward than an)
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "The bulwark will not abandon its post. While it remains closer to its " and wrote no row of that kind
-[reskin] seat asked again: trait — the first answer was refused (you wrote no row of the kind asked for (a trait)); asking once more with the reason
-[reskin] seat authored nothing: trait — the call was asked to write a trait for "The bulwark will not abandon its post. While it remains closer to its " and wrote no row of that kind
-[reskin] seat refused twice: trait — first: you wrote no row of the kind asked for (a trait); second: you wrote no row of the kind asked for (a trait); the seat stays empty
-[reskin] decline reason: trait — the call answered none and names it "no_fit" — the GM's words key resonant-body, which the pool did not offer for this idea's declared trigger (since 2026-10-27 the keys rank and gate but no longer inject)
-[reskin] key match declined: trait — "resonant-body" is keyed by the GM's iron and was on the call's menu, which the call read as no fit; since 2026-10-26 the words no longer seat it first — the idea's stamps order the menu — so this records a decline, not an overruled nomination
-[reskin] signature miss: trait — "The bulwark will not abandon its post. While it remains closer to its ward than any hostile creature, it has advantage on attack rolls, and it can react to a creature that tries to slip past it toward the ward with a sweeping backhand. Its oath tightens the instant something threatens what it guards." [trait/always/defense] — the model found no template that holds it (offered: bloodied-fury, death-restoration, shielded-mind, sealed-body, guarded-stance, undead-fortitude, evasion, phobia, blood-frenzy, pack-tactics, berserk, relentless-pursuit, bound, warded-mending, truth-aura, fear-aura)
+[reskin] seat answered, but: the call said "The bulwark will not abandon its post. While it remains closer to its ward than any hostile creature, it has advantage o" is carried by "Oathkeeper's Backhand", and no such row is on this sheet — the clause stays open
+[reskin] seat authored the row: trait — the call refused every template for no_fit ("grants advantage on its attacks while it stays nearer its ward than an") and wrote a trait instead: "Oathkeeper's Backhand" -> Reactions. *Trigger:* A hostile creature moves within 10 feet of the bulwark's ward while the bulwark is within 10 feet of that cre
+[reskin] authored row numbers: "Oathkeeper's Backhand" — the call declared 0 number(s) promised
 [reskin] seat default: warden owes interpose by print — it seats before the idea
 [reskin] signature template (trait): interpose -> Reactions/"Interpose" ("the seat owes it by print")
+[reskin] signature authored (trait): no template — the seat wrote it -> Reactions/"Oathkeeper's Backhand" ("The bulwark will not abandon its post. While it remains closer to its ward than any hostile creature, it has advantage on attack rolls, and it can react to a cr [authored: the catalog held no shape for it]")
 [reskin] weapons answered: Fist = none
 [reskin] languages by mind: "None" -> "Common" (sapient)
 [reskin] immunities stamped for type: Construct -> Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned
 [reskin] name-canon stands down: the path answered homebrew on "a sentinel of black iron, AC 20, Huge, s" and named no print body — no published trait lands on a word alone (owner's ruling)
-[reskin] sheet lint: stock-template-name: Bonus Actions/Binding Mark: is the stock name of the "aggro-curse" template
-[reskin] lint: stock-template-name: Bonus Actions/Binding Mark: is the stock name of the "aggro-curse" template
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
-[reskin] seed share: 1 of 2 signature row(s) came from a seed (Binding Mark) — the sameness metric
-[reskin] [gap] grants advantage on its attacks while it stays nearer its ward than any foe, and a reaction to strike a creature slippin — "The bulwark will not abandon its post. While it remains closer to its ward than any hostile creature, it has advantage on attack rolls, and it can react to a creature that tries to slip past it toward the ward with a sweeping backhand. Its oath tightens the instant something threatens what it guards." — Oathbound Bulwark [seat: trait [trait/always/defense]] (closest offered: bound) [effect: damage] [menu: bloodied-fury death-restoration shielded-mind sealed-body guarded-stance undead-fortitude evasion phobia blood-frenzy pack-tactics berserk relentless-pursuit bound warded-mending truth-aura fear-aura] [same-cell unoffered: false-appearance shell-withdraw uncanny-sense patient-defense relic-object mimicry blurred-form] [same-seat rejected: false-appearance:body-verdict adhesive:body-verdict spider-climb:body-verdict terrain-walk:body-verdict aberrant-ground:body-verdict faultless-tracker:body-verdict web-walker:body-verdict uncanny-sense:body-verdict earth-glide:movement tunneler:movement marking-light:body-verdict relic-object:body-verdict mimicry:body-verdict assassinate:role blurred-form:role death-burst:role kill-denial:body-verdict] [row dropped]
-[reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
-[reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
+[reskin] multiattack replacement clause: It can replace one attack with a use of Iron Advance.
+[reskin] free-row budget: 1 candidate(s) reached the finished sheet, 1 kept (budget 1) — "Oathkeeper's Backhand" [no template]
+[reskin] 2024 caps: "Oathkeeper's Backhand" — a condition or game term shipped lowercase
+[reskin] lint fixed: prone-vocab, success-no-effect — the lint's own deterministic surgery, applied before the gate reads the sheet
+[reskin] lint: 0 findings
+[reskin] element claim revoked: "Oathkeeper's Backhand" claims "interposing warden's bulk" but the audit judged that nothing in the row carries it; the name advertises nothing, so the row stands as decoration
+[reskin] sameness: 1 of 1 free row(s) express nothing their rules carry — counted as decoration ("Oathkeeper's Backhand")
+audit finding below confidence gate: Ward Bond Tracking continuous 60-foot proximity and halving/rounding every damage instance against a ward is state the block gives no way to mark or check in play.
+[reskin] audit: [Oathkeeper's Backhand: The failure clause is a gar…ght away from Bulwark. Prone and is not pushed."), Ward Bond: The ward is never defined or created by…rk is magically bound to a ward of its choosing"), Interpose: 'that it guards' names a guard relation…ulwark that it guards is hit by an attack roll.")]
+[reskin] audit defect: Reactions/"Oathkeeper's Backhand" [model-written] high wording — The failure clause is a garbled fragment: it names 'Bulwark' instead of the creature, and 'Prone and is not pushed' is a dangling orphan sentence that contradicts the push it follows. — Rewrite the failure line as a single clean clause pushing the target away from the bulwark and giving it the Prone condition. (about: "the target is pushed up to 10 feet straight away from Bulwark. Prone and is not pushed.")
+[reskin] audit defect: Traits/"Ward Bond" [print] medium dead_reference — The ward is never defined or created by any entry, and 'magically bound' implies a magic source the creature has no spellcasting to express. — State how a ward is established (an action, a condition, or a creature it is assigned to) so the bond can be adjudicated. (about: "The bulwark is magically bound to a ward of its choosing")
+[reskin] audit defect: Reactions/"Interpose" [catalog] medium dead_reference — 'that it guards' names a guard relationship nothing on the sheet defines, so the GM cannot determine who the reaction applies to. — Define 'guards' by the same ward relationship named in Ward Bond, or restate the trigger so the protected creature is explicit. (about: "Trigger: A creature within 5 feet of the bulwark that it guards is hit by an attack roll.")
+[reskin] seed share: 0 of 2 signature row(s) came from a seed — the sameness metric
+[reskin] clause unresolved: "Oathkeeper's Backhand" carries "The bulwark will not abandon its post. While it remains ", which matches no clause on the sheet — no coverage credit by id
+[reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] header clause: speed 30 ft. -> 20 ft. — the user typed 20 feet
 [reskin] user-set: AC 18 -> 20 — a declared field, not a derivation (Resolution 3)
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Oathbound Bulwark" — donor defender-7-warden, CR 11
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 51 of 65
-  nearest recorded prompt: the same call in this generation, 6328 characters shared
-     50 | - disarm [Actions] (fires: save, does: movement): Strength Saving Throw: DC {dc}, one creature within 5 feet that is holding a weapon or another object. Failure: {burst} {damage_type} damage, and the target drops the held object, which lands in its space.
-  -  51 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  51 | - wind-up [Actions, Recharge 5-6] (fires: save, does: damage): The creature begins gathering destructive power, {telegraph}. At the end of its next turn, after it has moved, the power erupts. Dexterity Saving Throw: DC {dc}, each creature in a 20-foot Emanation originating from the creature at that moment. Failure: {burst} {damage_type} damage. Success: Half damage. — you fill: {telegraph}
-     52 | - wind-up [Actions, Recharge 5-6] (fires: save, does: damage): The creature begins gathering destructive power, {telegraph}. At the end of its next turn, after it has moved, the power erupts. Dexterity Saving Throw: DC {dc}, each creature in a 20-foot Emanation originating from the creature at that moment. Failure: {burst} {damage_type} damage. Success: Half damage. — you fill: {telegraph}
-[harness] the whole prompt, and every recorded one, is in 25-REPLAY-MISS.txt
-[harness] 11 prompt(s) had no recorded answer during this entry: fit x3, seat x2, audit x3, legacy x3
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (5 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+!! [ENRICHMENT] Failed to enrich Oathbound Bulwark: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
+[harness] replay identical to 25-oathbound-bulwark.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -4737,18 +4794,6 @@ Delete
 
 ### Trace
 ```
-!! Error generating response: TypeError: Failed to fetch
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-!! [ENRICHMENT] Failed to enrich Oathbound Bulwark: TypeError: Failed to fetch
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] class_npc — class mage — "witch" (call)
 [route] caster-binder (controller) type=Humanoid mechanics=none — casts: implied by the kind — "curses trespassers" | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | caster-binder: ✓ ("curses trespassers") | caster-binder: key "curses" (class verb)
@@ -4840,8 +4885,8 @@ audit finding below confidence gate: Fen Curse A Charisma save is used to resist
 [reskin] clause id by substring: "Protective Magic (3/Day)" carries "witch" which is not a whole clause — the seat surgery cut it; resolved to cl_1enkq57
 [reskin] signature tally: 2 seat(s) -> 2 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path class_npc
 [reskin] done: "Mire Huldra" — donor caster-8-binder, CR 7
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 26-mire-huldra.json — fields: sections
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 26-mire-huldra.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -4945,15 +4990,15 @@ Delete
 !! Error generating response: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 !! [ENRICHMENT] Failed to enrich Mire Huldra: TypeError: Failed to fetch
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 26 taken name(s) the recording carried
 [path] class_npc — class paladin — "templar" (call)
 [route] defender type=Humanoid mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | defender: ✓ ("a templar priest with a mace") | defender: no line key in the words — the model's read of its quote
@@ -4987,7 +5032,7 @@ Delete
 [reskin] idea unanchored: action — "The templar reads an overcommitted foe and punishes the gap: when a cr" names none of the 0 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] idea unanchored: trait — "Iron Vestments Over a Bare Faith. The templar does not break: while Bl" names none of the 0 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 27 of 27 answered; not true of this body: seal, shield-bash, active-toll, random-ray, herd, shell-withdraw, rally, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, uncanny-sense, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, kill-denial, hook-rider, life-drain
-[reskin] signature idea (action): "The templar reads an overcommitted foe and punishes the gap: when a creature within its reach makes an attack roll against it and misses, the templar can immediately repay the opening with its Mace — the same haft, aimed at knee or helm so the target has the Prone condition and cannot easily rise while the line holds." [reaction/on_being_hit/condition] [family: sentinel] — menu: riposte, answering-strike (+ shelf: throw-retrieve, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, reveal, wind-up, patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, stunning-strike, charge-push)
+[reskin] signature idea (action): "The templar reads an overcommitted foe and punishes the gap: when a creature within its reach makes an attack roll against it and misses, the templar can immediately repay the opening with its Mace — the same haft, aimed at knee or helm so the target has the Prone condition and cannot easily rise while the line holds." [reaction/on_being_hit/condition] [family: sentinel] — menu: riposte, answering-strike (+ shelf: throw-retrieve, ground-burst, terror-pulse, slow-bolt, disarm, push-prone, curse-debt, reveal, wind-up, patient-defense, lay-on-hands, second-wind, aggro-curse, self-invisibility, stunning-strike, charge-push)
 [reskin] composed candidates: none action — the sentinel family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires on_being_hit/does condition; leading: riposte (on_being_hit/damage), answering-strike (on_being_hit/damage)
 [reskin] classification handed to the fit call: shape=attack
@@ -5037,6 +5082,12 @@ Delete
 [reskin] lack took nothing: "no magic at all" removed no row and the call named no roll it spoils (costs: (unanswered)) — no flaw row, and the gap list carries it
 [reskin] done: "Displaced Templar" — donor defender-5, CR 6
 [harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+!! [ENRICHMENT] Failed to enrich Displaced Templar: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] replay identical to 27-displaced-templar.json — 1 recorded answer(s) unused
 ```
 
@@ -5048,7 +5099,7 @@ Delete
 
 **Input:** `name: Ilvareth Dusksong | An elf archmage who bends shadow and steps between places.`
 **Donor:** caster-12 -> CR 12
-**Signature:** library · **elapsed** 3s
+**Signature:** library · **elapsed** 2s
 
 ### Block
 ```
@@ -5135,12 +5186,6 @@ Spellcasting: Ilvareth casts one of the following spells, using Intelligence as 
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Displaced Templar: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
 [harness] restored 27 taken name(s) the recording carried
 [path] class_npc — class mage — "archmage" (call)
 [route] caster (artillery) type=Humanoid mechanics=teleport — casts: implied by the kind — "an elf archmage who bends shadow" | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | caster: ✓ ("an elf archmage") | caster: no line key in the words — the model's read of its quote
@@ -5180,7 +5225,7 @@ Spellcasting: Ilvareth casts one of the following spells, using Intelligence as 
 [reskin] idea unanchored: trait — "Ilvareth's body is half-substance, bent from shadow: he can move throu" names none of the 0 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 35 of 35 answered; not true of this body: snare, seal, wail, active-toll, random-ray, spew, snare-bolt, herd, drain, blighted-ground, rally, false-appearance, absorption, bloodied-burst, resonant-body, spider-climb, terrain-walk, aberrant-ground, faultless-tracker, web-walker, marking-light, sealed-body, relic-object, warded-mending, mimicry, gaze-aura, death-burst, kill-denial
 [reskin] menu pruned: action — snap-shot (the sheet cannot render them)
-[reskin] signature idea (action): "When Ilvareth takes the Hide action, he does not merely conceal himself — he steps into the shadow and comes out of another patch of dim light or darkness within sight, appearing there Prone but unseen. Any creature that was tracking or targeting him loses him entirely until he moves or attacks." [bonus_action/always/movement] [family: breach] — menu: lay-on-hands, aggro-curse, self-invisibility, phase-slip, blink, focus, feint-slip (+ shelf: thrown-burst, gaze-single, zone, execute, lure, ground-burst, pacify, escalating-dread, slow-bolt, sensory-strike, thrown-burst-seed, delayed-brand, zone-seed, reveal, wind-up, disarm, bolt-restrain, bolt-drag, bolt-mark)
+[reskin] signature idea (action): "When Ilvareth takes the Hide action, he does not merely conceal himself — he steps into the shadow and comes out of another patch of dim light or darkness within sight, appearing there Prone but unseen. Any creature that was tracking or targeting him loses him entirely until he moves or attacks." [bonus_action/always/movement] [family: breach] — menu: lay-on-hands, aggro-curse, self-invisibility, phase-slip, blink, focus, feint-slip (+ shelf: thrown-burst, gaze-single, zone, execute, lure, ground-burst, pacify, escalating-dread, slow-bolt, sensory-strike, thrown-burst-seed, delayed-brand, curse-debt, zone-seed, reveal, wind-up, disarm, bolt-restrain, bolt-drag, bolt-mark)
 [reskin] composed candidates: none action — the breach family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — teleport: self-invisibility, phase-slip, blink
 [reskin] menu ordered by the idea's stamps: action — idea fires always/does movement; leading: self-invisibility (always/movement), phase-slip (always/movement), blink (always/movement)
@@ -5226,8 +5271,8 @@ Spellcasting: Ilvareth casts one of the following spells, using Intelligence as 
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path class_npc
 [reskin] done: "Ilvareth Dusksong" — donor caster-12, CR 12
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 28-ilvareth-dusksong.json — fields: other_edition
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 28-ilvareth-dusksong.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -5238,7 +5283,7 @@ Spellcasting: Ilvareth casts one of the following spells, using Intelligence as 
 
 **Input:** `a swarm of funeral bells that ring themselves over the dying`
 **Donor:** swarm-9 -> CR 13 (invented — no printed peer)
-**Signature:** library · **elapsed** 2s
+**Signature:** library · **elapsed** 3s
 
 ### Block
 ```
@@ -5329,9 +5374,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Ilvareth Dusksong: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 28 taken name(s) the recording carried
 [path] homebrew — "a swarm of funeral bells that ring themselves over the dying" (call)
 [route] swarm type=Construct mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: on the GM's own words "a swarm of funeral bells" | swarm: ✓ ("a swarm of funeral bells") | swarm: no line key in the words — the model's read of its quote
@@ -5362,7 +5407,7 @@ Delete
 [reskin] idea unanchored: trait — "While the swarm is Bloodied, its ragged peal quickens; each of its Bel" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 40 of 40 answered; not true of this body: gaze-single, snare, seal, shield-bash, random-ray, spew, snare-bolt, drain, zone-seed, blighted-ground, blink, shell-withdraw, coating, phase-slip, heated-body, false-appearance, absorption, bloodied-burst, adhesive, terrain-walk, aberrant-ground, web-walker, energy-aura, noxious-aura, marking-light, relic-object, warded-mending, mimicry, gaze-aura, blurred-form, death-burst, kill-denial, hook-rider
 [reskin] menu: taste stands down — action answers the GM's "ring themselves over the dying", so role and style do not filter the menu (legality still does); 6 template(s) offered
-[reskin] menu pruned: action — pacify, escalating-dread, terror-pulse, slow-bolt, sensory-strike, disarm, thrown-burst-seed, push-prone, reveal, wind-up, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
+[reskin] menu pruned: action — pacify, escalating-dread, terror-pulse, slow-bolt, sensory-strike, disarm, thrown-burst-seed, push-prone, curse-debt, reveal, wind-up, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
 [reskin] signature idea (action): "The swarm fixes on the creature nearest to death within its reach and rings a single tolling note meant only for them. That creature makes a Wisdom saving throw; on a failure it is Frightened of the swarm until the end of its next turn, and while Frightened this way, whenever it takes damage it must repeat the save or drop Prone, already half-lowered into the grave." [action/save/condition] [family: mark] — menu: thrown-burst, execute, wail, lure, active-toll, ground-burst (+ shelf: patient-defense, second-wind, lay-on-hands, riposte, answering-strike, stunning-strike, charge-push, pounce, isolation, life-drain, charge)
 [reskin] composed candidates: none action — the mark family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: lure (save/condition), thrown-burst (save/damage), execute (save/damage)
@@ -5407,8 +5452,8 @@ Delete
 [reskin] clause unresolved: "Ragged Peal" carries "While the swarm is Bloodied, its ragged peal quickens; e", which matches no clause on the sheet — no coverage credit by id
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Swarm of Funeral Bells" — donor swarm-9, CR 13
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 29-swarm-of-funeral-bells.json — fields: sections
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 29-swarm-of-funeral-bells.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -5502,9 +5547,9 @@ Reliquary Spray (Recharge 5-6): Each creature in a 30-foot-long, 5-foot-wide lin
 !! [ENRICHMENT] Failed to enrich Swarm of Funeral Bells: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 29 taken name(s) the recording carried
 [path] homebrew — "a cathedral-vault ooze that digests reliquaries" (call)
 [route] ooze type=Ooze mechanics=none — casts: the call reads no worked magic here | hold_shape: contain on the GM's own words "digests reliquaries" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | ooze: ✓ ("cathedral-vault ooze") | ooze: no line key in the words — the model's read of its quote
@@ -5535,7 +5580,7 @@ Reliquary Spray (Recharge 5-6): Each creature in a 30-foot-long, 5-foot-wide lin
 [reskin] idea unanchored: trait — "Spilled sanctified oil seeps from every seam of the ooze, and the holy" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 38 of 38 answered; not true of this body: gaze-single, shield-bash, wail, active-toll, random-ray, herd, blink, shell-withdraw, rally, phase-slip, false-appearance, absorption, faultless-tracker, web-walker, sealed-body, relic-object, mimicry, gaze-aura, blurred-form
 [reskin] menu: taste stands down — action answers the GM's "digests reliquaries", so role and style do not filter the menu (legality still does); 9 template(s) offered
-[reskin] menu pruned: action — pacify, escalating-dread, terror-pulse, snare-bolt, slow-bolt, sensory-strike, push-prone, thrown-burst-seed, drain, zone-seed, wind-up, blighted-ground, disarm, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip, coating (the sheet cannot render them)
+[reskin] menu pruned: action — pacify, escalating-dread, terror-pulse, snare-bolt, slow-bolt, sensory-strike, push-prone, thrown-burst-seed, drain, zone-seed, wind-up, blighted-ground, disarm, curse-debt, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip, coating (the sheet cannot render them)
 [reskin] signature idea (action): "The ooze rears up and brings its half-dissolved prize down across the floor — or hurls it — sending a spray of sanctified oil and reliquary-grit across a wide line. Each creature in the area must make a Dexterity saving throw; on a failure it takes Acid damage and is Blinded until the end of its next turn as the burning oil finds its eyes." [action/save/condition] [family: nova] — menu: trample, leap, thrown-burst, execute, seal, lure, pull-through, ground-burst, spew (+ shelf: rampage, patient-defense, second-wind, lay-on-hands, riposte, stunning-strike, charge-push, hook-rider, pounce, isolation, life-drain, charge)
 [reskin] composed candidates: none action — the nova family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: seal (save/condition), lure (save/condition), trample (save/damage)
@@ -5575,8 +5620,8 @@ Reliquary Spray (Recharge 5-6): Each creature in a 30-foot-long, 5-foot-wide lin
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Reliquary Ooze" — donor ooze-9, CR 9
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 30-reliquary-ooze.json — fields: other_edition
+[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 30-reliquary-ooze.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -5673,18 +5718,12 @@ Delete
 
 ### Trace
 ```
-!! Error generating response: TypeError: Failed to fetch
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+!! [ENRICHMENT] Failed to enrich Reliquary Ooze: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
-!! [ENRICHMENT] Failed to enrich Reliquary Ooze: TypeError: Failed to fetch
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "a young storm drake whose breath is a rolling wall of thunder" (call)
 [route] dragon type=Dragon mechanics=breath — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | dragon: ✓ ("a young storm drake whose breath is a ro") | dragon: key "drake" (class body)
@@ -5715,7 +5754,7 @@ Delete
 [reskin] idea unanchored: trait — "The whelp's hide crackles with storm-charge; whenever it takes Lightni" names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 1 of 35 answered; not true of this body: none
 [reskin] menu: taste stands down — action answers the GM's "a young storm drake whose breath is a rolling wall of thunde", so role and style do not filter the menu (legality still does); 2 template(s) offered
-[reskin] menu pruned: action — escalating-dread, terror-pulse, push-prone, thrown-burst-seed, pacify, slow-bolt, sensory-strike, disarm, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
+[reskin] menu pruned: action — escalating-dread, terror-pulse, push-prone, thrown-burst-seed, pacify, slow-bolt, sensory-strike, disarm, curse-debt, reveal, delayed-brand, aggro-curse, self-invisibility, focus, feint-slip (the sheet cannot render them)
 [reskin] signature idea (action): "The whelp's scales crack and arc with blue-white static as it inhales, and any creature that hits it with a melee attack before the start of its next turn takes Thunder damage and must succeed on a Constitution saving throw or have its speed halved until the end of its next turn, its limbs jittering with the charge." [action/always/damage] [family: nova] — menu: execute, lure (+ shelf: rampage, lay-on-hands, second-wind, patient-defense, answering-strike, riposte, affliction, contagion, stunning-strike, charge-push, pounce, charge, isolation)
 [reskin] composed candidates: none action — the nova family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] menu ordered by the idea's stamps: action — idea fires always/does damage; leading: execute (save/damage), charge (on_hit/damage), lure (save/condition)
@@ -5762,7 +5801,7 @@ audit finding below confidence gate: Thunder Roll Despite the name and the GM's 
 [reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
 [reskin] done: "Thunderhead Whelp" — donor dragon-2, CR 7
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 31-thunderhead-whelp.json — 1 recorded answer(s) unused
 ```
 
@@ -5855,9 +5894,9 @@ Earthshaker Slam (1/Day): Each creature within 20 feet of Grumalk must make a DC
 !! [ENRICHMENT] Failed to enrich Thunderhead Whelp: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] twist — Stone Giant (is) — "stone giant" (call)
 [route] brute type=Giant mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | brute: ✓ ("a stone giant exile") | brute: no line key in the words — the model's read of its quote
@@ -5930,7 +5969,7 @@ Earthshaker Slam (1/Day): Each creature within 20 feet of Grumalk must make a DC
 [reskin] done: "Grumalk the Exile" — donor brute-9, CR 9
 [reskin] 2014 conversion: one lint-gated call — both printings saved
 [harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 32-grumalk-the-exile.json — fields: other_edition
+[harness] replay identical to 32-grumalk-the-exile.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -6024,9 +6063,9 @@ Dart: Ranged Weapon Attack: +6 to hit, range 20/60 ft., one target. Hit: 12 (2d8
 !! [ENRICHMENT] Failed to enrich Grumalk the Exile: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 32 taken name(s) the recording carried
 [concept] thin concept expanded before routing: lizardfolk monk — A lizardfolk monk opens a fight by circling and testing, letting its hide shrug off the first weak blows while it counts the enemy's rhythm, then commits to flurries of claw, tail, and bone-hardened fist aimed at joints and throats. Every round it takes the enemy's attack and gives
 [concept] expansion answered: type=Humanoid (type_source=user) material=hide size=Medium mind=sapient
@@ -6116,7 +6155,7 @@ audit finding below confidence gate: Unarmed Strike The Stunned condition is imp
 [reskin] species kit: Swim 30 ft. — a lizardfolk's own
 [reskin] done: "Reedtemple Warden" — donor skirmisher-3, CR 5
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 33-reedtemple-warden.json — 1 recorded answer(s) unused
 ```
 
@@ -6128,7 +6167,7 @@ audit finding below confidence gate: Unarmed Strike The Stunned condition is imp
 
 **Input:** `name: Krennik Skullstandard | riding a worg`
 **Donor:** skirmisher-3-mounted -> CR 4 (invented — no printed peer)
-**Signature:** library · **elapsed** 1s
+**Signature:** library · **elapsed** 2s
 
 ### Block
 ```
@@ -6212,9 +6251,9 @@ Ride-Down (Recharge 5-6): Krennik moves up to its speed without provoking opport
 !! [ENRICHMENT] Failed to enrich Reedtemple Warden: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [path] homebrew — "riding a worg" (call)
 [route] skirmisher-mounted type=Humanoid mechanics=none — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | skirmisher-mounted: ✓ ("riding a worg") | skirmisher-mounted: key "riding" (class verb)
@@ -6294,7 +6333,13 @@ audit finding below confidence gate: Rampage (1/Day) The entry's generic name de
 [reskin] signature tally: 1 seat(s) -> 2 shape(s) on the sheet · 0 expressed, 1 decoration, 1 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path homebrew
 [reskin] done: "Krennik Skullstandard" — donor skirmisher-3-mounted, CR 4
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (4 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+!! [ENRICHMENT] Failed to enrich Krennik Skullstandard: Error: Failed to generate a valid response. Please try again later.
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
+    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] replay identical to 34-krennik-skullstandard.json — 1 recorded answer(s) unused
 ```
 
@@ -6394,12 +6439,6 @@ Delete
 
 ### Trace
 ```
-!! [ENRICHMENT] Failed to enrich Krennik Skullstandard: Error: Failed to generate a valid response. Please try again later.
-    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
-    at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [concept] name: provided_name rejected — "the thing in the well" is written in lowercase inside a description; the generator names it
 [concept] thin concept expanded before routing: the thing in the well — The thing in the well waits below with the patience of deep water, opening a fight by letting a rope or bucket touch it and answering with a sudden lunge up the shaft, dragging the curious down to drown quietly in the dark. Every round it works to keep prey in the water — gra
@@ -6476,7 +6515,7 @@ Delete
 [reskin] clause unresolved: "Brine Flow" carries "A body of living brine and silt, the drowned can flow th", which matches no clause on the sheet — no coverage credit by id
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path homebrew
 [reskin] done: "Well Drowned" — donor brute-5, CR 5
-[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 35-well-drowned.json — 1 recorded answer(s) unused
 ```
 
@@ -6649,7 +6688,7 @@ Delete
 
 **Input:** `name: Meshrin | Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.`
 **Donor:** skirmisher-8-hurler -> CR 8 (invented — no printed peer)
-**Signature:** dropped · **elapsed** 2s
+**Signature:** library · **elapsed** 2s
 
 ### Block
 ```
@@ -6723,9 +6762,10 @@ Marsh Stride.Difficult Terrain composed of mud doesn't cost Meshrin extra moveme
 Parry (Reaction).When Meshrin is hit by a melee attack roll while holding a weapon, Meshrin adds 3 to its AC against that attack, possibly causing it to miss.
 
 Actions
-Multiattack: Meshrin makes three attacks, using Greataxe or Javelin.
+Multiattack: Meshrin makes three attacks, using Greataxe or Javelin. It can replace one attack with a use of Frightening Roar.
 Greataxe: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 17 (2d12 + 4) slashing damage.
 Javelin: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hit: 18 (4d6 + 4) piercing damage.
+Frightening Roar: Each creature of Meshrin's choice in a 30-foot radius originating from Meshrin that can see or hear it must make a DC 15 Wisdom saving throw. On a failed save, the target is frightened until the end of its next turn. On a successful save, the target is immune to this creature's terror for 24 hours.
 ```
 
 ### Trace
@@ -6771,29 +6811,33 @@ Javelin: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hit: 18 
 [reskin] idea anchored: action — "Meshrin looses a bone-shaking roar that rolls out from him in an emana" answers the GM's "Give him a frightening roar"
 [reskin] idea unanchored: trait — "The marsh warband's cry carries: when Meshrin reduces a creature to 0 " names none of the 1 open ask(s); it answered NOTHING (the field was absent or empty) and rolls as it did before R7
 [reskin] body verdicts: 26 of 26 answered; not true of this body: snare, shield-bash, snare-bolt, coating, phase-slip, false-appearance, absorption, bloodied-burst, resonant-body, adhesive, spider-climb, aberrant-ground, faultless-tracker, web-walker, uncanny-sense, marking-light, relic-object, warded-mending, mimicry, gaze-aura, blurred-form, death-burst, hook-rider, life-drain
-[reskin] menu: taste stands down — action answers the GM's "Give him a frightening roar", so role and style do not filter the menu (legality still does); 12 template(s) offered
+[reskin] menu: taste stands down — action answers the GM's "Give him a frightening roar", so role and style do not filter the menu (legality still does); 13 template(s) offered
 [reskin] menu pruned: action — thrown-burst-seed, push-prone (the sheet cannot render them)
-[reskin] signature idea (action): "Meshrin looses a bone-shaking roar that rolls out from him in an emanation. Each creature of his choice in it must make a Wisdom saving throw; on a failure it has the Frightened condition until the end of its next turn, and while Frightened this way it can't willingly move closer to him." [action/save/condition] [family: nova] — menu: condition-payoff, throw-retrieve, lure, sensory-strike, disarm, exploiter, execute, pacify, escalating-dread, terror-pulse, slow-bolt, reveal (+ shelf: delayed-brand, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, rampage, lay-on-hands, rally, snap-shot, riposte, answering-strike, affliction, contagion, stunning-strike, charge-push, pounce, isolation, bolt-mark, bolt-restrain, bolt-drag, charge)
+[reskin] signature idea (action): "Meshrin looses a bone-shaking roar that rolls out from him in an emanation. Each creature of his choice in it must make a Wisdom saving throw; on a failure it has the Frightened condition until the end of its next turn, and while Frightened this way it can't willingly move closer to him." [action/save/condition] [family: nova] — menu: condition-payoff, throw-retrieve, lure, sensory-strike, disarm, exploiter, execute, pacify, escalating-dread, terror-pulse, slow-bolt, curse-debt, reveal (+ shelf: delayed-brand, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, rampage, lay-on-hands, rally, snap-shot, riposte, answering-strike, affliction, contagion, stunning-strike, charge-push, pounce, isolation, bolt-mark, bolt-restrain, bolt-drag, charge)
 [reskin] composed candidates: none action — the nova family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: action — fear: escalating-dread, terror-pulse
 [reskin] menu ordered by the idea's stamps: action — idea fires save/does condition; leading: escalating-dread (save/condition), terror-pulse (save/condition), lure (save/condition)
 [reskin] keys would have bound: action — terror-pulse, throw-retrieve, rampage (roar, javelin, rage)
 [reskin] classification handed to the fit call: mechanic=thrown-weapon shape=condition
-[reskin] signature fit call failed — action: Failed to generate a valid response. Please try again later.
-[reskin] fallback stands down: the class_npc path has no shelf — the Gladiator's rows plus the receipted seat are the composition
-[reskin] signature dropped — no template held the idea and no seed is legal on this sheet
-[reskin] signature idea (trait): "The marsh warband's cry carries: when Meshrin reduces a creature to 0 hit points, he lets out a triumphant roar, and each enemy that can hear him must make a Wisdom saving throw or have the Frightened condition until the end of its next turn." [trait/always/condition] [family: kill-growth] — menu: phobia, terrain-walk, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, evasion, relentless-pursuit, bound, guarded-stance, undead-fortitude, truth-aura, fear-aura, assassinate, kill-denial
+[reskin] word match declined by the call: escalating-dread, lure, sensory-strike, pacify, exploiter, reveal, condition-payoff, disarm, execute, slow-bolt, curse-debt, throw-retrieve — the key word does not mean the mechanic here
+[reskin] signature template: terror-pulse -> Actions/"Frightening Roar (2/Day)" ("Meshrin looses a bone-shaking roar that rolls out from him in an emanation; each [verb: roar:concept]")
+[reskin] keys spent by the action: roar
+[reskin] signature idea (trait): "The marsh warband's cry carries: when Meshrin reduces a creature to 0 hit points, he lets out a triumphant …, and each enemy that can hear him must make a Wisdom saving throw or have the Frightened condition until the end of its next turn." [trait/always/condition] [family: kill-growth] — menu: phobia, terrain-walk, bloodied-fury, blood-frenzy, pack-tactics, death-restoration, berserk, shielded-mind, evasion, relentless-pursuit, bound, guarded-stance, undead-fortitude, truth-aura, fear-aura, assassinate, kill-denial
 [reskin] composed candidates: none trait — the kill-growth family has no grammar — composable families are payoff, body-reaction, zone
 [reskin] declared mechanic leads the menu: trait — fear: phobia, fear-aura
 [reskin] menu ordered by the idea's stamps: trait — idea fires always/does condition; leading: phobia (always/condition), fear-aura (start_of_turn/condition), berserk (always/condition)
 [reskin] keys would have bound: trait — fear-aura (frightens, frightening)
 [reskin] classification handed to the fit call: mechanic=thrown-weapon shape=condition
-[reskin] signature fit call failed — trait: Failed to generate a valid response. Please try again later.
-[reskin] trait bound to the concept's verb (concept-first): fear-aura — frightens+frightening in the user's words; the idea path had nothing
-[reskin] trait ceiling: "Fear Aura" does not ship — 4 traits already, and print's ceiling for a meat body is 3
-[reskin] repair: 1 clause(s) with no row — "Give him a frightening roar"; one targeted call with the sheet as context
-[reskin] repair answer: attacks 0, saves 0, traits 0, reactions 0, answered [], unplaced []
-[reskin] repair: the answer held no rows for 1 owed clause(s) — "Give him a frightening roar": a print body plus a clause the sheet never answers is the stock monster (1e)
+[reskin] word match declined by the call: phobia, berserk, kill-denial — the key word does not mean the mechanic here
+[reskin] closest refused: trait — "fear-aura" was named nearest, but the call declined it for no_fit ("no_fit") — nothing offered carries the mechanic, and a nearest row was measured as the wrong row five times in six; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: a trigger that fires when Meshrin drops a foe to 0 HP and forces nearb)
+[reskin] seat answered, but: the call said "The marsh warband's cry carries: when Meshrin reduces a creature to 0 hit points, he lets out a triumphant …, and each e" is carried by "Triumphant Cry", and no such row is on this sheet — the clause stays open
+[reskin] seat authored nothing: trait — the call was asked to write a trait for "The marsh warband's cry carries: when Meshrin reduces a creature to 0 " and wrote no row of that kind (refused: "Triumphant Cry" — a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence) (it belongs in the description)
+[reskin] seat asked again: trait — the first answer was refused ("Triumphant Cry" — a trait is not a save — the save form takes stat, target and effect as fields and the engin); asking once more with the reason
+[reskin] seat answered, but: the call said "The marsh warband's cry carries: when Meshrin reduces a creature to 0 hit points, he lets out a triumphant …, and each e" is carried by "Triumphant Cry", and no such row is on this sheet — the clause stays open
+[reskin] seat authored nothing: trait — the call was asked to write a trait for "The marsh warband's cry carries: when Meshrin reduces a creature to 0 " and wrote no row of that kind
+[reskin] seat refused twice: trait — first: "Triumphant Cry" — a trait is not a save — the save form takes stat, target and effect as ; second: you wrote no row of the kind asked for (a trait); the seat stays empty
+[reskin] the declared ask's own template lands: trait — the sheet's declared ask is "fear", the seat that carries it ended with no row, and "fear-aura" answers that mechanic and was not declined as a word mismatch (owner's R4)
+[reskin] trait ceiling: "Triumphant Roar" does not ship — 4 traits already, and print's ceiling for a meat body is 3
 [reskin] weapons answered: Greataxe = greataxe; Javelin = javelin; Javelin Volley = javelin
 [reskin] weapon dice follow the weapon: the GM's "Greataxe" is a greataxe (d12) — "17 (3d8 + 4)" becomes "17 (2d12 + 4)"
 [reskin] weapon dice follow the weapon: the GM's "Javelin" is a javelin (d6) — "17 (3d8 + 4)" becomes "18 (4d6 + 4)"
@@ -6811,29 +6855,29 @@ Javelin: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hit: 18 
 [reskin] print canon row: Reactions/Parry — the Gladiator's own
 [reskin] class weapon: Actions/"Shield Bash" leaves with the shield — a greataxe is two-handed and print pairs a shield with no heavy melee weapon (0 of 329 gear lines)
 [reskin] class weapon: "greataxe" already names a row on this body — no row is renamed to it (fix F: one name, one row)
-[reskin] free-row budget by card size: CR 8 sits in band 6-9, where print runs 3-5 rows (p20-p90, Multiattack excluded); this card already carries 7 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
+[reskin] dead control row: "Frightening Roar" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead
+[reskin] multiattack replacement clause: It can replace one attack with a use of Frightening Roar.
+[reskin] free-row budget by card size: CR 8 sits in band 6-9, where print runs 3-5 rows (p20-p90, Multiattack excluded); this card already carries 8 fixed row(s), so the free-row budget is 0 rather than 1 — the card is already at print's high end
+[reskin] row binds its clause: "Frightening Roar" answers "Give him a frightening roar" — the keys it matched came from that clause, so the coverage credit has a receipt
 [reskin] asked but unanswered: "He is a barbarian who rages" asked for when_bloodied and no row binds the clause
 [reskin] lint: 0 findings
-[reskin] audit skipped — Failed to generate a valid response. Please try again later.
+audit finding below confidence gate: Hold Breath Hold Breath is a swimmer's/amphibian's trait, but Meshrin is a lizardfolk barbarian with no swim Speed, water action, or aquatic anything in the block, so the trait sits on the sheet without a use the GM can ever reach.
+[reskin] audit: [Parry: Parry requires holding a weapon, but Meshri…able condition. (about: "while holding a weapon"), Frightening Roar: The success clause refers to 'th… immune to this creature's terror for 24 hours.")]
+[reskin] audit defect: Reactions/"Parry" [print] medium untrackable — Parry requires holding a weapon, but Meshrin wields a greataxe two-handed and throws javelins, and nothing on the sheet ever states he is armed or lets the trigger be checked once a javelin has been thrown; the trigger references a state the block never establishes. — State in the trigger that Meshrin is holding his greataxe (or a melee weapon) so the GM has a concrete, checkable condition. (about: "while holding a weapon")
+[reskin] audit defect: Actions/"Frightening Roar" [catalog] medium dead_reference — The success clause refers to 'this creature's terror' rather than naming the entry, and 'this creature' is a generic catalog referent that does not match Meshrin by name, so the effect being made immune is only inferable. — Name the ability directly in the success line so the immunity has an unambiguous referent. (about: "The target is immune to this creature's terror for 24 hours.")
+[reskin] seed share: 0 of 1 signature row(s) came from a seed — the sameness metric
 [reskin] clause id by substring: "Bloodied Frenzy" carries "barbarian" which is not a whole clause — the seat surgery cut it; resolved to cl_jeugdk
 [reskin] clause id by substring: "Hold Breath" carries "barbarian" which is not a whole clause — the seat surgery cut it; resolved to cl_jeugdk
 [reskin] clause id by substring: "Marsh Stride" carries "barbarian" which is not a whole clause — the seat surgery cut it; resolved to cl_jeugdk
-[reskin] signature tally: 1 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path class_npc
-[reskin] owed and unanswered: "Give him a frightening roar" — the checker fails this block (1e)
+[reskin] [gap] a trigger that fires when Meshrin drops a foe to 0 HP and forces nearby enemies to save or be Frightened — "The marsh warband's cry carries: when Meshrin reduces a creature to 0 hit points, he lets out a triumphant …, and each enemy that can hear him must make a Wisdom saving throw or have the Frightened condition until the end of its next turn." — Meshrin [seat: trait [trait/always/condition]] (closest offered: fear-aura) [effect: condition] [menu: phobia fear-aura berserk kill-denial terrain-walk bloodied-fury blood-frenzy pack-tactics death-restoration shielded-mind evasion relentless-pursuit bound guarded-stance undead-fortitude assassinate truth-aura] [same-cell unoffered: adhesive faultless-tracker marking-light] [same-seat rejected: false-appearance:body-verdict adhesive:body-verdict spider-climb:body-verdict aberrant-ground:body-verdict faultless-tracker:body-verdict web-walker:body-verdict uncanny-sense:body-verdict earth-glide:movement tunneler:movement marking-light:body-verdict sealed-body:role relic-object:body-verdict mimicry:body-verdict blurred-form:body-verdict death-burst:body-verdict] [row dropped]
+[reskin] signature outcome: 1 of 1 accepted signature pick(s) never reached the sheet — 1x the call named no template for the pick
+[reskin] signature tally: 1 seat(s) -> 1 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path class_npc
 [reskin] user-set: HP 136 -> 120 — a declared field (Resolution 3)
 [reskin] species kit: Swim 30 ft. — a lizardfolk's own
-[reskin] record recounted: free_rows 0 -> 0, expressed_rows undefined -> 0 — a pass after the budget removed a free row, and the record is the finished sheet's
 [reskin] done: "Meshrin" — donor skirmisher-8-hurler, CR 8
-!! [reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing: Failed to generate a valid response. Please try again later.
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY MISS — the fit call (buildFitPrompt) — first differs at line 66 of 79
-  nearest recorded prompt: the same call in this generation, 9041 characters shared
-     65 | - slow-bolt [Actions] (fires: save, does: movement): Constitution Saving Throw: DC {dc}, one creature within 60 feet. Failure: The target's Speed is halved and it can't take Reactions until the end of the creature's next turn.
-  -  66 | - curse-debt [Actions] (fires: save, does: damage): Charisma Saving Throw: DC {dc}, one creature within 60 feet. Failure: {burst} {damage_type} damage, and the target is cursed. While cursed, {curse_effect}.
-  +  66 | - throw-retrieve [Actions] (fires: always, does: damage): The creature hurls {projectile}. Ranged Attack Roll: {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature's Speed is halved and it can't use this action. — you fill: {projectile}
-     67 | - throw-retrieve [Actions] (fires: always, does: damage): The creature hurls {projectile}. Ranged Attack Roll: {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature's Speed is halved and it can't use this action. — you fill: {projectile}
-[harness] the whole prompt, and every recorded one, is in 37-REPLAY-MISS.txt
-[harness] 13 prompt(s) had no recorded answer during this entry: fit x6, repair x1, audit x3, legacy x3
+[reskin] 2014 conversion: one lint-gated call — both printings saved
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 37-meshrin.json — 1 recorded answer(s) unused
 ```
 
 ---
@@ -6935,9 +6979,9 @@ Delete
 !! [ENRICHMENT] Failed to enrich Meshrin: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 0 taken name(s) the recording carried
 [concept] thin but a print creature — keeping route-first: a skeleton with a greatsword
 [path] twist — Skeleton (is) — "skeleton" (call)
@@ -7004,7 +7048,7 @@ Delete
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 0 expressed, 0 decoration, 0 free · accepted picks lost: 0 of 0 · path twist
 [reskin] multiattack re-read — "Shortbow" joins the combination; "The gravebound makes two attacks, using Greatsword or Shortbow in any combination."
 [reskin] done: "Oathsworn Gravebound" — donor brute-5, CR 6
-[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (2 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 38-oathsworn-gravebound.json — 1 recorded answer(s) unused
 ```
 
@@ -7099,9 +7143,9 @@ Shield Bash: One creature within 5 feet that Vellick can see must make a DC 15 S
 !! [ENRICHMENT] Failed to enrich Oathsworn Gravebound: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 38 taken name(s) the recording carried
 [path] class_npc — class fighter — "sellsword" (call)
 [route] skirmisher-hurler type=Humanoid mechanics=thrown-weapon — casts: the call reads no worked magic here | hold_shape: none — the call reads no hold in these words | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | skirmisher-hurler: ✓ ("hurls a handaxe") | skirmisher-hurler: key "hurls" (class verb)
@@ -7197,7 +7241,7 @@ audit finding below confidence gate: Riposte Riposte makes a Handaxe attack, whi
 [reskin] signature tally: 2 seat(s) -> 1 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 1 of 1 (1x the call named no template for the pick) · path class_npc
 [reskin] done: "Vellick the Last Contract" — donor skirmisher-8-hurler, CR 5
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] enrichment not run (3 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
 [harness] replay identical to 39-vellick-the-last-contract.json — 1 recorded answer(s) unused
 ```
 
@@ -7288,9 +7332,9 @@ Spellcasting: Halric casts one of the following spells, using Wisdom as the spel
 !! [ENRICHMENT] Failed to enrich Vellick the Last Contract: Error: Failed to generate a valid response. Please try again later.
     at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:341:11)
     at async enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:20)
-    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1732:24)
-    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:1557:3)
-    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795285667639:663:5)
+    at async saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1732:24)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:1557:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1795296614413:663:5)
 [harness] restored 39 taken name(s) the recording carried
 [concept] thin concept expanded before routing: Brother Halric — Brother Halric opens with a brutal thrown hammer from across the nave, then wades in swinging, and when bloodied he does not retreat — he fights on in silence, counting on his ravaged body to hold together longer than the prey's nerve. Every round he presses the nearest foe and lets
 [concept] expansion answered: type=Undead (type_source=user) material=grave size=Medium mind=sapient
@@ -7372,6 +7416,6 @@ Spellcasting: Halric casts one of the following spells, using Wisdom as the spel
 [reskin] signature tally: 2 seat(s) -> 0 shape(s) on the sheet · 1 expressed, 0 decoration, 1 free · accepted picks lost: 0 of 0 · path class_npc
 [reskin] done: "Brother Halric" — donor brute-2, CR 3
 [reskin] 2014 conversion: one lint-gated call — both printings saved
-[harness] enrichment not run (1 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
-[harness] REPLAY DIFFERS from 40-brother-halric.json — fields: other_edition
+[harness] enrichment not run (0 request(s) answered offline) and not waited for — it writes to its own key and cannot affect the sheet
+[harness] replay identical to 40-brother-halric.json — 1 recorded answer(s) unused
 ```
