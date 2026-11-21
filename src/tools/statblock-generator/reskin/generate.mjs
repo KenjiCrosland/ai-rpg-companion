@@ -940,6 +940,31 @@ export const syncMultiattackCitations = (sectionsMap, traceFn = () => {}) => {
 };
 
 /**
+ * A ROW PRINT'S ATTACK LIST DOES NOT GOVERN (fault 1, owner's ruling 2026-11-20).
+ *
+ * At least four passes remove a row from a printed body, each carried its own list of what to
+ * spare, and the lists disagreed. A strike was on none of them, so three of the seven strikes the
+ * forty wrote were deleted and three separate fixes each missed the pass that actually did it:
+ * the one-melee-row filter, the provenance sweep, and finally `extraRows`, which is where the
+ * trace "the Dire Wolf prints no row for it (1 melee, 0 ranged)" comes from.
+ *
+ * Print's attack list is locked on a print body — the owner's ruling of 8 November — and that
+ * governs the attacks the Multiattack NAMES. These rows are outside it:
+ *
+ *   strike   — offered IN PLACE of one attack by the replacement clause, so it takes no extra
+ *              swing and does not widen print's list (owner, 20 November)
+ *   part     — the user's own body part, which stands beside print's row
+ *   gmArmed  — a weapon the GM typed, which print's name never displaces
+ *   userSet  — a row the user set outright
+ *   print    — print's own row is never removed as an extra
+ *
+ * One predicate, read by every pass that removes a row from a printed body. The disagreements it
+ * settles: the ranged loop spared neither `part` nor `userSet` while the melee loop spared `part`;
+ * none of the four spared a strike.
+ */
+export const outsidePrintsAttackList = (e) => !!(e?.strike || e?.part || e?.gmArmed || e?.userSet || e?.print);
+
+/**
  * A RENAMED ROW KEEPS ITS CITATIONS (owner's ruling, 2026-11-20; fix D3).
  *
  * `renamed: true` says the row is STILL ON THE SHEET under a new name — not gone. The two cases
@@ -9248,13 +9273,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // keeps its own numbers and the weapon table's range for its own name.
         const extraRows = [];
         meleeRows.forEach((e, i) => {
-          if (i >= pc.meleeRows.length) { if (closedPath && !e.part && !e.gmArmed && !e.print) extraRows.push(e); return; }
+          if (i >= pc.meleeRows.length) { if (closedPath && !outsidePrintsAttackList(e)) extraRows.push(e); return; }
           const pr = pc.meleeRows[i]; const to = pr?.name; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
           if (!to || e.part) return;
           if (e.library || e.template) { trace('print canon yields:', `"${from}" is the seat's own row (${e.template ?? e.seed}) — print's name never lands on a template's body (the Glacier-Jarl's Great Bow carried the throw-retrieve text, critic D 2026-10-19)`); return; }
           // THE NAME IS ALREADY ON THE SHEET: decide before stamping (the chassis hybrid took the Pistol's
           // numbers, then had its rename refused — classes-eight 2026-10-19). On a closed path the row leaves.
-          if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !e.gmArmed && !e.print) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // another ATTACK row: a trait that happens to share the name is not the same row (the stub's "Bite" trait, print-names pins) // the user's part keeps its name on a borrow (the hag's Nails stayed Nails, not print's Claw — step 8)
+          if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !outsidePrintsAttackList(e)) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // another ATTACK row: a trait that happens to share the name is not the same row (the stub's "Bite" trait, print-names pins) // the user's part keeps its name on a borrow (the hag's Nails stayed Nails, not print's Claw — step 8)
           // A WEAPON THE GM TYPED STANDS (owner's spot check, 2026-10-18): the ranged
           // rows had this guard and the melee rows did not, so "skeleton with a
           // greatsword" shipped print's Shortsword over the call's own Greatsword,
@@ -9548,9 +9573,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         rangedRows2.forEach((e, i) => { // gmWeapons: read once above the melee rows
           if (e.part) return;
           if (e.library || e.template) { trace('print canon yields:', `"${String(e.name ?? '').replace(/ \(.*\)$/, '')}" is the seat's own row — print's name never lands on a template's body (see the melee loop)`); return; }
-          if (i >= pc.rangedRows.length) { if (closedPath && !e.gmArmed && !e.print) extraRows.push(e); return; } // print has no row for it — see the melee loop
+          if (i >= pc.rangedRows.length) { if (closedPath && !outsidePrintsAttackList(e)) extraRows.push(e); return; } // print has no row for it — see the melee loop
           const prr = pc.rangedRows[i]; const to = prr?.name; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
-          if (to && to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !e.gmArmed && !e.print) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // decided before any stamping; attack rows only (see the melee loop)
+          if (to && to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !outsidePrintsAttackList(e)) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // decided before any stamping; attack rows only (see the melee loop)
           const gmArmed = !!(e.weapon && gmWeapons.has(e.weapon) && e.weapon !== weaponFor(String(to ?? '')));
           if (gmArmed) { e.gmArmed = true; trace('print canon yields:', `"${from}" keeps its ${e.weapon} — the GM typed it; the ${pc.name}'s ${to} prices the row but does not replace the weapon`); }
           if (prr?.range && !gmArmed) e.text = e.text.replace(/range \d+\/\d+ ft\./, `range ${prr.range} ft.`); // print's range for print's weapon (a Longbow is 150/600, not 30/90)
