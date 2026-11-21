@@ -209,3 +209,22 @@ describe('a sheet carries the findings of the sheet it is', () => {
     expect(stored).toEqual(lintSheet(monster).map((h) => `${h.rule}: ${h.message}`));
   }, 30000);
 });
+
+/**
+ * A DROP REMOVES THE ROW (item 2, owner 2026-11-21). Two forms land early — the strike and the
+ * aura — and a drop that only set `actionT = null` left them on the sheet while the trace said
+ * they had gone. s06 shipped "signature dropped by the floor: Scree Snare" with Scree Snare on the
+ * sheet and cited by its Multiattack.
+ */
+describe('a form that lands early and is then dropped is not on the sheet', () => {
+  test('the strike lands early, and when a drop takes it the row and its citation go', async () => {
+    // the name-collision drop is the one that can be provoked from here: the strike is given the
+    // name its own host already carries, which `uniqueRowName` refuses with no template name to
+    // fall back on.
+    const { monster } = await build([A_STRIKE({ name: 'Greatsword' })]);
+    const ma = rows(monster).find((e) => /^Multiattack/.test(String(e.name)));
+    expect(strikeOf(monster)).toBeUndefined();
+    expect(rows(monster).filter((e) => String(e.name) === 'Greatsword')).toHaveLength(1); // the host, once
+    expect(String(ma?.text ?? '')).not.toMatch(/replace one attack with a use of/);
+  }, 30000);
+});

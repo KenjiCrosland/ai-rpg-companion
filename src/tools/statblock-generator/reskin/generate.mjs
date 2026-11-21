@@ -8037,6 +8037,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
       } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no ${wantRanged ? 'ranged' : 'melee'} row to ride`);
     }
+    // A DROP REMOVES THE ROW (owner's policy, 2026-11-21: a row the model wrote is not silently
+    // dropped — and when it IS dropped, the sheet has to agree with the trace).
+    //
+    // Two forms land EARLY, pushed into `sections` as the seat returns: the strike and the aura.
+    // Every other form lands below, after the drops have had their say. So a drop that only set
+    // `actionT = null` removed a row that was never there and left one that was: s06 shipped
+    // "signature dropped by the floor: Scree Snare" with Scree Snare on the sheet and cited by the
+    // Multiattack.
+    //
+    // I chose to make the DROP remove it rather than move the landings: the two early forms return
+    // their row to the caller as the seat's answer, and moving them would change what the seat
+    // returns on every path, not just the dropped one.
+    const dropLandedRow = (row) => {
+      if (!row) return;
+      for (const [secD, esD] of Object.entries(sections)) {
+        const ix = esD.indexOf(row);
+        if (ix === -1) continue;
+        esD.splice(ix, 1);
+        sweepDeadName(sections, row.name, null, trace);
+        trace('dropped row removed:', `${secD}/"${row.name}" had already landed when it was dropped — the row and any citation of it leave, so the sheet says what the trace says`);
+      }
+    };
     if (actionT && actionT.section !== 'Rider' && actionT.section !== 'Traits' && !closedPath) { // a re-seated TRAIT never climbs the ladder; the TWIST path has no value floor — its one row is the GM's ask, priced by print's CR (pipeline 2) (Wounded Tolling: 27 per hit, no save — fresh ten)
       // THE VALUE CHECK — the row must be worth the attack it replaces
       // A STRIKE IS NOT A NOVA (owner's ruling, 20 November). The one-nova rule stripped the
@@ -8086,6 +8108,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (vc.steps.some((st) => /still under|does nothing/.test(st)) && actionT && actionT.section === vcSection && actionT.row.name === vcName) {
         noteDrop(actionT.template ?? actionT.row?.template, 'the value floor', `EV under the ${actionT.section === 'Bonus Actions' ? 'bonus action' : 'attack'} it replaces`);
         trace('signature dropped by the floor:', `"${actionT.row.name}" — the ladder could not lift it; the fallback stands in`);
+        dropLandedRow(actionT.row);
         actionT = null;
       }
     }
@@ -8099,7 +8122,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (sup) for (const [secS, esS] of Object.entries(sections)) {
         for (let i = esS.length - 1; i >= 0; i -= 1) if (sup.test(esS[i].text ?? '')) { trace('row superseded:', `${secS}/"${esS[i].name}" leaves — "${actionT.row.name}" owns the throw now`); sweepDeadName(sections, esS[i].name, actionT.row, trace); esS.splice(i, 1); }
       }
-      if (!uniqueRowName(actionT.row, actionT.templateName)) { noteDrop(actionT.template ?? actionT.row?.template, 'the name is taken', actionT.row?.name ?? ''); actionT = null; }
+      if (!uniqueRowName(actionT.row, actionT.templateName)) { noteDrop(actionT.template ?? actionT.row?.template, 'the name is taken', actionT.row?.name ?? ''); dropLandedRow(actionT.row); actionT = null; }
       if (actionT) {
       slotYield(actionT.template ?? actionT.row?.template, actionT.row);
       actionT.row.boundKeys = [...new Set([...keysOf(actionT.because), ...(actionT.row.boundKeys ?? []), ...userKeysFor(actionT.template ?? actionT.row?.template)])]; // provenance (step 8): the user's words this row binds to, by the fit's reason and by the template's own keys
