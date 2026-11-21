@@ -86,6 +86,10 @@ export const MODES = ['strict', 'pass-through', 'live-from'];
  *                 live even where the prompt is unchanged, so one step can be re-rolled on a frozen
  *                 sheet. `afterNamed` is the caller's latch: once the named family has been seen in
  *                 this generation, every later call is live whatever its family.
+ *                 `--live-from miss` is the same latch keyed on the PROMPT instead: every answer
+ *                 whose prompt still matches is served, the first that does not goes live, and
+ *                 everything after it is live. That is what "re-record from the call that missed"
+ *                 means when a family is called four times.
  *
  * @returns {{use: 'tape'|'live'|'miss', family: string, flips?: boolean}}
  */
@@ -93,6 +97,18 @@ export const decide = ({ mode = 'strict', liveFrom = null, prompt = '', tape = n
   const family = familyOf(prompt);
   if (mode === 'live-from') {
     if (afterNamed) return { use: 'live', family };
+    // LIVE FROM THE CALL THAT MISSED, not from its family (owner's rule, 2026-11-21: a re-record
+    // keeps every answer BEFORE the call that missed). A family is called more than once — the seat
+    // is asked for an action and then for a trait, twice each where a first answer is refused — so
+    // `--live-from seat` threw away answers that still matched. On s06 the trait seat's prompt had
+    // changed and the action seat's two had not, and the action seat was rolled again anyway and
+    // came back a different row.
+    //
+    // `--live-from miss` serves a recorded answer for as long as the prompt matches, goes live at
+    // the first prompt that does not, whatever its family, and latches from there.
+    if (liveFrom === 'miss') {
+      return hasAnswer(tape, prompt) ? { use: 'tape', family } : { use: 'live', family, flips: true };
+    }
     if (family === liveFrom) return { use: 'live', family, flips: true }; // the named call itself goes live, and latches
     return hasAnswer(tape, prompt) ? { use: 'tape', family } : { use: 'miss', family };
   }

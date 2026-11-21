@@ -88,8 +88,8 @@ const liveFrom = args.includes('--live-from') ? String(args[args.indexOf('--live
   : (arm?.live ? arm.call : null);
 const mode = liveFrom ? 'live-from' : args.includes('--pass-through') ? 'pass-through' : 'strict';
 const rolls = Math.max(1, Number(args.includes('--rolls') ? args[args.indexOf('--rolls') + 1] : 1) || 1);
-if (liveFrom && !FAMILY_NAMES.includes(liveFrom)) {
-  console.error(`--live-from takes one call name; got "${liveFrom}".\nKnown calls: ${FAMILY_NAMES.join(', ')}`);
+if (liveFrom && liveFrom !== 'miss' && !FAMILY_NAMES.includes(liveFrom)) {
+  console.error(`--live-from takes one call name, or "miss".\ngot "${liveFrom}".\nKnown calls: ${FAMILY_NAMES.join(', ')}\n"miss" serves every answer whose prompt still matches and goes live at the first that does not — which is what "re-record from the call that missed" means when a family is called more than once.`);
   process.exit(2);
 }
 const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx) && a !== (replayDir ? args[args.indexOf('--replay') + 1] : null)) ?? 'batch';
