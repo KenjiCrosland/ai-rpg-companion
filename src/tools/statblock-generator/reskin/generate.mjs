@@ -12,7 +12,7 @@ import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords, citationsIn} from './templates.mjs';
+import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords, citationsIn, mayCurseUnasked} from './templates.mjs';
 import { drawLibraryRow, nameHash, curseEffectFor } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
@@ -2734,7 +2734,15 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
   };
   return kept.map((c) => ({ id: clauseId(c.text), ...c }));
 }
-const PART_NOUN = /\b(greatswords?|longswords?|shortswords?|scimitars?|rapiers?|swords?|greataxes?|battleaxes?|handaxes?|axes?|spears?|lances?|pikes?|glaives?|halberds?|tridents?|longbows?|shortbows?|crossbows?|bows?|slings?|javelins?|darts?|daggers?|kni(?:fe|ves)|quarterstaffs?|staffs?|staves|warhammers?|hammers?|mauls?|greatclubs?|clubs?|maces?|flails?|whips?|chains?|nets?|kicks?|headbutts?|fingers?|tail|claws?|talons?|nails?|teeth|tooth|fangs?|jaws?|maw|bites?|horns?|antlers?|tusks?|hooves|hoof|tentacles?|stingers?|stings?|beak|pincers?|fists?|slams?|gores?)\b/gi; // no wings, shield or lantern: a part that does not strike, or one the thrown-weapon template owns
+const PART_NOUN = /\b(greatswords?|longswords?|shortswords?|scimitars?|rapiers?|swords?|greataxes?|battleaxes?|handaxes?|axes?|spears?|lances?|pikes?|glaives?|halberds?|tridents?|longbows?|shortbows?|crossbows?|bows?|slings?|javelins?|darts?|daggers?|kni(?:fe|ves)|quarterstaffs?|staffs?|staves|warhammers?|hammers?|mauls?|greatclubs?|clubs?|maces?|flails?|whips?|chains?|nets?|kicks?|headbutts?|fingers?|tail|claws?|talons?|nails?|teeth|tooth|fangs?|jaws?|maw|bites?|horns?|antlers?|tusks?|hooves|hoof|tentacles?|stingers?|stings?|beak|pincers?|fists?|slams?|gores?|scythes?|sickles?)\b/gi; // no wings, shield or lantern: a part that does not strike, or one the thrown-weapon template owns.
+// SCYTHE AND SICKLE added by the owner's own exception (2026-11-21, "ok let's grow the list"):
+// both are weapons and the list already holds the glaive, the halberd and the whip, so a weapon
+// missing from a list of weapons is a gap in the data. s24's "four scythe-arms" was read as asking
+// for an attack by the clause call and then found no noun here, so the melee slot went to the
+// spitting maw and nothing on the sheet was a scythe. `arms?` is NOT added: it is in
+// "men-at-arms", "takes up arms" and "a coat of arms", none of which is something to hit with, and
+// "scythe-arms" is caught by `scythe`. This is an exception for this list and these two words, and
+// not leave to grow any list again without his word.
 const PART_TYPE = { kick: 'Bludgeoning', headbutt: 'Bludgeoning', finger: 'Bludgeoning', /* a kick, a headbutt, strangling fingers: body parts the sprint run named (2026-10-12) */ nail: 'Slashing', bow: 'Piercing', longbow: 'Piercing', shortbow: 'Piercing', crossbow: 'Piercing', sling: 'Bludgeoning', javelin: 'Piercing', dart: 'Piercing', spear: 'Piercing', lance: 'Piercing', pike: 'Piercing', trident: 'Piercing', glaive: 'Slashing', halberd: 'Slashing', scimitar: 'Slashing', rapier: 'Piercing', dagger: 'Piercing', knife: 'Piercing', whip: 'Slashing', chain: 'Bludgeoning', net: 'Bludgeoning', flail: 'Bludgeoning', maul: 'Bludgeoning', fist: 'Bludgeoning', hoof: 'Bludgeoning', slam: 'Bludgeoning', gore: 'Piercing', bite: 'Piercing', tooth: 'Piercing', fang: 'Piercing', jaw: 'Piercing', maw: 'Piercing', horn: 'Piercing', antler: 'Piercing', tusk: 'Piercing', beak: 'Piercing', sting: 'Piercing', stinger: 'Piercing', pincer: 'Bludgeoning', tentacle: 'Bludgeoning', tail: 'Bludgeoning', claw: 'Slashing', talon: 'Slashing', sword: 'Slashing', axe: 'Slashing', club: 'Bludgeoning', hammer: 'Bludgeoning', mace: 'Bludgeoning', staff: 'Bludgeoning' };
 const ROLE_NOUN = /^(?:marauder|raider|reaver|horseman|horsewoman|rider|pilgrim|knight|hunter|huntress|warden|keeper|slayer|witch|hermit|monk|priest|priestess|champion|captain|sentinel|guardian|butcher|reaper|wanderer|smith|assassin|archer|duelist|seer|prophet|bride|groom|ghost|golem|king|queen|prince|princess|baron|baroness|matron|widow|stranger|collector|gardener|ferryman|fisher|fisherman|piper|drummer|jester|fool|hangman|executioner|judge|magistrate|abbot|bishop|shepherd|harvester|tinker|tailor|weaver|miller|baker|butler|nurse|doctor|surgeon|scholar|librarian|alchemist|cartographer|navigator|admiral|general|marshal|sergeant|soldier|mercenary|bandit|thief|rogue|outlaw|pirate|corsair|sailor|miner|gravedigger|undertaker|mourner|dancer|singer|bard|poet|painter|sculptor|mason|carpenter|chandler|lamplighter|watchman|guard|jailer|sentry|scout|ranger|tracker|trapper|poacher|falconer|beekeeper|herder|drover|preacher|deacon|templar|crusader|paladin|squire|page|herald|envoy|ambassador|regent|steward|chancellor|vizier|warlord|chieftain|shaman|oracle|augur|necromancer|sorcerer|sorceress|wizard|warlock|conjurer|summoner|illusionist|enchanter|enchantress|druid|hag|crone|matriarch|patriarch)$/i;
 const EPITHET_FIRST = /^(?:[A-Z][a-z]+(?:less|ful|ous|ish|some)|Old|Young|Great|Grand|Big|Little|Black|White|Red|Grey|Gray|Green|Blue|Pale|Dark|Dread|Iron|Stone|Bone|Blood|Night|Grim|Mad|Wild|Lost|Last|First|Dead|Silent|Hollow|Crimson|Golden|Silver|Burning|Weeping|Laughing|Wandering|Drowned|Hanged|Headless|Faceless)$/;
@@ -8156,8 +8164,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // THE IDEA'S DECLARED EFFECT TRAVELS WITH THE ROW (item 3, 2026-11-21). The idea call stamps
       // every idea damage/condition/movement, and only the row knows which idea it came from — so
       // the pricing pass downstream can ask whether an idea about damage landed on a row with none.
-      if (ideasT?.action?.effect && actionT.row.ideaEffect === undefined) actionT.row.ideaEffect = ideasT.action.effect;
-      if (!(sections[actionT.section] ?? []).includes(actionT.row)) (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
+      // WHO MAY CURSE UNASKED, read at the LANDING (owner, 2026-11-21 afternoon). As a filter on
+      // the menu it changed the fit prompt on eight sheets the owner had already read, for a
+      // template that landed on none of them — and a replay with no answer for the new prompt
+      // prints a sheet the product would never make. Here it changes no prompt: `curse-debt` is
+      // declined where the GM typed no curse word and the creature is not a Fiend, Fey, Undead or
+      // Aberration, and the seat goes on as it does for any other miss.
+      if ((actionT.template === 'curse-debt' || actionT.row?.template === 'curse-debt')
+        && !mayCurseUnasked(`${options.userConcept ?? concept ?? ''} ${idea?.clause ?? ''}`, p?.type ?? options.resolvedType)) {
+        trace('curse declined — nobody asked for one:', `"${actionT.row.name}" is curse-debt on a ${String(p?.type ?? 'creature of no declared type')}, and the GM typed no curse word — a permanent curse is not what "${String(options.userConcept ?? concept ?? '').slice(0, 50)}" asked for (owner's ruling, 21 November)`);
+        dropLandedRow(actionT.row);
+        actionT = null;
+      }
+      if (actionT && ideasT?.action?.effect && actionT.row.ideaEffect === undefined) actionT.row.ideaEffect = ideasT.action.effect;
+      if (actionT && !(sections[actionT.section] ?? []).includes(actionT.row)) (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
       }
       // THE TRACE IS INSIDE THE GUARD (2026-11-19). `uniqueRowName` sets `actionT = null` on a name

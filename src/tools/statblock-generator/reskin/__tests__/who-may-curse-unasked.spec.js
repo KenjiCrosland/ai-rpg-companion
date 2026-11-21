@@ -10,15 +10,24 @@
  * The four curse words bind on anything. The rest bind only where cursing is what the creature IS.
  * This changes no prompt: it is a legality gate on the menu.
  */
-import { templatesFor } from '../templates.mjs';
+import { mayCurseUnasked, templatesFor } from '../templates.mjs';
 
-const sections = { Actions: [
-  { name: 'Multiattack', text: 'The creature makes two Blade attacks.' },
-  { name: 'Blade', text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d6 + 5) Slashing damage.' },
-] };
-// a context that DOES offer curse-debt, so the gate is what these read and not some other leg
-const offered = (text, type) => templatesFor({ archetype: 'caster', cr: 5, sections, section: 'action', text, concept: text, type })
-  .map((t) => t.id).includes('curse-debt');
+// READ AT THE LANDING, NOT ON THE MENU (owner, 21 November afternoon). As a menu filter it changed
+// the fit prompt on eight sheets of the forty, for a template that landed on none of them. The
+// predicate is the same; what reads it moved.
+const offered = (text, type) => mayCurseUnasked(text, type);
+
+describe('the menu is untouched — the gate is at the landing', () => {
+  test('curse-debt is still offered to the fit call on a Humanoid who takes a toll', () => {
+    const sections = { Actions: [
+      { name: 'Multiattack', text: 'The creature makes two Blade attacks.' },
+      { name: 'Blade', text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d6 + 5) Slashing damage.' },
+    ] };
+    const text = 'a tollkeeper who takes a toll from the dying';
+    expect(templatesFor({ archetype: 'caster', cr: 5, sections, section: 'action', text, concept: text, type: 'Humanoid' })
+      .map((t) => t.id)).toContain('curse-debt');
+  });
+});
 
 describe('a word that is not a curse binds only on a creature that curses by nature', () => {
   test('"toll" lands it on a Fiend and not on a Humanoid', () => {

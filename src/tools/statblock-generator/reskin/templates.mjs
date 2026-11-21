@@ -1752,6 +1752,26 @@ export function conditionsImposedTwice(rows) {
   );
 }
 
+/**
+ * WHO MAY CURSE UNASKED (owner's ruling, 2026-11-21; moved to the landing 21 November afternoon).
+ *
+ * `curse-debt` is a PERMANENT curse offered in place of one attack, and it answers to nine everyday
+ * words besides the four that name a curse: debt, price, bargain, owe, tithe, toll, judgment,
+ * rebuke, sin — and oath. A tax collector, a judge, a bell-ringer and a creditor all reached a
+ * permanent curse without the GM typing one. s17's Pit Fiend took it on "oath", which the owner
+ * allowed for a fiend that binds by oaths.
+ *
+ * The four curse words bind on anything. The rest bind only where cursing is what the creature IS.
+ *
+ * READ AT THE LANDING, NOT ON THE MENU. As a filter on the pool it took the template off eight of
+ * the forty's fit menus, which changes the fit prompt on eight sheets the owner has already read
+ * and passed — for a template that landed on none of them. The same predicate at the landing
+ * changes no prompt and no sheet: on the forty it lands twice, s17 on a Fiend and s26 on the word,
+ * and both pass.
+ */
+export const mayCurseUnasked = (text, type) => /\b(?:curse|cursed|curses|cursing|hex|hexed|hexes|accursed|jinx|jinxed)\b/i.test(String(text ?? ''))
+  || ['fiend', 'fey', 'undead', 'aberration'].some((k) => String(type ?? '').toLowerCase().includes(k));
+
 export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null, gmAsked = false, holdShape = undefined } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
@@ -1886,21 +1906,6 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // hit to hang on. Declared data, not a reading of its text.
     ['needs-a-hit', (t) => !(section === 'trait' && t.trigger === 'on_hit')
     ],
-    // WHO MAY CURSE UNASKED (owner's ruling, 2026-11-21). `curse-debt` is a PERMANENT curse in
-    // place of one attack, and it answers to nine everyday words besides the four that name a
-    // curse: debt, price, bargain, owe, tithe, toll, judgment, rebuke, sin — and oath. So a tax
-    // collector, a judge, a bell-ringer and a creditor all reached a permanent curse without the
-    // GM typing one; s17's Pit Fiend took it on "oath", which the owner allowed for a fiend that
-    // binds by oaths and for that case only.
-    //
-    // The four curse words bind on anything. The rest bind only where cursing is what the creature
-    // IS: a Fiend, a Fey, an Undead or an Aberration. The type is declared by the resolve, and the
-    // curse words are print's own name for the thing, not a guess at what the GM meant.
-    ['curse-by-type', (t) => {
-      if (t.id !== 'curse-debt' && t.key !== 'curse-debt') return true;
-      if (/\b(?:curse|cursed|curses|cursing|hex|hexed|hexes|accursed|jinx|jinxed)\b/i.test(`${text ?? ''} ${concept ?? ''}`)) return true;
-      return ['fiend', 'fey', 'undead', 'aberration'].some((k) => String(type ?? '').toLowerCase().includes(k));
-    }],
     ['trigger', (t) => triggerCompatible(trigger, t.trigger, t.section)
     ],
     ['denied-clause', (t) => !(text && deniedBy(t, text).length)
