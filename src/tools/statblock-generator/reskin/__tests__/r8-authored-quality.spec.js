@@ -117,10 +117,20 @@ describe('(d) the condition a row REQUIRES is recorded, and must be one the shee
     expect(t.condition_relation).toBe('requires');
   });
 
-  test('`inflicts` records an imposition and requires nothing', () => {
-    const t = parseAuthorResponse(JSON.stringify({ traits: [{ clause: 'c', name: 'X', trigger: null, effect: 'a creature near it has the Prone condition', imposes: 'Prone', condition_relation: 'inflicts', passive_effect: 'threat' }] })).traits[0];
-    expect(t.imposes).toBe('Prone');
-    expect(t.requiresConditionNamed).toBeNull();
+  // A TRAIT THAT INFLICTS WITH NO SAVE IS REFUSED (item 4, owner 2026-11-21). This fixture is the
+  // fault itself — "a creature near it has the Prone condition", no saving throw — and it used to
+  // land. The reason names where it belongs, which is an aura for a creature standing near.
+  test('`inflicts` on a trait is refused, and the reason names the form that holds a save', () => {
+    const p = parseAuthorResponse(JSON.stringify({ traits: [{ clause: 'c', name: 'X', trigger: null, effect: 'a creature near it has the Prone condition', imposes: 'Prone', condition_relation: 'inflicts', passive_effect: 'threat' }] }));
+    expect(p.traits).toHaveLength(0);
+    expect(p.refused[0].why).toMatch(/cannot put the Prone condition on another creature with no saving throw/);
+    expect(p.refused[0].why).toMatch(/"auras"/);
+  });
+
+  test('and a trait that REQUIRES a condition still records it and lands', () => {
+    const t = parseAuthorResponse(JSON.stringify({ traits: [{ clause: 'c', name: 'X', trigger: null, effect: 'it has Advantage on attack rolls against a creature that has the Prone condition', imposes: 'Prone', condition_relation: 'requires', passive_effect: 'bonus' }] })).traits[0];
+    expect(t).toBeDefined();
+    expect(t.requiresConditionNamed).toBe('Prone');
   });
 });
 

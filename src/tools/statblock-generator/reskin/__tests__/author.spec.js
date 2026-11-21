@@ -94,7 +94,10 @@ describe('condition_relation gates the imposes record', () => {
       imposes, ...(relation === undefined ? {} : { condition_relation: relation }),
     }],
   });
-  const read = (imposes, relation) => (parseAuthorResponse(one(imposes, relation))?.traits ?? [])[0];
+  // `reseated: true` because a NON-reseated trait that INFLICTS is refused outright now (item 4,
+// owner 2026-11-21: "no save is bad. needs a con save"), and what these tests read is the record
+// the parse keeps for each relation, which is the same on both paths.
+const read = (imposes, relation) => (parseAuthorResponse(one(imposes, relation), { reseated: true })?.traits ?? [])[0];
 
   test('inflicts keeps the record — the row hands the condition out', () => {
     expect(read('Prone', 'inflicts')).toMatchObject({ imposes: 'Prone', condition_relation: 'inflicts' });

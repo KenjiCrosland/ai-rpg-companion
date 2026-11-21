@@ -528,7 +528,7 @@ export const swapDeafenedToFrightened = (raw) => {
   return swapped ? JSON.stringify(o) : null;
 };
 
-export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1, attackNames = [], declaredAsk = null, hasCurse = false, hasAura = false } = {}) {
+export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1, attackNames = [], declaredAsk = null, hasCurse = false, hasAura = false, reseated = false} = {}) {
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
   const str = (v, max = 80) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -789,6 +789,21 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     : traitIsSave(t) && STARTS_NEAR.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? `a trait is not a save, and this fires on creatures NEAR the creature at the start of their turns — that is an aura, which print writes as a trait (the Ghast's Stench). Answer in "auras" with "name", "stat", "radius" (5, 10, 20 or 30) and "condition" (one of ${AURA_CONDITIONS.join('/')}). The engine writes the sentence, the DC, the ending and the immunity line`
     : traitIsSave(t) && OWN_ATTACK_HITS.test(`${t.trigger ?? ''}`) ? `a trait is not a save, and this fires when one of the creature's OWN attacks hits — answer in "strikes" with "attack" (the exact name of the attack row), "save" (the ability), and "condition" or "movement". The engine writes it as its own row with that attack's numbers and Multiattack offers it in place of one attack. If the hit needs NO save, answer in "riders" instead, with "attack" and a light "condition" (Prone or Grappled) or a "movement"`
     : traitIsSave(t) ? `a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence${/\b(?:is hit|takes? damage|is damaged|is struck|would be moved|is moved|hits it)\b/i.test(`${t.trigger ?? ''} ${t.effect ?? ''}`) ? '. This fires in RESPONSE to something — being hit, damaged or moved — which print writes as a REACTION: answer in "reactions" with a trigger and a response, and put the save in the response\'s "save" object (${reactionSaveSpec()})' : ''}`
+    // A TRAIT MAY NOT PUT A CONDITION ON ANOTHER CREATURE WITH NO SAVE (item 4, owner 2026-11-21).
+    // The Vampire's Briar Blood: anyone who damages it with a melee weapon is Poisoned for a
+    // round, no save. His words: "no save is bad. needs a con save." The cause is the form — a
+    // trait may not hold a save, so the model wrote the condition without one and nothing refused
+    // it. The Pit Fiend's Sulfurous Reek is the same idea done properly, as a Reaction with a save.
+    //
+    // Declared data on both sides: `imposes` is the condition the call says the row applies, and
+    // `condition_relation: 'inflicts'` is the call saying it hands it OUT rather than requiring it.
+    // A trait that imposes nothing on anyone else is untouched.
+    //
+    // AND A RE-SEATED IDEA IS LEFT ALONE. `traitWritesARider` turns an inflicting trait into a
+    // rider on the creature's own attack — print's Dire Wolf bite — which gives the condition a
+    // hit to hang on and needs no save. That path fires only on a re-seated idea, so the refusal
+    // stands down there rather than killing a fix the engine already has.
+    : t.imposes && t.condition_relation === 'inflicts' && !reseated ? `a trait cannot put the ${t.imposes} condition on another creature with no saving throw, and a trait has nowhere to hold one. Where it fires because the creature was HIT, answer in "reactions" with a trigger and a "save" object; where it fires on creatures NEAR it, answer in "auras"`
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
     // A {dmg} USED AS A BONUS IS A NUMBER THIS ENGINE CANNOT PRICE (2026-11-16). It prices damage,
     // and a bonus to AC or to a roll is not damage — so the token is neither fillable nor safely

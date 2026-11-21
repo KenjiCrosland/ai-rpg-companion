@@ -32,7 +32,10 @@ const traitForm = (over) => {
       passive_effect: 'other',
       ...over,
     }],
-  }), {});
+    // the rider path is only for a RE-SEATED idea, and a non-reseated trait that INFLICTS is now
+    // refused outright (item 4, owner 2026-11-21) — so the form this helper builds is the
+    // re-seated one, which is what every test here is about
+  }), { reseated: true });
   const f = parsed?.traits?.[0];
   return f ? { kind: 'trait', f, section: 'Traits' } : null;
 };

@@ -7005,7 +7005,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               .map((e) => String(e.name).replace(/ \(.*\)$/, '').trim());
             const sheetHasCurse = Object.values(sections ?? {}).flat().some((e) => /\bis cursed\b/i.test(String(e?.text ?? '')));
             const sheetHasAura = Object.values(sections ?? {}).flat().some((e) => /any creature that starts its turn in a \d+-foot Emanation/i.test(String(e?.text ?? '')));
-            const seatParseOpts = { attackCap: 0, traitSlots: 1, attackNames: sheetAttackNames, declaredAsk: askedT ?? null, hasCurse: sheetHasCurse, hasAura: sheetHasAura };
+            const seatParseOpts = { attackCap: 0, traitSlots: 1, attackNames: sheetAttackNames, declaredAsk: askedT ?? null, hasCurse: sheetHasCurse, hasAura: sheetHasAura, reseated: !!idea?.reseated };
             let wrote = parseAuthorResponse(rawS, seatParseOpts);
             // DEAFENED ALONE IS SWAPPED, NOT DROPPED (owner's ruling, 18 November evening). On the
             // SECOND ask only, and only when that refusal is the whole of what was wrong: the bells
@@ -8365,6 +8365,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // for any other miss, rather than shipping a row a GM cannot run.
         {
           const tpl = TEMPLATE_BY_ID.get(tt.template?.id ?? tt.template ?? tt.row?.template);
+          // A CREATURE THAT CANNOT PASS FOR AN OBJECT DOES NOT GET FALSE APPEARANCE (item 5, owner
+          // 2026-11-21). s01's Dire Wolf shipped "Frozen Shape": "What the heck is a frozen shape?
+          // This seems to borrow the inanimate object template but doesn't work in this case."
+          //
+          // Print gives no list to copy — no creature in srd52-monsters.json holds it, and the
+          // template cites the 2014 Mimic, Gargoyle and Animated Armor — so this is the handoff's
+          // call and the owner can widen it: a Construct, a Plant, an Elemental or an Ooze. It is
+          // declined at the LANDING and not on the menu, so the fit prompt is unchanged on every
+          // other sheet.
+          if ((tpl?.id ?? tpl?.key) === 'false-appearance') {
+            const CAN_PASS_FOR_AN_OBJECT = ['construct', 'plant', 'elemental', 'ooze'];
+            const kind = String(p?.type ?? options.resolvedType ?? '').toLowerCase();
+            if (!CAN_PASS_FOR_AN_OBJECT.some((k) => kind.includes(k))) {
+              trace('trait declined — it cannot pass for an object:', `"${tt.row.name}" is false-appearance on a ${kind || 'creature of no declared type'}; the template is print's shape for a Construct, a Plant, an Elemental or an Ooze, and the seat goes on as it does for any other miss (item 5)`);
+              return;
+            }
+          }
           if (tpl?.trigger === 'on_hit') {
             trace('trait declined — it needs a hit:', `"${tt.row.name}" is a ${tpl.id} row, whose own declared trigger is on_hit — as a trait it is a saving throw with no target and nothing saying when it fires, so the seat goes on as it does for any other miss (fault 3). It is not welded here: which attack it would ride is a choice the engine does not get to make, and the rider form exists for a call that answers it`);
             return;

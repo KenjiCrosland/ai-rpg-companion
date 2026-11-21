@@ -38,7 +38,7 @@ const A_PLAIN_TRAIT = {
     acts: null, heals: false, mechanics: 1, quantities: 0, passive_effect: 'defense' }],
 };
 
-const build = async (answers, { path, mechanics, holds, cr, concept } = {}) => {
+const build = async (answers, { path, mechanics, holds, cr, concept, seat = 'action' } = {}) => {
   const seatPrompts = [];
   let cached = null;
   let hostHeld = false;
@@ -55,7 +55,9 @@ const build = async (answers, { path, mechanics, holds, cr, concept } = {}) => {
         casts: { yes: false, because: '', implied_by_kind: false } });
     }
     if (p.startsWith('You are inventing the SIGNATURE ability')) {
-      return JSON.stringify({ action: { idea: IDEA, section: 'action', trigger: 'on_hit', effect: 'condition', family: 'none' } });
+      return seat === 'trait'
+        ? JSON.stringify({ trait: { idea: IDEA, section: 'trait', trigger: 'always', effect: 'other', family: 'none' } })
+        : JSON.stringify({ action: { idea: IDEA, section: 'action', trigger: 'on_hit', effect: 'condition', family: 'none' } });
     }
     if (p.startsWith("A monster's signature ability has been described in plain words")) {
       return JSON.stringify({ template: null, declined_because: 'no_fit', closest: null, missing: 'a low sweep through a knot of legs' });
@@ -265,4 +267,75 @@ describe('an at-will area swap written for a damage idea deals damage', () => {
     priceAreaSwapAtHalfAHit(s);
     expect(barrage(s).text).not.toMatch(/\d+ \(\d+d\d+/);
   });
+});
+
+/**
+ * A TRAIT MAY NOT PUT A CONDITION ON ANOTHER CREATURE WITH NO SAVE (item 4, owner 2026-11-21).
+ * s11's Briar Blood: anyone who damages the vampire with a melee weapon is Poisoned for a round,
+ * no save. "no save is bad. needs a con save."
+ */
+describe('a trait that inflicts a condition with no save is refused', () => {
+  const INFLICTING_TRAIT = {
+    attacks: [], saves: [], strikes: [], reactions: [], riders: [], auras: [], crossRef: null, unplaced: [],
+    traits: [{ clause: CONCEPT, name: 'Briar Blood', trigger: 'When a creature damages it with a melee weapon',
+      effect: 'that creature has the Poisoned condition until the end of its next turn', imposes: 'Poisoned',
+      condition_relation: 'inflicts', acts: null, heals: false, mechanics: 1, quantities: 0, passive_effect: 'threat' }],
+  };
+  const A_CLEAN_TRAIT = {
+    attacks: [], saves: [], strikes: [], reactions: [], riders: [], auras: [], crossRef: null, unplaced: [],
+    traits: [{ clause: CONCEPT, name: 'Bone-Deep Habit', trigger: 'While it holds a weapon in both hands',
+      effect: 'it does not suffer Disadvantage on attack rolls while Prone', imposes: null,
+      condition_relation: 'none', acts: null, heals: false, mechanics: 1, quantities: 0, passive_effect: 'defense' }],
+  };
+
+  test('it is not on the sheet, and the seat was asked twice', async () => {
+    const { monster, seatAsks } = await build([INFLICTING_TRAIT, A_CLEAN_TRAIT], { seat: 'trait' });
+    expect(named(monster, 'Briar Blood')).toBeUndefined();
+    expect(seatAsks).toBe(2);
+  }, 30000);
+
+  test('and a trait that imposes nothing on anyone else lands on the first ask', async () => {
+    const { monster, seatAsks } = await build([A_CLEAN_TRAIT], { seat: 'trait' });
+    expect(named(monster, 'Bone-Deep Habit')).toBeDefined();
+    expect(seatAsks).toBe(1);
+  }, 30000);
+});
+
+/**
+ * FALSE APPEARANCE ONLY WHERE A CREATURE CAN PASS FOR AN OBJECT (item 5, owner 2026-11-21).
+ * s01's Dire Wolf shipped "Frozen Shape": "What the heck is a frozen shape? This seems to borrow
+ * the inanimate object template but doesn't work in this case." No printed creature holds the
+ * template, so the list is the handoff's call and the owner can widen it.
+ */
+describe('false-appearance lands only on a creature that can pass for an object', () => {
+  const fitPicks = (template) => async (p) => JSON.stringify({ template, because: 'it passes for an ordinary thing', closest: null, missing: null });
+  const buildWithFit = async ({ concept, path, type }) => {
+    let cached = null; const traces = [];
+    const orig = console.log; console.log = (...a) => { traces.push(a.join(' ')); };
+    try {
+      await generateReskin({ mechanics: [], archetype: 'brute', concept, userConcept: concept, cr: 4, path, resolvedType: type }, async (p0) => {
+        const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+        if (p.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'it stands utterly still and is taken for a thing', section: 'trait', trigger: 'always', effect: 'other', family: 'none' } });
+        if (p.startsWith("A monster's signature ability has been described in plain words")) return JSON.stringify({ template: 'false-appearance', because: 'it passes for an ordinary thing', closest: null, missing: null });
+        if (p.startsWith('You are writing ONE ability')) return JSON.stringify({ attacks: [], saves: [], traits: [], strikes: [], reactions: [], riders: [], auras: [], crossRef: null, unplaced: [] });
+        const rk = keysOf(p, 'renames');
+        if (rk.length || !cached) cached = JSON.stringify({ name: 'Test Thing', type, size: 'Medium', alignment: 'Unaligned', senses: 'darkvision 60 ft.', languages: 'None', renames: Object.fromEntries(rk.map((k, i) => [k, `Named Row${i}`])), damage_types: {}, conditions: { condition_minor: 'Prone' }, melee_rider: 'none', projectile: 'stone', wildcard: '' });
+        return cached;
+      });
+    } finally { console.log = orig; }
+    return traces.join('\n');
+  };
+
+  // The DECLINE AT THE LANDING is pinned in pipelines.spec on an Undead (the skeleton's "Deathless
+  // Grin"), which is the route the Dire Wolf took. Here the outcome is what matters: on a Beast the
+  // template does not reach the sheet, whichever gate stops it.
+  test('it does not reach a Beast\'s sheet', async () => {
+    const tr = await buildWithFit({ concept: 'a dire wolf with a frost-rimed hide', type: 'Beast', path: { path: 'homebrew', print_body: null, relation: null, class: null } });
+    expect(tr).not.toMatch(/signature template \(trait\): false-appearance/);
+  }, 30000);
+
+  test('and kept on a Construct', async () => {
+    const tr = await buildWithFit({ concept: 'an animated suit of plate that waits in a hall', type: 'Construct', path: { path: 'homebrew', print_body: null, relation: null, class: null } });
+    expect(tr).not.toMatch(/trait declined — it cannot pass for an object/);
+  }, 30000);
 });

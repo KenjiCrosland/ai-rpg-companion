@@ -72,7 +72,11 @@ describe('the twist path at a CR far from print\'s', () => {
     // typed and what the critic counted as a miss for three packages. So the row SHIPS, for that
     // clause, with the clause as its receipt by construction.
     expect(tr).toMatch(/seat takes its clause: "Deathless Grin" is HANDED "was a gladiator in a former life"/);
-    expect(Object.values(m.sections).flat().some((e) => e.template === 'false-appearance')).toBe(true);
+    // THE SUBJECT HERE IS THE CLAUSE, NOT THE TEMPLATE, and the first assertion is the subject.
+    // `false-appearance` no longer lands on an Undead (item 5, owner 2026-11-21: Construct, Plant,
+    // Elemental or Ooze), so the row that used to ship for this clause is declined at the landing
+    // and the seat goes on. That decline is what this second assertion now reads.
+    expect(tr).toMatch(/trait declined — it cannot pass for an object: "Deathless Grin"/);
   });
 });
 
@@ -491,7 +495,7 @@ describe("the twist seat receives its clause (the critic's prescription, 2026-10
   });
   test('and with a quote that names only the body (the skeleton\'s former life)', async () => {
     const r = await fitFor({ concept: 'a skeleton who was a gladiator in a former life', cr: 4, archetype: 'brute', body: 'Skeleton', template: 'false-appearance', rowName: 'Old Champion', asked: 'a skeleton' });
-    expect(r.rows.some((e) => e.template === 'false-appearance')).toBe(true);
+    expect(r.trace).toMatch(/trait declined — it cannot pass for an object|seat takes its clause/); // item 5: a Skeleton is Undead
     expect(r.trace).toMatch(/seat takes its clause: "Old Champion" is HANDED "(?:who )?was a gladiator in a former life"|keys would have bound/);
   });
   test('control: a print body that asks for NOTHING still takes no row', async () => {
