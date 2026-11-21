@@ -1886,6 +1886,21 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // hit to hang on. Declared data, not a reading of its text.
     ['needs-a-hit', (t) => !(section === 'trait' && t.trigger === 'on_hit')
     ],
+    // WHO MAY CURSE UNASKED (owner's ruling, 2026-11-21). `curse-debt` is a PERMANENT curse in
+    // place of one attack, and it answers to nine everyday words besides the four that name a
+    // curse: debt, price, bargain, owe, tithe, toll, judgment, rebuke, sin — and oath. So a tax
+    // collector, a judge, a bell-ringer and a creditor all reached a permanent curse without the
+    // GM typing one; s17's Pit Fiend took it on "oath", which the owner allowed for a fiend that
+    // binds by oaths and for that case only.
+    //
+    // The four curse words bind on anything. The rest bind only where cursing is what the creature
+    // IS: a Fiend, a Fey, an Undead or an Aberration. The type is declared by the resolve, and the
+    // curse words are print's own name for the thing, not a guess at what the GM meant.
+    ['curse-by-type', (t) => {
+      if (t.id !== 'curse-debt' && t.key !== 'curse-debt') return true;
+      if (/\b(?:curse|cursed|curses|cursing|hex|hexed|hexes|accursed|jinx|jinxed)\b/i.test(`${text ?? ''} ${concept ?? ''}`)) return true;
+      return ['fiend', 'fey', 'undead', 'aberration'].some((k) => String(type ?? '').toLowerCase().includes(k));
+    }],
     ['trigger', (t) => triggerCompatible(trigger, t.trigger, t.section)
     ],
     ['denied-clause', (t) => !(text && deniedBy(t, text).length)
