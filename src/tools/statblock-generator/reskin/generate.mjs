@@ -13003,10 +13003,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const all = Object.values(monster.sections).flat();
       const bareOf = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
       const host = all.find((h) => h !== e && bareOf(h?.name) === bareOf(e.strikeHost));
-      const why = !all.some((x) => /^Multiattack/.test(String(x?.name ?? ''))) ? 'this sheet has no Multiattack, and the exchange is the only thing that limits it to once a turn'
-        : !host ? `the attack it points at, "${e.strikeHost}", is not on this sheet`
-          : strikeAddsNothing({ condition: e.imposes }, host) ? `its save hands out ${e.imposes}, which "${host.name}" already applies on a hit`
-            : null;
+      // ONE ARM, AND IT IS THE ONE RULE 7 ORDERS. I had two more here — a sheet with no
+      // Multiattack and a host that is not on the sheet — and neither is reachable: both are
+      // settled at the seat, which refuses the answer and asks again, and I could not build a path
+      // that reaches them with a strike already landed. Untestable code that claims to guard
+      // something is worse than no code, so they are gone (owner, 2026-11-21).
+      const why = host && strikeAddsNothing({ condition: e.imposes }, host) ? `its save hands out ${e.imposes}, which "${host.name}" already applies on a hit` : null;
       if (!why) continue;
       es.splice(i, 1);
       sweepDeadName(monster.sections, e.name, null, trace);
