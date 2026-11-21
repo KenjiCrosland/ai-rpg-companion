@@ -520,6 +520,25 @@ export const SHEET_LINTS = [
       return [`${gated.map(({ r }) => `"${BARE(r.name)}"`).join(' and ')}: ${gated.length} rows on a Recharge — ${kind}`];
     },
   },
+  {
+    rule: 'strike-differs-from-host',
+    reads: 'the finished sheet',
+    why: "a strike whose attack line is not its host's. The owner's ruling is that a strike IS the named attack with a save added; print canon restamps the host afterwards and the clone is left behind. 0 everywhere today, because no strike on a printed body had ever shipped — which is the point of having it before one does",
+    run: (rows) => {
+      const out = [];
+      const bareOf = (n) => BARE(n).toLowerCase();
+      for (const { sec, r } of rows.filter(({ r }) => r.strike && r.strikeHost)) {
+        const host = rows.find(({ r: h }) => h !== r && bareOf(h?.name) === bareOf(r.strikeHost) && /Attack Roll|Weapon Attack/.test(TEXT(h)));
+        // `rows` yields { sec, r } wrappers — the row is `host.r`, and reading the wrapper gave an
+        // empty string, which made every strike differ from its host
+        if (!host) { out.push(`${sec}/${BARE(r.name)}: clones "${r.strikeHost}", which is not an attack row on this sheet`); continue; }
+        // the strike's head is everything before its save clause; it must be the host's whole line
+        const head = TEXT(r).split(/\s(?=If the target is a creature, it is subjected)/)[0].trim();
+        if (head !== TEXT(host.r).trim()) out.push(`${sec}/${BARE(r.name)}: its attack line is not "${BARE(host.r.name)}"'s — "${head.slice(0, 70)}…" against "${TEXT(host.r).slice(0, 70)}…"`);
+      }
+      return out;
+    },
+  },
 ];
 
 /** Every finding on one sheet, as `{ rule, reads, message }`. */

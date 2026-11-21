@@ -1447,7 +1447,7 @@ export const strikeRowFrom = (sections, strike, scaled, cr) => {
     // combination" — which lets the drake use it with BOTH attacks, every turn, the opposite of the
     // ruling it was built for. It is offered by the replacement clause instead, and `strike` is how
     // both passes tell it from a weapon.
-    name: `${String(strike.name)}${gate}`, authored: true, authoredSeat: true, strike: true,
+    name: `${String(strike.name)}${gate}`, authored: true, authoredSeat: true, strike: true, strikeHost: String(src.name ?? '').replace(/ \(.*\)$/, '').trim(),
     ...(gate ? { gate: 'Recharge 5-6' } : {}),
     text: `${head} If the target is a creature, it is subjected to the following effect. *${strike.save} Saving Throw*: DC ${scaled.dc}. *Failure:* ${failure}.`,
     ...(strike.clauseId ? { clauseId: strike.clauseId } : {}),
@@ -8894,6 +8894,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // PROVENANCE: a chassis nova is the donor's own row under the model's name (the
     // gong's Tremor Toll appeared with no template line — critic 2026-09-29)
     for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
+      // THIS PASS ONLY LABELS — it edits nothing, and the lines it says are "its edits" belong to
+      // the passes below it. It still read a gated strike as the chassis's own nova and announced
+      // it as such on s01, which is a trace that tells a reader the wrong thing about the sheet.
+      if (e.strike) continue;
       if (!/\(Recharge [\d–-]+\)|\d\/Day/.test(e.name ?? '') || !/Saving Throw/.test(e.text ?? '') || e.library) continue;
       const bare = String(e.name ?? '').replace(/ \(.*\)$/, '');
       const from = Object.entries(p.renames ?? {}).find(([, v]) => String(v ?? '').trim().toLowerCase() === bare.toLowerCase())?.[0];
@@ -9469,7 +9473,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // and the next row's test began mid-string, able to miss a match at its
           // start. `replace` is a no-op when nothing matches, so the guard was
           // never needed.
-          for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3) e3.text = String(e3.text ?? '').replace(re, to);
+          for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3) {
+            e3.text = String(e3.text ?? '').replace(re, to);
+            // A STRIKE FOLLOWS ITS HOST'S RENAME (fault 1, owner 2026-11-20). print canon restamps
+            // the host with print's own row and name; a strike cloned from it must keep pointing at
+            // it, or the re-derivation below has nothing to read. s11's trace still said it cloned
+            // "Thornblade", a name no longer on the sheet.
+            if (e3.strikeHost && e3.strikeHost.toLowerCase() === String(from).toLowerCase()) e3.strikeHost = to;
+          }
           e.print = true; // print's named melee row carries the flag the ranged rename already sets — one reader (the gates skip print's composition) saw the Lich's Paralyzing Touch unflagged and failed it (forty, 2026-10-18)
           trace('print canon attack:', `"${from}" -> "${to}" — the ${pc.name}'s own row`);
         });
@@ -12842,6 +12853,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
+  // A STRIKE IS ITS HOST PLUS A SAVE (owner's ruling, 2026-11-20). The row is written at the seat
+  // from the attack as it stood THEN, and print canon afterwards restamps the host with print's own
+  // row — numbers, reach, damage types and all — leaving the clone behind. Once a strike survives
+  // on a printed body, which it never did before this round, the two drift apart:
+  //
+  //   s11  Grave Strike 8 (1d8 + 4) Bludgeoning + 7 (2d6) Necrotic, and the target is Grappled
+  //        Crimson Bramble Stalk 13 (2d8 + 4) Slashing + 9 (2d8) Necrotic, no grapple
+  //   s01  Bite 8 (1d10 + 3) Piercing, and the target has the Prone condition
+  //        Flank the Herd 6 (1d6 + 3) Piercing, no Prone
+  //
+  // On the Vampire the strike out-damages the attack it replaces by half again; on the wolf it is
+  // weaker and drops the Bite's Prone. Neither is the attack plus a save.
+  //
+  // ONE DERIVATION, HERE, after everything that renames or restamps a row: the head is the host's
+  // whole line as the finished sheet has it — bonus, reach, dice, damage types and whatever it does
+  // on a hit — and the strike's own save clause follows it unchanged. The seat's version is a draft
+  // and this is the one that ships.
+  for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
+    if (!e?.strike || !e.strikeHost) continue;
+    const bareOf = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+    const host = Object.values(monster.sections).flat().find((h) => h !== e && bareOf(h?.name) === bareOf(e.strikeHost) && /Attack Roll|Weapon Attack/.test(String(h?.text ?? '')));
+    if (!host) { trace('strike host missing:', `"${e.name}" was cloned from "${e.strikeHost}", which is no longer an attack row on this sheet — its line is left as written`); continue; }
+    const saveClause = String(e.text ?? '').match(/\s(If the target is a creature, it is subjected[\s\S]*)$/);
+    if (!saveClause) continue;
+    const before = String(e.text ?? '');
+    e.text = `${String(host.text ?? '').replace(/\s*$/, '')} ${saveClause[1]}`;
+    if (e.text !== before) trace('strike derived from its host:', `"${e.name}" takes "${host.name}" as the finished sheet has it — ${String(host.text ?? '').slice(0, 70)}…`);
+  }
   syncMultiattackCitations(monster.sections, trace); // every citation reads its row, after everything that renames
   stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
