@@ -3922,7 +3922,7 @@ Delete
 
 ## 22-goblin-boss
 
-## 01. Goblin Boss — CR auto
+## 22. Goblin Boss — CR auto
 
 **Input:** `name: Goblin Boss | `
 **Donor:** skirmisher-1 -> CR 1
@@ -6470,7 +6470,7 @@ Delete
 
 ## 36-sarnoth
 
-## 01. Sarnoth — CR 4
+## 36. Sarnoth — CR 4
 
 **Input:** ` | role: brute`
 **Donor:** brute-2-charger -> CR 4
