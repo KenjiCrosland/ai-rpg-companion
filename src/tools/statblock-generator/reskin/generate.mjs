@@ -8171,7 +8171,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // declined where the GM typed no curse word and the creature is not a Fiend, Fey, Undead or
       // Aberration, and the seat goes on as it does for any other miss.
       if ((actionT.template === 'curse-debt' || actionT.row?.template === 'curse-debt')
-        && !mayCurseUnasked(`${options.userConcept ?? concept ?? ''} ${idea?.clause ?? ''}`, p?.type ?? options.resolvedType)) {
+        && !mayCurseUnasked(`${options.userConcept ?? concept ?? ''} ${ideasT?.action?.clause ?? ''}`, p?.type ?? options.resolvedType)) {
         trace('curse declined — nobody asked for one:', `"${actionT.row.name}" is curse-debt on a ${String(p?.type ?? 'creature of no declared type')}, and the GM typed no curse word — a permanent curse is not what "${String(options.userConcept ?? concept ?? '').slice(0, 50)}" asked for (owner's ruling, 21 November)`);
         dropLandedRow(actionT.row);
         actionT = null;

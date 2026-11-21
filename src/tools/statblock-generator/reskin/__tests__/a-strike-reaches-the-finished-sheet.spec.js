@@ -339,3 +339,46 @@ describe('false-appearance lands only on a creature that can pass for an object'
     expect(tr).not.toMatch(/trait declined — it cannot pass for an object/);
   }, 30000);
 });
+
+/**
+ * THE CURSE GATE AT THE LANDING (owner, 2026-11-21 afternoon).
+ *
+ * The predicate had tests and the LANDING did not, so a variable that is not in that scope —
+ * `idea`, where the surrounding code has `ideasT` — threw on the only two sheets of the forty
+ * where curse-debt actually lands. "Statblock generation failed: idea is not defined." The suite
+ * was green; the replay found it.
+ */
+describe('curse-debt is declined where nobody asked for a curse', () => {
+  const pick = (concept, type, path) => async () => {
+    let cached = null; const traces = [];
+    const orig = console.log; console.log = (...a) => { traces.push(a.join(' ')); };
+    try {
+      await generateReskin({ mechanics: [], archetype: 'caster', concept, userConcept: concept, cr: 5, path, resolvedType: type }, async (p0) => {
+        const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
+        if (p.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'it lays a lasting debt on one creature', section: 'action', trigger: 'save', effect: 'damage', family: 'none' } });
+        if (p.startsWith("A monster's signature ability has been described in plain words")) return JSON.stringify({ template: 'curse-debt', because: 'it exacts what it is owed', closest: null, missing: null });
+        if (p.startsWith('You are writing ONE ability')) return JSON.stringify({ attacks: [], saves: [], traits: [], strikes: [], reactions: [], riders: [], auras: [], crossRef: null, unplaced: [] });
+        const rk = keysOf(p, 'renames');
+        if (rk.length || !cached) cached = JSON.stringify({ name: 'Test Creature', type, size: 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'Common', renames: Object.fromEntries(rk.map((k, i) => [k, `Named Row${i}`])), damage_types: {}, conditions: { condition_minor: 'Prone' }, melee_rider: 'none', projectile: 'ash', wildcard: '' });
+        return cached;
+      });
+    } finally { console.log = orig; }
+    return traces.join('\n');
+  };
+  const HOMEBREW = { path: 'homebrew', print_body: null, relation: null, class: null };
+
+  test('a Humanoid tollkeeper does not get one, and the generation does not throw', async () => {
+    const tr = await pick('a tollkeeper who takes a toll from the dying', 'Humanoid', HOMEBREW)();
+    expect(tr).toMatch(/curse declined — nobody asked for one/);
+  }, 30000);
+
+  test('a Fiend does', async () => {
+    const tr = await pick('a devil who collects the oaths of dying knights', 'Fiend', HOMEBREW)();
+    expect(tr).not.toMatch(/curse declined — nobody asked for one/);
+  }, 30000);
+
+  test('and so does a Humanoid the GM called a curser', async () => {
+    const tr = await pick('a witch who curses trespassers', 'Humanoid', HOMEBREW)();
+    expect(tr).not.toMatch(/curse declined — nobody asked for one/);
+  }, 30000);
+});
