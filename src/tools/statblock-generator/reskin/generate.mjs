@@ -829,6 +829,30 @@ export const priceAreaSwapAtHalfAHit = (sections, traceFn = () => {}) => {
     // AT WILL ONLY: a gate in the NAME or in the TEXT means the row paid for its damage
     if (!row || / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(String(row.name)) || TEXT_GATE.test(row.text ?? '') || !AREA_ROW.test(row.text ?? '')) continue;
     const dealt = wholeHit(row.text);
+    // AND AN IDEA ABOUT DAMAGE LANDS ON A ROW THAT DEALS SOME (item 3, owner 2026-11-21). His
+    // Knife Ball shipped Blade Barrage — a 30-foot cone that pushes and knocks Prone, in an
+    // attack's place, with no damage at all: "Blade barrage should deal damage. They are blades."
+    //
+    // This is the one mismatch between an idea's declared effect and what landed that can be fixed
+    // from declared data alone, and R1 already prices the row: half of one whole hit of the attack
+    // it replaces, saved for half, in that attack's own damage type. The cap below writes exactly
+    // that number, so the floor is the same arithmetic read the other way. Only here: the idea said
+    // damage, the row is an at-will area swap, and it deals none.
+    if (!dealt && row.ideaEffect === 'damage') {
+      const attacks0 = rows.filter((e) => /Attack Roll|Weapon Attack/.test(String(e.text ?? ''))
+        && new RegExp(`\\b${bareOf(e.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text)));
+      const host0 = attacks0.slice().sort((a, b) => wholeHit(b.text) - wholeHit(a.text))[0];
+      const hit0 = host0 ? wholeHit(host0.text) : 0;
+      const type0 = host0 ? (/(\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)) (\w+) damage/.exec(String(host0.text)) ?? [])[2] : null;
+      if (hit0 && type0) {
+        const want = Math.max(1, Math.round(hit0 / 2));
+        const dice = engineDiceFor(want);
+        const sentence = `${dice.avg} (${dice.dice}) ${type0} damage`;
+        row.text = String(row.text).replace(/(\*Failure:\*\s*)/, `$1${sentence}, and `).replace(/\s{2,}/g, ' ');
+        if (!/\*Success:\*/.test(row.text)) row.text = `${String(row.text).replace(/\s*$/, '')} *Success:* Half damage only.`;
+        traceFn('an idea about damage gets damage:', `"${row.name}" — the idea was stamped damage and the row dealt none; R1's price is half of one whole hit of "${host0.name}" (${hit0}), so ${sentence}, save for half`);
+      }
+    }
     if (!dealt) continue;
     // THE ATTACK IT REPLACES is the BIGGEST whole hit the Multiattack offers. The GM chooses which
     // attack to give up, which argues for the smallest — but the smallest would price the row out
@@ -8129,6 +8153,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       { const yk = (scaled.speciesYielded ?? []).find((y) => y.shape === (actionT.template ?? actionT.row?.template)); if (yk) { const gateSuffix = (/ \(.*\)$/.exec(actionT.row.name) ?? [''])[0]; actionT.row.name = `${yk.name}${gateSuffix}`; actionT.row.kit = yk.kit; actionT.row.clause = yk.clause; actionT.row.free = true; trace('kit credited:', `the signature bound ${yk.shape}, the shape the ${yk.kit} kit yielded to the cap — the row is the kit's ("${yk.name}"), free tier`); } } // (the tortle's Bulwark Withdrawal was Shell Defense — the critic's second species read)
       // ONE PUSH. A form that landed early (a strike, an aura) is already in `sections`; pushing
       // again put the same row on the sheet twice.
+      // THE IDEA'S DECLARED EFFECT TRAVELS WITH THE ROW (item 3, 2026-11-21). The idea call stamps
+      // every idea damage/condition/movement, and only the row knows which idea it came from — so
+      // the pricing pass downstream can ask whether an idea about damage landed on a row with none.
+      if (ideasT?.action?.effect && actionT.row.ideaEffect === undefined) actionT.row.ideaEffect = ideasT.action.effect;
       if (!(sections[actionT.section] ?? []).includes(actionT.row)) (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
       }

@@ -228,3 +228,41 @@ describe('a form that lands early and is then dropped is not on the sheet', () =
     expect(String(ma?.text ?? '')).not.toMatch(/replace one attack with a use of/);
   }, 30000);
 });
+
+/**
+ * AN IDEA ABOUT DAMAGE LANDS ON A ROW THAT DEALS SOME (item 3, owner 2026-11-21). His Knife Ball
+ * shipped Blade Barrage — a 30-foot cone that pushes and knocks Prone, in an attack's place, with
+ * no damage: "Blade barrage should deal damage. They are blades."
+ */
+describe('an at-will area swap written for a damage idea deals damage', () => {
+  const { priceAreaSwapAtHalfAHit } = require('../generate.mjs');
+  const sheet = (ideaEffect) => ({
+    Actions: [
+      { name: 'Multiattack', text: 'The ball makes two Blade attacks. It can replace one attack with a use of Blade Barrage.' },
+      { name: 'Blade', text: '*Melee Attack Roll:* +7, reach 5 ft. 18 (4d6 + 4) Slashing damage.' },
+      { name: 'Blade Barrage', ideaEffect, text: '*Dexterity Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* The target is pushed up to 10 feet and has the Prone condition.' },
+    ],
+  });
+  const barrage = (s) => s.Actions.find((r) => r.name === 'Blade Barrage');
+
+  test('it is given half of one whole hit of the attack it replaces, in that attack\'s type', () => {
+    const s = sheet('damage');
+    expect(barrage(s).text).not.toMatch(/\d+ \(\d+d\d+/);          // the defect is present
+    priceAreaSwapAtHalfAHit(s);
+    expect(barrage(s).text).toMatch(/\d+ \(\d+d\d+[^)]*\) Slashing damage/);
+    expect(barrage(s).text).toMatch(/\*Success:\* Half damage only\./);
+    expect(barrage(s).text).toMatch(/Prone condition/);            // and keeps what it did
+  });
+
+  test('and the same pick under an idea stamped condition deals none', () => {
+    const s = sheet('condition');
+    priceAreaSwapAtHalfAHit(s);
+    expect(barrage(s).text).not.toMatch(/\d+ \(\d+d\d+/);
+  });
+
+  test('a row with no idea stamp is untouched', () => {
+    const s = sheet(undefined);
+    priceAreaSwapAtHalfAHit(s);
+    expect(barrage(s).text).not.toMatch(/\d+ \(\d+d\d+/);
+  });
+});
