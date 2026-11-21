@@ -150,3 +150,27 @@ describe('strike-differs-from-host', () => {
     expect(hits(s, 'strike-differs-from-host')[0].message).toMatch(/not an attack row on this sheet/);
   });
 });
+
+/**
+ * AND THE CASE THE RULE MISREAD (owner, 2026-11-21). Since a strike is derived from its host, its
+ * text opens with the host's line — so reading the FIRST "has the X condition" in the row found the
+ * host's own rider and compared the host with itself. s06's Scree Buckle knocks Prone on a host
+ * that grapples, which is the ruling working, and the rule called it redundant.
+ */
+describe('strike-adds-nothing reads what the save hands out', () => {
+  const RUBBLE_LASH = { name: 'Rubble Lash', text: '*Melee Attack Roll:* +6, reach 5 ft. 16 (3d8 + 3) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14). While Grappled, the target has the Restrained condition.' };
+  const derived = (saveCondition, record) => ({ name: 'Scree Buckle', sections: { Actions: [RUBBLE_LASH, {
+    name: 'Scree Buckle', strike: true, strikeHost: 'Rubble Lash', ...(record ? { imposes: record } : {}),
+    text: `${RUBBLE_LASH.text} If the target is a creature, it is subjected to the following effect. *Strength Saving Throw*: DC 14. *Failure:* The target has the ${saveCondition} condition.`,
+  }] } });
+
+  test('s06: the host grapples and the save knocks Prone — silent', () => {
+    expect(hits(derived('Prone', 'Prone'), 'strike-adds-nothing')).toHaveLength(0);
+    expect(hits(derived('Prone'), 'strike-adds-nothing')).toHaveLength(0);   // and with no record, off the text
+  });
+
+  test('and it still fires when the save hands out what the host applies', () => {
+    expect(hits(derived('Grappled', 'Grappled'), 'strike-adds-nothing')).toHaveLength(1);
+    expect(hits(derived('Grappled'), 'strike-adds-nothing')).toHaveLength(1);
+  });
+});

@@ -482,7 +482,15 @@ export const SHEET_LINTS = [
     run: (rows) => {
       const out = [];
       for (const { sec, r } of rows.filter(({ r }) => r.strike)) {
-        const cond = (/has the (\w+) condition/.exec(TEXT(r)) ?? [])[1];
+        // WHAT THE SAVE HANDS OUT, not the first condition in the row (owner, 2026-11-21). Since a
+        // strike is derived from its host, its text OPENS with the host's line — so the first
+        // "has the X condition" in it is the HOST'S own rider, and the rule compared the host with
+        // itself and matched. It read s06's Scree Buckle as redundant when its save knocks Prone
+        // and the host grapples, and it would have done the same to the Vampire's Grave Strike and
+        // the Dire Wolf's Bite. The row's own record is the first reader; the text after "it is
+        // subjected to the following effect" is the fallback.
+        const after = String(TEXT(r)).split(/it is subjected to the following effect\.?/i)[1] ?? '';
+        const cond = String(r.imposes ?? '') || (/has the (\w+) condition/.exec(after) ?? [])[1];
         if (!cond) continue;
         // the host is the attack this strike clones: same damage line, not itself
         const dmg = (/(\d+ \(\d+d\d+[^)]*\))/.exec(TEXT(r)) ?? [])[1];
