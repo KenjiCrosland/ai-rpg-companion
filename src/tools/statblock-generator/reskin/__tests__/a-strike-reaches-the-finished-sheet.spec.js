@@ -144,3 +144,30 @@ describe('a redundant strike is refused and asked again', () => {
     expect(seatAsks).toBe(1);
   }, 30000);
 });
+
+/**
+ * THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).
+ *
+ * The sheet lints read the finished sheet, and three passes ran after their findings were stored:
+ * the audit port and its renames, the citation sync, and the derivation of a strike from its host.
+ * s06 shipped "strike-differs-from-host: Actions/Scree Snare" with no Scree Snare on it.
+ */
+describe('a sheet carries the findings of the sheet it is', () => {
+  const { lintSheet } = require('../sheet-lints.mjs');
+  const { SHEET_LINTS } = require('../sheet-lints.mjs');
+  const sheetRules = new Set(SHEET_LINTS.map((l) => l.rule));
+  const ruleOf = (line) => (/^([a-z0-9-]+):/.exec(String(line)) ?? [])[1];
+
+  test('every sheet-lint finding stored on the sheet is one the finished sheet still has', async () => {
+    const { monster } = await build([A_STRIKE()]);
+    const stored = (monster.lint_findings ?? []).filter((f) => sheetRules.has(ruleOf(f)));
+    const live = lintSheet(monster).map((h) => `${h.rule}: ${h.message}`);
+    expect(stored).toEqual(live);
+  }, 30000);
+
+  test('and that holds on the body where the derivation rewrites the strike', async () => {
+    const { monster } = await build([A_STRIKE()], { path: { path: 'twist', print_body: 'Skeleton', relation: 'is', class: null } });
+    const stored = (monster.lint_findings ?? []).filter((f) => sheetRules.has(ruleOf(f)));
+    expect(stored).toEqual(lintSheet(monster).map((h) => `${h.rule}: ${h.message}`));
+  }, 30000);
+});

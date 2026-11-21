@@ -44,7 +44,7 @@ import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
 import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf, checkBlock } from './checker.mjs';
-import { lintSheet, sheetCanCast, undefinedStateIn, contradictsSelfHeal } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
+import { lintSheet, SHEET_LINTS, sheetCanCast, undefinedStateIn, contradictsSelfHeal } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
 import { matcherPath, bodyForClass, bodyForPerson, hagFor, PRINT_ALIAS, printAliasFor } from './path.mjs';
 export { hagFor, PRINT_ALIAS }; // one definition, in path.mjs (2026-11-09); re-exported so every caller and test is unchanged
@@ -12895,6 +12895,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // A sheet with ONE attack row and a Multiattack naming it is correct and passes. A sheet with no
   // Multiattack at all is not this bug.
   assertSomethingToRoll(monster.sections);
+  // THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).
+  //
+  // The sheet lints read the finished sheet — that is the whole premise of the instrument — and
+  // three passes run after the point where their findings were stored: the audit port and its
+  // renames, the citation sync, and the derivation of a strike from its host. So what a sheet
+  // CARRIED described a sheet that no longer existed. s06 shipped
+  // "strike-differs-from-host: Actions/Scree Snare …" with no Scree Snare on it: the audit renamed
+  // the row to Scree Buckle after the lint ran, and the derivation then made the finding false as
+  // well. My own column for that rule read 0 because I linted the RETURNED sheets, which is true
+  // of the sheets and was not true of what they carried.
+  //
+  // The sheet-lint entries are recomputed here, last, and replace the ones stored earlier.
+  // Everything else in `lint_findings` is left as it was: those findings belong to passes that
+  // have already run and are not re-derivable from the finished sheet.
+  try {
+    const SHEET_RULES = new Set(SHEET_LINTS.map((l) => l.rule));
+    const isSheetRule = (line) => SHEET_RULES.has((/^([a-z0-9-]+):/.exec(String(line)) ?? [])[1]);
+    const fresh = lintSheet(monster).map((h) => `${h.rule}: ${h.message}`);
+    const kept = (monster.lint_findings ?? []).filter((f) => !isSheetRule(f));
+    const before = (monster.lint_findings ?? []).filter(isSheetRule);
+    monster.lint_findings = [...kept, ...fresh];
+    if (before.join('|') !== fresh.join('|')) trace('sheet lint re-read at ship:', `${before.length} finding(s) stored before the audit and the derivation, ${fresh.length} on the finished sheet`);
+  } catch (e) { trace('sheet lint re-read skipped:', String(e?.message ?? e)); }
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }
