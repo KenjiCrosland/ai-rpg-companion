@@ -317,3 +317,63 @@ export const ribbonFamilyRefusal = (sentence, opts) => ribbonFaults(sentence, op
  * print's flat voice, and the ask asks for it — but a simile is NOT refused. This is for the report.
  */
 export const similesIn = (text) => (String(text ?? '').match(/\b(?:as though|as if|like)\b/gi) ?? []).length;
+
+/* ──────────────── WHICH SHEETS, AND WHICH FAMILIES ────────────────
+ *
+ * None of this is left to the model. It declined nothing in eighty asks, so the engine decides.
+ */
+
+/** Print's own size ladder. `sheds` is kept for Large and larger — "the goblin boss with dandruff is weird". */
+const LARGE_OR_LARGER = ['Large', 'Huge', 'Gargantuan'];
+export const shedsSuits = (size) => LARGE_OR_LARGER.includes(String(size ?? '').trim());
+
+/**
+ * Whether this sheet takes a ribbon, read from what the route already decided — the path, and
+ * whether the GM typed anything beyond a printed name. The GM's words are NOT read again here.
+ *
+ * The owner: "I don't like us adding ribbons to owlbear and goblin boss. If they are twists and if
+ * it's a specific ask it can be a ribbon but not otherwise." On the forty that is exactly the three
+ * sheets whose path is `exact` — s19, s21, s22 — and no others.
+ *
+ * The blank form takes one. That is Fable's call, not the owner's: the whole creature is invented
+ * there, so a ribbon is no more of an addition than its name. Recorded here so it can be reversed
+ * in one line.
+ */
+export function sheetTakesARibbon({ path, twist } = {}) {
+  const p = String(path ?? '');
+  if (p === 'exact' && !twist) {
+    return { yes: false, because: 'a printed creature typed by name alone takes no ribbon' };
+  }
+  if (p === 'blank') {
+    return { yes: true, because: 'the blank form invents the whole creature, so a ribbon is no more of an addition than its name' };
+  }
+  if (p === 'exact') return { yes: true, because: 'a printed creature with a twist takes a ribbon' };
+  return { yes: true, because: `the ${p || 'unknown'} path is a creature of the GM's own` };
+}
+
+/**
+ * The three families this sheet is offered. A FIXED FUNCTION OF THE INPUT, so the same input is
+ * offered the same three and a replay is stable — the ribbon call's prompt must not drift between
+ * runs the way `cr: "auto"` does on s22.
+ *
+ * FNV-1a over the typed text seeds a small LCG, which shuffles the eligible families; the first
+ * three are offered. Over many inputs each family is offered about as often as the others, which is
+ * what the test asserts.
+ */
+export const RIBBONS_OFFERED = 3;
+const fnv1a = (text) => {
+  let h = 0x811c9dc5;
+  for (const ch of String(text ?? '')) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+};
+export function ribbonFamiliesOffered(typedText, { size } = {}) {
+  const eligible = RIBBON_FAMILIES.filter((f) => !f.largeOrLarger || shedsSuits(size)).map((f) => f.key);
+  let seed = fnv1a(typedText) || 1;
+  const next = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 0x100000000; };
+  const pool = [...eligible];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(RIBBONS_OFFERED, pool.length));
+}
