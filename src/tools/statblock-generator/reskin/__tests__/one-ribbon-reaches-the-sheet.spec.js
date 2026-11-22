@@ -151,7 +151,9 @@ describe('which sheets the call is made for', () => {
     const { monster, ribbonAsks } = await build({ ribbon: goodFor(['senses']), concept: 'Dire Wolf', path: 'exact' });
     expect(ribbonOf(monster)).toBeNull();
     expect(ribbonAsks).toBe(0);
-    expect(monster.generation.ribbon).toEqual({ written: false, because: 'a printed creature typed by name alone takes no ribbon' });
+    // AND NOTHING IS STAMPED. The strict replay of 22 November failed on this: a record on a sheet
+    // that was never asked made s21's Owlbear differ from its recording in `generation` alone.
+    expect(monster.generation.ribbon).toBeUndefined();
   });
 
   it('a printed creature with a twist gets one even when the route says exact', async () => {

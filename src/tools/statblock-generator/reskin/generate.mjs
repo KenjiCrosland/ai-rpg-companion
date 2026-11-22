@@ -13058,9 +13058,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     callLLM,
     trace,
   });
-  if (monster.generation) monster.generation.ribbon = ribbonOutcome.written
-    ? { family: ribbonOutcome.family, name: ribbonOutcome.row.name, offered: ribbonOutcome.offered, attempt: ribbonOutcome.attempt }
-    : { written: false, ...(ribbonOutcome.asked ? { offered: ribbonOutcome.offered, reasons: ribbonOutcome.reasons, ...(ribbonOutcome.failed ? { failed: true } : {}) } : { because: ribbonOutcome.because }) };
+  // NOTHING IS STAMPED ON A SHEET THAT NEVER ASKED. The strict replay caught this: s21's Owlbear
+  // takes no ribbon, but a `generation.ribbon` record on it made the sheet differ from its
+  // recording — `REPLAY DIFFERS (generation)` — while s19's did not, because s19 is print-exact
+  // with no calls and never reaches this line at all. A sheet that was not asked is untouched, and
+  // the trace above already says why. That is what "nothing else on the sheet moves" has to mean.
+  if (monster.generation && ribbonOutcome.asked) {
+    monster.generation.ribbon = ribbonOutcome.written
+      ? { family: ribbonOutcome.family, name: ribbonOutcome.row.name, offered: ribbonOutcome.offered, attempt: ribbonOutcome.attempt }
+      : { written: false, offered: ribbonOutcome.offered, reasons: ribbonOutcome.reasons, ...(ribbonOutcome.failed ? { failed: true } : {}) };
+  }
 
   // THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).
   //

@@ -693,7 +693,11 @@ const run = async () => {
       `**Donor:** ${(lines.find((l) => l.includes('[reskin] donor:')) ?? '—').replace(/.*donor: /, '')}`,
       // toLegacyModel drops `generation`, so on a 2014 block the signature
       // survives only on the cached 2024 printing
-      `**Signature:** ${(monster?.generation ?? monster?.other_edition?.generation)?.signature ?? '—'} · **elapsed** ${secs}s`,
+      // THE ELAPSED SECONDS ARE NOT IN THE SHEET'S HEADER (Fable, 2026-11-22). They differ every
+      // run, so a whole-file diff of two blocks files reported ~1,040 changed lines when one sheet
+      // had changed, and the diff that proves a round could not be read. They go in all.md's
+      // summary instead, which a blocks file assembled from the per-sheet files never meets.
+      `**Signature:** ${(monster?.generation ?? monster?.other_edition?.generation)?.signature ?? '—'}`,
       '',
       '### Block', '```', card, '```', '',
       ...(converted ? ['### Converted', '```', converted, '```', ''] : []),
@@ -709,14 +713,14 @@ const run = async () => {
 
     fs.writeFileSync(path.join(outDir, `${n}-${slug(monster?.name ?? label)}.md`), md);
     if (monster) fs.writeFileSync(path.join(outDir, `${n}-${slug(monster.name)}.json`), JSON.stringify(monster, null, 2));
-    results.push({ n, md, status, name: monster?.name ?? label, signature: (monster?.generation ?? monster?.other_edition?.generation)?.signature });
+    results.push({ n, md, status, secs, name: monster?.name ?? label, signature: (monster?.generation ?? monster?.other_edition?.generation)?.signature });
   }
 
   // drop the interceptor before the context goes, so a call still in flight cannot throw
   await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
   await browser.close();
 
-  const summary = results.map((r) => `- ${r.n} ${r.name} — ${r.status}, signature: ${r.signature ?? '—'}`).join('\n');
+  const summary = results.map((r) => `- ${r.n} ${r.name} — ${r.status}, signature: ${r.signature ?? '—'}, ${r.secs}s`).join('\n');
   fs.writeFileSync(path.join(outDir, 'all.md'),
     `# Smoke: ${batchName} (${stamp})\n\n${summary}\n\n---\n\n${results.map((r) => r.md).join('\n---\n\n')}`);
 
