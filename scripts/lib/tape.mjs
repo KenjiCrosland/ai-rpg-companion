@@ -107,10 +107,21 @@ export const decide = ({ mode = 'strict', liveFrom = null, prompt = '', tape = n
     // changed and the action seat's two had not, and the action seat was rolled again anyway and
     // came back a different row.
     //
-    // `--live-from miss` serves a recorded answer for as long as the prompt matches, goes live at
-    // the first prompt that does not, whatever its family, and latches from there.
+    // `--live-from miss` serves a recorded answer for as long as the prompt matches and goes live at
+    // each prompt that does not, whatever its family. IT DOES NOT LATCH — corrected 2026-11-22.
+    //
+    // I built it latching, by analogy with the family latch below, and the ribbon round showed why
+    // that is wrong. The ribbon call is the last call inside generateReskin and its answer goes
+    // into no other prompt, but the 2014 conversion call runs AFTER it: the latch sent that call
+    // live on all 13 of the forty's 2014 sheets, and four came back with the same rows reworded.
+    // Rows the round had promised not to touch moved.
+    //
+    // The honest rule is the one the family latch was already failing: IF A PROMPT MATCHES THE
+    // TAPE, THE RECORDED ANSWER IS A VALID ANSWER TO IT, whatever happened upstream. A prompt built
+    // from a changed answer does not match and goes live on its own account, so the latch was never
+    // buying safety — only discarding answers, which is the complaint that created this mode.
     if (liveFrom === 'miss') {
-      return hasAnswer(tape, prompt) ? { use: 'tape', family } : { use: 'live', family, flips: true };
+      return hasAnswer(tape, prompt) ? { use: 'tape', family } : { use: 'live', family };
     }
     if (family === liveFrom) return { use: 'live', family, flips: true }; // the named call itself goes live, and latches
     return hasAnswer(tape, prompt) ? { use: 'tape', family } : { use: 'miss', family };

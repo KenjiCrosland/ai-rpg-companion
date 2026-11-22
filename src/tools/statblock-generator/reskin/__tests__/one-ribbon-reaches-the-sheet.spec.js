@@ -181,7 +181,9 @@ describe('when the answer is refused', () => {
     expect(ribbonAsks).toBe(2);
     expect(ribbonOf(monster)).toBeNull();
     expect(monster.generation.ribbon.written).toBe(false);
-    expect(monster.generation.ribbon.reasons).toEqual(['it does damage', 'it does damage']);
+    // every fault is kept, joined, and handed to the re-ask — measured 2026-11-22, see below
+    expect(monster.generation.ribbon.reasons).toHaveLength(2);
+    for (const kept of monster.generation.ribbon.reasons) expect(kept).toMatch(/^it does damage/);
     expect(skeleton(monster)).toEqual(skeleton((await build({ ribbon: 'throw' })).monster));
   });
 
@@ -226,6 +228,64 @@ describe('the engine sets the DC, and the call never stops a sheet', () => {
     expect(ribbonOf(monster)).toBeNull();
     expect(monster.generation.ribbon.failed).toBe(true);
     expect(Object.values(monster.sections).flat().length).toBeGreaterThan(2);
+  });
+});
+
+describe('the re-ask is handed every fault', () => {
+  /**
+   * The first recording of this round handed the model one reason. In five of its six double
+   * refusals the second answer broke a DIFFERENT rule than the first — told its name was four
+   * words it shortened the name and wrote "40 feet"; told it was 42 words it cut the sentence and
+   * wrote "5 feet". Eleven sheets of thirty-eight lost their ribbon to that.
+   */
+  it('builds the re-ask with every fault listed, not the first', async () => {
+    const { buildRibbonPrompt } = await import('../ribbon.mjs');
+    const p = buildRibbonPrompt({ name: 'Rime Hound', type: 'Beast', size: 'Large', cr: 6, typed: CONCEPT,
+      families: ['senses'], refusedFor: ['it is 44 words, and a ribbon is 40 at most', '"45 feet" is not one of the distances'] });
+    expect(p).toContain('FOR EVERY REASON BELOW');
+    expect(p).toContain('- it is 44 words, and a ribbon is 40 at most');
+    expect(p).toContain('- "45 feet" is not one of the distances');
+  });
+
+  it('both faults are recorded when it is refused twice', async () => {
+    const offered = ribbonFamiliesOffered(CONCEPT, { size: 'Large' });
+    const twoFaults = { family: offered[0], name: 'A Name Of Four Words',
+      ribbon: `It can pinpoint a thing within 45 feet of itself. ${Array.from({ length: 34 }, () => 'word').join(' ')}` };
+    const { monster } = await build({ ribbon: [twoFaults, twoFaults] });
+    expect(monster.generation.ribbon.written).toBe(false);
+    for (const kept of monster.generation.ribbon.reasons) {
+      expect(kept).toMatch(/45 feet/);
+      expect(kept).toMatch(/name is 5 words/);
+      expect(kept).toContain(';'); // several faults, joined
+    }
+  });
+});
+
+describe("print's casing on the 2024 side", () => {
+  it('capitalises the rules terms a ribbon can hold', async () => {
+    const { ribbonTextFor2024 } = await import('../ribbon.mjs');
+    expect(ribbonTextFor2024('the ground it crosses is difficult terrain and it sheds dim light'))
+      .toEqual({ text: 'the ground it crosses is Difficult Terrain and it sheds Dim Light',
+        termsUsed: ['Difficult Terrain', 'Dim Light'] });
+  });
+
+  it('leaves a ribbon with no such term alone', async () => {
+    const { ribbonTextFor2024 } = await import('../ribbon.mjs');
+    const plain = 'The hound can cross snow and thin ice without breaking it.';
+    expect(ribbonTextFor2024(plain)).toEqual({ text: plain, termsUsed: [] });
+  });
+
+  it('the row that reaches the sheet carries print\'s casing', async () => {
+    let concept = null;
+    for (let i = 0; i < 4000 && !concept; i += 1) {
+      const t = `a marsh thing of the ninth kind, number ${i}`;
+      if (ribbonFamiliesOffered(t, { size: 'Large' })[0] === 'moves') concept = t;
+    }
+    const lower = { family: 'moves', name: 'Marsh Way',
+      ribbon: 'It can cross fen water without sinking, and the ground behind it becomes difficult terrain.' };
+    const { monster } = await build({ ribbon: lower, concept, printBody: null, path: 'homebrew' });
+    expect(ribbonOf(monster).text).toContain('Difficult Terrain');
+    expect(ribbonOf(monster).text).not.toContain('difficult terrain');
   });
 });
 

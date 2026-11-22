@@ -27,13 +27,34 @@ describe('--live-from miss serves while the prompt matches', () => {
     expect(run('You are writing ONE ability — call 3, and the sheet has changed')).toBe('live');
   });
 
-  test('and it LATCHES: a later call whose prompt would have matched is live too', () => {
+  /**
+   * IT DOES NOT LATCH — corrected 2026-11-22, and this test used to assert the opposite.
+   *
+   * I built the latch by analogy with the family latch below. The ribbon round showed the cost: the
+   * ribbon is the last call inside generateReskin and its answer goes into no other prompt, but the
+   * 2014 conversion runs after it. The latch sent that call live on all 13 of the forty's 2014
+   * sheets and four came back with their existing rows reworded — rows the round had promised not
+   * to touch.
+   *
+   * If a prompt matches the tape, the recorded answer is a valid answer to it. A prompt built from
+   * a changed answer does not match, and goes live on its own account.
+   */
+  test('a later call whose prompt still matches is served, not re-rolled', () => {
     const t = tape();
     let afterNamed = false;
     const run = (prompt) => { const d = decide({ mode: 'live-from', liveFrom: 'miss', prompt, tape: t, afterNamed }); if (d.flips) afterNamed = true; return d.use; };
     expect(run(SEAT(1))).toBe('tape');
     expect(run('a prompt the tape has never seen')).toBe('live');
-    expect(run(SEAT(2))).toBe('live');          // matches the tape, and is still live
+    expect(run(SEAT(2))).toBe('tape');          // it matches, so the recorded answer stands
+  });
+
+  test('and every prompt the tape has never seen goes live, however many', () => {
+    const t = tape();
+    let afterNamed = false;
+    const run = (prompt) => { const d = decide({ mode: 'live-from', liveFrom: 'miss', prompt, tape: t, afterNamed }); if (d.flips) afterNamed = true; return d.use; };
+    expect(run('one prompt the tape has never seen')).toBe('live');
+    expect(run(SEAT(1))).toBe('tape');
+    expect(run('another prompt the tape has never seen')).toBe('live');
   });
 
   test('the fixture really is the seat family, or the latch below reads nothing', () => {

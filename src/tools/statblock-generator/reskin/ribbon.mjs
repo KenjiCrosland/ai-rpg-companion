@@ -396,7 +396,7 @@ export function ribbonFamiliesOffered(typedText, { size } = {}) {
 /** The opening line is a literal, which is how scripts/lib/tape.mjs recognises the call. */
 export const RIBBON_PROMPT_HEAD = 'You are writing one RIBBON for a D&D monster';
 
-export function buildRibbonPrompt({ name, type, size, cr, typed, speed, senses, languages, rowNames = [], families = [], refusedBefore = null }) {
+export function buildRibbonPrompt({ name, type, size, cr, typed, speed, senses, languages, rowNames = [], families = [], refusedFor = [] }) {
   const offered = families.map((key) => {
     const f = familyByKey(key);
     return `- ${f.label}\n  It must hold: ${f.mustHold}\n  Print's own row: ${f.print}`;
@@ -427,7 +427,7 @@ THE RULES
 6. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.
 7. Print's flat voice. Print writes "can pinpoint the location of ferrous metal within 30 feet of
    itself". Do not reach for "as though", "as if" or "like a".
-${refusedBefore ? `\nYOUR LAST ANSWER WAS REFUSED: ${refusedBefore}\nWrite a different one that does not have that fault.\n` : ''}
+${refusedFor.length ? `\nYOUR LAST ANSWER WAS REFUSED, FOR EVERY REASON BELOW. Fix all of them at once.\n${refusedFor.map((r) => `- ${r}`).join('\n')}\n` : ''}
 Answer with JSON only: {"family": "<one of the three labels above>", "name": "<two or three words>", "ribbon": "<the sentence>"}`;
 }
 
@@ -495,6 +495,28 @@ export const RIBBON_2014_TERMS = [
   [/\bEmanation\b/g, 'radius'],
   [/\b(\d+)-foot Emanation\b/g, '$1-foot radius'],
 ];
+/**
+ * AND THE OTHER DIRECTION, which the first recording of this round found. Two ribbons of
+ * twenty-five used a 2024-only term and both wrote it in LOWERCASE — "dim light" on s18, "difficult
+ * terrain" on s25 — so the 2014 rewording below had nothing to do, and the 2024 printing of those
+ * two sheets carried a rules term print capitalises. The ribbon's own text is normalised to print's
+ * casing when the row is written; nothing else on the sheet is touched.
+ */
+export const RIBBON_2024_TERMS = [
+  [/\bdifficult terrain\b/g, 'Difficult Terrain'],
+  [/\bbright light\b/g, 'Bright Light'],
+  [/\bdim light\b/g, 'Dim Light'],
+];
+export function ribbonTextFor2024(text) {
+  let out = String(text ?? '');
+  const used = [];
+  for (const [re, to] of RIBBON_2024_TERMS) {
+    if (re.test(out)) { used.push(to); out = out.replace(re, to); }
+    re.lastIndex = 0;
+  }
+  return { text: out, termsUsed: used };
+}
+
 export function ribbonTextFor2014(text) {
   let out = String(text ?? '');
   const used = [];
@@ -523,11 +545,19 @@ export async function writeARibbon({ monster, cr, typed, path, twist, families =
     rowNames, families: offered,
   };
 
+  // EVERY FAULT GOES TO THE RE-ASK, NOT THE FIRST ONE (measured 2026-11-22).
+  //
+  // The first recording of this round handed the model one reason, as a seat is handed one. In five
+  // of its six double refusals the second answer broke a DIFFERENT rule than the first: told its
+  // name was four words, it shortened the name and wrote "40 feet"; told it was 42 words, it cut
+  // the sentence and wrote "5 feet". The model fixes what it is told and trips what it is not.
+  // `ribbonFaults` already computes all of them, so all of them are handed over.
   const reasons = [];
+  let lastFaults = [];
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     let answer = null;
     try {
-      const raw = await callLLM(buildRibbonPrompt({ ...ask, refusedBefore: reasons[0] ?? null }), () => true);
+      const raw = await callLLM(buildRibbonPrompt({ ...ask, refusedFor: lastFaults }), () => true);
       answer = parseRibbonAnswer(raw);
     } catch (e) {
       trace('ribbon call failed:', `${e?.message ?? e} — the sheet ships without one`);
@@ -535,28 +565,34 @@ export async function writeARibbon({ monster, cr, typed, path, twist, families =
     }
     if (!answer) {
       reasons.push('the answer could not be read');
+      lastFaults = ['the answer could not be read as JSON — answer with JSON only'];
       if (attempt === 2) break;
       continue;
     }
     if (!offered.includes(answer.family)) {
-      reasons.push(answer.family
+      const why = answer.family
         ? `"${answer.familySaid}" was not one of the three families offered`
-        : `"${answer.familySaid}" is not one of the six families`);
+        : `"${answer.familySaid}" is not one of the six families`;
+      reasons.push(why);
+      lastFaults = [why];
       if (attempt === 2) break;
       continue;
     }
     const faults = ribbonFaults(answer.sentence, { family: answer.family, name: answer.name });
     if (faults.length) {
-      reasons.push(faults[0]);
+      reasons.push(faults.join('; '));
+      lastFaults = faults;
       if (attempt === 2) break;
       continue;
     }
-    // Rule 3: the engine's DC, applied after the validator has passed the sentence.
-    const sentence = applyRibbonDc(answer.sentence, cr);
+    // Rule 3: the engine's DC, applied after the validator has passed the sentence. Then print's
+    // own casing for the rules terms a ribbon can hold.
+    const cased = ribbonTextFor2024(applyRibbonDc(answer.sentence, cr));
+    const sentence = cased.text;
     const row = ribbonRowFrom({ name: answer.name, sentence, family: answer.family });
     putRibbonIn(monster, row);
-    trace('ribbon written:', `${answer.family}/"${answer.name}" — ${sentence}`);
-    return { asked: true, written: true, attempt, offered, family: answer.family, row, reasons };
+    trace('ribbon written:', `${answer.family}/"${answer.name}" — ${sentence}${cased.termsUsed.length ? ` (cased: ${cased.termsUsed.join(', ')})` : ''}`);
+    return { asked: true, written: true, attempt, offered, family: answer.family, row, reasons, terms2024: cased.termsUsed };
   }
   trace('ribbon refused twice:', `${reasons.join(' | ')} — the sheet ships without one`);
   return { asked: true, written: false, offered, reasons };
