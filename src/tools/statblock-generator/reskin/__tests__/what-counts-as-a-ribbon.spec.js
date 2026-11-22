@@ -169,6 +169,19 @@ describe('the reasons a ribbon is refused', () => {
     expect(ribbonRefusal(sentence)).toBeNull();
   });
 
+  // From Probe A of 2026-11-22, line 29 — the one answer of eighty the validator refused, and the
+  // refusal was wrong. The GM had typed "blind in one eye"; nothing gains a condition here.
+  it("lets a lowercase condition word stand as flavour (the red dragon's blinded eye)", () => {
+    expect(ribbonRefusal('When the dragon dies, its blinded eye collapses into a fist-sized red '
+      + "crystal around the ancient lance tip; for a day afterward, the crystal stays warm and "
+      + "shows a faint flicker of the dragon's last view.")).toBeNull();
+  });
+
+  it('still refuses the capitalized rules term', () => {
+    expect(ribbonRefusal('A creature that starts its turn there has the Blinded condition.'))
+      .toBe('it imposes the Blinded condition');
+  });
+
   // Flavour is not a price. The word "damage" with nothing rules-shaped beside it stands.
   it('lets "damage" stand as flavour', () => {
     expect(ribbonRefusal('Its chains show the damage of a hundred years in the churchyard dirt.')).toBeNull();

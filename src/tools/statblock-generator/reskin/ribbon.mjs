@@ -70,7 +70,11 @@ const sentencesOf = (text) => String(text ?? '').split(/(?<=[.!?])\s+/).filter((
  */
 const REFERENCE_BEFORE = /(?:does ?n[o']?t have|is ?n[o']?t|are ?n[o']?t|has ?n[o']?t|without|unless|lacks|other than|except)\b[^.]{0,40}$/i;
 const imposesCondition = (text, condition) => {
-  const re = new RegExp(`\\b${condition}\\b`, 'gi');
+  // Case-sensitive, because print's convention IS the signal: the rules term is capitalized
+  // ("has the Frightened condition"), and the lowercase word is an ordinary adjective. Probe A
+  // found this the hard way — "its blinded eye collapses into a red crystal" was refused for the
+  // Blinded condition when the GM had typed "blind in one eye" and no creature gained anything.
+  const re = new RegExp(`\\b${condition}\\b`, 'g');
   for (let m = re.exec(text); m; m = re.exec(text)) {
     if (!REFERENCE_BEFORE.test(text.slice(0, m.index))) return true;
   }
