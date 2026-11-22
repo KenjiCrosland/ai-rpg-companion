@@ -8170,7 +8170,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // prints a sheet the product would never make. Here it changes no prompt: `curse-debt` is
       // declined where the GM typed no curse word and the creature is not a Fiend, Fey, Undead or
       // Aberration, and the seat goes on as it does for any other miss.
-      if ((actionT.template === 'curse-debt' || actionT.row?.template === 'curse-debt')
+      // PULL-THROUGH IS REACHED BY A VERB, NOT BY A SHAPE (owner, 2026-11-21 evening). Its own note
+      // in shapes.mjs says so: "phantom by verb (through walls, drown, phase), not by style gate".
+      // s24's re-record landed it on a shape fit alone and shipped "the scythe drags the target up
+      // to 15 feet through a wall, floor, or other solid object it can pass through", on an
+      // insectile horror that can do none of those things. The audit called it at high confidence:
+      // "A creature with no burrow speed, no phasing, and no earth-shaping trait cannot pass
+      // through a wall or floor." That is fault 4 of 20 November in another family — the shape fit
+      // and what the row DOES was whatever the template held.
+      //
+      // Declined at the landing, so the menu and the fit prompt are unchanged.
+      if ((actionT.template === 'pull-through' || actionT.row?.template === 'pull-through')
+        && /\[shape fit, no verb match\]/.test(String(actionT.because ?? ''))) {
+        trace('pull-through declined — no verb matched:', `"${actionT.row.name}" fitted by shape alone, and this template is reached by a verb — through walls, drown, phase — because what it writes is a body passing through solid matter. The seat goes on as it does for any other miss (owner, 21 November)`);
+        dropLandedRow(actionT.row);
+        actionT = null;
+      }
+      if (actionT && (actionT.template === 'curse-debt' || actionT.row?.template === 'curse-debt')
         && !mayCurseUnasked(`${options.userConcept ?? concept ?? ''} ${ideasT?.action?.clause ?? ''}`, p?.type ?? options.resolvedType)) {
         trace('curse declined — nobody asked for one:', `"${actionT.row.name}" is curse-debt on a ${String(p?.type ?? 'creature of no declared type')}, and the GM typed no curse word — a permanent curse is not what "${String(options.userConcept ?? concept ?? '').slice(0, 50)}" asked for (owner's ruling, 21 November)`);
         dropLandedRow(actionT.row);
