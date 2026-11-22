@@ -74,10 +74,10 @@ describe('the sentences from the eighty', () => {
   });
 
   it("46, Vashka's marching cadence, as moves — refused: it grants no movement", () => {
-    // The family's own fault leads, which is what the re-ask is handed. It is also 45 words.
-    expect(ribbonFamilyRefusal(L46_VASHKA, { family: 'moves', name: 'Marching Cadence' }))
-      .toBe('it grants no movement the creature could not otherwise make');
-    expect(ribbonFaults(L46_VASHKA, { family: 'moves', name: 'Marching Cadence' })).toHaveLength(2);
+    // 45 words exactly, so the cap no longer touches it and the family fault stands alone.
+    expect(wordsIn(L46_VASHKA)).toBe(45);
+    expect(ribbonFaults(L46_VASHKA, { family: 'moves', name: 'Marching Cadence' }))
+      .toEqual(['it grants no movement the creature could not otherwise make']);
   });
 
   it('51, the marsh witch, as moves — accepted: she can cross quicksand', () => {
@@ -98,9 +98,10 @@ describe('the sentences from the eighty', () => {
     expect(ribbonFaults(L9_AIR_ELEMENTAL, { family: 'taboo', name: 'Borrowed Trust' })).toEqual([]);
   });
 
-  it('69, the Well Drowned, as speaks — holds both a limit and a check; only the cap stops it', () => {
-    expect(ribbonFaults(L69_WELL_DROWNED, { family: 'speaks', name: 'Drowned Words' }))
-      .toEqual(['it is 42 words, and a ribbon is 40 at most']);
+  // Accepted outright once the cap went to 45. It was refused at 40 for its 42 words.
+  it('69, the Well Drowned, as speaks — accepted: a limit and a check, in 42 words', () => {
+    expect(wordsIn(L69_WELL_DROWNED)).toBe(42);
+    expect(ribbonFaults(L69_WELL_DROWNED, { family: 'speaks', name: 'Drowned Words' })).toEqual([]);
   });
 
   /**
@@ -116,9 +117,10 @@ describe('the sentences from the eighty', () => {
    * refuse good ribbons as well. The rule is implemented as stated; the disagreement is in the
    * round's report for the owner to settle.
    */
-  it("16, the Siege-Golem's Groaning Timber, as speaks — its \"can only use words it has heard\" is the limit", () => {
-    expect(ribbonFaults(L16_SIEGE_GOLEM, { family: 'speaks', name: 'Groaning Timber' }))
-      .toEqual(['it is 45 words, and a ribbon is 40 at most']);
+  // The owner loved this one and the 40-word cap was refusing it at 45 words. The cap is 45 now.
+  it("16, the Siege-Golem's Groaning Timber, as speaks — accepted, at exactly 45 words", () => {
+    expect(wordsIn(L16_SIEGE_GOLEM)).toBe(45);
+    expect(ribbonFaults(L16_SIEGE_GOLEM, { family: 'speaks', name: 'Groaning Timber' })).toEqual([]);
   });
 
   it('16 cut to length, with a check to understand it added — accepted outright', () => {
@@ -130,10 +132,15 @@ describe('the sentences from the eighty', () => {
   });
 
   /** 40 is stopped by TWO rules, and the test names both. */
-  it("40, the Trench Siren's drowning toll, as leaves-at-death — stopped by rule 1 and rule 4", () => {
-    const faults = ribbonFaults(L40_TRENCH_SIREN, { family: 'leaves-at-death', name: 'Drowning Toll' });
-    expect(faults).toContain(`it is ${wordsIn(L40_TRENCH_SIREN)} words, and a ribbon is ${MAX_RIBBON_WORDS} at most`);
-    expect(faults).toContain('"10 miles" is not one of the distances a ribbon may use (30 feet, 60 feet, 120 feet, 1 mile)');
+  /**
+   * The handoff asked which rule stops this one. At the 40-word cap it was two — its length and its
+   * "10 miles". A leaving has 55 words now and the toll is 54, so ONLY RULE 4 STOPS IT. The length
+   * it was refused for is no longer a fault at all.
+   */
+  it("40, the Trench Siren's drowning toll, as leaves-at-death — stopped by rule 4 alone", () => {
+    expect(wordsIn(L40_TRENCH_SIREN)).toBe(54);
+    expect(ribbonFaults(L40_TRENCH_SIREN, { family: 'leaves-at-death', name: 'Drowning Toll', object: 'drowning toll' }))
+      .toEqual(['"10 miles" is not one of the distances a ribbon may use (30 feet, 60 feet, 120 feet, 1 mile)']);
   });
 
   it('with its length and its 10 miles fixed, the same toll is accepted', () => {
@@ -141,12 +148,12 @@ describe('the sentences from the eighty', () => {
       + 'verse it heard for 1d20 days. A creature touching it can make a DC 15 Arcana check to '
       + 'sense the nearest shipwreck.';
     expect(wordsIn(fixed)).toBeLessThanOrEqual(MAX_RIBBON_WORDS);
-    expect(ribbonFaults(fixed, { family: 'leaves-at-death', name: 'Drowning Toll' })).toEqual([]);
+    expect(ribbonFaults(fixed, { family: 'leaves-at-death', name: 'Drowning Toll', object: 'bell' })).toEqual([]);
   });
 
-  it('28, the Glacier Heart, as sheds — a trail and the check that follows it; only the cap stops it', () => {
-    expect(ribbonFaults(L28_GLACIER_HEART, { family: 'sheds', name: 'Ice Trail' }))
-      .toEqual(['it is 41 words, and a ribbon is 40 at most']);
+  it('28, the Glacier Heart, as sheds — accepted: a trail and the check that follows it', () => {
+    expect(wordsIn(L28_GLACIER_HEART)).toBe(41);
+    expect(ribbonFaults(L28_GLACIER_HEART, { family: 'sheds', name: 'Ice Trail' })).toEqual([]);
   });
 
   /**
@@ -155,24 +162,25 @@ describe('the sentences from the eighty', () => {
    * 40-word cap refuses it. Recorded here because the cap and the example disagree, and the cap is
    * the rule.
    */
-  it("61, the Whelp's heart-stone, holds what the family needs and is still three words too long", () => {
-    const faults = ribbonFaults(L61_THUNDERHEAD_WHELP, { family: 'leaves-at-death', name: 'Heart Stone' });
-    expect(faults).toEqual([`it is 44 words, and a ribbon is ${MAX_RIBBON_WORDS} at most`]);
+  // The handoff's own example of what a leaving must hold. At 40 words it was refused for its 44;
+  // a leaving has 55 now, because it has to name an object AND say when it ends.
+  it("61, the Whelp's heart-stone, accepted as a leaving at 44 words", () => {
+    expect(ribbonFaults(L61_THUNDERHEAD_WHELP, { family: 'leaves-at-death', name: 'Heart Stone', object: 'heart-stone' })).toEqual([]);
   });
 });
 
 describe('the rules that are the validator\'s to enforce', () => {
-  it('rule 1 — a sentence of 41 words is refused', () => {
-    const fortyOne = Array.from({ length: 41 }, (_, i) => (i === 0 ? 'It' : 'word')).join(' ');
-    expect(wordsIn(fortyOne)).toBe(41);
-    expect(ribbonFaults(fortyOne, { family: 'senses', name: 'Long Winded' }))
-      .toContain('it is 41 words, and a ribbon is 40 at most');
+  it('rule 1 — a sentence of 46 words is refused', () => {
+    const fortySix = Array.from({ length: 46 }, (_, i) => (i === 0 ? 'It' : 'word')).join(' ');
+    expect(wordsIn(fortySix)).toBe(46);
+    expect(ribbonFaults(fortySix, { family: 'senses', name: 'Long Winded' }))
+      .toContain('it is 46 words, and a ribbon is 45 at most');
   });
 
-  it('rule 1 — forty words is not', () => {
-    const forty = `It can pinpoint iron within 60 feet ${Array.from({ length: 33 }, () => 'word').join(' ')}`;
-    expect(wordsIn(forty)).toBe(40);
-    expect(ribbonFaults(forty, { family: 'senses', name: 'Just Short' })).toEqual([]);
+  it('rule 1 — forty-five words is not', () => {
+    const fortyFive = `It can pinpoint iron within 60 feet ${Array.from({ length: 38 }, () => 'word').join(' ')}`;
+    expect(wordsIn(fortyFive)).toBe(45);
+    expect(ribbonFaults(fortyFive, { family: 'senses', name: 'Just Short' })).toEqual([]);
   });
 
   it.each([['one', 'Scent'], ['four', 'The Scent Of Iron']])('rule 1 — a name of %s words is refused', (_n, name) => {
@@ -198,29 +206,24 @@ describe('the rules that are the validator\'s to enforce', () => {
 
   it('rule 4 — a length of time is not a distance', () => {
     expect(ribbonFaults('When it dies, its heart-stone hums for 1d20 days, then goes silent.',
-      { family: 'leaves-at-death', name: 'Heart Stone' })).toEqual([]);
+      { family: 'leaves-at-death', name: 'Heart Stone', object: 'heart-stone' })).toEqual([]);
   });
 
   it('rule 6 — a leave-behind that gives +1 to attack rolls is refused', () => {
     expect(ribbonFaults('When it dies it leaves a bone charm that gives +1 to attack rolls for 1 hour.',
-      { family: 'leaves-at-death', name: 'Bone Charm' })[0]).toBe('it gives a bonus');
+      { family: 'leaves-at-death', name: 'Bone Charm', object: 'bone charm' })[0]).toBe('it gives a bonus');
   });
 
   it('rule 6 — a leave-behind that casts a spell is refused for what the spell does', () => {
     expect(ribbonFaults('When it dies it leaves an ember that casts fireball once, dealing 8d6 Fire damage.',
-      { family: 'leaves-at-death', name: 'Last Ember' })).toContain('it does damage');
+      { family: 'leaves-at-death', name: 'Last Ember', object: 'ember' })).toContain('it does damage');
   });
 
-  it('rule 6 — a leave-behind that does none of the four things is refused', () => {
-    expect(ribbonFaults('When it dies, its shell hardens into a smooth grey stone that stays warm for 1 hour.',
-      { family: 'leaves-at-death', name: 'Grey Stone' }))
-      .toContain('what it leaves does none of the four things: sheds light, gives the direction of '
-        + 'something, tells a fact to whoever makes an ability check, or makes a sound');
-  });
-
+  // The list of four things a leaving may do is GONE (22 November). `four-holes-in-the-ribbon-rules`
+  // holds the leaving's rules as they now stand: an object, an ending, and no spell.
   it('rule 6 — a leave-behind that never ends is refused', () => {
     expect(ribbonFaults('When it dies, its heart-stone rumbles like far-off thunder.',
-      { family: 'leaves-at-death', name: 'Heart Stone' }))
+      { family: 'leaves-at-death', name: 'Heart Stone', object: 'heart-stone' }))
       .toContain('it never says when what it leaves ends, and it does not work only once');
   });
 

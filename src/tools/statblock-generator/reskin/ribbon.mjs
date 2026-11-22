@@ -50,8 +50,8 @@ export const RIBBON_FAMILIES = [
     checks: 'that a restriction is there, and that a tether carries both its distance and its consequence' },
   { key: 'leaves-at-death', label: 'Leaves something when it dies',
     print: "Troll Limb, Troll Spawn: The limb uncannily has the same senses as a whole troll. If the limb isn't destroyed within 24 hours, roll 1d12. On a 12, the limb turns into a Troll. Otherwise, the limb withers away.",
-    mustHold: 'An object, what it does, and when that ends. What it does is one of four: it sheds light, it gives the direction of something, it tells a fact to whoever makes an ability check, or it makes a sound.',
-    checks: 'that it does one of the four things, and that it ends' },
+    mustHold: 'An object it leaves behind, what that object does, and when that ends — after a stated time, or once. It casts no spell. Up to 55 words.',
+    checks: 'that an object is named and said in the sentence, that it ends, and that it casts no spell' },
   { key: 'moves', label: 'Moves strangely',
     print: "Earth Elemental, Earth Glide: The elemental can burrow through nonmagical, unworked earth and stone. While doing so, the elemental doesn't disturb the material it moves through.",
     mustHold: 'A movement it can make that others cannot, over a named surface or through a named thing.',
@@ -193,8 +193,19 @@ export const isRibbon = (text) => ribbonRefusal(text) === null;
  * ask's business and the owner's read, and `checks` on each family says so in the open.
  */
 
-/** Rule 1. The name is two or three words; the sentence is 40 words at most. */
-export const MAX_RIBBON_WORDS = 40;
+/**
+ * Rule 1. The name is two or three words; the sentence is 45 words at most, and 55 for a leaving.
+ *
+ * IT WAS 40, AND 40 WAS WRONG. Fable's own words on 22 November: "Forty was my number and it was
+ * wrong: I took it from a median and never held my own four examples against it." All four ribbons
+ * sent to me as what a family must hold were over it — the Whelp's heart-stone 44, Groaning Timber
+ * 45, the Well Drowned 42, the Glacier Heart's trail 41 — and the cap was the sole or leading reason
+ * in ten of the eleven refusals on the forty. A leaving gets 55 because it has to name an object,
+ * say what it does AND say when it ends, which does not fit in the space the others need.
+ */
+export const MAX_RIBBON_WORDS = 45;
+export const MAX_LEAVING_WORDS = 55;
+export const maxWordsFor = (family) => (family === 'leaves-at-death' ? MAX_LEAVING_WORDS : MAX_RIBBON_WORDS);
 export const wordsIn = (text) => String(text ?? '').trim().split(/\s+/).filter(Boolean).length;
 
 /** A check: the engine will rewrite the number, but one has to be there to rewrite. */
@@ -211,23 +222,86 @@ const RULES_MOVEMENTS = 'move|moves|cross|crosses|crossing|walk|walks|climb|clim
 const grantsMovement = (t) => new RegExp(`\\b(?:can|may|is able to|are able to)\\b[^.]{0,48}?\\b(?:${RULES_MOVEMENTS})\\b`, 'i').test(t)
   || /\b(?:ignores?|is unaffected by|need not|needn't)\b[^.]{0,48}?\b(?:difficult terrain|movement restrictions?|movement costs?|webs?)\b/i.test(t);
 
-/** Rule 6's four things, which are the owner's list. */
-const LEAVES_DOES = [
-  ['it sheds light', /\b(?:sheds?|gives? off|casts?|glows?|glimmers?|shines?)\b[^.]{0,30}\blight\b|\b(?:bright|dim)\s+light\b/i],
-  ['it gives the direction of something', /\bdirection\b|\bpoints? (?:toward|towards|to)\b/i],
-  ['it tells a fact to whoever makes an ability check', /\bDC\s*\d+[^.]{0,60}?\bchecks?\b|\bability check\b/i],
-  ['it makes a sound', /\b(?:hums?|rumbl\w+|rings?|chimes?|tolls?|sings?|whispers?|moans?|sounds?|audible|hisses?|crackl\w+)\b/i],
-];
-/** Rule 6 also: it ends after a stated time, or works once. */
-const endsOrIsOnce = (t) => /\bfor\s+(?:\d+|\dd\d+|a|an|one)\s+\w*\s*(?:round|rounds|minute|minutes|hour|hours|day|days|week|weeks|year|years)\b/i.test(t)
+/**
+ * WHAT A LEAVING MUST HOLD, after the amendment of 22 November. The list of four things it may do
+ * is GONE. It was Fable's list, not the owner's — the owner called the family "cool" and wants it
+ * to grow into small magic things — and it is what the model could not fit: four of the eleven
+ * refusals on the forty were a leaving failing that list or the cap.
+ *
+ * What is left: it must name an object, it must end after a stated time or work only once, it gives
+ * no bonus to anything and casts no spell, and every other ribbon rule still applies.
+ *
+ * THE OBJECT IS A CALL FIELD, NOT A WORD LIST. "Names an object" cannot be read off a sentence
+ * without a table of nouns, and a table of nouns deciding what the model meant is the one thing the
+ * standing order forbids. So the call answers with the object as its own field and the validator
+ * checks what it is allowed to check: that the field is there, and that the sentence actually says
+ * it. That is enum membership and a quote existing, which is this file's job.
+ */
+const CASTS_A_SPELL = /\bcasts?\b|\bspellcasting\b|\bcantrip\b/i;
+/** It ends after a stated time, or works once. */
+const endsOrIsOnce = (t) => /\bfor\s+(?:\d+|\d+d\d+|a|an|one)\s+\w*\s*(?:round|rounds|minute|minutes|hour|hours|day|days|week|weeks|year|years)\b/i.test(t)
   || /\b(?:until|after)\b[^.]{0,60}\b(?:dawn|dusk|sunrise|sunset|long rest|short rest)\b/i.test(t)
-  || /\bonce\b|\bthen (?:crumbles|withers|fades|melts|goes (?:cold|dark|silent))\b|\b(?:crumbles|withers|fades|melts|dissolves)\b/i.test(t);
+  || /\bonce\b|\b(?:then |and )?(?:crumbles|withers|fades|melts|dissolves|goes (?:cold|dark|silent))\b/i.test(t);
+
+/* ─── FOUR HOLES THE FIRST TWENTY-FIVE FOUND (Fable, 22 November evening) ───
+ *
+ * Each of these passed the validator as it stood and each does more than a ribbon should. All four
+ * are read off real sheets of the forty, which is why they are rules and not guesses.
+ */
+
+/**
+ * A CHECK IS ONE A CREATURE CHOOSES TO MAKE — to learn, notice, follow or understand something. A
+ * ribbon never says a creature must succeed on a check or suffer something: that is a saving throw
+ * under another name. s20's Trench Siren: "must succeed on a DC 15 Wisdom check or lose its footing
+ * in the current."
+ *
+ * Read as grammar, not vocabulary: the fault is a check with a consequence hanging off it. Print's
+ * own Transparent says "a creature must succeed on a DC 15 Wisdom (Perception) check to notice the
+ * cube" — a check to LEARN something, with no "or" after it — and still stands.
+ */
+const checkWithAConsequence = (t) => /\bchecks?\b[^.]{0,24}\bor\b/i.test(t)
+  || /\bor\b[^.]{0,24}\bfails?\b[^.]{0,20}\bchecks?\b/i.test(t)
+  || /\bfails?\b[^.]{0,20}\bchecks?\b[^.]{0,30}\b(?:is|has|becomes|loses|takes|cannot|can't)\b/i.test(t);
+
+/**
+ * MOVES GRANTS A WAY OF MOVING, never movement that costs nothing or more of it. s15's Adult Red
+ * Dragon: "moving up to 120 feet in a straight line without spending movement." That is free
+ * distance in a fight.
+ *
+ * "without spending EXTRA movement" is a different thing and stands — it is the difficult-terrain
+ * cost, which is what "ignoring difficult terrain makes sense" licensed. s23's Vashka and s37's
+ * Meshrin both use it.
+ */
+const freeMovement = (t) => /\bwithout\s+(?:spending|using|expending)\s+(?:any\s+|its\s+)?(?:movement|speed)\b/i.test(t)
+  || /\b(?:costs?|costing)\s+(?:it\s+)?no\s+movement\b/i.test(t)
+  || /\bat no cost to its (?:movement|speed)\b/i.test(t)
+  || /\b(?:gains?|grants?|adds?)\b[^.]{0,30}\b(?:additional|extra|more)\s+(?:\d+\s+feet of\s+)?(?:movement|speed)\b/i.test(t);
+
+/**
+ * ONE FAMILY TO A RIBBON, and only a Senses ribbon pinpoints. Three of the twenty-five were two
+ * ribbons welded together: s11's Vampire moves through plants AND pinpoints creatures touching one,
+ * and s14's Glacier Heart and s31's Whelp do the same.
+ *
+ * `pinpoint` and `knows the location of` are print's own two phrasings for this — the Rust Monster's
+ * and the Drider's — so they are closed facts, not a list of guesses. "Knows the DIRECTION of" is
+ * not pinpointing and stays allowed anywhere, which is what the Reliquary Ooze's tether needs.
+ */
+const PINPOINTS = /\bpinpoint\w*\b|\bknows? the location of\b/i;
+
+/**
+ * A TETHER NEVER TAKES AWAY ACTIONS. At the end of one the creature cannot willingly go farther, or
+ * must move back — that is all. s09's Stone Golem: beyond its tether "it takes no actions but
+ * movement back toward the site", which ends the fight when the party walks away.
+ */
+const takesAwayActions = (t) => /\btakes? no (?:other )?actions?\b/i.test(t)
+  || /\b(?:can(?:not|'t)|may not|is unable to)\s+(?:take|use)\s+(?:any\s+|other\s+)?(?:actions?|reactions?|bonus actions?)\b/i.test(t)
+  || /\bloses? (?:its|all) (?:actions?|turns?)\b/i.test(t);
 
 /**
  * Every reason this sentence does not work as a ribbon of this family, base rules first.
  * An empty array means it stands. The first entry is what the re-ask is given.
  */
-export function ribbonFaults(sentence, { family, name } = {}) {
+export function ribbonFaults(sentence, { family, name, object = null } = {}) {
   const t = String(sentence ?? '').trim();
   const out = [];
 
@@ -251,7 +325,8 @@ export function ribbonFaults(sentence, { family, name } = {}) {
     if (n < 2 || n > 3) shape.push(`its name is ${n} word${n === 1 ? '' : 's'}, and a ribbon's name is two or three`);
   }
   const words = wordsIn(t);
-  if (words > MAX_RIBBON_WORDS) shape.push(`it is ${words} words, and a ribbon is ${MAX_RIBBON_WORDS} at most`);
+  const cap = maxWordsFor(fam.key);
+  if (words > cap) shape.push(`it is ${words} words, and a ${fam.key === 'leaves-at-death' ? 'leaving' : 'ribbon'} is ${cap} at most`);
 
   // Rule 4. A tether may also be 100 feet; nothing else may.
   const allowedFeet = fam.key === 'taboo' ? [...RIBBON_FEET, TETHER_FEET] : RIBBON_FEET;
@@ -263,6 +338,15 @@ export function ribbonFaults(sentence, { family, name } = {}) {
     }
   }
 
+  // The two that hold in every family.
+  if (checkWithAConsequence(t)) {
+    out.push('it makes a creature pass a check or suffer something, and a ribbon\'s check is one a '
+      + 'creature chooses to make — to learn, notice, follow or understand');
+  }
+  if (fam.key !== 'senses' && PINPOINTS.test(t)) {
+    out.push('only a ribbon that senses pinpoints, and this one is two ribbons in one');
+  }
+
   switch (fam.key) {
     case 'senses':
       if (!distancesIn(t).length) out.push('it names no range, and a ribbon that senses says how far');
@@ -271,6 +355,8 @@ export function ribbonFaults(sentence, { family, name } = {}) {
       if (!hasCheck(t) && !hasRestriction(t)) {
         out.push('it carries neither a check to understand it nor a limit on what it can say');
       }
+      break;
+    default:
       break;
     case 'taboo': {
       if (!hasRestriction(t)) {
@@ -285,19 +371,24 @@ export function ribbonFaults(sentence, { family, name } = {}) {
       if (readsAsTether && !distancesIn(t).length) {
         out.push('it reads as a tether but names no distance it cannot pass');
       }
+      if (takesAwayActions(t)) {
+        out.push("it takes the creature's actions, and a tether only stops it going farther or sends it back");
+      }
       break;
     }
     case 'leaves-at-death': {
-      const did = LEAVES_DOES.filter(([, re]) => re.test(t)).map(([what]) => what);
-      if (!did.length) {
-        out.push('what it leaves does none of the four things: sheds light, gives the direction of '
-          + 'something, tells a fact to whoever makes an ability check, or makes a sound');
+      const obj = String(object ?? '').trim();
+      if (!obj) out.push('it names no object left behind');
+      else if (!t.toLowerCase().includes(obj.toLowerCase())) {
+        out.push(`the sentence never says "${obj}", the object it claims to leave`);
       }
       if (!endsOrIsOnce(t)) out.push('it never says when what it leaves ends, and it does not work only once');
+      if (CASTS_A_SPELL.test(t)) out.push('what it leaves casts a spell');
       break;
     }
     case 'moves':
       if (!grantsMovement(t)) out.push('it grants no movement the creature could not otherwise make');
+      if (freeMovement(t)) out.push('it grants movement that costs nothing, and a ribbon grants a way of moving, not more of it');
       break;
     case 'sheds':
       if (!distancesIn(t).length && !hasCheck(t)) {
@@ -415,7 +506,8 @@ THE THREE FAMILIES YOU MAY WRITE IN. Pick the one that suits this creature best.
 ${offered}
 
 THE RULES
-1. A name of two or three words, and one or two sentences of 40 words at most.
+1. A name of two or three words, and one or two sentences of ${MAX_RIBBON_WORDS} words at most —
+   ${MAX_LEAVING_WORDS} if you write in the "Leaves something when it dies" family.
 2. No damage, no saving throw, no condition, no bonus to an attack or to Armor Class or to a save,
    and no Advantage or Disadvantage on an attack roll or a saving throw. On an ability check both
    are allowed.
@@ -424,11 +516,21 @@ THE RULES
    Lengths of time are free.
 5. It must do something at the table: a check, a distance, a permission, a restriction, or an
    object. Not flavour alone.
-6. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.
-7. Print's flat voice. Print writes "can pinpoint the location of ferrous metal within 30 feet of
-   itself". Do not reach for "as though", "as if" or "like a".
+6. A CHECK IS ONE A CREATURE CHOOSES TO MAKE — to learn, notice, follow or understand something.
+   Never "must succeed on a check or" anything. That is a saving throw under another name.
+7. ONE FAMILY TO A RIBBON. Only a ribbon that senses pinpoints or knows the location of a thing.
+   Do not weld a second ribbon onto the one you are writing.
+8. If you write in "Moves strangely", grant a WAY of moving — over a named surface, through a named
+   thing. Never movement that costs nothing, and never more movement.
+9. If you write a tether, the consequence is that the creature cannot willingly go farther, or must
+   move back. It never takes away its actions.
+10. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.
+11. Print's flat voice. Print writes "can pinpoint the location of ferrous metal within 30 feet of
+    itself". Do not reach for "as though", "as if" or "like a".
 ${refusedFor.length ? `\nYOUR LAST ANSWER WAS REFUSED, FOR EVERY REASON BELOW. Fix all of them at once.\n${refusedFor.map((r) => `- ${r}`).join('\n')}\n` : ''}
-Answer with JSON only: {"family": "<one of the three labels above>", "name": "<two or three words>", "ribbon": "<the sentence>"}`;
+Answer with JSON only: {"family": "<one of the three labels above>", "name": "<two or three words>", "ribbon": "<the sentence>"}
+If and only if you write in the "Leaves something when it dies" family, add one more field:
+"object": "<the thing it leaves, named in your sentence exactly as you write it there>"`;
 }
 
 /** The label the model is shown, back to the key the engine uses. */
@@ -446,7 +548,8 @@ export function parseRibbonAnswer(raw) {
   const sentence = String(body.ribbon ?? body.sentence ?? '').trim();
   const name = String(body.name ?? '').trim();
   if (!sentence || !name) return null;
-  return { family: familyFromLabel(body.family), familySaid: String(body.family ?? ''), name, sentence };
+  return { family: familyFromLabel(body.family), familySaid: String(body.family ?? ''), name, sentence,
+    object: String(body.object ?? '').trim() || null };
 }
 
 /** A ribbon row, flagged so the conversion can take it out and the lint can find it. */
@@ -578,7 +681,7 @@ export async function writeARibbon({ monster, cr, typed, path, twist, families =
       if (attempt === 2) break;
       continue;
     }
-    const faults = ribbonFaults(answer.sentence, { family: answer.family, name: answer.name });
+    const faults = ribbonFaults(answer.sentence, { family: answer.family, name: answer.name, object: answer.object });
     if (faults.length) {
       reasons.push(faults.join('; '));
       lastFaults = faults;
@@ -590,6 +693,7 @@ export async function writeARibbon({ monster, cr, typed, path, twist, families =
     const cased = ribbonTextFor2024(applyRibbonDc(answer.sentence, cr));
     const sentence = cased.text;
     const row = ribbonRowFrom({ name: answer.name, sentence, family: answer.family });
+    if (answer.object) row.ribbonObject = answer.object;
     putRibbonIn(monster, row);
     trace('ribbon written:', `${answer.family}/"${answer.name}" — ${sentence}${cased.termsUsed.length ? ` (cased: ${cased.termsUsed.join(', ')})` : ''}`);
     return { asked: true, written: true, attempt, offered, family: answer.family, row, reasons, terms2024: cased.termsUsed };
