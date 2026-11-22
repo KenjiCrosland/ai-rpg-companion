@@ -55,6 +55,7 @@ import { anatomyIn } from './header.mjs';
 import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
 import { classFor, classRows, CLASSES, classEligible, classWeapon, classLiftOwner } from './classes.mjs';
 import { renderForm, resolutionOf } from './forms.mjs';
+import { writeARibbon } from './ribbon.mjs';
 
 /**
  * PRINT'S ROWS PER CR BAND — ONE DEFINITION (2026-11-17).
@@ -13031,6 +13032,36 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('strike removed at ship:', `${sec}/"${e.name}" — ${why}; the row and its clause in the Multiattack leave`);
     }
   }
+  // ONE RIBBON, LAST, AND NOTHING ELSE ON THE SHEET MOVES (owner's rulings on the eighty, 2026-11-22).
+  //
+  // The call is its own and nothing it returns goes into any other prompt, so the route, idea, fit,
+  // seat, audit and legacy prompts are character for character what they were and every recorded
+  // answer still serves. It sits here, after the audit's renames and the strike's last check, so
+  // the row names it is shown are the finished sheet's — and before the lint below, so the stored
+  // findings describe the sheet that is returned, ribbon included.
+  //
+  // It is outside the free-row budget and takes no other row's place. A ribbon is never the reason
+  // a sheet does not arrive: if the call fails, the sheet ships as it is.
+  //
+  // "Typed by name alone" is read by comparing what the GM typed with the print body the ROUTE
+  // named — a presence comparison, not a second reading of his words. On the forty that is s19,
+  // s21 and s22, whose typed text is the print body and nothing else.
+  const ribbonTyped = String(options.userConcept ?? concept ?? '');
+  const ribbonPrintBody = String(monster.generation?.pipeline?.print_body ?? '');
+  const flat = (t) => t.replace(/[—–-]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  const ribbonOutcome = await writeARibbon({
+    monster,
+    cr,
+    typed: ribbonTyped,
+    path: monster.generation?.pipeline?.path ?? null,
+    twist: !!ribbonPrintBody && flat(ribbonTyped) !== flat(ribbonPrintBody),
+    callLLM,
+    trace,
+  });
+  if (monster.generation) monster.generation.ribbon = ribbonOutcome.written
+    ? { family: ribbonOutcome.family, name: ribbonOutcome.row.name, offered: ribbonOutcome.offered, attempt: ribbonOutcome.attempt }
+    : { written: false, ...(ribbonOutcome.asked ? { offered: ribbonOutcome.offered, reasons: ribbonOutcome.reasons, ...(ribbonOutcome.failed ? { failed: true } : {}) } : { because: ribbonOutcome.because }) };
+
   // THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).
   //
   // The sheet lints read the finished sheet — that is the whole premise of the instrument — and

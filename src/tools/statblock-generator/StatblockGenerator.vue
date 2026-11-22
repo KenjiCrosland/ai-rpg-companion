@@ -328,6 +328,7 @@ import {
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept, buildSynthesisGuidance, rollRandomCR } from './format-2024/concept-seeds.mjs';
+import { takeRibbonOut, putRibbonIn, ribbonTextFor2014 } from './reskin/ribbon.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -1741,6 +1742,14 @@ async function generateStatblockEngine(edition) {
         // deterministic shape ships with 2024 phrasing (honest degrade,
         // same never-fail law as every other organ).
         const source = JSON.parse(JSON.stringify(finalMonster));
+        // THE RIBBON DOES NOT GO THROUGH THE CONVERSION CALL (2026-11-22).
+        //
+        // The whole ribbon round rests on no existing prompt changing, and the conversion prompt is
+        // built from this object. A ribbon row in it would add a line to every 2014 sheet's legacy
+        // prompt and every recorded answer for that call would stop serving. So the row comes out
+        // here, the conversion runs on the sheet it has always run on, and the engine writes the
+        // 2014 row itself below — which is also why `ribbonTextFor2014` exists.
+        const ribbonRow = takeRibbonOut(source);
         try {
           const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
           delete converted._conversionNotes;
@@ -1752,6 +1761,12 @@ async function generateStatblockEngine(edition) {
           // and Thurivald were the only two 2014 blocks in
           // classes-eight-2026-10-16T22-10-02 and the only two with none.
           if (source.generation && !converted.generation) converted.generation = source.generation;
+          if (ribbonRow) {
+            const { text, termsUsed } = ribbonTextFor2014(ribbonRow.text);
+            putRibbonIn(converted, { ...ribbonRow, text });
+            if (converted.generation?.ribbon) converted.generation.ribbon.terms_2014 = termsUsed;
+            logger.log('[reskin] ribbon written for 2014:', `"${ribbonRow.name}"${termsUsed.length ? ` — ${termsUsed.join(', ')} reworded` : ' — no 2024-only term in it'}`);
+          }
           converted.other_edition = finalMonster;
           finalMonster = converted;
           logger.log('[reskin] 2014 conversion:', 'one lint-gated call — both printings saved');
@@ -1763,6 +1778,7 @@ async function generateStatblockEngine(edition) {
           // the deterministic 2014 grammar pass still runs so no 2024 token ships (checker 2026-10-02)
           for (const k of ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions']) if (Array.isArray(shaped[k])) shaped[k] = shaped[k].map((e) => ({ ...e, name: String(e.name ?? '').replace(/\bBloodied\b/g, 'Wounded'), description: to2014Grammar(e.description) }));
           if (source.generation && !shaped.generation) shaped.generation = source.generation; // the degraded path loses it too
+          if (ribbonRow) putRibbonIn(shaped, { ...ribbonRow, text: ribbonTextFor2014(ribbonRow.text).text });
           // A FAILED CONVERSION SHIPS MARKED (critic A9, 2026-10-18): nine of 32 conversion
           // calls failed in one run and every half-converted sheet read "edition: ok".
           // The checker's edition gate reads this mark and fails the block.

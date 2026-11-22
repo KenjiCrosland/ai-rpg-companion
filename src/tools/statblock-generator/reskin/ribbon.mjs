@@ -377,3 +377,187 @@ export function ribbonFamiliesOffered(typedText, { size } = {}) {
   }
   return pool.slice(0, Math.min(RIBBONS_OFFERED, pool.length));
 }
+
+/* ───────────────────── THE CALL, AND THE ROW IT WRITES ─────────────────────
+ *
+ * One call at the end of the pipeline. NOTHING IT RETURNS GOES INTO ANY OTHER PROMPT — that is the
+ * property this round depends on, so the route, idea, fit, seat, audit and legacy prompts stay
+ * character for character what they are and every recorded answer still serves.
+ *
+ * It runs inside generateReskin, last, and the 2014 conversion that follows it in the Vue layer
+ * takes the ribbon OUT before building its prompt (`takeRibbonOut`) and the engine writes the 2014
+ * row itself (`putRibbonIn`). Otherwise the legacy prompt would gain a row and every 2014 sheet
+ * would miss at the conversion call.
+ *
+ * A RIBBON IS NEVER THE REASON A SHEET DOES NOT ARRIVE. If the call errors, times out or returns
+ * something unreadable, the sheet ships as it is. No stock ribbon stands in.
+ */
+
+/** The opening line is a literal, which is how scripts/lib/tape.mjs recognises the call. */
+export const RIBBON_PROMPT_HEAD = 'You are writing one RIBBON for a D&D monster';
+
+export function buildRibbonPrompt({ name, type, size, cr, typed, speed, senses, languages, rowNames = [], families = [], refusedBefore = null }) {
+  const offered = families.map((key) => {
+    const f = familyByKey(key);
+    return `- ${f.label}\n  It must hold: ${f.mustHold}\n  Print's own row: ${f.print}`;
+  }).join('\n');
+  return `${RIBBON_PROMPT_HEAD} — one trait with no price in a fight.
+
+THE CREATURE
+${name} — ${[size, type].filter(Boolean).join(' ')}, CR ${cr}
+What the GM typed: ${typed || '(nothing — the creature was invented)'}
+Speed: ${speed || '(not set)'}
+Senses: ${senses || '(not set)'}
+Languages: ${languages || '(not set)'}
+Rows already on its sheet: ${rowNames.join(', ') || '(none)'}
+
+THE THREE FAMILIES YOU MAY WRITE IN. Pick the one that suits this creature best.
+${offered}
+
+THE RULES
+1. A name of two or three words, and one or two sentences of 40 words at most.
+2. No damage, no saving throw, no condition, no bonus to an attack or to Armor Class or to a save,
+   and no Advantage or Disadvantage on an attack roll or a saving throw. On an ability check both
+   are allowed.
+3. Write a DC if the ribbon needs one. The number does not matter — it is replaced.
+4. A distance, if you use one, is 30 feet, 60 feet, 120 feet or 1 mile. A tether may be 100 feet.
+   Lengths of time are free.
+5. It must do something at the table: a check, a distance, a permission, a restriction, or an
+   object. Not flavour alone.
+6. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.
+7. Print's flat voice. Print writes "can pinpoint the location of ferrous metal within 30 feet of
+   itself". Do not reach for "as though", "as if" or "like a".
+${refusedBefore ? `\nYOUR LAST ANSWER WAS REFUSED: ${refusedBefore}\nWrite a different one that does not have that fault.\n` : ''}
+Answer with JSON only: {"family": "<one of the three labels above>", "name": "<two or three words>", "ribbon": "<the sentence>"}`;
+}
+
+/** The label the model is shown, back to the key the engine uses. */
+export const familyFromLabel = (said) => {
+  const t = String(said ?? '').trim().toLowerCase();
+  return RIBBON_FAMILIES.find((f) => f.key === t || f.label.toLowerCase() === t)?.key ?? null;
+};
+
+export function parseRibbonAnswer(raw) {
+  let body = raw;
+  if (typeof raw === 'string') {
+    try { body = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim()); } catch { return null; }
+  }
+  if (!body || typeof body !== 'object') return null;
+  const sentence = String(body.ribbon ?? body.sentence ?? '').trim();
+  const name = String(body.name ?? '').trim();
+  if (!sentence || !name) return null;
+  return { family: familyFromLabel(body.family), familySaid: String(body.family ?? ''), name, sentence };
+}
+
+/** A ribbon row, flagged so the conversion can take it out and the lint can find it. */
+export const ribbonRowFrom = ({ name, sentence, family }) => ({ name, text: sentence, ribbon: true, ribbonFamily: family });
+export const isRibbonRow = (row) => !!row?.ribbon;
+
+/** Where a sheet keeps its traits, in whichever shape it is. */
+const traitsOf = (monster) => {
+  if (monster?.sections && typeof monster.sections === 'object') {
+    monster.sections.Traits ??= [];
+    return monster.sections.Traits;
+  }
+  if (Array.isArray(monster?.abilities)) return monster.abilities;
+  monster.abilities = [];
+  return monster.abilities;
+};
+
+/** Last under Traits. Outside the free-row budget: it takes no other row's place. */
+export function putRibbonIn(monster, row) {
+  if (!monster || !row) return null;
+  const traits = traitsOf(monster);
+  if (traits.some((r) => isRibbonRow(r))) return null; // never two
+  traits.push({ ...row });
+  return row;
+}
+
+/** Take it out again — what the 2014 conversion is given, so the legacy prompt does not change. */
+export function takeRibbonOut(monster) {
+  let found = null;
+  for (const list of [monster?.sections?.Traits, monster?.abilities]) {
+    if (!Array.isArray(list)) continue;
+    for (let i = list.length - 1; i >= 0; i -= 1) if (isRibbonRow(list[i])) { found ??= list[i]; list.splice(i, 1); }
+  }
+  return found;
+}
+
+/**
+ * TERMS THAT DIFFER BETWEEN THE EDITIONS. A ribbon holds very few: it has no conditions and no
+ * saving throws by construction, so what is left is the 2024 capitalised light and terrain terms.
+ * Applied when the engine writes the 2014 row, since the conversion call never sees it.
+ */
+export const RIBBON_2014_TERMS = [
+  [/\bDifficult Terrain\b/g, 'difficult terrain'],
+  [/\bBright Light\b/g, 'bright light'],
+  [/\bDim Light\b/g, 'dim light'],
+  [/\bEmanation\b/g, 'radius'],
+  [/\b(\d+)-foot Emanation\b/g, '$1-foot radius'],
+];
+export function ribbonTextFor2014(text) {
+  let out = String(text ?? '');
+  const used = [];
+  for (const [re, to] of RIBBON_2014_TERMS) {
+    if (re.test(out)) { used.push(String(re).replace(/^\/\\b|\\b\/g$|^\/|\/g$/g, '')); out = out.replace(re, to); }
+    re.lastIndex = 0;
+  }
+  return { text: out, termsUsed: used };
+}
+
+/**
+ * Make the call, validate it, ask once more with the reason if it is refused, and write the row.
+ * Returns what happened, for the trace and for the report.
+ */
+export async function writeARibbon({ monster, cr, typed, path, twist, families = null, callLLM, trace = () => {} }) {
+  const takes = sheetTakesARibbon({ path, twist });
+  if (!takes.yes) { trace('ribbon not asked:', takes.because); return { asked: false, ...takes }; }
+
+  const size = monster?.size ?? null;
+  const offered = families ?? ribbonFamiliesOffered(typed, { size });
+  const rowNames = Object.values(monster?.sections ?? {}).flat().map((r) => r?.name).filter(Boolean);
+  const ask = {
+    name: monster?.name, type: monster?.type, size, cr, typed,
+    speed: typeof monster?.speed === 'string' ? monster.speed : null,
+    senses: monster?.senses ?? null, languages: monster?.languages ?? null,
+    rowNames, families: offered,
+  };
+
+  const reasons = [];
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    let answer = null;
+    try {
+      const raw = await callLLM(buildRibbonPrompt({ ...ask, refusedBefore: reasons[0] ?? null }), () => true);
+      answer = parseRibbonAnswer(raw);
+    } catch (e) {
+      trace('ribbon call failed:', `${e?.message ?? e} — the sheet ships without one`);
+      return { asked: true, written: false, failed: true, offered, reasons };
+    }
+    if (!answer) {
+      reasons.push('the answer could not be read');
+      if (attempt === 2) break;
+      continue;
+    }
+    if (!offered.includes(answer.family)) {
+      reasons.push(answer.family
+        ? `"${answer.familySaid}" was not one of the three families offered`
+        : `"${answer.familySaid}" is not one of the six families`);
+      if (attempt === 2) break;
+      continue;
+    }
+    const faults = ribbonFaults(answer.sentence, { family: answer.family, name: answer.name });
+    if (faults.length) {
+      reasons.push(faults[0]);
+      if (attempt === 2) break;
+      continue;
+    }
+    // Rule 3: the engine's DC, applied after the validator has passed the sentence.
+    const sentence = applyRibbonDc(answer.sentence, cr);
+    const row = ribbonRowFrom({ name: answer.name, sentence, family: answer.family });
+    putRibbonIn(monster, row);
+    trace('ribbon written:', `${answer.family}/"${answer.name}" — ${sentence}`);
+    return { asked: true, written: true, attempt, offered, family: answer.family, row, reasons };
+  }
+  trace('ribbon refused twice:', `${reasons.join(' | ')} — the sheet ships without one`);
+  return { asked: true, written: false, offered, reasons };
+}

@@ -35,6 +35,8 @@ export const CALL_FAMILIES = [
   // called it; three recordings from 2026-11-16 still carry 11 of these calls each, and a family
   // dropped from this list would make them report `unknown` instead of naming what they are.
   { name: 'free-row-fix', builder: 'buildFreeRowFixPrompt (deleted 2026-11-17)', file: 'reskin/author.mjs', head: 'You are REPAIRING one ability' },
+  // The ribbon runs last inside generateReskin, so it arrives BEFORE the 2014 conversion call.
+  { name: 'ribbon', builder: 'buildRibbonPrompt', file: 'reskin/ribbon.mjs', head: 'You are writing one RIBBON for a D&D monster' },
   { name: 'legacy', builder: 'fromLegacyModel', file: 'reskin/generate.mjs', head: 'You are converting D&D statblock entries' },
   { name: 'enrichment', builder: 'buildEnrichmentPrompt', file: 'util/statblock-enrichment.mjs', head: 'You are generating creature intelligence data' },
 ];
