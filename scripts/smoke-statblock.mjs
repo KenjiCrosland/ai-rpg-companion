@@ -27,7 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { buildTape, takeAnswer, unusedAnswers, decide, formatMiss, familyOf, MISS_BODY, FAMILY_NAMES, sheetsDiffer, differingFields, onlyKeyOrderDiffers } from './lib/tape.mjs';
+import { buildTape, takeAnswer, unusedAnswers, decide, formatMiss, familyOf, MISS_BODY, FAMILY_NAMES, sheetsDiffer, differingFields, onlyKeyOrderDiffers , notReplayable} from './lib/tape.mjs';
 import { ARMS, ARM_NAMES } from './lib/arms.mjs';
 // the engine's own reader for a CR typed in the words, so the harness and the page agree (item 0.4)
 import { crFromPrompt } from '../src/tools/statblock-generator/reskin/lexicon.mjs';
@@ -114,25 +114,6 @@ const RECORDINGS = path.resolve('src/tools/statblock-generator/reskin/__tests__/
  * replay reported 2 misses that had been 2 skips. The rule is knowable from the input, so it is
  * written rather than remembered.
  */
-// A SHEET IS UNREPLAYABLE WHEN ITS CR IS ROLLED, NOT WHEN THE FIELD SAYS "auto" (item 0.4,
-// 2026-11-18). This marked every entry whose CR field was "auto", and the engine does not roll
-// then: `StatblockGenerator.vue` reads `selectedChallengeRating || crFromPrompt(name + description)`
-// and rolls ONLY when both are absent. The marsh witch types "cr 7" in her words, the engine reads
-// it, and nothing is rolled — yet the mark was written on her twice and taken off by hand twice,
-// which would have dropped from the gate the one sheet the owner most wanted read.
-//
-// The harness now asks what the engine asks, through the engine's own reader rather than a second
-// pattern of its own.
-const notReplayable = (entry) => {
-  const field = String(entry?.cr ?? '').trim();
-  const inWords = crFromPrompt(`${entry?.name ?? ''} ${entry?.description ?? ''}`);
-  const rolledCr = (!field || field.toLowerCase() === 'auto') && !inWords;
-  const blank = !String(entry?.name ?? '').trim() && !String(entry?.description ?? '').trim();
-  if (!rolledCr && !blank) return {};
-  return { replay: { skip: true, why: rolledCr
-    ? 'the CR the user did not set is rolled locally (rollRandomCR) and lands in the route prompt'
-    : 'a blank form rolls its whole creature — type, traits, energy, naming (buildRandomConceptSeed)' } };
-};
 
 let replayCases = [];
 if (replayDir) {
@@ -356,8 +337,16 @@ const run = async () => {
     // differ every run and the frozen half cannot be served. That is true whatever the mode: run
     // live-from-the-audit, both sheets threw "Failed to generate a valid response", because the
     // calls BEFORE the named one missed the tape and were answered offline.
-    if (replayDir && replayCases[i]?.replay?.skip) {
-      const why = replayCases[i].replay.why ?? 'marked not replayable';
+    // THE MARK IS READ FROM THE INPUT, NOT REMEMBERED FROM THE TAPE (owner, 2026-11-21 evening).
+    // `notReplayable` already answers this from the entry alone — that was the point of writing it
+    // rather than hand-marking the files — and the tape's copy still fell out of the lineage twice:
+    // a skipped entry writes no tape, so the next generation, recorded by replaying the last, has
+    // no mark to carry. It was present on the 18 November tapes and null on the 20 November ones,
+    // and both sheets were then reported as MISSES, which is what made "38 of 40" read as a
+    // failure for a week.
+    const skipMark = replayCases[i]?.replay?.skip ? replayCases[i].replay : notReplayable(entry).replay;
+    if (replayDir && skipMark?.skip) {
+      const why = skipMark.why ?? 'marked not replayable';
       console.log(`SKIPPED — ${why}`);
       replaySkipped += 1;
       results.push({ n, status: `SKIPPED — ${why}`, name: label, signature: null,

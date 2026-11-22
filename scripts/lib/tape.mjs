@@ -1,3 +1,4 @@
+import { crFromPrompt } from '../../src/tools/statblock-generator/reskin/lexicon.mjs'; // the engine's own reader: the harness asks what the engine asks
 /**
  * THE TAPE: a recorded generation's prompts and answers, served back in place of the model.
  *
@@ -211,3 +212,23 @@ export const differingFields = (a, b) => Object.keys({ ...(a ?? {}), ...(b ?? {}
 
 /** KEY ORDER ALONE, reported rather than hidden: the sheet is the same and the serialisation moved. */
 export const onlyKeyOrderDiffers = (a, b) => JSON.stringify(a) !== JSON.stringify(b) && !sheetsDiffer(a, b);
+
+// A SHEET IS UNREPLAYABLE WHEN ITS CR IS ROLLED, NOT WHEN THE FIELD SAYS "auto" (item 0.4,
+// 2026-11-18). This marked every entry whose CR field was "auto", and the engine does not roll
+// then: `StatblockGenerator.vue` reads `selectedChallengeRating || crFromPrompt(name + description)`
+// and rolls ONLY when both are absent. The marsh witch types "cr 7" in her words, the engine reads
+// it, and nothing is rolled — yet the mark was written on her twice and taken off by hand twice,
+// which would have dropped from the gate the one sheet the owner most wanted read.
+//
+// The harness now asks what the engine asks, through the engine's own reader rather than a second
+// pattern of its own.
+export const notReplayable = (entry) => {
+  const field = String(entry?.cr ?? '').trim();
+  const inWords = crFromPrompt(`${entry?.name ?? ''} ${entry?.description ?? ''}`);
+  const rolledCr = (!field || field.toLowerCase() === 'auto') && !inWords;
+  const blank = !String(entry?.name ?? '').trim() && !String(entry?.description ?? '').trim();
+  if (!rolledCr && !blank) return {};
+  return { replay: { skip: true, why: rolledCr
+    ? 'the CR the user did not set is rolled locally (rollRandomCR) and lands in the route prompt'
+    : 'a blank form rolls its whole creature — type, traits, energy, naming (buildRandomConceptSeed)' } };
+};
