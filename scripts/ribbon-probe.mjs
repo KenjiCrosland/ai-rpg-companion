@@ -5,8 +5,12 @@
  * model for two ribbons per sheet of the forty, runs every answer through the validator that will
  * ship (reskin/ribbon.mjs), and writes a blocks file the owner can read.
  *
- * Sheet i takes family `i mod 8` and `(i + 3) mod 8`, so each of the eight is asked ten times and
- * the run can be repeated. Eighty calls.
+ * Sheet i takes family `i mod N` and `(i + 3) mod N` over the families as they stand, so each is
+ * asked an equal number of times and the run can be repeated.
+ *
+ * THE EIGHTY OF 22 NOVEMBER WERE ASKED OVER EIGHT FAMILIES. The owner then cut them to six —
+ * hiding went, bound folded into taboo — so this script no longer reproduces that run. The eighty
+ * lines are the kept artifact: `scripts/smoke-evidence/BLOCKS-ribbon-probe-2026-11-22.md`.
  *
  * THE CONTEXT COMES FROM THE RECORDING, NOT A NEW RUN. The forty's finished sheets are already on
  * disk in baseline-2026-11-20, each with the GM's input, the creature's name and type, and its row
@@ -76,7 +80,7 @@ What the GM typed: ${sheet.typed}
 The rows already on its sheet: ${sheet.rows.join(', ') || '(none)'}
 
 The family you are writing in: ${family.label}
-Print's own row in that family, as the example: ${family.example}
+Print's own row in that family, as the example: ${family.print}
 
 ${RULES}`;
 
@@ -107,7 +111,8 @@ if (sheets.length !== 40) console.warn(`note: ${sheets.length} sheets in the rec
 /** Sheet i takes family i mod 8 and (i + 3) mod 8. i is the sheet's own 1-based index. */
 const asks = [];
 for (const s of sheets) {
-  for (const k of [s.index % 8, (s.index + 3) % 8]) asks.push({ sheet: s, family: RIBBON_FAMILIES[k] });
+  const n = RIBBON_FAMILIES.length;
+  for (const k of [s.index % n, (s.index + 3) % n]) asks.push({ sheet: s, family: RIBBON_FAMILIES[k] });
 }
 const planned = LIMIT ? asks.slice(0, LIMIT) : asks;
 console.log(`${planned.length} asks over ${sheets.length} sheets, ${RIBBON_FAMILIES.length} families, via ${ORIGIN}`);

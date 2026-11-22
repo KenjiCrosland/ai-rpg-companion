@@ -20,25 +20,29 @@ const printTrait = (creature, row) => {
   return t.text;
 };
 
-describe('the eight families each have print\'s row as their example', () => {
-  it('names eight families, each with a key, a label and an example', () => {
-    expect(RIBBON_FAMILIES).toHaveLength(8);
+describe("each family carries print's row as its example", () => {
+  // The families went from eight to six when the owner read the eighty: hiding was a second Stealth
+  // with an invented number, and bound folded into taboo as a tether. `a-ribbon-of-its-family.spec.js`
+  // holds the family rules; this file holds the question of whether a sentence is a ribbon at all.
+  it('each family has a key, a label, print\'s row, and what it must hold', () => {
+    expect(RIBBON_FAMILIES).toHaveLength(6);
     for (const f of RIBBON_FAMILIES) {
       expect(f.key).toMatch(/^[a-z-]+$/);
       expect(f.label.length).toBeGreaterThan(4);
-      expect(f.example).toMatch(/: /); // "Creature, Row: the text"
+      expect(f.print).toMatch(/: /); // "Creature, Row: the text"
     }
   });
 
-  // Every example the ask will show the model must itself pass the validator, or the ask teaches
-  // the model to write something the validator then refuses.
-  it.each(RIBBON_FAMILIES.map((f) => [f.key, f.example]))('%s — its own example is a ribbon', (_key, example) => {
+  // Every example the ask shows the model must itself pass the BASE rules, or the ask teaches the
+  // model to write something the validator then refuses. (The family rules are tighter than print:
+  // the Azer's 10-foot Illumination is refused by the four-distance rule, which is the owner's.)
+  it.each(RIBBON_FAMILIES.map((f) => [f.key, f.print]))('%s — print\'s own row is a ribbon', (_key, example) => {
     const sentence = example.slice(example.indexOf(': ') + 2);
     expect(ribbonRefusal(sentence)).toBeNull();
   });
 });
 
-describe('it accepts every printed trait in the eight families', () => {
+describe('it accepts every printed trait in the families, past and present', () => {
   const PRINTED = [
     ['senses', 'Rust Monster', 'Iron Scent'],
     ['sheds', 'Azer Sentinel', 'Illumination'],
