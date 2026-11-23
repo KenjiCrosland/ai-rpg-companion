@@ -88,6 +88,23 @@ the first place.
   order says. The zone table from the probes round is recorded in
   `HANDOFF-probes-2026-11-22.md` §5 and in Fable's own handoff, so nothing has to be found again.
 
+## Housekeeping I found and did not act on
+
+While checking that the evidence folder matched the standing order, three blocks files and a number
+of CHECK files look orphaned by it. **I have not touched any of them** — the order asked for one
+deletion this round, deletions go in their own commit, and what is named is yours and the owner's to
+say, not mine to infer.
+
+- **Three blocks files predate the list** and are on neither the milestones nor the named-from-handoffs
+  roll: `BLOCKS-bothways-2026-11-14.md`, `BLOCKS-probeB-2026-11-14.md`, `BLOCKS-probeC1-2026-11-14.md`.
+  They may be named by a handoff older than the list, which is why I am asking rather than deleting.
+- **Sixteen `CHECK-*` files remain**, and the rule is that a CHECK file goes when its blocks file
+  goes. At least two point at October blocks files that are long gone —
+  `CHECK-classes-eight-2026-10-16T22-10-02.md` and `CHECK-stage34-2026-10-16T20-49-59.md`. The rest
+  are 16 November and pair with blocks files that are still milestones, so those stay either way.
+
+Say which should go and it is one commit.
+
 ## One thing worth saying about the 34
 
 Your reading is in the handoff and I agree with it, but the number is worth writing down because it
