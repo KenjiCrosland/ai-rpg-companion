@@ -235,3 +235,52 @@ The brass tyrant's pair is the one to look at if you disagree with any of it. It
 **decoration** — rank 2, not the borrowed rank 3 — and your rule as written covers ranks 0 to 2, so
 with room for two the decoration now stays beside the seat's payoff. If decorations were meant to be
 excluded along with the borrowed row, that is one word in the predicate and I have not assumed it.
+
+---
+
+# The amendment's probe: does a second roll fix a dud?
+
+Twelve generations — the four sheets on the owner's Fix list, three rolls each, live from the idea
+call, on the sheets as this round leaves them. `scripts/smoke-evidence/BLOCKS-second-roll-probe-2026-11-23.md`
+holds all twelve in full with the recorded sheet above each for comparison. **Not graded**, as
+ordered: the twelve are yours to read against his words on each sheet.
+
+**Which idea call the harness took.** Every generation makes **exactly one** idea call — checked in
+each run's own tape, which shows 11 calls per generation with one of them the idea — so
+`--live-from idea` had nothing to choose between. Nothing was built and no second roll exists inside
+the engine.
+
+**What the engine says for itself.** Seats that landed a row, seats that wrote nothing, seats asked
+a second time, rows drawn from a stock seed, and the lint:
+
+| Sheet | Roll | Landed | Wrote nothing | Asked again | From a seed | Lint |
+|---|---|---|---|---|---|---|
+| s07 Hydra | 1 | action | trait | — | 0 | 0 findings |
+| | 2 | — | action | — | 0 of 1 | 0 findings |
+| | 3 | — | — | — | 0 of 2 | 0 findings |
+| s13 Purple Worm | 1 | trait | — | — | 0 of 1 | 0 findings |
+| | 2 | action, trait | — | — | 0 | 0 findings |
+| | 3 | — | trait | — | 0 of 1 | 0 findings |
+| s35 Well Drowned | 1 | trait | action | action | **1 of 1** | 0 findings |
+| | 2 | trait | trait | trait | 0 of 1 | `orphan-condition-ref`: "Grappled" referenced, nothing applies it |
+| | 3 | — | — | — | 0 of 1 | `citation-gate-mismatch`: Multiattack cites "Dragged Under", gated, without "if available" |
+| s06 Spoilheap Lurker | 1 | action | — | — | 0 | 0 findings |
+| | 2 | action, trait | — | — | 0 | 0 findings |
+| | 3 | trait | trait | trait | **1 of 1** | `stock-template-name`: `Bonus Actions/Venomed Edge` is the stock name of the "coating" template |
+
+**Three facts worth having beside the twelve, none of them a grade:**
+
+- **The action seat on s35 does not always end empty.** Your note on that sheet is that it ends
+  empty and nothing drags anyone into the well. Of these three rolls it was refused once (roll 1,
+  which then drew a seed) and on roll 3 the sheet carries a row named **Dragged Under** — the lint's
+  only complaint about it is a missing "if available" on the Multiattack's citation. That is the
+  first time the engine has produced a row of that shape for this sheet; the three earlier rolls
+  that came back empty were from before this round.
+- **A roll that changes nothing is possible.** s07's roll 3 and s13's roll 3 each landed no row from
+  either seat, and s07's roll 3 drew 0 of 2 from a seed — the sheet simply came back with its
+  chassis rows.
+- **Two of the twelve drew a stock seed** (s35 roll 1, s06 roll 3), which is the sameness the owner
+  dislikes, and **two of the twelve carry a lint finding** that the recorded sheets did not.
+
+**What I did not do.** No button, no second roll inside the engine, and no grading. The twelve are
+in the blocks file for you to count against his words.
