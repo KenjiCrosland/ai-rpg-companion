@@ -51,7 +51,7 @@
   },
   {
    "prompt": "You are writing one RIBBON for a D&D monster — one trait with no price in a fight.\n\nTHE CREATURE\nStone Golem — Large Construct, CR 10\nWhat the GM typed: Stone Golem — carved as a weeping saint\nSpeed: 30 ft.\nSenses: darkvision 60 ft.; Passive Perception 14\nLanguages: Understands Common plus two other languages but can't speak\nRows already on its sheet: Multiattack, Slam, Force Bolt, Grief Glare, Immutable Form, Magic Resistance, Slow (Recharge 5-6)\n\nTHE THREE FAMILIES YOU MAY WRITE IN. Pick the one that suits this creature best.\n- Sheds or leaves a trail\n  It must hold: A light with its radius, or a trail and how it is followed.\n  Print's own row: Azer, Illumination: The azer sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.\n- Has a taboo, a need, or a tether\n  It must hold: Something it cannot do, must do, or will not do. A tether has a distance and says what the creature does at the end of it.\n  Print's own row: Sahuagin, Limited Amphibiousness: The sahuagin can breathe air and water, but it must be submerged at least once every 4 hours to avoid suffocating outside water.\n- Moves strangely\n  It must hold: A movement it can make that others cannot, over a named surface or through a named thing.\n  Print's own row: Earth Elemental, Earth Glide: The elemental can burrow through nonmagical, unworked earth and stone. While doing so, the elemental doesn't disturb the material it moves through.\n\nTHE RULES\n1. A name of two or three words, and one or two sentences of 45 words at most —\n   55 if you write in the \"Leaves something when it dies\" family.\n2. No damage, no saving throw, no condition, no bonus to an attack or to Armor Class or to a save,\n   and no Advantage or Disadvantage on an attack roll or a saving throw. On an ability check both\n   are allowed.\n3. Write a DC if the ribbon needs one. The number does not matter — it is replaced.\n4. A distance, if you use one, is 30 feet, 60 feet, 120 feet or 1 mile. A tether may be 100 feet.\n   Lengths of time are free.\n5. It must do something at the table: a check, a distance, a permission, a restriction, or an\n   object. Not flavour alone.\n6. A CHECK IS ONE A CREATURE CHOOSES TO MAKE — to learn, notice, follow or understand something.\n   Never \"must succeed on a check or\" anything. That is a saving throw under another name.\n7. ONE FAMILY TO A RIBBON. Only a ribbon that senses pinpoints or knows the location of a thing.\n   Do not weld a second ribbon onto the one you are writing.\n8. If you write in \"Moves strangely\", grant a WAY of moving — over a named surface, through a named\n   thing. Never movement that costs nothing, and never more movement.\n9. If you write a tether, the consequence is that the creature cannot willingly go farther, or must\n   move back. It never takes away its actions.\n10. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.\n11. Print's flat voice. Print writes \"can pinpoint the location of ferrous metal within 30 feet of\n    itself\". Do not reach for \"as though\", \"as if\" or \"like a\".\n\nAnswer with JSON only: {\"family\": \"<one of the three labels above>\", \"name\": \"<two or three words>\", \"ribbon\": \"<the sentence>\"}\nIf and only if you write in the \"Leaves something when it dies\" family, add one more field:\n\"object\": \"<the thing it leaves, named in your sentence exactly as you write it there>\"",
-   "response": "{\"id\":\"c3175bdf-b6e0-4bd5-8d32-187e9e4b4916\",\"object\":\"chat.completion\",\"created\":1795393131,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"family\\\": \\\"Sheds or leaves a trail\\\", \\\"name\\\": \\\"Weeping Seams\\\", \\\"ribbon\\\": \\\"Wet trails run from the stone golem's eyes and fissures. A creature can make a DC 15 Wisdom (Survival) check to follow these trails for up to 1 mile, learning the golem's path and the direction it last took.\\\"}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":886,\"completion_tokens\":80,\"total_tokens\":966,\"prompt_tokens_details\":{\"cached_tokens\":640},\"prompt_cache_hit_tokens\":640,\"prompt_cache_miss_tokens\":246},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+   "response": "{\"id\":\"30b59a8a-2b48-48eb-826d-ca3bc3e87866\",\"object\":\"chat.completion\",\"created\":1795394063,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"family\\\": \\\"Moves strangely\\\", \\\"name\\\": \\\"Saint's Procession\\\", \\\"ribbon\\\": \\\"The golem can move across worked stone without disturbing dust, water, or loose debris on its surface, leaving no tracks. A creature can follow its path by making a DC 15 Wisdom (Survival) check.\\\"}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":886,\"completion_tokens\":67,\"total_tokens\":953,\"prompt_tokens_details\":{\"cached_tokens\":640},\"prompt_cache_hit_tokens\":640,\"prompt_cache_miss_tokens\":246},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
   }
  ],
  "sheet": {
@@ -139,10 +139,10 @@
      "print": true
     },
     {
-     "name": "Weeping Seams",
-     "text": "Wet trails run from the stone golem's eyes and fissures. A creature can make a DC 13 Wisdom (Survival) check to follow these trails for up to 1 mile, learning the golem's path and the direction it last took.",
+     "name": "Saint's Procession",
+     "text": "The golem can move across worked stone without disturbing dust, water, or loose debris on its surface, leaving no tracks. A creature can follow its path by making a DC 13 Wisdom (Survival) check.",
      "ribbon": true,
-     "ribbonFamily": "sheds"
+     "ribbonFamily": "moves"
     }
    ],
    "Bonus Actions": [
@@ -194,8 +194,8 @@
    "seed_rows": 0,
    "signature": "library",
    "ribbon": {
-    "family": "sheds",
-    "name": "Weeping Seams",
+    "family": "moves",
+    "name": "Saint's Procession",
     "offered": [
      "sheds",
      "taboo",

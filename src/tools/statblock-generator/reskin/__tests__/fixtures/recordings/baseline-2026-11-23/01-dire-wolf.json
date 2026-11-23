@@ -46,7 +46,7 @@
   },
   {
    "prompt": "You are writing one RIBBON for a D&D monster — one trait with no price in a fight.\n\nTHE CREATURE\nDire Wolf — Large Beast, CR 1\nWhat the GM typed: Dire Wolf — with a frost-rimed hide\nSpeed: 50 ft.\nSenses: darkvision 60 ft.; Passive Perception 15\nLanguages: None\nRows already on its sheet: Pack Tactics, Bite, Herding Snap (Recharge 5-6)\n\nTHE THREE FAMILIES YOU MAY WRITE IN. Pick the one that suits this creature best.\n- Sheds or leaves a trail\n  It must hold: A light with its radius, or a trail and how it is followed.\n  Print's own row: Azer, Illumination: The azer sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.\n- Senses a thing\n  It must hold: What it pinpoints, and a range.\n  Print's own row: Rust Monster, Iron Scent: The rust monster can pinpoint the location of ferrous metal within 30 feet of itself.\n- Leaves something when it dies\n  It must hold: An object it leaves behind, what that object does, and when that ends — after a stated time, or once. It casts no spell. Up to 55 words.\n  Print's own row: Troll Limb, Troll Spawn: The limb uncannily has the same senses as a whole troll. If the limb isn't destroyed within 24 hours, roll 1d12. On a 12, the limb turns into a Troll. Otherwise, the limb withers away.\n\nTHE RULES\n1. A name of two or three words, and one or two sentences of 45 words at most —\n   55 if you write in the \"Leaves something when it dies\" family.\n2. No damage, no saving throw, no condition, no bonus to an attack or to Armor Class or to a save,\n   and no Advantage or Disadvantage on an attack roll or a saving throw. On an ability check both\n   are allowed.\n3. Write a DC if the ribbon needs one. The number does not matter — it is replaced.\n4. A distance, if you use one, is 30 feet, 60 feet, 120 feet or 1 mile. A tether may be 100 feet.\n   Lengths of time are free.\n5. It must do something at the table: a check, a distance, a permission, a restriction, or an\n   object. Not flavour alone.\n6. A CHECK IS ONE A CREATURE CHOOSES TO MAKE — to learn, notice, follow or understand something.\n   Never \"must succeed on a check or\" anything. That is a saving throw under another name.\n7. ONE FAMILY TO A RIBBON. Only a ribbon that senses pinpoints or knows the location of a thing.\n   Do not weld a second ribbon onto the one you are writing.\n8. If you write in \"Moves strangely\", grant a WAY of moving — over a named surface, through a named\n   thing. Never movement that costs nothing, and never more movement.\n9. If you write a tether, the consequence is that the creature cannot willingly go farther, or must\n   move back. It never takes away its actions.\n10. It must not contradict the Speed, Senses or Languages above, or any row already on the sheet.\n11. Print's flat voice. Print writes \"can pinpoint the location of ferrous metal within 30 feet of\n    itself\". Do not reach for \"as though\", \"as if\" or \"like a\".\n\nAnswer with JSON only: {\"family\": \"<one of the three labels above>\", \"name\": \"<two or three words>\", \"ribbon\": \"<the sentence>\"}\nIf and only if you write in the \"Leaves something when it dies\" family, add one more field:\n\"object\": \"<the thing it leaves, named in your sentence exactly as you write it there>\"",
-   "response": "{\"id\":\"97ac66fa-a1c7-4993-8665-70d67b8faadb\",\"object\":\"chat.completion\",\"created\":1795393101,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"family\\\": \\\"Sheds or leaves a trail\\\", \\\"name\\\": \\\"Rime Trail\\\", \\\"ribbon\\\": \\\"A creature can follow the dire wolf's frost-rimed tracks by succeeding on a DC 12 Survival check. The tracks remain readable for 1 hour in cold or shaded ground and fade in 10 minutes in sunlight.\\\"}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":859,\"completion_tokens\":71,\"total_tokens\":930,\"prompt_tokens_details\":{\"cached_tokens\":640},\"prompt_cache_hit_tokens\":640,\"prompt_cache_miss_tokens\":219},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
+   "response": "{\"id\":\"11ca0c77-0e91-4811-b447-f68be770dfdb\",\"object\":\"chat.completion\",\"created\":1795394038,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"family\\\": \\\"Sheds or leaves a trail\\\", \\\"name\\\": \\\"Frost-Rime Trail\\\", \\\"ribbon\\\": \\\"The dire wolf sheds frost-rimed hairs in its wake. A creature can follow the trail for 1 mile by making a DC 13 Wisdom (Survival) check, and the trail ends at any water it crosses.\\\"}\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":859,\"completion_tokens\":74,\"total_tokens\":933,\"prompt_tokens_details\":{\"cached_tokens\":640},\"prompt_cache_hit_tokens\":640,\"prompt_cache_miss_tokens\":219},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}"
   }
  ],
  "sheet": {
@@ -95,8 +95,8 @@
      "print": true
     },
     {
-     "name": "Rime Trail",
-     "text": "A creature can follow the dire wolf's frost-rimed tracks by succeeding on a DC 10 Survival check. The tracks remain readable for 1 hour in cold or shaded ground and fade in 10 minutes in sunlight.",
+     "name": "Frost-Rime Trail",
+     "text": "The dire wolf sheds frost-rimed hairs in its wake. A creature can follow the trail for 1 mile by making a DC 10 Wisdom (Survival) check, and the trail ends at any water it crosses.",
      "ribbon": true,
      "ribbonFamily": "sheds"
     }
@@ -170,7 +170,7 @@
    "signature": "library",
    "ribbon": {
     "family": "sheds",
-    "name": "Rime Trail",
+    "name": "Frost-Rime Trail",
     "offered": [
      "sheds",
      "senses",
