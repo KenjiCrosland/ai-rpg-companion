@@ -1,7 +1,8 @@
 /**
  * WITHIN ONE RECEIPT RANK, A TEMPLATED ROW BEATS AN UNTEMPLATED ONE (owner, 2026-11-14).
  *
- * Probe B's clockwork spider (`BLOCKS-probeB-2026-11-14.md` #01) had one package seat write two
+ * Probe B's clockwork spider (probe B #01, 14 November; its blocks file has since gone and the
+ * two rows are kept verbatim in `spiderPair()` below) had one package seat write two
  * rows for the same element: the action "Caught Line (Recharge 5-6)" on the snare template,
  * priced and accepted by the value check, and the trait "Mainspring Rewind" with no template.
  * Both ranked `element`. The sort is stable, so the tie fell to sheet order — Traits before
