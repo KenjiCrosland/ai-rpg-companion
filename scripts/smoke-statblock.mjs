@@ -67,6 +67,9 @@ const onlyIdx = (() => {
 // node, a mismatch could be the environment; here it cannot.
 const replayDir = args.includes('--replay') ? path.resolve(args[args.indexOf('--replay') + 1] ?? '') : null;
 const recording = args.includes('--record');
+// THE RIBBON IS PARKED AND OFF BY DEFAULT (owner, 2026-11-23). `--ribbons` turns it on, which is
+// what a replay of baseline-2026-11-23 needs; every other run reproduces the product's default.
+const ribbons = args.includes('--ribbons');
 // THREE REPLAY MODES (2026-11-16).
 //   strict        (default) a hit is served, a miss FAILS. What proves a refactor.
 //   pass-through  a miss goes LIVE, so a prompt change can be tried without paying for a forty.
@@ -318,9 +321,11 @@ const run = async () => {
 
   // premium is the page VARIANT in dev, not a runtime flag — and it's what
   // keeps the 5/24h free quota out of the way
-  await page.addInitScript(() => {
+  await page.addInitScript((wantRibbons) => {
     localStorage.setItem('dev-current-page', 'statblock-generator-premium');
-  });
+    if (wantRibbons) localStorage.setItem('statblock-ribbons', '1');
+    else localStorage.removeItem('statblock-ribbons');
+  }, ribbons);
 
   const results = [];
   for (const [i, entry] of entries.entries()) {

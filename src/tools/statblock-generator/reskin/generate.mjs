@@ -13032,41 +13032,54 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('strike removed at ship:', `${sec}/"${e.name}" — ${why}; the row and its clause in the Multiattack leave`);
     }
   }
-  // ONE RIBBON, LAST, AND NOTHING ELSE ON THE SHEET MOVES (owner's rulings on the eighty, 2026-11-22).
+  // THE RIBBON IS PARKED, AND OFF UNLESS IT IS ASKED FOR (owner, 2026-11-23).
   //
-  // The call is its own and nothing it returns goes into any other prompt, so the route, idea, fit,
-  // seat, audit and legacy prompts are character for character what they were and every recorded
-  // answer still serves. It sits here, after the audit's renames and the strike's last check, so
-  // the row names it is shown are the finished sheet's — and before the lint below, so the stored
-  // findings describe the sheet that is returned, ribbon included.
+  // His words: "I don't know if I want to spend this much effort or overhead on ribbons. Too many
+  // of them are malformed." Of the 34 that landed on the forty, eleven were the same 100-foot leash
+  // and five more copied Earth Glide — the model took whichever family's rule spelled out its own
+  // sentence. The eighty in the probe, which nothing policed, were the ones he enjoyed.
   //
-  // It is outside the free-row budget and takes no other row's place. A ribbon is never the reason
-  // a sheet does not arrive: if the call fails, the sheet ships as it is.
-  //
-  // "Typed by name alone" is read by comparing what the GM typed with the print body the ROUTE
-  // named — a presence comparison, not a second reading of his words. On the forty that is s19,
-  // s21 and s22, whose typed text is the print body and nothing else.
-  const ribbonTyped = String(options.userConcept ?? concept ?? '');
-  const ribbonPrintBody = String(monster.generation?.pipeline?.print_body ?? '');
-  const flat = (t) => t.replace(/[—–-]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-  const ribbonOutcome = await writeARibbon({
-    monster,
-    cr,
-    typed: ribbonTyped,
-    path: monster.generation?.pipeline?.path ?? null,
-    twist: !!ribbonPrintBody && flat(ribbonTyped) !== flat(ribbonPrintBody),
-    callLLM,
-    trace,
-  });
-  // NOTHING IS STAMPED ON A SHEET THAT NEVER ASKED. The strict replay caught this: s21's Owlbear
-  // takes no ribbon, but a `generation.ribbon` record on it made the sheet differ from its
-  // recording — `REPLAY DIFFERS (generation)` — while s19's did not, because s19 is print-exact
-  // with no calls and never reaches this line at all. A sheet that was not asked is untouched, and
-  // the trace above already says why. That is what "nothing else on the sheet moves" has to mean.
-  if (monster.generation && ribbonOutcome.asked) {
-    monster.generation.ribbon = ribbonOutcome.written
-      ? { family: ribbonOutcome.family, name: ribbonOutcome.row.name, offered: ribbonOutcome.offered, attempt: ribbonOutcome.attempt }
-      : { written: false, offered: ribbonOutcome.offered, reasons: ribbonOutcome.reasons, ...(ribbonOutcome.failed ? { failed: true } : {}) };
+  // With `options.ribbon` absent or false — which is every path the product takes — the call is not
+  // made, no sheet carries a ribbon row, and nothing is stamped on `generation`. A generation costs
+  // what it cost before the ribbon existed. The code, the validator and their tests stay; only the
+  // asking is off.
+  if (options.ribbon) {
+    // ONE RIBBON, LAST, AND NOTHING ELSE ON THE SHEET MOVES (owner's rulings on the eighty, 2026-11-22).
+    //
+    // The call is its own and nothing it returns goes into any other prompt, so the route, idea, fit,
+    // seat, audit and legacy prompts are character for character what they were and every recorded
+    // answer still serves. It sits here, after the audit's renames and the strike's last check, so
+    // the row names it is shown are the finished sheet's — and before the lint below, so the stored
+    // findings describe the sheet that is returned, ribbon included.
+    //
+    // It is outside the free-row budget and takes no other row's place. A ribbon is never the reason
+    // a sheet does not arrive: if the call fails, the sheet ships as it is.
+    //
+    // "Typed by name alone" is read by comparing what the GM typed with the print body the ROUTE
+    // named — a presence comparison, not a second reading of his words. On the forty that is s19,
+    // s21 and s22, whose typed text is the print body and nothing else.
+    const ribbonTyped = String(options.userConcept ?? concept ?? '');
+    const ribbonPrintBody = String(monster.generation?.pipeline?.print_body ?? '');
+    const flat = (t) => t.replace(/[—–-]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const ribbonOutcome = await writeARibbon({
+      monster,
+      cr,
+      typed: ribbonTyped,
+      path: monster.generation?.pipeline?.path ?? null,
+      twist: !!ribbonPrintBody && flat(ribbonTyped) !== flat(ribbonPrintBody),
+      callLLM,
+      trace,
+    });
+    // NOTHING IS STAMPED ON A SHEET THAT NEVER ASKED. The strict replay caught this: s21's Owlbear
+    // takes no ribbon, but a `generation.ribbon` record on it made the sheet differ from its
+    // recording — `REPLAY DIFFERS (generation)` — while s19's did not, because s19 is print-exact
+    // with no calls and never reaches this line at all. A sheet that was not asked is untouched, and
+    // the trace above already says why. That is what "nothing else on the sheet moves" has to mean.
+    if (monster.generation && ribbonOutcome.asked) {
+      monster.generation.ribbon = ribbonOutcome.written
+        ? { family: ribbonOutcome.family, name: ribbonOutcome.row.name, offered: ribbonOutcome.offered, attempt: ribbonOutcome.attempt }
+        : { written: false, offered: ribbonOutcome.offered, reasons: ribbonOutcome.reasons, ...(ribbonOutcome.failed ? { failed: true } : {}) };
+    }
   }
 
   // THE STORED FINDINGS ARE THE FINISHED SHEET'S (owner, 2026-11-21).

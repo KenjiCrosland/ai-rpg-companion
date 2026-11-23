@@ -1,5 +1,8 @@
 /**
- * THE RIBBON THROUGH THE WHOLE PIPELINE.
+ * THE RIBBON THROUGH THE WHOLE PIPELINE, WITH THE SWITCH ON.
+ *
+ * The ribbon is parked (owner, 2026-11-23): off unless a generation asks for it. Every build here
+ * passes `ribbon: true`. What the product does by default is in `the-ribbon-is-parked.spec.js`.
  *
  * `generateReskin(options, callLLM)` with a stub routed on each call's opening words — the pattern
  * `the-seat-gets-one-more-try.spec.js` and `a-strike-reaches-the-finished-sheet.spec.js` use. The
@@ -47,6 +50,9 @@ const build = async ({ ribbon, concept = CONCEPT, cr = 6, printBody = 'Dire Wolf
   const monster = await generateReskin({
     mechanics: [], archetype: 'skirmisher', concept, userConcept: concept, cr,
     path: { path, print_body: printBody, relation: 'is', class: null },
+    // THE RIBBON IS PARKED AND OFF BY DEFAULT (owner, 2026-11-23). Every test in this file is a
+    // SWITCH-ON test and says so here; `the-ribbon-is-parked.spec.js` holds the default.
+    ribbon: true,
   }, async (p0) => {
     const p = typeof p0 === 'string' ? p0 : JSON.stringify(p0);
     if (/"hold_shape": \{"shape"/.test(p)) {

@@ -328,7 +328,7 @@ import {
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept, buildSynthesisGuidance, rollRandomCR } from './format-2024/concept-seeds.mjs';
-import { takeRibbonOut, putRibbonIn, ribbonTextFor2014 } from './reskin/ribbon.mjs';
+import { takeRibbonOut, putRibbonIn, ribbonTextFor2014, ribbonsAsked } from './reskin/ribbon.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -1724,6 +1724,10 @@ async function generateStatblockEngine(edition) {
           // that must see an empty hand, because on a blank roll there is nothing the GM
           // asked for and no words of theirs a row could quote.
           userConcept: userConcept || '', // the user's OWN words, and nothing stands in for them
+          // THE RIBBON IS PARKED (owner, 2026-11-23). Off unless asked for, and nothing in the app
+          // asks: this reads a dev-only key the harness sets for `--ribbons`. With it off the
+          // ribbon call is not made and no sheet carries one.
+          ...(ribbonsAsked(window.localStorage) ? { ribbon: true } : {}),
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
           // THE 2014 LINE is the DMG table itself (2026-10-02): `edition`
           // above makes the card read challengeRatings.json for HP, AC,

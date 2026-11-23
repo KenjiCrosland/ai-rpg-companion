@@ -500,6 +500,16 @@ export function ribbonFamiliesOffered(typedText, { size } = {}) {
  * something unreadable, the sheet ships as it is. No stock ribbon stands in.
  */
 
+/**
+ * THE SWITCH. The ribbon is parked: off unless a generation asks for it, and nothing in the app
+ * asks. `options.ribbon` on `generateReskin` is the option; this is the dev-only key the harness
+ * sets so `--ribbons` can turn it on for a replay of the recording that has them.
+ */
+export const RIBBON_FLAG_KEY = 'statblock-ribbons';
+export const ribbonsAsked = (store) => {
+  try { return store?.getItem(RIBBON_FLAG_KEY) === '1'; } catch { return false; }
+};
+
 /** The opening line is a literal, which is how scripts/lib/tape.mjs recognises the call. */
 export const RIBBON_PROMPT_HEAD = 'You are writing one RIBBON for a D&D monster';
 
