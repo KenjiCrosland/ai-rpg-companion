@@ -289,29 +289,24 @@ const freeMovement = (t) => /\bwithout\s+(?:spending|using|expending)\s+(?:any\s
 const PINPOINTS = /\bpinpoint\w*\b|\bknows? the location of\b/i;
 
 /**
- * A TETHER NEVER TAKES AWAY ACTIONS. At the end of one the creature cannot willingly go farther, or
- * must move back — that is all. s09's Stone Golem: beyond its tether "it takes no actions but
- * movement back toward the site", which ends the fight when the party walks away.
- */
-/**
- * A TETHER NEVER TAKES AWAY ACTIONS. At the end of one the creature cannot willingly go farther, or
- * must move back — that is all. s09's Stone Golem: beyond its tether "it takes no actions but
- * movement back toward the site", which ends the fight when the party walks away.
+ * A TETHER'S CONSEQUENCE IS ONE OF TWO THINGS, AND THE RULE IS WRITTEN THE POSITIVE WAY ROUND.
  *
- * AND THE HOLE THIS RULE ITSELF LEFT. The run that followed it still shipped s28's Ilvareth:
- * "must return to within that distance OR LOSE ITS SPELLCASTING until the end of its next turn."
- * A tether taking away an action, written in a word the first pattern did not know. So what the
- * creature may lose is named here from the rules' own vocabulary for a turn — actions, Reactions,
- * Multiattack, Spellcasting, its turn, its attacks — and nothing else is read.
+ * The amendment's words: "At the end of a tether the creature cannot willingly go farther, or must
+ * move back. A tether never takes away its actions." I first wrote that as a blacklist of what it
+ * may not take, and the blacklist leaked twice on two successive runs — s28's Ilvareth lost its
+ * "Spellcasting", then s12's archon lost its "Fly speed". Neither word was on the list, and adding
+ * the word it missed this week is precisely how a list becomes the rule again (the owner's standing
+ * order, 2026-11-09).
  *
- * The object matters. "Cannot use a borrowed voice to lie" is a taboo the owner accepted; "cannot
- * use its Reaction" is a tether taking something. The verb alone cannot tell them apart.
+ * So the question is no longer "what did it take". It is: DOES THIS TETHER TAKE ANYTHING AT ALL?
+ * A tether may stop the creature going farther and may send it back. Any losing, denying or
+ * forbidding at the end of a tether is refused, whatever the object.
+ *
+ * It is gated on reading as a tether, so a plain taboo keeps its refusals — the Air Elemental
+ * "cannot use a borrowed voice to lie" is one of the handoff's own accepted examples, and a blanket
+ * rule refused it.
  */
-const WHAT_A_TURN_IS = 'actions?|reactions?|bonus actions?|Multiattack|[Ss]pellcasting|turns?|attacks?';
-const takesAwayActions = (t) => new RegExp(`\\btakes? no (?:other )?(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
-  || new RegExp(`\\b(?:can(?:not|'t)|may not|is unable to)\\s+(?:take|use|cast|make)\\s+(?:any\\s+|other\\s+|its\\s+|their\\s+|an?\\s+)?(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
-  || new RegExp(`\\b(?:los(?:e|es|ing)|forfeits?|gives? up|is denied)\\s+(?:its|their|all)?\\s*(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
-  || /\bcan(?:not|'t)\s+(?:cast spells?|attack|act)\b/i.test(t);
+const TAKES_SOMETHING = /\b(?:los(?:e|es|ing)|forfeits?|gives? up|is denied|surrenders?)\b|\bcan(?:not|'t)\s+(?:use|cast|take|make|attack|act|fly|speak)\b|\bhas no\b|\btakes? no\b/i;
 
 /**
  * Every reason this sentence does not work as a ribbon of this family, base rules first.
@@ -382,13 +377,18 @@ export function ribbonFaults(sentence, { family, name, object = null } = {}) {
       }
       // A tether is the one shape in this family that owes two things. It is recognised by what it
       // restricts — going, travelling, leaving — not by a word for "tether".
+      // What reads as a tether. "Must remain within 100 feet" is the same leash as "cannot travel
+      // more than 100 feet", and s12's archon used the first form — so the gate below missed it.
       const readsAsTether = /\b(?:travel|travels|travelling|traveling|go|goes|move|moves|stray|strays|leave|leaves|wander|wanders|venture|ventures)\b[^.]{0,40}\b(?:more than|farther|further|beyond|away from|from)\b/i.test(t)
+        || /\b(?:remain|remains|stay|stays|keep|keeps)\b[^.]{0,20}\bwithin\b[^.]{0,20}\b\d+\s*(?:-|\s)\s*(?:foot|feet|ft\.?)\b/i.test(t)
+        || /\b(?:is |are )?(?:tethered|bound|anchored|chained)\b[^.]{0,40}\b\d+\s*(?:-|\s)\s*(?:foot|feet|ft\.?)\b/i.test(t)
         || /\b(?:more than|farther than|further than|beyond)\b[^.]{0,20}\b\d+\s*(?:-|\s)\s*(?:foot|feet|ft\.?)\b/i.test(t);
       if (readsAsTether && !distancesIn(t).length) {
         out.push('it reads as a tether but names no distance it cannot pass');
       }
-      if (takesAwayActions(t)) {
-        out.push("it takes something away from the creature, and a tether only stops it going farther or sends it back");
+      if (readsAsTether && TAKES_SOMETHING.test(t)) {
+        out.push('it takes something away from the creature, and a tether only stops it going '
+          + 'farther or sends it back');
       }
       break;
     }

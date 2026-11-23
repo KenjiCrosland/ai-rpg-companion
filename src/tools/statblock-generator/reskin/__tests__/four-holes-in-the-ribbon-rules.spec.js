@@ -219,13 +219,56 @@ describe('a tether never takes away actions', () => {
     expect(ribbonFaults(fixed, { family: 'taboo', name: 'Rooted Shadow' })).toEqual([]);
   });
 
+  /**
+   * THE RULE IS WRITTEN THE POSITIVE WAY ROUND, because the blacklist version leaked twice on two
+   * successive live runs: s28's Ilvareth lost its "Spellcasting", then s12's archon lost its "Fly
+   * speed". Neither word was on the list. The question is no longer what a tether took — it is
+   * whether it took anything at all.
+   */
+  const S12_ARCHON_FLY = 'The archon must remain within 100 feet of at least one swarm under its '
+    + 'command. At the end of each hour beyond that distance, it loses its Fly speed until it ends '
+    + 'a turn within 100 feet of a swarm.';
+
+  it("s12's Swarm Sustenance — refused: a tether cannot take a Fly speed either", () => {
+    expect(ribbonFamilyRefusal(S12_ARCHON_FLY, { family: 'taboo', name: 'Swarm Sustenance' }))
+      .toBe('it takes something away from the creature, and a tether only stops it going '
+        + 'farther or sends it back');
+  });
+
   it.each([
     ['a Reaction', 'It cannot willingly go more than 100 feet from the stone, and beyond it cannot use its Reaction.'],
     ['its Multiattack', 'It will not go more than 100 feet from the shrine, and loses its Multiattack while it is farther.'],
     ['its attacks', 'It must stay within 100 feet of the grave, and forfeits its attacks at the end of any turn beyond it.'],
-  ])('a tether that takes %s is refused too', (_what, sentence) => {
+    ['its darkvision', 'It cannot travel more than 100 feet from the barrow, and loses its darkvision beyond it.'],
+    ['anything at all', 'It must remain within 100 feet of the well, and is denied its climb speed while farther.'],
+  ])('a tether that takes %s is refused', (_what, sentence) => {
     expect(ribbonFaults(sentence, { family: 'taboo', name: 'Bound Thing' }).join(' '))
       .toContain('it takes something away from the creature');
+  });
+
+  it('"must remain within 100 feet" reads as a tether, which the first gate missed', () => {
+    // s12 used this form, and the gate was only looking for "travel more than".
+    expect(ribbonFaults('The archon must remain within 100 feet of a swarm, and loses its Fly speed beyond it.',
+      { family: 'taboo', name: 'Swarm Bond' }).join(' ')).toContain('it takes something away');
+  });
+
+  it.each([
+    ['the Vampire rooted to its thorn tree',
+      'The vampire cannot willingly move more than 100 feet from the oldest thorn tree in its '
+      + 'garden. At the end of each of its turns beyond that distance, it must move back toward the '
+      + 'tree by the shortest route.'],
+    ['s28 as it stands on the sheet now',
+      'Ilvareth cannot willingly move farther than 100 feet from the last patch of Dim Light or '
+      + 'darkness it stood in. At the end of each of its turns beyond that distance, it must move '
+      + 'back toward that patch if able.'],
+  ])('%s — a tether that only sends it back is accepted', (_what, sentence) => {
+    expect(ribbonFaults(sentence, { family: 'taboo', name: 'Bound Thing' })).toEqual([]);
+  });
+
+  it("a plain need keeps its 'must', which is not a tether at all", () => {
+    expect(ribbonFaults('The sahuagin can breathe air and water, but it must be submerged at least '
+      + 'once every 4 hours to avoid suffocating outside water.',
+    { family: 'taboo', name: 'Limited Amphibiousness' })).toEqual([]);
   });
 
   /**
