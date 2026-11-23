@@ -1785,23 +1785,56 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
 
   // counted once, read by both the envelope and the median ceiling below
   const fixedRows = Object.entries(sections).flatMap(([, es]) => es ?? []).filter((e) => e && !e.freeRow && !/^Multiattack/.test(String(e.name ?? ''))).length;
+  // HOW MANY MORE ROWS PRINT'S CARD FOR THIS CR HAS ROOM FOR. One number, read by the budget below
+  // and by the one-of-each-kind rule in the keep loop, so the two can never disagree about a card.
+  // 0 when there is no envelope for the band, which keeps the new rule off a card we cannot size.
+  const cardRoom = (() => {
+    if (printExact) return 0;
+    const envelope = band ? PRINT_CARD_ROWS[band] : null;
+    if (!envelope) return 0;
+    return Math.max(0, envelope[1] - fixedRows);
+  })();
   const freeBudget = (() => {
     if (printExact) return 0;
     const envelope = band ? PRINT_CARD_ROWS[band] : null;
     if (!envelope) return 1;
-    const [floor, ceiling] = envelope;
+    const [floor] = envelope;
     // a free row is a candidate, not yet a fixture: the fixed rows are what the
     // card carries whatever this budget decides
     const fixed = fixedRows;
     const thin = Math.max(0, floor - fixed);        // under print's low end: keep more
-    const room = Math.max(0, ceiling - fixed);      // over print's high end: keep none
+    const room = cardRoom;                          // over print's high end: keep none
     const settled = Math.min(Math.max(1, thin), room);
-    if (settled !== 1) trace('free-row budget by card size:', `CR ${cr} sits in band ${band}, where print runs ${floor}-${ceiling} rows (p20-p90, Multiattack excluded); this card already carries ${fixed} fixed row(s), so the free-row budget is ${settled} rather than 1 — ${room === 0 ? 'the card is already at print\'s high end' : 'the card is thin and can afford more'}`);
+    if (settled !== 1) trace('free-row budget by card size:', `CR ${cr} sits in band ${band}, where print runs ${floor}-${envelope[1]} rows (p20-p90, Multiattack excluded); this card already carries ${fixed} fixed row(s), so the free-row budget is ${settled} rather than 1 — ${room === 0 ? 'the card is already at print\'s high end' : 'the card is thin and can afford more'}`);
     return settled;
   })();
   const cellOf = (e) => { const t = TEMPLATE_BY_ID.get(e.template ?? e.seed ?? ''); return t ? `${t.section}/${t.trigger}/${t.effect}` : null; };
   const keptCells = new Set();
   const keptFree = [];
+  /**
+   * ONE FREE TRAIT AND ONE FREE ROW THAT IS NOT A TRAIT, WHERE THE CARD HAS ROOM FOR TWO
+   * (owner, 2026-11-23).
+   *
+   * His standing word is that a row the model wrote should not silently disappear, and on the forty
+   * six rows were written, passed every gate, and left here because the budget is one. In five of
+   * the six the trait seat and the action seat had each done their job and the sheet kept one of
+   * them: the Bog Hound's Living Mire, the Lurker's Loose Scree — which he read, liked, and then
+   * lost in a re-record — the Stone Golem's Trail of Tears, Sarnoth's Temple Stalker and Halric's
+   * Bound Reliquary.
+   *
+   * So this adds ONE WAY TO BE KEPT and changes nothing else. A row is also kept when it is the
+   * first kept row of its kind and the card still has room, where the two kinds are a row under
+   * Traits and a row under any other section. A card with room for two keeps its trait and its
+   * action; a card with room for one keeps one, chosen as it is chosen today; a thin card that
+   * already earns two or more is not narrowed, because this only ever adds.
+   *
+   * What it does not reach, all of it ruled before: a printed creature typed by name alone still
+   * takes none (printExact), the borrowed row gains nothing (rank 3, the owner's 29 October
+   * balance), two rows in one declared cell are still one too many, and two rows of the SAME kind
+   * still answer to the budget alone.
+   */
+  const kindOf = (sec) => (String(sec) === 'Traits' ? 'trait' : 'other');
+  const keptKinds = new Set();
   // GM QUOTE > ELEMENT > DECORATION (the critic's item 2, 2026-10-22). This loop
   // used to walk `freeRows` in SHEET order and keep the first that fit, so which
   // row survived a budget of 1 depended on where it happened to sit in the
@@ -1913,7 +1946,18 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     const allowed = printExact ? 0
       : receiptRank(e) === 3 ? Math.min(freeBudget, medianRoom)
         : Math.max(1, freeBudget);
-    if (keptFree.length < allowed && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
+    // The second way in: the first row of its kind, while print's card still has the room.
+    const firstOfItsKind = !printExact && receiptRank(e) !== 3
+      && !keptKinds.has(kindOf(sec)) && keptFree.length < cardRoom;
+    if ((keptFree.length < allowed || firstOfItsKind) && !sameCell) {
+      if (firstOfItsKind && keptFree.length >= allowed) {
+        trace('free row kept as one of its kind:', `${sec}/"${bareName(e)}" stays — the first ${kindOf(sec) === 'trait' ? 'trait' : 'non-trait row'} kept, and print's card for CR ${cr} has room for ${cardRoom} (budget ${freeBudget}, ${keptFree.length} kept so far)`);
+      }
+      keptFree.push(e);
+      keptKinds.add(kindOf(sec));
+      if (cell) keptCells.add(cell);
+      continue;
+    }
     sections[sec] = (sections[sec] ?? []).filter((x) => x !== e);
     // THE INSTRUMENT POINTED HERE. On its first full forty, three accepted picks
     // reported "died at an UNRECORDED drop site" and all three sat beside this

@@ -542,16 +542,38 @@ describe('a free row carries its receipt onto the row (brass tyrant)', () => {
     expect(markFreeRow(null)).toBeNull();
   });
 
-  test("the tyrant's pair: the action seat's payoff survives, the trait decoration leaves", () => {
-    // sheet order as the engine builds it — Traits iterate before Actions
+  /**
+   * THE TYRANT'S PAIR, AND WHERE IT STANDS AFTER 23 NOVEMBER.
+   *
+   * The ranking is unchanged: a seat's accepted payoff outranks a refused template's decoration,
+   * and when one of the two has to go it is the decoration. What changed is how often one has to
+   * go — a sheet now keeps one free trait AND one free row that is not a trait where print's card
+   * has the room, so on a card with room both of these stay.
+   *
+   * CR 17 sits in band 17-20, where print's high end is 9 rows. `chassis(7)` leaves room for two,
+   * so the pair both stay; padded to nine, the card is full and the ranking decides as it did.
+   */
+  test("the tyrant's pair on a FULL card: the action seat's payoff survives, the trait decoration leaves", () => {
+    const trait = markFreeRow({ accepted_closest: true, expresses: 'the hammer that finds the terrified', row: { name: "Terror's Toll", text: 'It sharpens its blows.', template: 'assassinate' } }, { decoration: true }).row;
+    const action = markFreeRow(seatWithRow()).row;
+    const pad = Array.from({ length: 2 }, (_, k) => ({ name: `Printed ${k}`, text: 'A printed row.' }));
+    const sections = { Traits: [trait], Actions: [action, ...chassis(7), ...pad] };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 17, generation });
+    expect(sections.Actions).toContain(action);
+    expect(sections.Traits).not.toContain(trait);
+    expect(generation.free_row_templates).toEqual(['condition-payoff']);
+  });
+
+  test('and on the card as it was, with room for two, both stay — one trait, one action', () => {
     const trait = markFreeRow({ accepted_closest: true, expresses: 'the hammer that finds the terrified', row: { name: "Terror's Toll", text: 'It sharpens its blows.', template: 'assassinate' } }, { decoration: true }).row;
     const action = markFreeRow(seatWithRow()).row;
     const sections = { Traits: [trait], Actions: [action, ...chassis(7)] };
     const generation = {};
     settleSheetBudgets({ sections, scaled: scaled(), cr: 17, generation });
     expect(sections.Actions).toContain(action);
-    expect(sections.Traits).not.toContain(trait);
-    expect(generation.free_row_templates).toEqual(['condition-payoff']);
+    expect(sections.Traits).toContain(trait);
+    expect(generation.free_rows).toBe(2);
   });
 });
 

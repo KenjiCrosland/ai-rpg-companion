@@ -13,6 +13,13 @@
  * This is a TIE-BREAK INSIDE the owner's 10-29 ruling (GM quote, then element, then
  * decoration), not a change to it: `receiptRank` still decides first and always, which is what
  * the second test here pins.
+ *
+ * WHERE THE TIE-BREAK IS NOW VISIBLE (owner, 2026-11-23). The ruling is unchanged, but the round
+ * that gave a sheet one free trait AND one free row that is not a trait narrowed the cases in
+ * which anything has to go. On a card with room, a trait and an action now BOTH stay and no order
+ * decides anything. The tie-break still decides when the card is at print's high end, or between
+ * two rows of the same kind — so every test below is run on a full card as well, which is where
+ * the ordering still does its work.
  */
 import { settleSheetBudgets } from '../generate.mjs';
 import { lintStatblock } from '../../format-2024/lint.mjs';
@@ -28,12 +35,31 @@ const spiderPair = () => ({
 });
 const settle = (sections, cr = 2) => { const lines = []; settleSheetBudgets({ sections, cr, trace: (a, b) => lines.push(`${a} ${b}`) }); return { sections, lines: lines.join(' | ') }; };
 const names = (s) => Object.values(s).flat().map((e) => e.name);
+/**
+ * The same sheet on a card with NO room: print's high end for band 0-2 is 4 rows, so four fixed
+ * ones leave nothing over and the ordering alone decides who stays. Multiattack is not counted.
+ */
+const onAFullCard = (sections) => {
+  const fixed = Object.values(sections).flat().filter((e) => !e.freeRow && !/^Multiattack/.test(e.name)).length;
+  const pad = Array.from({ length: Math.max(0, 4 - fixed) }, (_, i) => ({ name: `Fixed ${i}`, text: 'A printed row.' }));
+  return { ...sections, Actions: [...(sections.Actions ?? []), ...pad] };
+};
 
 describe('a tie within a rank keeps the templated row', () => {
-  test("probe B #01 replayed: Caught Line survives and Mainspring Rewind leaves", () => {
-    const { sections, lines } = settle(spiderPair());
+  test("probe B #01 replayed on a full card: Caught Line survives and Mainspring Rewind leaves", () => {
+    const { sections, lines } = settle(onAFullCard(spiderPair()));
     expect(names(sections)).toContain('Caught Line (Recharge 5-6)');
     expect(names(sections)).not.toContain('Mainspring Rewind');
+    expect(lines).toMatch(/free-row order: "Caught Line" \[element, snare\] > "Mainspring Rewind" \[element, no template\]/);
+  });
+
+  test('and on the card as the run actually had it, both now stay — one trait, one action', () => {
+    // The spider's own card had room for three more rows. Under the 23 November rule nothing has
+    // to go, and the sheet that shipped "while it is not grappling or restraining a creature" now
+    // keeps the row that restrains as well.
+    const { sections, lines } = settle(spiderPair());
+    expect(names(sections).sort()).toEqual(['Caught Line (Recharge 5-6)', 'Fangs', 'Mainspring Rewind', 'Multiattack']);
+    // the ordering still ran, and still ranked them the same way
     expect(lines).toMatch(/free-row order: "Caught Line" \[element, snare\] > "Mainspring Rewind" \[element, no template\]/);
   });
 
@@ -41,7 +67,7 @@ describe('a tie within a rank keeps the templated row', () => {
     const flipped = spiderPair();
     flipped.Traits[0].template = 'adhesive';
     delete flipped.Actions[2].template;
-    const { sections } = settle(flipped);
+    const { sections } = settle(onAFullCard(flipped));
     expect(names(sections)).toContain('Mainspring Rewind');
     expect(names(sections)).not.toContain('Caught Line (Recharge 5-6)');
   });
@@ -50,10 +76,11 @@ describe('a tie within a rank keeps the templated row', () => {
 describe('what the tie-break must not change', () => {
   test('a receipt still beats a decoration, templated or not', () => {
     // the decoration is the one on a template; the element row is not. The RANK wins.
-    const { sections, lines } = settle({
+    // On a full card, where one of the two has to go.
+    const { sections, lines } = settle(onAFullCard({
       Traits: [{ name: 'Deco', text: 'A decorative trait.', freeRow: true, decoration: true, template: 'terrain-walk' }],
       Actions: [{ name: 'Multiattack', text: 'two attacks.' }, { name: 'Elem', text: 'An element row.', freeRow: true, expresses: 'e' }],
-    });
+    }));
     expect(names(sections)).toContain('Elem');
     expect(names(sections)).not.toContain('Deco');
     expect(lines).toMatch(/"Elem" \[element, no template\] > "Deco" \[decoration, terrain-walk\]/);
@@ -70,8 +97,9 @@ describe('what the tie-break must not change', () => {
     for (const cr of [6, 12, 18]) {
       expect(names(settle(pair(), cr).sections).sort()).toEqual(['Caught Line', 'Mainspring Rewind']);
     }
-    // and at CR 2, where only one fits, it is the templated one
-    expect(names(settle(pair(), 2).sections)).toEqual(['Caught Line']);
+    // and on a card with no room, where only one fits, it is the templated one
+    expect(names(settle(onAFullCard(pair()), 2).sections).filter((n) => !/^Fixed /.test(n)))
+      .toEqual(['Caught Line']);
   });
 });
 
