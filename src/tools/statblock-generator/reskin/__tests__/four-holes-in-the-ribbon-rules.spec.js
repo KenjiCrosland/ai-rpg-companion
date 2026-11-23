@@ -185,7 +185,7 @@ describe('one family to a ribbon, and only a senses ribbon pinpoints', () => {
 describe('a tether never takes away actions', () => {
   it("s09's Sealed in Weeping — refused: it takes the creature's actions", () => {
     expect(ribbonFamilyRefusal(S09_STONE_GOLEM, { family: 'taboo', name: 'Sealed Weeping' }))
-      .toBe("it takes the creature's actions, and a tether only stops it going farther or sends it back");
+      .toBe('it takes something away from the creature, and a tether only stops it going farther or sends it back');
   });
 
   it('and accepted when it only must return', () => {
@@ -197,6 +197,52 @@ describe('a tether never takes away actions', () => {
   it("s34's Skullstandard Tether, as it is — accepted", () => {
     expect(ribbonFaults(S34_KRENNIK, { family: 'taboo', name: 'Skullstandard Tether' })).toEqual([]);
   });
+
+  /**
+   * THE HOLE THIS RULE ITSELF LEFT, found on the run that followed it. s28's Ilvareth shipped with
+   * "must return to within that distance OR LOSE ITS SPELLCASTING until the end of its next turn" —
+   * a tether taking away an action, in a word the first pattern did not know. A ribbon that can
+   * switch off a caster's Spellcasting is the kind of row that gets screenshotted as broken.
+   */
+  const S28_ILVARETH = 'Ilvareth cannot willingly move farther than 100 feet from an area of Dim '
+    + 'Light or darkness it has touched; at the end of such a move it must return to within that '
+    + 'distance or lose its Spellcasting until the end of its next turn.';
+
+  it("s28's Rooted in Shadow — refused: a tether cannot take Spellcasting", () => {
+    expect(ribbonFamilyRefusal(S28_ILVARETH, { family: 'taboo', name: 'Rooted Shadow' }))
+      .toBe("it takes something away from the creature, and a tether only stops it going farther or sends it back");
+  });
+
+  it('and accepted with that clause gone', () => {
+    const fixed = 'Ilvareth cannot willingly move farther than 100 feet from an area of Dim Light '
+      + 'or darkness it has touched; at the end of such a move it must return to within that distance.';
+    expect(ribbonFaults(fixed, { family: 'taboo', name: 'Rooted Shadow' })).toEqual([]);
+  });
+
+  it.each([
+    ['a Reaction', 'It cannot willingly go more than 100 feet from the stone, and beyond it cannot use its Reaction.'],
+    ['its Multiattack', 'It will not go more than 100 feet from the shrine, and loses its Multiattack while it is farther.'],
+    ['its attacks', 'It must stay within 100 feet of the grave, and forfeits its attacks at the end of any turn beyond it.'],
+  ])('a tether that takes %s is refused too', (_what, sentence) => {
+    expect(ribbonFaults(sentence, { family: 'taboo', name: 'Bound Thing' }).join(' '))
+      .toContain('it takes something away from the creature');
+  });
+
+  /**
+   * THE OBJECT MATTERS, and the verb alone cannot tell these apart. Both are in the handoff's own
+   * accepted list, and an earlier draft of this rule refused the first of them.
+   */
+  it.each([
+    ['9, the Air Elemental that cannot use a borrowed voice to lie',
+      'Stolen voices are a trust the air elemental cannot break: it cannot use a borrowed voice to '
+      + 'lie, and if it does, that voice slips free and returns to its owner.'],
+    ['59, the ooze that cannot willingly travel past its altar stone',
+      'Bound to the altar stone of the vault it haunts, the reliquary ooze cannot willingly travel '
+      + 'more than 100 feet from it, and it always knows the direction of any reliquary carried '
+      + 'within a mile of that stone.'],
+  ])('%s — still accepted', (_what, sentence) => {
+    expect(ribbonFaults(sentence, { family: 'taboo', name: 'Bound Thing' })).toEqual([]);
+  });
 });
 
 describe('the four hold together', () => {
@@ -205,7 +251,7 @@ describe('the four hold together', () => {
       [S20_TRENCH_SIREN, 'moves', /pass a check or suffer/],
       [S15_RED_DRAGON, 'moves', /costs nothing/],
       [S11_VAMPIRE, 'moves', /two ribbons in one/],
-      [S09_STONE_GOLEM, 'taboo', /takes the creature's actions/],
+      [S09_STONE_GOLEM, 'taboo', /takes something away from the creature/],
     ];
     for (const [sentence, family, pattern] of cases) {
       const faults = ribbonFaults(sentence, { family, name: 'Two Words' });

@@ -293,9 +293,25 @@ const PINPOINTS = /\bpinpoint\w*\b|\bknows? the location of\b/i;
  * must move back — that is all. s09's Stone Golem: beyond its tether "it takes no actions but
  * movement back toward the site", which ends the fight when the party walks away.
  */
-const takesAwayActions = (t) => /\btakes? no (?:other )?actions?\b/i.test(t)
-  || /\b(?:can(?:not|'t)|may not|is unable to)\s+(?:take|use)\s+(?:any\s+|other\s+)?(?:actions?|reactions?|bonus actions?)\b/i.test(t)
-  || /\bloses? (?:its|all) (?:actions?|turns?)\b/i.test(t);
+/**
+ * A TETHER NEVER TAKES AWAY ACTIONS. At the end of one the creature cannot willingly go farther, or
+ * must move back — that is all. s09's Stone Golem: beyond its tether "it takes no actions but
+ * movement back toward the site", which ends the fight when the party walks away.
+ *
+ * AND THE HOLE THIS RULE ITSELF LEFT. The run that followed it still shipped s28's Ilvareth:
+ * "must return to within that distance OR LOSE ITS SPELLCASTING until the end of its next turn."
+ * A tether taking away an action, written in a word the first pattern did not know. So what the
+ * creature may lose is named here from the rules' own vocabulary for a turn — actions, Reactions,
+ * Multiattack, Spellcasting, its turn, its attacks — and nothing else is read.
+ *
+ * The object matters. "Cannot use a borrowed voice to lie" is a taboo the owner accepted; "cannot
+ * use its Reaction" is a tether taking something. The verb alone cannot tell them apart.
+ */
+const WHAT_A_TURN_IS = 'actions?|reactions?|bonus actions?|Multiattack|[Ss]pellcasting|turns?|attacks?';
+const takesAwayActions = (t) => new RegExp(`\\btakes? no (?:other )?(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
+  || new RegExp(`\\b(?:can(?:not|'t)|may not|is unable to)\\s+(?:take|use|cast|make)\\s+(?:any\\s+|other\\s+|its\\s+|their\\s+|an?\\s+)?(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
+  || new RegExp(`\\b(?:los(?:e|es|ing)|forfeits?|gives? up|is denied)\\s+(?:its|their|all)?\\s*(?:${WHAT_A_TURN_IS})\\b`, 'i').test(t)
+  || /\bcan(?:not|'t)\s+(?:cast spells?|attack|act)\b/i.test(t);
 
 /**
  * Every reason this sentence does not work as a ribbon of this family, base rules first.
@@ -372,7 +388,7 @@ export function ribbonFaults(sentence, { family, name, object = null } = {}) {
         out.push('it reads as a tether but names no distance it cannot pass');
       }
       if (takesAwayActions(t)) {
-        out.push("it takes the creature's actions, and a tether only stops it going farther or sends it back");
+        out.push("it takes something away from the creature, and a tether only stops it going farther or sends it back");
       }
       break;
     }
