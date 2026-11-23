@@ -721,7 +721,11 @@ export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}) => 
     // `authored`, which should already have skipped it, so some pass between the landing and here
     // drops that flag; `strike` is the row's own declaration and is checked on its own rather than
     // trusting a flag that demonstrably does not survive the trip.
-    if (/^Multiattack/.test(e.name ?? '') || e.strike || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules) continue;
+    // `keptByTwist` is the path stage's own claim: the owner's 23 November exception kept this
+    // chassis nova on a twist whose print body has none, and this pass drops exactly the rows no
+    // stage claimed. Without it the exception fired, the trace said the row stayed, and the row
+    // left anyway four lines later.
+    if (/^Multiattack/.test(e.name ?? '') || e.strike || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules || e.keptByTwist) continue;
     if (!/Attack Roll|Saving Throw/.test(e.text ?? '')) continue;
     if (/Attack Roll/.test(e.text ?? '')
         && !Object.values(sections).flat().some((o) => o !== e && /Attack Roll/.test(o.text ?? ''))) {
@@ -9078,6 +9082,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!/\(Recharge [\d–-]+\)|\d\/Day/.test(e.name ?? '') || !/Saving Throw/.test(e.text ?? '') || e.library) continue;
       const bare = String(e.name ?? '').replace(/ \(.*\)$/, '');
       const from = Object.entries(p.renames ?? {}).find(([, v]) => String(v ?? '').trim().toLowerCase() === bare.toLowerCase())?.[0];
+      // NOTHING IS STAMPED HERE. A flag on every chassis nova changed eight sheets of the forty
+      // that this round must not touch — REPLAY DIFFERS (sections) on s07, s14, s16, s20, s30,
+      // s31, s32 and s34 — which is the same fault the ribbon round's `generation.ribbon` record
+      // had. The one place that needs to know a nova was renamed reads the rename map itself.
       trace('chassis nova:', `"${e.name}" — the ${donor.id}'s own nova row${from ? ` (its "${from}", renamed by the model)` : ''}; geometry, cap and rider lines below are its edits`);
     }
     // a chassis nova that "sends a tremor in all directions" is an Emanation, not
@@ -10316,6 +10324,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           (sections.Traits = sections.Traits ?? []).push({ name: t.name, text: text.charAt(0).toUpperCase() + text.slice(1), rules: true, print: true }); // print's trait is print (the Vampire's Weakness and Misty Escape tripped the gates, checker 2026-10-02)
           trace('print canon trait:', `${t.name} — "${options.userConcept ?? concept}" is the ${pc.name} (print's own row)`);
         }
+        /**
+         * The four conditions of the owner's 23 November exception, in one place.
+         *
+         * Point 1 is read from what the route recorded — `pathD.path` and `pathBody` — plus the
+         * SHAPE of the concept: `userConcept` is the name field and the description joined with
+         * " — ", so its head is the name the GM typed. s13's head is "Purple Worm" and the route's
+         * body is the Purple Worm; s18's concept has no name field at all ("an archlich enthroned
+         * on a sun of bone") and s38's is "a skeleton with a greatsword", so neither is a printed
+         * creature typed by its own name. That is a comparison of two recorded strings, not a
+         * second reading of his words.
+         */
+        const typedConcept = String(options.userConcept ?? concept ?? '');
+        const typedHead = typedConcept.split(' — ')[0].trim();
+        const namedByTheGmWithATwist = pathD?.path === 'twist' && !!pathBody
+          && typedConcept.includes(' — ')
+          && typedHead.toLowerCase() === String(pathBody).toLowerCase();
+        const printPrintsANova = (pc.rulesRows ?? []).some((r) => / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? ''));
+        const gatedAreaRow = (e) => /\(Recharge [\d–-]+\)|\d\/Day/.test(e?.name ?? '') && /Saving Throw/.test(e?.text ?? '');
+        /** Point 3, read off the naming call's own rename map rather than a flag on the row. */
+        const renamedFromOf = (row) => {
+          const bare = String(row?.name ?? '').replace(/ \(.*\)$/, '').toLowerCase();
+          return Object.entries(p?.renames ?? {}).find(([, v]) => String(v ?? '').trim().toLowerCase() === bare)?.[0] ?? null;
+        };
+        const keepsItsNamedNova = (row, esA) => namedByTheGmWithATwist && !printPrintsANova
+          && !!renamedFromOf(row) && !esA.some((o) => o !== row && gatedAreaRow(o));
+
         // the print body's row set is CLOSED: a chassis bonus action or reaction the
         // print block does not carry leaves (the skulker's Umbral Step on a Wight)
         if (printBody && (closedPath || (!pc.addsSeat && !(pc.rulesRows ?? []).some((r) => / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? ''))))) { // on the TWIST path the chassis nova always leaves (pipeline 2 forbids it) // a print NOVA is a gated save row; a 3/Day blessing is not one; a seat the user's words named keeps its nova (the Worg's Charge left the Goblin Boss, critic form-ten 2026-10-01)
@@ -10335,6 +10369,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the fault look six times larger than it is — and one had no provenance at all.
             if (printCanonExempt(row)) {
               trace('print canon: the seat\'s own row STAYS —', `Actions/"${row.name}" answers "${String(row.clause ?? row.clauseId).slice(0, 60)}", which the GM typed; print's nova rides beside it rather than over it`);
+              continue;
+            }
+            // A TWIST KEEPS THE AREA ATTACK THE MODEL NAMED FOR IT (owner's ruling, 2026-11-23).
+            //
+            // He typed "Purple Worm, that swallowed a war-band's armoury" and wants the worm to
+            // disgorge the weapons as an area attack. The naming call calls the body's area row
+            // Shrapnel Spray; this pass then removed it because print's Purple Worm has no nova,
+            // and the trait seat went on to write a payoff that NAMES a row no longer on the sheet.
+            //
+            // The exception is narrow, and all four have to hold:
+            //   1. the GM typed a printed creature BY ITS OWN NAME and added a twist — the name
+            //      field is the route's own print body and a description came with it, which is
+            //      read off the route's record and the shape of the concept, not from his words;
+            //   2. print's creature has no nova of its own;
+            //   3. the model renamed the row (a nova still under the chassis's default name is
+            //      nobody's answer to anything);
+            //   4. no other gated area action is on the sheet — if the seat wrote one for the GM's
+            //      clause, as it did on 18 November with Vomited Armoury, THAT row is the answer.
+            if (keepsItsNamedNova(row, esA)) {
+              // CLAIMED BY A PATH STAGE, or `closedPathFillerLeaves` takes it a few lines later:
+              // it drops any Actions row with no provenance, and a chassis nova has none. The first
+              // cut of this exception kept the row here and the sheet still shipped without it.
+              row.keptByTwist = true;
+              trace('print canon: the twist KEEPS its area attack —', `Actions/"${row.name}" is the chassis's nova under the name the model gave it${renamedFromOf(row) ? ` (its "${renamedFromOf(row)}")` : ''}; the ${pc.name} prints no nova of its own and the GM typed it by name with a twist`);
               continue;
             }
             // SAY WHOSE ROW IT IS. Everything reaching this line is the CHASSIS's: print and library
