@@ -7,15 +7,19 @@ pass replayed from. **`baseline-2026-11-20` stays** — `scripts/ribbon-probe.mj
 default context source, so something does still read the 20 November folder. `baseline-2026-11-18`
 is read by no code; it appears only in committed evidence prose.
 
-Five commits this pass, ready to push. Nothing is pushed.
+Six commits this pass, ready to push. Nothing is pushed.
 
 | # | Commit | What |
 |---|---|---|
 | 1 | `a65f56d` | the cap is 45, and a leaving needs an object, not a list |
 | 2 | `76a496d` | four holes the first twenty-five found (26 tests) |
-| 3 | `628ccaf` | a tether's rule, written the positive way round |
-| 4 | — | the forty re-recorded |
-| 5 | — | the blocks file and this report |
+| 3 | `b03a39a` | a tether takes nothing, in whatever word — the first patch of the leak |
+| 4 | `628ccaf` | a tether's rule, written the positive way round — the leak's real fix |
+| 5 | `d161d45` | the forty re-recorded, the blocks file and this report |
+| 6 | `856d63b` | the superseded ribbon blocks file goes (a deletion of its own) |
+
+Commits 3 and 4 are the same fault twice, and §9 says why they are both in the history rather than
+squashed into one.
 
 **Suite:** 277 suites, 6,004 passed, 26 skipped, **exit 0**, single worker, from its own exit code.
 **Replay:** strict replay of `baseline-2026-11-23` — **38 of 38 reproduced EXACTLY, 2 skipped.**
