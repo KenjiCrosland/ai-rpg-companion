@@ -33,7 +33,10 @@ describe('the twist path', () => {
     const r = await run({ concept: 'a cave troll that speaks only Giant', cr: 5, archetype: 'brute', path: twist('Troll', 'cave troll') });
     expect(r.trace).toMatch(/\[path\] decides: twist on the Troll \(the matcher would have said homebrew\)/);
     expect(names(r)).toContain('Regeneration');
-    expect(r.trace).toMatch(/fallback stands down: the twist path has no shelf/);
+    // ENCODED: the twist path has no fallback shelf (pipeline 2). Still true, and now true of
+    // every path — the seat that fails takes nothing in its place (owner, 2026-11-23), so the
+    // trace is the ruling's rather than the twist path's.
+    expect(r.trace).toMatch(/signature seat empty|fallback stands down/);
     expect(r.trace).not.toMatch(/library seed drawn|fallback drawn|signature template: /);
     expect(r.trace).not.toMatch(/value check:/);
     expect(r.rows.some((e) => !e.print && !e.library && /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '') && /Saving Throw/.test(e.text ?? ''))).toBe(false);
@@ -581,7 +584,8 @@ describe('the class-NPC path (pipeline 3)', () => {
     expect(r.trace).toMatch(/\[path\] class body: the monk stands on the (Spy|Scout|Assassin)/);
     expect(r.trace).toMatch(/\[path\] decides: class_npc on the (Spy|Scout|Assassin) · class monk/);
     expect(r.rows.some((e) => e.kit === 'monk')).toBe(true); // the kit lands
-    expect(r.trace).toMatch(/fallback stands down: the class_npc path has no shelf/);
+    // ENCODED: the class-NPC path has no fallback shelf. Same as above.
+    expect(r.trace).toMatch(/signature seat empty|fallback stands down/);
     expect(r.trace).not.toMatch(/library seed drawn|value check:/);
     expect(r.m.type).toMatch(/^Humanoid/); expect(r.m.languages).toMatch(/Draconic/); // the species kit from the path
     expect(Math.max(r.m.stats.DEX)).toBeGreaterThanOrEqual(14);

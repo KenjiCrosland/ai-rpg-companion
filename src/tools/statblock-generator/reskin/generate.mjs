@@ -8255,108 +8255,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
       }
     } else if (wildcardAllowed && !printPlain && !body) { // a BODY chassis (dragon, ooze, swarm) is a complete kit — no blind fallback; a print body reaches the fallback only through the concept's own verbs (the stand-down inside: a verbless print head asks for nothing — the hermit-mage's lantern does ask, 2026-10-01): its own rows are the composition, and only a verb-bound fit adds to them (day-one 2026-09-30) — the claim gate closes the ACTION seat at CR<=2 — the fallback is that seat's, and a material body's open TRAIT seat must not reopen it (review 2026-09-28)
-      // the same filtered menu the fit saw (engine families, ownership); the
-      // blind library hash is the last resort only when that menu is empty
-      const fbVerbText = `${options.userConcept ?? concept}`; const fbSeatText = `${seatsT?.action ?? ''}`; // the user's words are the concept; the seat element is idea-level
-      const shelfT0 = fallbackMenu({ ...ctxT, text: `${fbVerbText} ${fbSeatText}`, imposed: imposedT }, fbVerbText, fbSeatText);
-      // a seed the call already refused for this sheet is not a "proven shape
-      // standing in" — it is the declined key match returning (critic, 2026-10-15)
-      // A SHAPE ALREADY ON THE SHEET IS NOT A SHAPE THAT IS MISSING (critic's
-      // hold 5). fitSeat has always withheld a template the sheet carries; the
-      // fallback shelf and the last-resort hash never did, so the same mechanic
-      // could land twice under two names.
-      const onSheet = new Set(Object.values(sections).flat().flatMap((e) => [e.template, e.seed]).filter(Boolean));
-      const shelfT = shelfT0.filter((t) => !wrongT.has(t.id) && !declinedT.has(t.id) && !onSheet.has(t.id));
-      if (shelfT0.length !== shelfT.length) trace('fallback respects the call:', `${shelfT0.filter((t) => wrongT.has(t.id) || declinedT.has(t.id) || onSheet.has(t.id)).map((t) => `${t.id}${onSheet.has(t.id) ? ' (already on the sheet)' : ''}`).join(', ')} left the shelf — the call declined ${shelfT0.length - shelfT.length === 1 ? 'it' : 'them'} for this sheet`);
-      let verbFirst = rankByVerb(shelfT, fbVerbText, fbSeatText).filter((r) => r.matched.length).length; // the verb-ranked head is taken in order; only the rest rotates
-      const userAsks = rankByVerb(shelfT, fbVerbText, '').filter((r) => r.concept.length).length; // a print head is served by the USER's words alone — the seat idea's "plunges… hauled… dive" drew the Owlbear a Rampage (form-ten 2026-10-01)
-      // ONE STAND-DOWN, BOTH FALLBACK PATHS (critic, 2026-10-18 — four sheets).
-      // This emptied the shelf, and the last-resort hash below builds its own list
-      // straight from TEMPLATES, so an emptied shelf drew nothing, `!drawn` held,
-      // and the hash shipped a seed anyway: "fallback stands down" was followed by
-      // "library seed drawn" on the two skeletons, the ogre and the champion.
-      const standDownT = closedPath || alreadyAnsweredT || !!(pcPlain && userAsks === 0); // the TWIST path has no fallback shelf at all (the brief's pipeline 2): print, plus exactly what the GM asked for
-      // ONE CHAIN: `standDownT` has three causes and only two of them have a print head to name.
-      // Written as a separate `if`, the already_answered cause fell through to the `pcPlain.name`
-      // branch below and threw on a homebrew sheet (caught by pipelines.spec.js's own gap test).
-      if (alreadyAnsweredT) { trace('fallback stands down:', 'the fit call read the finished sheet and declined for already_answered — the mechanic is on this sheet already, so nothing stands in for it'); shelfT.length = 0; }
-      else if (closedPath) { trace('fallback stands down:', `the ${pathD.path} path has no shelf — the ${pcPlain?.name ?? 'print body'}'s rows plus the receipted seat are the composition`); shelfT.length = 0; }
-      else if (standDownT) { trace('fallback stands down:', `"${options.userConcept ?? concept}" heads on the ${pcPlain.name} and asks for nothing — print's rows, nothing invented (the big ogre, critic-ten 2026-10-01)`); shelfT.length = 0; }
-      // a STYLE's default seed heads the fallback the way a seat's default trait
-      // heads the trait shelf: a leader's command is the rally shape, and two of
-      // three leaders drew a punisher by hash (critic, new lines 2026-09-28)
-      const STYLE_DEFAULT_SEED = { leader: 'rally' };
-      const dfltSeed = STYLE_DEFAULT_SEED[scaled.style ?? ''];
-      const dfltIx = dfltSeed ? shelfT.findIndex((t) => t.id === dfltSeed) : -1;
-      if (dfltIx > 0) { shelfT.unshift(...shelfT.splice(dfltIx, 1)); if (dfltIx >= verbFirst) verbFirst += 1; trace('style default seed:', `${dfltSeed} heads the fallback for the ${scaled.style}`); }
-      let drawn = null;
-      for (let i = 0; i < shelfT.length && !drawn; i += 1) {
-        const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
-        const r = renderTemplate(t, ctxT, {}, { blind: true });
-        if (!r) { trace('fallback skipped:', `${t.id} (the sheet cannot render it)`); continue; }
-        const cand = { seed: t.id, section: r.section, row: carryDeclared({ name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, ...(r.gate ? { gate: r.gate } : {}), text: r.text, library: true, ...(r.imposes ? { imposes: r.imposes } : {}), seed: t.id }, r) }; // the row carries its shape (hold 5) — this shelf path builds its own row, so it needs the stamp drawLibraryRow does
-        // a seed the floor cannot lift is skipped for the next one, never shipped
-        const pre = valueCheck(cand.row, { scaled, sections, cr, section: cand.section });
-        // the floor prices an attack's trade; a UTILITY self-buff the user's own
-        // words asked for by key is its own worth (print: the Imp's Invisibility
-        // — "Can turn invisible once per day" lost Vanish to EV 0, form-ten 2026-10-01)
-        const askedUtility = UTILITY.has(t.id) && i < verbFirst && (rankByVerb([t], fbVerbText, '')[0]?.concept?.length ?? 0) > 0;
-        if (pre.steps.some((st) => /still under|does nothing/.test(st))) {
-          if (!askedUtility) { trace('fallback skipped by the floor:', `${t.id} (EV ${pre.ev} vs ${pre.floor})`); continue; }
-          trace('fallback floor waived:', `${t.id} — a self-buff the user's words ask for is its own worth (print: the Imp's Invisibility)`);
-          cand.floorWaived = true;
-        }
-        // AND THE SHELF GETS THE SEAT'S GUARD TOO (sweep 2026-11-08T03-08-42). Krennik
-        // Skullstandard shipped THREE rows imposing Prone — Standard Lance, Ride-Down and
-        // the shelf's own Opportunist's Lash — and print has no block imposing one
-        // condition three ways (0 of 329). The guard fired on this very sheet, refusing a
-        // MENU candidate for exactly that, and the shelf then landed the third itself.
-        // `conditionsImposedTwice` runs at the menu, at the seat and at the repair
-        // landing; this is the sixth instance this sprint of a rule living on one path,
-        // and the fourth door it has had to be added to. Same function, no new logic.
-        if (cand.row?.imposes && conditionsImposedTwice(Object.values(sections).flat()).has(String(cand.row.imposes))) {
-          trace('fallback skipped — a third imposition:', `${t.id} imposes ${cand.row.imposes}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329)`);
-          continue;
-        }
-        const seedKeys = rankByVerb([t], fbVerbText, '')[0]?.concept ?? []; if (seedKeys.length) cand.row.boundKeys = seedKeys; // the keys the USER's words matched are the row's provenance — the Kobold's Vanish covered nothing (canaries 2026-10-12)
-        drawn = cand;
-      }
-      // the LAST RESORT obeys the same law as the shelf: only a blind-dealable
-      // seed, in hash order (the siege ram drew "Shell Defense" from the bare
-      // library hash after every shelf row failed to render, fresh two)
-      if (!drawn && !standDownT) { // the hash honours the stand-down too
-        const keys = TEMPLATES.filter((t) => t.kind === 'seed' && blindDealable(t, archetype) && !UTILITY.has(t.id) && !wrongT.has(t.id) && !declinedT.has(t.id) && !onSheet.has(t.id) && !onSheet.has(t.key)).map((t) => t.key);
-        for (let i = 0; i < keys.length && !drawn; i += 1) {
-          const key = keys[(nameHash(p.name) + i) % keys.length];
-          drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: key, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
-        }
-      }
-      if (drawn && Object.values(sections).flat().filter((e) => e.part || e.feature).length >= 3) { trace('fallback skipped:', `"${drawn.row.name}" — the user's own rows fill the sheet (three or more parts and features); no seed stands in (Meshrin's Chain Hook, critic's step-8 read)`); drawn = null; }
-      if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
-      if (drawn) {
-        if (hasChassisNova(sections) && !exemptFromOneNova(drawn.row) && / \(Recharge [\d–-]+\)$/.test(drawn.row.name ?? '')) { drawn.row.name = drawn.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); drawn.row.gate = undefined; trace('one nova:', `"${drawn.row.name}" — the seed's gate leaves; the chassis nova stands`); }
-        const vc = valueCheck(drawn.row, { scaled, sections, cr, section: drawn.section, noGate: hasChassisNova(sections), template: drawn.seed ?? drawn.row?.template ?? null });
-        if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; if (vc.gate) drawn.row.gate = vc.gate; }
-        trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
-        if (!drawn.floorWaived && vc.steps.some((st) => /still under|does nothing/.test(st))) noteDrop(drawn.seed ?? drawn.row?.template, 'the value floor', 'a seed the ladder could not lift');
-        if (!drawn.floorWaived && vc.steps.some((st) => /still under|does nothing/.test(st))) { trace('signature dropped by the floor:', `"${drawn.row.name}" — a seed that cannot be lifted does not ship`); drawn = null; }
-      }
-      if (drawn) {
-        drawn.row.text = stampT(drawn.row.text);
-        if (!uniqueRowName(drawn.row, null)) { trace('library seed refused:', `${drawn.seed} — "${drawn.row.name}" is already a row on this sheet; a seed carries no other name, so the sheet keeps the row it has`); drawn = null; }
-      }
-      if (drawn) {
-        (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
-        slotYield(drawn.seed, drawn.row); // a seed drawn into a slot evicts the chassis's row there too (the fallback is a landing — "Hurled Debris" stood beside the seed's "Hurled Weapon", step 2 probe)
-        libraryDrawn = true;
-        libraryGenericName = drawn.row.name;
-        trace('library seed drawn:', `${drawn.seed} -> ${drawn.section}/"${drawn.row.name}" (no template held the idea; a proven shape stands in)`);
-        if (deadBareT) sweepDeadName(sections, deadBareT, drawn.row, trace);
-      } else {
-        noteDrop(actionT?.template ?? actionT?.row?.template, 'no legal template or seed', 'no template held the idea and no seed is legal on this sheet');
-        trace('signature dropped —', 'no template held the idea and no seed is legal on this sheet');
-        sweepDeadName(sections, deadBareT || null, null, trace);
-      }
+      // NOTHING STANDS IN FOR A SEAT THAT FAILED (owner's ruling, 2026-11-23).
+      //
+      // His words were "if a second roll doesn't fix it let's drop it", and asked whether that means
+      // the slot stays empty rather than taking a stock row, he said yes. It is the same thing he
+      // said on 29 October, which the free-row budget's own comments quote: "refusals lead to
+      // sameness because we borrow a stock row from the chassis".
+      //
+      // What used to be here was the fallback shelf: a verb ranking, a style default seed, a
+      // last-resort hash over the whole library, and a value check on whatever came out. Every part
+      // of it was a way of choosing WHICH stock row to borrow, and none is borrowed now. On the
+      // forty it drew three — s12's Bolstering Presence, s34's and s35's Rampage — and not one of
+      // the three had anything to do with what the GM typed.
+      //
+      // THIS IS NOT THE FIT CALL'S TEMPLATE. A template the fit call chose for the idea is the
+      // model's own answer and lands above, as it always did. Only the row drawn AFTER the seat has
+      // failed is gone.
+      //
+      // The twist path already had no shelf (`closedPath` stood it down); this gives every other
+      // path the same.
+      noteDrop(actionT?.template ?? actionT?.row?.template, 'the seat failed and nothing stands in',
+        'no template held the idea, the seat wrote no row, and a stock seed is no longer borrowed');
+      trace('signature seat empty —', 'no template held the idea and the seat wrote no row; nothing stands in (owner, 2026-11-23)');
+      sweepDeadName(sections, deadBareT || null, null, trace);
     }
     }
     if (traitWildcardAllowed) { // an OWED trait seats whether or not the idea call produced one (the claimed gaze owed Vile Appearance and the idea call returned nothing, 2026-09-28)

@@ -1811,7 +1811,9 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
       return answer({ wildcard: bad });
     });
     expect(auditPrompt).not.toMatch(/FALLBACK NOTICE/);
-    expect(m.generation.signature).toBe('library');
+    // ENCODED: a "none" from the fit call drew a library seed and the block still shipped. The
+    // draw is gone (owner, 2026-11-23) — the block still ships, with nothing in that slot.
+    expect(m.generation.signature).not.toBe('library');
   });
 
   test('the charger engine survives the reskin: charge rider and the Prone-gated trample', async () => {
@@ -2710,7 +2712,9 @@ describe('the first-smoke fix batch (2026-09-04): KO economy, hide ownership, ty
     // The old "within 5 feet of" expectation was met by an incidental seed text
     // and broke when the seed rotation moved (summon-lite retired, 2026-09-28).
     expect(s).not.toMatch(/adjacent to/);
-    expect(m.sections.Actions.some((e) => e.library)).toBe(true); // a proven seed stands in
+    // ENCODED: a dead wildcard drew from the shelf with no pivot call — "the workhorse posture".
+    // No seed is drawn now; what the test still pins is that no pivot call was made.
+    expect(m.sections.Actions.some((e) => e.library)).toBe(false);
   });
 
 });
@@ -4035,10 +4039,9 @@ describe('the library rename-claim check (2026-09-14): a lying rename loses to t
       return JSON.stringify(base);
     });
     const lib = Object.values(m.sections).flat().find((e) => e.library);
-    expect(lib).toBeTruthy();
-    if (!/\bStunned\b/.test(lib.text)) {
-      expect(lib.name).not.toMatch(/Stunning/);
-    }
+    // ENCODED: a lying rename loses to the seed's own name. No seed is drawn now, so there is no
+    // rename to lose to it; the rule itself is unchanged and lives in uniqueRowName.
+    expect(lib).toBeFalsy();
   });
 });
 
@@ -4261,8 +4264,11 @@ describe('the repair redesign + keyed library (owner 2026-09-15)', () => {
       return answer({ wildcard: 'It is very scary and dreadful beyond words entirely.' });
     });
     expect(pivotCalled).toBe(false);
-    expect(Object.values(m.sections).flat().some((e) => e.library)).toBe(true);
-    expect(m.generation.signature).toBe('library');
+    // ENCODED: an unrepairable wildcard drew a seed and the audit heard no fallback brief.
+    expect(Object.values(m.sections).flat().some((e) => e.library)).toBe(false);
+    // ENCODED: a "none" from the fit call drew a library seed and the block still shipped. The
+    // draw is gone (owner, 2026-11-23) — the block still ships, with nothing in that slot.
+    expect(m.generation.signature).not.toBe('library');
   });
 
 });
@@ -5113,8 +5119,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const mod = await run({ archetype: 'defender', style: 'leader', concept: 'a sergeant who orders a volley', userConcept: 'a sergeant who orders a volley', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(leader, 'Volley Sergeant Koldrek', { 'Melee Attack': 'Shield Bash', 'Hybrid Attack': 'Heavy Crossbow' }));
     expect(mod.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The sergeant makes/); // a modifier before the rank is still a rank-titled name
-    // "orders a volley" draws the volley order, not the rally (library round 2026-09-29)
-    expect((mod.m.sections['Bonus Actions'] ?? []).some((e) => /^Volley Order/.test(e.name) && /can take a Reaction to make one ranged attack roll/.test(e.text))).toBe(true);
+    // ENCODED: "orders a volley" drew the volley-order seed rather than the rally (library round
+    // 2026-09-29) — the verb ranking picking the RIGHT stock row. No stock row is drawn now
+    // (owner, 2026-11-23), so neither is drawn, and what this test still pins is the rank-titled
+    // name above it.
+    expect((mod.m.sections['Bonus Actions'] ?? []).some((e) => /^Volley Order/.test(e.name))).toBe(false);
     const axe = await run({ archetype: 'defender', style: 'leader', concept: 'a warlord who bellows her troops into a frenzy', userConcept: 'a warlord who bellows her troops into a frenzy', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(leader, 'Drumkalla the Red', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }));
     const ha = axe.rows.find((e) => /^Handaxe/.test(e.name));
@@ -5123,16 +5132,22 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(axe.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^Drumkalla makes/);
     expect(axe.rows.map((e) => e.text).join('\n')).not.toMatch(/\bthe red\b/);
     // the leader's fallback owes the rally shape, not a punisher drawn by hash
-    expect(axe.trace).toMatch(/library seed drawn: rally -> Bonus Actions/); // the command words rank rally first; the style default heads it when they don't
+    // ENCODED: the style default seed (`rally` for a leader) headed the fallback when the command
+    // words ranked nothing (critic, new lines 2026-09-28). No seed is drawn now.
+    expect(axe.trace).not.toMatch(/library seed drawn/);
     expect(axe.trace).not.toMatch(/own-turn-punisher/);
-    expect((axe.m.sections['Bonus Actions'] ?? []).some((e) => /Temporary Hit Points/.test(e.text))).toBe(true);
+    // ENCODED: the rally seed the style default drew gave Temporary Hit Points. No seed, no row.
+    expect((axe.m.sections['Bonus Actions'] ?? []).some((e) => /Temporary Hit Points/.test(e.text))).toBe(false);
     // A DRAWN ROW CARRIES ITS SEED, AND THE SHEET IS NOT OFFERED IT TWICE
     // (critic's hold 5, 2026-10-16). The row used to say only `library: true`,
     // so no draw site could tell which shape the sheet already had — Meridane
     // shipped two bonus actions that both charge its next strike. The id is the
     // row's provenance too, which is what the review doc asks for.
-    const rallyRow = (axe.m.sections['Bonus Actions'] ?? []).find((e) => /Temporary Hit Points/.test(e.text));
-    expect(rallyRow.seed).toBe('rally');
+    // ENCODED: a drawn row carried its seed id, so no draw site could offer the sheet the same
+    // shape twice (critic's hold 5, 2026-10-16). No row is drawn now, so there is none to carry an
+    // id — but the invariant it protected is still worth pinning, and the line below does that over
+    // every shape on the sheet.
+    expect((axe.m.sections['Bonus Actions'] ?? []).find((e) => /Temporary Hit Points/.test(e.text))).toBeUndefined();
     const ids = axe.rows.flatMap((e) => [e.template, e.seed]).filter(Boolean);
     expect(ids.length).toBe(new Set(ids).size); // no shape lands twice under two names
   });
@@ -5361,7 +5376,9 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     // menu and the class kit ask, and refuses. The DOOR is still proven by the gong below.
     expect(s.trace).toMatch(/concept-first trait skipped: guarded-stance — AC 16 already beats print's 15/);
     expect((s.m.sections.Traits ?? []).some((e) => e.name === 'Guarded Stance')).toBe(false);
-    expect(s.trace).toMatch(/volley-order/); // the concept's verb draws the volley card beside the stance
+    // ENCODED: the concept's verb drew the volley card beside the stance. The draw is gone; the
+    // reaction-name rule this test also pins is unchanged.
+    expect(s.trace).not.toMatch(/library seed drawn/);
     // one key that is the creature's own head noun binds too (the cloister gong: resonant-body on "gong")
     const jug = scaleDonor(pickDonor(8, 'juggernaut', 'brute'), 8, { mechanics: [] });
     const gong = await run({ archetype: 'brute', style: 'juggernaut', cr: 8, concept: 'a temple gong given legs that walks the cloister at night and tolls for the dead', userConcept: 'a temple gong given legs that walks the cloister at night and tolls for the dead', resolvedType: 'Construct', mind: 'mindless' },
@@ -5630,8 +5647,17 @@ describe('form-ten (2026-10-01): the form\'s own words ride over print', () => {
     const concept = 'Kobold — Can turn invisible once per day';
     const m = await generateReskin({ archetype: 'skirmisher', concept, userConcept: concept, cr: 0.25, mechanics: [] }, async () => answer({ name: 'Kobold', type: 'Humanoid', size: 'Small' }));
     const all = Object.values(m.sections).flat();
-    expect(all.some((e) => /Invisib/i.test(`${e.name} ${e.text}`))).toBe(true);
-    expect(all.find((e) => /Invisib/i.test(e.text)).name).toMatch(/^Vanish/);
+    /**
+     * ENCODED, AND THIS IS THE ONE THE RULING COSTS (form-ten, 2026-10-01). "Can turn invisible
+     * once per day" is a claim in the GM's own words, and the fallback's verb ranking drew the
+     * `vanish` seed to answer it. The 23 November ruling takes the draw out, so nothing answers it
+     * and the kobold ships with no invisibility.
+     *
+     * Fable's stated reason for the ruling is that the three seeds on the forty "had nothing to do
+     * with what was typed". This one did. It is at the top of the round's report for that reason,
+     * and if the draw is carved back for words the GM typed, this assertion goes back to `true`.
+     */
+    expect(all.some((e) => /Invisib/i.test(`${e.name} ${e.text}`))).toBe(false);
     expect(m.hp).toBe(7); // the Kobold Warrior's own HP at its own CR, not the card's 21
     expect((m.sections.Traits ?? []).map((e) => e.name)).not.toContain('Hedge Runner'); // the seat stood down; its trait leaves ("Darting Scamper", third roll)
   });

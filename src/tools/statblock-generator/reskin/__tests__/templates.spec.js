@@ -429,16 +429,22 @@ describe('generateReskin in template mode', () => {
     // (EV ~0.25 of an attack) — it is dropped and a seed that clears the
     // floor stands in; the fit's name never reaches the page
     expect(rows.map((e) => e.name)).not.toContain('Rooting Stare');
-    expect(rows.some((e) => e.library)).toBe(true);
+    // ENCODED: a "none" from the fit call drew a library seed so the block still shipped a
+    // signature. No seed is drawn now (owner, 2026-11-23); the block still ships.
+    expect(rows.some((e) => e.library)).toBe(false);
     expect(rows.map((e) => e.name)).not.toContain('Waylay');
     expect(rows.map((e) => e.name)).not.toContain('Signature Slot');
-    expect(m.generation?.signature ?? 'library').toBe('library');
+    // ENCODED: the signature was recorded as 'library' when a seed stood in. With no seed it is
+    // recorded as 'dropped', which is the honest word for an empty seat.
+    expect(m.generation?.signature ?? 'dropped').toBe('dropped');
   });
 
   test('a "none" from the fit logs a miss and the library seed stands in — the block still ships', async () => {
     const m = await run(() => JSON.stringify({ template: 'none', because: '' }));
     const rows = Object.values(m.sections).flat();
-    expect(rows.some((e) => e.library)).toBe(true);
+    // ENCODED: a "none" from the fit call drew a library seed so the block still shipped a
+    // signature. No seed is drawn now (owner, 2026-11-23); the block still ships.
+    expect(rows.some((e) => e.library)).toBe(false);
     expect(rows.map((e) => e.name)).not.toContain('Signature Slot');
   });
 

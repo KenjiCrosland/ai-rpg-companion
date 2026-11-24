@@ -57,13 +57,21 @@ describe('the canaries\' first read (2026-10-12)', () => {
     expect(await inl('Gormak Skullsunder', 'brute', 5)).toBe('Gormak');
     expect(await inl('Meshrin', 'defender', 8)).toBe('Meshrin');
   });
-  test('a seed the user\'s words drew carries them as provenance — the Kobold\'s Vanish covers "Can turn invisible once per day"', async () => {
+  /**
+   * ENCODED, AND THE RULING COSTS IT. A seed the user's own words drew carried them as provenance:
+   * the Kobold's `vanish` answered "Can turn invisible once per day" and its `boundKeys` held
+   * `invisible`. The 23 November ruling takes the fallback draw out, so no seed is drawn and
+   * NOTHING answers that claim.
+   *
+   * Kept as a test of the absence, because that is the behaviour now and because the trade should
+   * be visible to whoever reads this file next. It is at the top of the round's report. If the draw
+   * is carved back for words the GM typed, the original assertions are in git at 9e6fb2d.
+   */
+  test('no seed stands in for the Kobold\'s "Can turn invisible once per day" any more', async () => {
     const desc = 'Kobold — Can turn invisible once per day';
-    const m = await gen({ archetype: 'skirmisher', concept: desc, userConcept: desc, cr: 0.25, fixedName: 'Kobold' }, json('Kobold', 'Humanoid', 0.25, null, 'skirmisher', { size: 'Small', extra: { clauses: [{ text: 'Can turn invisible once per day', kind: 'mechanical' }] } }));
-    const vanish = rows(m).find((e) => /Invisibility/.test(e.text));
-    expect(vanish.boundKeys).toEqual(expect.arrayContaining(['invisible']));
-    const fid = fidelityOf(m, m, { userConcept: desc, donorId: m.generation.donor });
-    expect(fid.dropped).not.toEqual(expect.arrayContaining([expect.stringMatching(/invisible/)]));
+    const m = await gen({ archetype: 'skirmisher', concept: desc, userConcept: desc, cr: 0.25, fixedName: 'Kobold' }, json('Kobold', 'Humanoid', 0.25, null, 'skirmisher'));
+    expect(rows(m).find((e) => /Invisibility/.test(e.text))).toBeUndefined();
+    expect(rows(m).find((e) => e.library)).toBeUndefined();
   });
   test('print\'s Gear line names the 2014 armor — the Goblin Boss is chain shirt and shield, not the kit table\'s splint', async () => {
     const desc = 'Goblin Boss — riding a worg';
