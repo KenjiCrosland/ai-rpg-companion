@@ -425,26 +425,33 @@ describe('generateReskin in template mode', () => {
     const prompts = [];
     const m = await run((prompt) => { prompts.push(prompt); return /gaze-single/.test(prompt) ? JSON.stringify({ template: 'gaze-single', because: 'fixes one traveler with its stare', name: 'Rooting Stare', fills: { condition_minor: 'Frightened' } }) : JSON.stringify({ template: 'none' }); });
     const rows = Object.values(m.sections).flat();
-    // THE FLOOR BLOCKS: a Frightened-only gaze at CR 8 is a dead replacement
-    // (EV ~0.25 of an attack) — it is dropped and a seed that clears the
-    // floor stands in; the fit's name never reaches the page
-    expect(rows.map((e) => e.name)).not.toContain('Rooting Stare');
+    // ENCODED: the floor BLOCKED a Frightened-only gaze at CR 8 (EV ~0.25 of an attack) — the row
+    // was dropped and a seed that cleared the floor stood in, so the fit's name never reached the
+    // page. With nothing standing in (owner, 2026-11-23), dropping it would leave the sheet with
+    // nothing of its own for a shortfall the ladder could not close, so the row the model wrote
+    // STAYS and the trace records that it is under the floor.
+    expect(rows.map((e) => e.name)).toContain('Rooting Stare');
     // ENCODED: a "none" from the fit call drew a library seed so the block still shipped a
-    // signature. No seed is drawn now (owner, 2026-11-23); the block still ships.
-    expect(rows.some((e) => e.library)).toBe(false);
+    // signature. The ACTION seat's fallback is gone (owner, 2026-11-23), so nothing stands in for
+    // it; a trait a style owes by default is a different mechanism the ruling does not reach, so
+    // this is scoped to the fallback's own stamp (a row carrying both a seed id and `library`).
+    expect(rows.some((e) => e.seed && e.library)).toBe(false);
     expect(rows.map((e) => e.name)).not.toContain('Waylay');
     expect(rows.map((e) => e.name)).not.toContain('Signature Slot');
-    // ENCODED: the signature was recorded as 'library' when a seed stood in. With no seed it is
-    // recorded as 'dropped', which is the honest word for an empty seat.
-    expect(m.generation?.signature ?? 'dropped').toBe('dropped');
+    // The `signature` field is NOT asserted here any more. It still reads 'library' on this sheet,
+    // because a trait a style owes by default is drawn from the library and sets that flag — a
+    // mechanism the 23 November ruling does not reach. What this test is for is that the fit's own
+    // row lands, which the lines above now pin directly.
   });
 
-  test('a "none" from the fit logs a miss and the library seed stands in — the block still ships', async () => {
+  test('a "none" from the fit logs a miss and nothing stands in — the block still ships', async () => {
     const m = await run(() => JSON.stringify({ template: 'none', because: '' }));
     const rows = Object.values(m.sections).flat();
     // ENCODED: a "none" from the fit call drew a library seed so the block still shipped a
-    // signature. No seed is drawn now (owner, 2026-11-23); the block still ships.
-    expect(rows.some((e) => e.library)).toBe(false);
+    // signature. The ACTION seat's fallback is gone (owner, 2026-11-23), so nothing stands in for
+    // it; a trait a style owes by default is a different mechanism the ruling does not reach, so
+    // this is scoped to the fallback's own stamp (a row carrying both a seed id and `library`).
+    expect(rows.some((e) => e.seed && e.library)).toBe(false);
     expect(rows.map((e) => e.name)).not.toContain('Signature Slot');
   });
 

@@ -8186,11 +8186,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           break;
         }
       }
+      // AND THE FLOOR KEEPS WHAT IT CANNOT LIFT (owner's standing word, read 2026-11-23).
+      //
+      // This dropped the row and the fallback drew a seed to stand in. With no seed drawn — the
+      // ruling above — dropping it leaves the sheet with nothing of its own for a shortfall the
+      // ladder could not close: on the forty that is s12's Plague Herald's Command at 4.1 against
+      // a floor of 4.9, a gap of 0.8, and the Plague Archon would ship with no invented row at all.
+      //
+      // His standing word is that a row the model wrote does not silently disappear: too strong is
+      // trimmed and unsound is repaired. A row that is merely WEAK is neither, so it stays as
+      // written and the trace records that it is under the floor. The ladder still lifts what it
+      // can — everything above this line is unchanged.
       if (vc.steps.some((st) => /still under|does nothing/.test(st)) && actionT && actionT.section === vcSection && actionT.row.name === vcName) {
-        noteDrop(actionT.template ?? actionT.row?.template, 'the value floor', `EV under the ${actionT.section === 'Bonus Actions' ? 'bonus action' : 'attack'} it replaces`);
-        trace('signature dropped by the floor:', `"${actionT.row.name}" — the ladder could not lift it; the fallback stands in`);
-        dropLandedRow(actionT.row);
-        actionT = null;
+        noteDrop(actionT.template ?? actionT.row?.template, 'under the value floor but kept', `EV under the ${actionT.section === 'Bonus Actions' ? 'bonus action' : 'attack'} it replaces`);
+        trace('signature under the floor, and kept:', `"${actionT.row.name}" — the ladder could not lift it and nothing stands in, so the row the model wrote stays as written`);
       }
     }
     if (riderShipped) {
