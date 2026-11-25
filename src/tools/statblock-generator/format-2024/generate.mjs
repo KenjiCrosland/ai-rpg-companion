@@ -1750,6 +1750,14 @@ export function to2014Grammar(text) {
   // the 2024 lead-in folds into the save's subject even when the save already reads 2014 (the mounted nova on the conversion path)
   t = t.replace(/(^|[.!?]\s+)([^.!?]*?) is targeted once by the following effect\.\s*(?:The target|That creature|It) must make a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw/g,
     (m0, pre, subj, dc, stat) => `${pre}${subj.trim().charAt(0).toUpperCase()}${subj.trim().slice(1)} must make a DC ${dc} ${stat} saving throw`);
+  // BLOODIED BEFORE A NOUN MOVES AFTER IT (Fable, gm40 fault 2, 2026-11-25). The word-for-phrase
+  // swap below is right where Bloodied is predicative ("while Bloodied") and wrong where it
+  // qualifies a noun: the Butcher of Karrow's 2014 row read "One below half its hit point maximum
+  // creature the butcher can see within 60 feet must make a DC 14 Dexterity saving throw." English
+  // takes a phrase that long after the noun it describes, so it goes where the noun phrase ends —
+  // immediately before the verb.
+  t = t.replace(/\bBloodied\s+([a-z][\w'-]*)([^.]*?)(\s+must\s+)/g,
+    (m0, noun, mid, must) => `${noun}${mid} that is below half its hit point maximum${must}`);
   t = t.replace(/\bis Bloodied\b/g, 'has half its hit points or fewer').replace(/\bBloodied\b/g, 'below half its hit point maximum');
   t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
   t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);

@@ -2927,7 +2927,13 @@ export function partRows(record, { cap = 4 } = {}) {
     const hitsReal = hits.filter((h) => { const pre = text.slice(0, h.index).trim().split(/\s+/).at(-1) ?? ''; return !/^(?:them|him|her|us|me|it|themselves|himself|herself|itself)$/i.test(pre.replace(/[^A-Za-z]/g, '')); });
     if (!hitsReal.length) continue;
     const hit = hitsReal.at(-1); const noun = hit[1]; const idx = words.findIndex((w) => w.toLowerCase().replace(/[^a-z]/g, '') === noun.toLowerCase());
-    const before = []; for (let i = idx - 1; i >= 0 && before.length < 2; i -= 1) { const w = words[i].replace(/[^A-Za-z'-]/g, ''); if (!w || PART_STOP.has(w.toLowerCase()) || PART_NOUN.test(w) || /^(?:for|to|at|into|on|that|which|who|whose|whom|where|when)$/i.test(w)) break; before.unshift(w); } // "whose" was missing from a list that already held that/which/who, so "a plague-rat swarmlord whose bite rots the wound" named the row "Swarmlord Whose Bite" (critic's hold 3, 2026-10-16)
+    // A NAME NEVER REACHES BACK ACROSS A FULL STOP (Fable, gm40 fault 4, 2026-11-25). Grumm's
+    // "totem that gives allies +2 to hit within 30 ft. spear." named his weapon row "Ft Spear":
+    // the walk stepped back onto "ft." and kept it, because stripping the punctuation leaves a
+    // word like any other. "spear" opens a new sentence, so nothing before the stop belongs to
+    // its name. This is punctuation, not a list of words — a unit of measure is only the case
+    // that found it.
+    const before = []; for (let i = idx - 1; i >= 0 && before.length < 2; i -= 1) { if (/[.!?]$/.test(words[i])) break; const w = words[i].replace(/[^A-Za-z'-]/g, ''); if (!w || PART_STOP.has(w.toLowerCase()) || PART_NOUN.test(w) || /^(?:for|to|at|into|on|that|which|who|whose|whom|where|when)$/i.test(w)) break; before.unshift(w); } // "whose" was missing from a list that already held that/which/who, so "a plague-rat swarmlord whose bite rots the wound" named the row "Swarmlord Whose Bite" (critic's hold 3, 2026-10-16)
     PART_NOUN.lastIndex = 0;
     const after = /\bfor (?:a |an )?([A-Za-z]+)(?: attacks?)?\b/i.exec(text.slice(hit.index + noun.length)); // "tail for swipe attacks" → Tail Swipe
     const headNoun = /^(?:bite|slam|gore|sting|kick|headbutt)s?$/i.test(noun) ? noun.replace(/s$/, '') : (PART_SINGULAR(noun) !== noun.toLowerCase() && !/^(?:claws|talons|nails|teeth|fangs|jaws|horns|antlers|tusks|hooves|tentacles|stingers|pincers|fists|fingers)$/i.test(noun) ? PART_SINGULAR(noun) : noun); // a weapon plural names its singular row ("two longswords" → Longsword); a body-part plural keeps its plural name (Claws)
@@ -4397,7 +4403,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   const RANK = /^(?:[A-Z][a-z-]+\s+)?(Sergeant|Captain|Commander|Lieutenant|General|Admiral|Marshal|Warlord|Chieftain|Lord|Lady|Sir|Dame|Baron|Baroness|Count|Countess|Duke|Duchess|King|Queen|Prince|Princess|Abbot|Abbess|Bishop|Brother|Sister|Mother|Father|Constable|Sheriff|Grandmother|Grandfather|Granny|Grandma|Grandpa|Nan|Auntie|Aunt|Uncle|Old|Widow|Goodwife|Goodman|Elder|Mistress|Master)\s+[A-Z]/; // kinship titles are titles too ("the grandmother ashwick" on every line, critic form-ten 2026-10-01)
   const personalName = (full) => {
     const s = String(full).trim();
-    const hon = /^(Sir|Dame|Lord|Lady|Saint)\s+([A-Z][\w'-]+)/.exec(s); if (hon) return `${hon[1]} ${hon[2]}`; // an honorific keeps its name on every path — a model-minted "Sir Lorn of the Briar Court" spoke as "the sir" (sprint run 2026-10-12)
+    const hon = /^(Sir|Dame|Lord|Lady|Saint|Madame)\s+([A-Z][\w'-]+)/.exec(s); if (hon) return `${hon[1]} ${hon[2]}`; // an honorific keeps its name on every path — a model-minted "Sir Lorn of the Briar Court" spoke as "the sir" (sprint run 2026-10-12)
     const rank = RANK.exec(s); if (rank) { if (!/^(?:old|young|great|grand|big|little)$/i.test(rank[1])) return `the ${rank[1].toLowerCase()}`; const last = s.split(/\s+/).pop(); if (ROLE_NOUN.test(last)) return `the ${last.toLowerCase()}`; /* a role noun left after a stripped rank is still a kind ("Old Road Warden" spoke as "Warden" — the critic's fourth read) */ if (/^[A-Z][\w'-]+$/.test(last)) return last; }
     const epi = /^([A-Z][a-z]+(?:ed|en|ous|ful|ish|less|some|born|sworn|vowed|clad|bound|touched|marked|scarred|eyed|hearted|tongued|maned|horned|crowned))\s+([A-Z][\w'-]+)$/.exec(s); // AN EPITHET-FIRST PERSON: "Ashvowed Brannor" is Brannor, not "the ashvowed brannor" (the critic's fourth read); a role noun second is still a kind
     if (epi) return ROLE_NOUN.test(epi[2]) ? null : epi[2]; // a role noun second is a kind and speaks whole ("the headless horseman"); only a given name is a person ("Ashvowed Brannor" → Brannor) // a weak rank word is not a rank: "Old Sargeant Rootback" spoke as "the old" (the critic's third species read, rerun)
@@ -4464,7 +4470,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (kind === 'person') {
       // the honorific list was five words and print's register has more: a
       // Brother, Sister, Father or Mother is a person's title exactly as a Sir is
-      const hon = /^(Sir|Dame|Lord|Lady|Saint|Brother|Sister|Father|Mother|Captain|Sergeant)\s+([A-Z][\w'-]+)$/.exec(phrase);
+      const hon = /^(Sir|Dame|Lord|Lady|Saint|Madame|Brother|Sister|Father|Mother|Captain|Sergeant)\s+([A-Z][\w'-]+)$/.exec(phrase);
       if (hon && ofName(hon[1]) && ofName(hon[2])) return phrase;
       if (/^[A-Z][\w'-]*$/.test(phrase) && ofName(phrase)) return phrase;
       // A REFUSED PERSON FORM FALLS BACK TO A PERSON (owner's stage 1,
@@ -4481,7 +4487,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // person form, and a person must not end up speaking as a kind.
       if (/^the\s/i.test(phrase)) return null;
       const nmW = nm.split(/\s+/).filter(Boolean);
-      const honName = /^(Sir|Dame|Lord|Lady|Saint|Brother|Sister|Father|Mother|Captain|Sergeant)$/i.test(nmW[0] ?? '') && nmW[1] ? `${nmW[0]} ${nmW[1]}` : null;
+      const honName = /^(Sir|Dame|Lord|Lady|Saint|Madame|Brother|Sister|Father|Mother|Captain|Sergeant)$/i.test(nmW[0] ?? '') && nmW[1] ? `${nmW[0]} ${nmW[1]}` : null;
       const fallback = honName ?? null;
       if (fallback) { trace('inline person form repaired:', `the call answered person but "${phrase}" is no word of "${nm}" — "${fallback}" is, and a person does not speak as a kind`); return fallback; }
       return null;
@@ -5307,7 +5313,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // exactly the whole Name with "the" ("Knife Ball" spoke as "Knife"; "Gutter King" as "the king"); one-word Names never take it (Meshrin stays Meshrin).
     const whole = `the ${s.toLowerCase()}`;
     if (declaredInline && declaredInline.toLowerCase() === whole) return whole;
-    const hon = /^(Sir|Dame|Lord|Lady|Saint)\s+([A-Z][\w'-]+)/.exec(s); if (hon) return `${hon[1]} ${hon[2]}`;
+    const hon = /^(Sir|Dame|Lord|Lady|Saint|Madame)\s+([A-Z][\w'-]+)/.exec(s); if (hon) return `${hon[1]} ${hon[2]}`;
     const pn = personalName(s); if (pn) return pn;
     // AN "X OF/IN Y" NAME IS THE X, WITH ITS ARTICLE (owner's stage 1, item 5,
     // 2026-10-16). The last resort below returns the first word bare, which is a
@@ -5338,8 +5344,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // `nameIsPrint` is the distinction already in the data — true for "Owlbear" and
   // "Dire Wolf", false for a borrow — and it is what this guard always meant.
   const namePc = printCanonFor(String(p.name ?? '').trim(), cr);
-  const declaredOk = (!namePc?.nameIsPrint && !userGaveArticle) ? acceptDeclared() : null;
-  const byRule = body === 'swarm' ? 'the swarm' : properNoun ? properInline(p.name ?? fixedNameRaw) : (personalName(p.name) ?? oneWordPerson ?? (userGaveArticle ? null : declaredInline) ?? `the ${shortForm(p.name)}`); // the GM's own article makes a kind, whatever the call declared ("a meshrin" — the owner's rule)
+  // A DECLARED KIND PHRASE PASSES THE PRINT-NAME VETO (Fable, gm40 fault 7, 2026-11-25). The veto
+  // exists so a PERSON form the name does not carry cannot displace print's own name. The call had
+  // answered "the cube" for the Gelatinous Cube — print's own idiom, and a legal run of the name's
+  // words, which `acceptDeclared` already validates — and the veto threw it away, leaving
+  // `personalName` to read "Gelatinous" as an epithet and ship a bare "Cube". A kind answer that
+  // the name supports is the one thing the veto was never aimed at.
+  const declaredKind = String(p.inline_kind ?? '').trim().toLowerCase() === 'kind';
+  const declaredOk = ((!namePc?.nameIsPrint || declaredKind) && !userGaveArticle) ? acceptDeclared() : null;
+  // PRINT'S OWN NAME SPEAKS AS PRINT WRITES IT (Fable, gm40 fault 7, 2026-11-25). The Gelatinous
+  // Cube shipped "Cube can move through a space as narrow as 1 inch" beside "the cube" elsewhere:
+  // `personalName` read "Gelatinous Cube" as an epithet plus a given name, because "Gelatinous"
+  // ends in -ous, and returned "Cube". A print name is a closed fact and print says "the cube".
+  // The call had answered "the cube" and was overruled here by the very guard that exists to let
+  // print's name win — so print's name must now produce print's form, not a person's.
+  const byRule = body === 'swarm' ? 'the swarm' : namePc?.nameIsPrint ? `the ${shortForm(p.name)}` : properNoun ? properInline(p.name ?? fixedNameRaw) : (personalName(p.name) ?? oneWordPerson ?? (userGaveArticle ? null : declaredInline) ?? `the ${shortForm(p.name)}`); // the GM's own article makes a kind, whatever the call declared ("a meshrin" — the owner's rule)
   let inline = body === 'swarm' ? 'the swarm' : (declaredOk ?? byRule);
   if (declaredOk) trace('inline declared:', `"${declaredOk}" — the call's own answer (${String(p.inline_kind).toLowerCase()}), built from the name${declaredOk !== byRule ? `; the rules would have said "${byRule}"` : ''}`);
   else if (String(p.inline ?? '').trim()) trace('inline by rule:', `"${byRule}" — the call answered "${String(p.inline).trim()}"${p.inline_kind ? ` (${String(p.inline_kind).toLowerCase()})` : ''}, which the name does not support`);
@@ -7194,7 +7213,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 trace('strike not landed — it adds nothing:', `"${st.name}" clones "${st.attack}", which already applies ${st.condition} on a hit; the seat is asked again rather than trading an attack for a worse one`);
               } else {
               const row = strikeRowFrom(sections, st, scaled, cr, settledInline());
-              if (row) {
+              // NO TWO ROWS WITH ONE NAME (Fable, gm40 fault 5, 2026-11-25). The skeleton archer
+              // captain shipped two rows called Quiver Command: the herd template landed under the
+              // name the fit call gave it, and then this push added the seat's strike under the
+              // same name with no uniqueness gate — the one every other landing runs. The strike
+              // carries no template name, so it has no other name to take and it leaves, which is
+              // what the trace for the trait seat beside it already said happens.
+              if (row && !uniqueRowName(row, null)) {
+                trace('strike not landed — the name is taken:', `"${row.name}" already names a row on this sheet and a strike carries no template name to fall back on; the seat is asked again rather than shipping two rows with one name`);
+              } else if (row) {
                 trace('strike points at its attack:', `"${row.name}" makes one ${row.strikeHost} attack and adds a ${st.save} save — Multiattack offers it in place of one attack, which is the exchange and the whole limit (owner's ruling, 21 November)`);
                 sections.Actions = [...(sections.Actions ?? []), row];
                 return { landed: seatShape(row, 'Actions') };
@@ -9024,7 +9051,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
         }
         if (/\bnets?\b/i.test(bare)) { /* the 2024 Net: no damage, a Restrain on a Large or smaller target, and it does not come back (the kuo-toa's three nets, critic 2026-10-01) */
-          const net = (t0) => String(t0).replace(/\d+ \(\d+d\d+(?: \+ \d+)?\) \w+ damage(?: plus \d+ \(\d+d\d+\) \w+ damage)?\.?/, `If the target is Large or smaller, it has the Restrained condition until it escapes (escape DC ${scaled.dc}).`).replace(/\s*\*Hit or Miss:\*[^.]*\.\s*/, ' ').trim();
+          // THE NET'S OWN RESTRAINT IS THE ONLY ONE (Fable, gm40 fault 1, 2026-11-25). Tobias
+          // Crane's Net shipped "…until it escapes (escape DC 13)., and the target has the
+          // Restrained condition until the end of its next turn." The slot's Restrained rider is
+          // welded on hundreds of lines above this, when the row still carries its damage
+          // expression — so the weld's own "already restrains?" guard sees nothing to find, and
+          // this substitution then replaces the damage and leaves the rider stranded after a full
+          // stop. So this consumes a following clause that imposes the SAME condition, and repairs
+          // the "., and" join where a clause imposing a different one survives.
+          const net = (t0) => String(t0)
+            .replace(/\d+ \(\d+d\d+(?: \+ \d+)?\) \w+ damage(?: plus \d+ \(\d+d\d+\) \w+ damage)?\.?(?:,? and (?:the target|it) has the Restrained condition[^.]*\.?)?/, `If the target is Large or smaller, it has the Restrained condition until it escapes (escape DC ${scaled.dc}).`)
+            .replace(/\s*\*Hit or Miss:\*[^.]*\.\s*/, ' ')
+            .replace(/\.\s*,/g, ',')
+            .trim();
           e.text = net(e.text); if (e.text_noRider) e.text_noRider = net(e.text_noRider);
         }
         if (e.text !== before) trace('weapon table:', `"${bare}" — ${thrown ? 'thrown' : 'a launcher, never thrown'}, range ${range}`);
@@ -9286,14 +9325,47 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const clone = { ...base, name: pr.name, text: cloneText, print: true, weapon: weaponFor(pr.name) ?? null }; // print's row carries print's weapon, not the base row's stamp (the Ogre's Javelin read [greataxe], printplus 2026-10-18)
               if (!printOwnText) {
                 if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) clone.text = clone.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, clone.text, scaled.pb)); // an exact body at print's CR: the added row deals print's own dice, not the chassis's (the Pit Fiend's Devilish Claw read 21 or 26 by the donor's roll — sprint run 2026-10-12)
-                if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
+                // THE "plus" RIDER GOES THROUGH asInline TOO (Fable, gm40 fault 6, 2026-11-25).
+                // The branch below it does; this one pasted print's rider verbatim, so the
+                // Assassin's Shortsword rider shipped "until the start of the assassin's next
+                // turn" on a creature called the whisper (s08) and the creeper (s26). Print's
+                // own noun is substituted for this sheet's name wherever print's text is pasted.
+                if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${asInline(pr.rider, pc?.name).replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
                 // the clone is print's row: the chassis's condition clause leaves before print's rider is applied (the Lich's Paralyzing Touch knocked Prone on the caster chassis — critic's regressions brief 2026-10-04)
                 { const declaredC = typeof clone.minorClause === 'string' ? clone.minorClause : null;
                   if (declaredC && clone.text.includes(declaredC)) clone.text = clone.text.split(declaredC).join('');
                   else { const mc = splitMinorClause(clone.text); if (mc.clause) clone.text = mc.body.split('{minor_clause}').join(''); }
                   delete clone.minorClause; }
                 clone.text = clone.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
-                if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) clone.text = `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
+                // A GRAPPLE'S SENTENCE AND ITS REFERENCE GO TOGETHER (Fable, gm40 fault 3,
+                // 2026-11-25). The strip above removes print's condition sentence; the Mimic's
+                // Pseudopod then shipped "Ability checks made to escape this grapple have
+                // Disadvantage." with nothing on the row that grapples.
+                if (!/has the Grappled condition/i.test(clone.text)) clone.text = clone.text.replace(/\s*[^.]*\bthis grapple\b[^.]*\.?/i, '').replace(/\s+$/, '');
+                if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) {
+                  // PRINT'S ONE SENTENCE STAYS ONE SENTENCE, AND BOTH ITS FIGURES MOVE TOGETHER
+                  // (Fable, gm40 fault 3). The Mimic shipped "22 (4d8 + 4) Piercing damage. —or 12
+                  // (2d8 + 3) Piercing damage if the target is Grappled by the mimic—plus 4 (1d8)
+                  // Acid damage.": a rider that CONTINUES print's sentence with a dash was joined
+                  // as a new one, and its figure kept print's CR-2 number beside a rescaled first
+                  // figure — so the Grappled bite dealt less than the plain one. Print carries a
+                  // second figure on 12 rows (the Mimic and the Swarm of Venomous Snakes with
+                  // dashes, ten more with ", or"); the step is the one the first figure took.
+                  const dash = /^[—–]/.test(String(pr.rider).trim());
+                  const firstNow = /(\d+) \(\d+d\d+(?: [+-] \d+)?\)/.exec(clone.text);
+                  const printFirst = /(\d+) \(/.exec(String(pr.dmg ?? ''));
+                  const step = firstNow && printFirst && Number(printFirst[1]) > 0 ? Number(firstNow[1]) / Number(printFirst[1]) : 1;
+                  let rid = asInline(pr.rider, pc?.name);
+                  if (step !== 1) rid = rid.replace(/(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/g, (m0, avg, n0, d0, sign, mod) => {
+                    const flat = sign === '-' ? -Number(mod ?? 0) : Number(mod ?? 0);
+                    const wanted = Math.max(2 + flat, Math.round(Number(avg) * step));
+                    const r = attackDamageDiceFor(wanted, Math.min(flat, Math.max(0, wanted - 1)));
+                    return `${r.avg} (${r.dice})`;
+                  });
+                  clone.text = dash
+                    ? `${clone.text.trim().replace(/\.$/, '')}${rid}`
+                    : `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${rid}`;
+                }
               }
               if (printOwnText) {
                 const impP = imposedConditions({ name: pr.name, text: clone.text });
