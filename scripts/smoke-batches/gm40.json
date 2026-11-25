@@ -1,0 +1,246 @@
+[
+  {
+    "name": "Old Marta",
+    "description": "innkeeper, retired adventurer, keeps a crossbow under the bar",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "name": "Sergeant Dunmore",
+    "description": "town guard sergeant, halberd, by the book",
+    "cr": "2",
+    "rules": "2014",
+    "role": "defender"
+  },
+  {
+    "name": "Yx'theral",
+    "description": "drow priestess of the spider goddess",
+    "cr": "8",
+    "rules": "2024",
+    "role": "caster"
+  },
+  {
+    "name": "Tobias Crane",
+    "description": "bounty hunter, nets and a hand crossbow, takes people alive",
+    "cr": "5",
+    "rules": "2024"
+  },
+  {
+    "name": "The Butcher of Karrow",
+    "description": "cult enforcer with a meat cleaver, heals when he kills",
+    "cr": "6",
+    "rules": "2014",
+    "role": "brute"
+  },
+  {
+    "name": "Nib",
+    "description": "pixie thief, steals one thing and runs",
+    "cr": "1/2",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "dwarf artificer",
+    "cr": "4",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "tabaxi assassin",
+    "cr": "6",
+    "rules": "2014"
+  },
+  {
+    "name": "",
+    "description": "bugbear barbarian chief",
+    "cr": "5",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "fallen aasimar paladin",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "gnome illusionist",
+    "cr": "3",
+    "rules": "2014"
+  },
+  {
+    "name": "Ogre",
+    "description": "wearing full plate looted from a knight",
+    "cr": "4",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "giant spider that spits fire instead of webs",
+    "cr": "3",
+    "rules": "2014"
+  },
+  {
+    "name": "Mimic",
+    "description": "but it's a whole house",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "wolf pack leader, smarter than the rest, calls the pack",
+    "cr": "2",
+    "rules": "2024"
+  },
+  {
+    "name": "Gelatinous Cube",
+    "description": "full of the skeletons it ate and they fight for it",
+    "cr": "5",
+    "rules": "2014"
+  },
+  {
+    "name": "Young Black Dragon",
+    "description": "undead, breath is necrotic",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "a bandit captain but for level 1 players, should not kill them",
+    "cr": "1",
+    "rules": "2014"
+  },
+  {
+    "name": "Warden Halvek",
+    "description": "Runs the prison under the lighthouse. Used to be a paladin, broke his oath when he let a prisoner drown. Now he's bound to the place and can't leave. Fights with a ring of keys and a lantern that shows the truth. If the lantern goes out he gets weaker. The players need to get past him, not necessarily kill him.",
+    "cr": "7",
+    "rules": "2024"
+  },
+  {
+    "name": "The Lady in the Reeds",
+    "description": "River spirit that takes the shape of whoever the victim misses most. Lures people into the water. Not evil exactly, just lonely. Can't leave the river. Should be a social encounter first and a fight only if it goes wrong. Charm, drowning, turns to mist when hurt.",
+    "cr": "5",
+    "rules": "2014"
+  },
+  {
+    "name": "Gorrak Splitjaw",
+    "description": "Gnoll warlord for my level 6 party's boss fight. Has a pet hyena that fights next to him. Uses a flail and a longbow. Gets a free bite when he drops someone. I want him to feel scary when he's low on health, like he fights harder.",
+    "cr": "8",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "My players are going into a wizard's abandoned tower and I need the thing that's been living in the library. It was the wizard's familiar, a cat, but it's been eating spell scrolls for 50 years. Now it's the size of a horse and casts random spells when it attacks. Teleports short distances. Hates being looked at.",
+    "cr": "6",
+    "rules": "2024"
+  },
+  {
+    "name": "Captain Iress Vane",
+    "description": "Airship captain, half-elf, ex-navy. Rapier and pistol. She's a duelist who uses the terrain, swings on ropes, kicks barrels, that kind of thing. Has a crew but I'll stat them separately. AC 17, around 110 HP, should get 3 attacks.",
+    "cr": "9",
+    "rules": "2014"
+  },
+  {
+    "name": "",
+    "description": "ice elemental, cone of cold breath recharge 5-6, leaves difficult terrain, slows on hit",
+    "cr": "7",
+    "rules": "2024"
+  },
+  {
+    "name": "Grumm",
+    "description": "troll shaman. 3/day he can heal another troll 2d8. totem that gives allies +2 to hit within 30 ft. spear.",
+    "cr": "6",
+    "rules": "2014"
+  },
+  {
+    "name": "",
+    "description": "assassin vine that grapples on hit and pulls 10 ft, restrained while grappled, 2d6 poison at start of turn",
+    "cr": "4",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "ghost knight, resistant to nonmagical weapons, lance attack does extra 3d8 on a charge, reaction to parry, frightens with a look",
+    "cr": "10",
+    "rules": "2024"
+  },
+  {
+    "name": "Madame Zolga",
+    "description": "fortune teller. legendary actions: 3. can reroll one attack against her per round. casts hold person and mirror image. immune to charm",
+    "cr": "8",
+    "rules": "2014",
+    "role": "caster"
+  },
+  {
+    "name": "",
+    "description": "golem that explodes when it dies, 30 ft radius, 6d6 fire, dex save half",
+    "cr": "5",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "wyvern rider knight, mounted, lance and shield, wyvern has the stinger",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "like the predator, invisible hunter with a shoulder cannon, collects trophies",
+    "cr": "9",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "jaws but its a lake and the shark is a ghost",
+    "cr": "6",
+    "rules": "2014"
+  },
+  {
+    "name": "",
+    "description": "weeping angel type statue, only moves when nobody is looking at it",
+    "cr": "7",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "skelton archer capt",
+    "cr": "3",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "need a quick mook for a cult, 5 of them, knife guys",
+    "cr": "1/4",
+    "rules": "2014"
+  },
+  {
+    "name": "",
+    "description": "something for a desert",
+    "cr": "5",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "can you make a flying monkey that steals hats lol",
+    "cr": "1",
+    "rules": "2024"
+  },
+  {
+    "name": "The Hollow King",
+    "description": "final boss of a level 15 campaign, lich-like but not a lich, three phases",
+    "cr": "20",
+    "rules": "2024"
+  },
+  {
+    "name": "",
+    "description": "solo boss for 4 level 3 players, a giant toad with a crown",
+    "cr": "5",
+    "rules": "2014"
+  },
+  {
+    "name": "Mayor Fitch",
+    "description": "",
+    "cr": "auto",
+    "rules": "2024"
+  }
+]
