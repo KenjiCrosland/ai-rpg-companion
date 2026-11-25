@@ -78,3 +78,48 @@ export function tailNamesKind(printName) {
 
 /** The labelled names, for the coverage pin. */
 export const POSTS = TAIL_IS_A_POST;
+
+/**
+ * HOW A PRINTED MONSTER REFERS TO ITSELF, READ OFF ITS OWN ROWS
+ * (Fable, gm40 fault 7, 2026-11-25).
+ *
+ * The Gelatinous Cube shipped "Cube can move through a space as narrow as 1 inch wide" beside
+ * "the cube" elsewhere on the same sheet, because a rule read "Gelatinous" as an epithet and took
+ * "Cube" for a given name. No rule can be right here: measured across the 329 printed monsters,
+ * 293 refer to themselves as "the" plus words of their own name, and among the multi-word names
+ * print uses the LAST word on 112, the FIRST on 37, the whole name on 4 and something else on 9.
+ *
+ * So this does not guess. It counts the self-references in a block's own rows and returns the one
+ * print uses most — "the cube", 15 times and never anything else. Where a block never refers to
+ * itself (36 of them, mostly one-word names), it returns null and the caller falls back.
+ */
+const SELF_REF = new Map();
+export function printSelfReference(printName, corpus) {
+  const key = String(printName ?? '').trim().toLowerCase();
+  if (!key) return null;
+  if (SELF_REF.has(key)) return SELF_REF.get(key);
+  const block = (corpus ?? []).find((m) => String(m?.name ?? '').trim().toLowerCase() === key);
+  if (!block) { SELF_REF.set(key, null); return null; }
+  const words = key.split(/\s+/).filter(Boolean);
+  const runs = new Set();
+  for (let i = 0; i < words.length; i += 1) for (let j = i + 1; j <= words.length; j += 1) runs.add(words.slice(i, j).join(' '));
+  const tally = new Map();
+  for (const rows of Object.values(block.sections ?? {})) {
+    for (const row of rows ?? []) {
+      const text = String(row?.text ?? '');
+      // A sentence opens "The dire wolf has Advantage", so the article is matched either way — and
+      // the two-word capture swallows the verb ("wolf has"), so both the pair and its first word
+      // are offered and the longest one that is actually part of the name wins.
+      for (const m of text.matchAll(/\b[Tt]he ([A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z][A-Za-z'-]*)?)\b/g)) {
+        const pair = m[1].toLowerCase();
+        const run = runs.has(pair) ? pair : (runs.has(pair.split(/\s+/)[0]) ? pair.split(/\s+/)[0] : null);
+        if (run) tally.set(run, (tally.get(run) ?? 0) + 1);
+      }
+    }
+  }
+  // the longest run wins a tie, so "the dire wolf" is not read as "the wolf"
+  const best = [...tally.entries()].sort((a, b) => (b[1] - a[1]) || (b[0].length - a[0].length))[0] ?? null;
+  const out = best ? `the ${best[0]}` : null;
+  SELF_REF.set(key, out);
+  return out;
+}

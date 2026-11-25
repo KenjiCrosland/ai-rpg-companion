@@ -75,11 +75,7 @@ describe('fault 6 — a printed body does not leave its own name in a row', () =
     });
   });
 
-  // KNOWN RED (2026-11-25). Fault 6 is NOT fixed for this path. I passed the body's name to
-  // `asInline` at the print-rider paste site, which is where s08's and s26's rider is welded, and
-  // "the assassin's" still ships — so the rider reaching the sheet comes through a path I have not
-  // found. `it.failing` keeps the test in the suite and red-by-contract until it is.
-  it.failing('no row refers to the creature as the printed body', () => {
+  it('no row refers to the creature as the printed body', () => {
     expect(allText(m)).not.toMatch(/\bthe assassin('s)?\b/i);
   });
 
@@ -92,15 +88,13 @@ describe('fault 7 — the short name a row uses', () => {
   it('an honorific keeps the name it titles: Madame Zolga, never a bare "Madame"', async () => {
     const m = await build({ name: 'Madame Zolga', concept: 'a fortune teller who reads a creature’s fate', cr: 8, naming: { name: 'Madame Zolga', type: 'Humanoid' } });
     const t = allText(m);
+    // the amendment of 25 November: she keeps her title, and "Madame" never stands alone
     expect(t).not.toMatch(/\bMadame\s+(?:can|has|makes|takes|is|deals|moves|gains)\b/);
+    expect(t).not.toMatch(/\bMadame\b(?!\s+Zolga)/);
     if (/Madame/.test(t)) expect(t).toMatch(/Madame Zolga/);
   });
 
-  // KNOWN RED (2026-11-25). The bare "Cube" is gone — the declared kind answer now passes the
-  // print-name veto — but the inline reads "the gelatinous cube" where print says "the cube".
-  // Print names itself by its first word on some blocks and its last on others, so the right
-  // source is print's own record, not a rule I can guess. Half-fixed, and marked.
-  it.failing("a printed monster typed in the Name field speaks as print writes it: the cube", async () => {
+  it("a printed monster typed in the Name field speaks as print writes it: the cube", async () => {
     const m = await build({
       name: 'Gelatinous Cube', concept: 'Gelatinous Cube full of the skeletons it ate', cr: 5,
       path: { path: 'twist', print_body: 'Gelatinous Cube', relation: 'is', class: null },
@@ -133,10 +127,7 @@ describe('fault 3 — print’s second figure moves with the first', () => {
     });
   });
 
-  // KNOWN RED (2026-11-25). Fault 3 is half fixed: the grapple reference and the figure ordering
-  // below both hold, and the dash branch I added is not the path that builds this row. The Mimic
-  // still ships "31 (6d8 + 4) Piercing damage. —or 12 (2d8 + 3)…".
-  it.failing('no row opens a dashed continuation as a new sentence', () => {
+  it('no row opens a dashed continuation as a new sentence', () => {
     expect(allText(m)).not.toMatch(/damage\.\s*[—–-]or\b/);
   });
 

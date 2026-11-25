@@ -50,7 +50,8 @@ import { matcherPath, bodyForClass, bodyForPerson, hagFor, PRINT_ALIAS, printAli
 export { hagFor, PRINT_ALIAS }; // one definition, in path.mjs (2026-11-09); re-exported so every caller and test is unchanged
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
-import { tailNamesKind } from './print-names.mjs';
+import { printSelfReference, tailNamesKind } from './print-names.mjs';
+import CORPUS_FOR_SELF_REF from '@/data/srd52-monsters.json';
 import { anatomyIn } from './header.mjs';
 import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
 import { classFor, classRows, CLASSES, classEligible, classWeapon, classLiftOwner } from './classes.mjs';
@@ -5344,21 +5345,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // `nameIsPrint` is the distinction already in the data — true for "Owlbear" and
   // "Dire Wolf", false for a borrow — and it is what this guard always meant.
   const namePc = printCanonFor(String(p.name ?? '').trim(), cr);
-  // A DECLARED KIND PHRASE PASSES THE PRINT-NAME VETO (Fable, gm40 fault 7, 2026-11-25). The veto
-  // exists so a PERSON form the name does not carry cannot displace print's own name. The call had
-  // answered "the cube" for the Gelatinous Cube — print's own idiom, and a legal run of the name's
-  // words, which `acceptDeclared` already validates — and the veto threw it away, leaving
-  // `personalName` to read "Gelatinous" as an epithet and ship a bare "Cube". A kind answer that
-  // the name supports is the one thing the veto was never aimed at.
-  const declaredKind = String(p.inline_kind ?? '').trim().toLowerCase() === 'kind';
-  const declaredOk = ((!namePc?.nameIsPrint || declaredKind) && !userGaveArticle) ? acceptDeclared() : null;
-  // PRINT'S OWN NAME SPEAKS AS PRINT WRITES IT (Fable, gm40 fault 7, 2026-11-25). The Gelatinous
-  // Cube shipped "Cube can move through a space as narrow as 1 inch" beside "the cube" elsewhere:
-  // `personalName` read "Gelatinous Cube" as an epithet plus a given name, because "Gelatinous"
-  // ends in -ous, and returned "Cube". A print name is a closed fact and print says "the cube".
-  // The call had answered "the cube" and was overruled here by the very guard that exists to let
-  // print's name win — so print's name must now produce print's form, not a person's.
-  const byRule = body === 'swarm' ? 'the swarm' : namePc?.nameIsPrint ? `the ${shortForm(p.name)}` : properNoun ? properInline(p.name ?? fixedNameRaw) : (personalName(p.name) ?? oneWordPerson ?? (userGaveArticle ? null : declaredInline) ?? `the ${shortForm(p.name)}`); // the GM's own article makes a kind, whatever the call declared ("a meshrin" — the owner's rule)
+  const declaredOk = (!namePc?.nameIsPrint && !userGaveArticle) ? acceptDeclared() : null;
+  // PRINT'S OWN NAME SPEAKS AS PRINT WRITES IT, READ OFF PRINT'S ROWS (Fable, gm40 fault 7,
+  // 2026-11-25). The Gelatinous Cube shipped "Cube can move through a space as narrow as 1 inch"
+  // beside "the cube" elsewhere: `personalName` read "Gelatinous Cube" as an epithet plus a given
+  // name, because "Gelatinous" ends in -ous, and returned "Cube" — a person form for a printed
+  // monster. No rule can settle this: of print's multi-word names, it uses the LAST word on 112,
+  // the FIRST on 37, the whole name on 4 and something else on 9. So the source is print's own
+  // rows, counted — "the cube", fifteen times and never anything else. 293 of the 329 blocks say;
+  // for the 36 that never name themselves the short form stands.
+  const printSelf = namePc?.nameIsPrint ? printSelfReference(p.name, CORPUS_FOR_SELF_REF) : null;
+  const byRule = body === 'swarm' ? 'the swarm' : namePc?.nameIsPrint ? (printSelf ?? `the ${shortForm(p.name)}`) : properNoun ? properInline(p.name ?? fixedNameRaw) : (personalName(p.name) ?? oneWordPerson ?? (userGaveArticle ? null : declaredInline) ?? `the ${shortForm(p.name)}`); // the GM's own article makes a kind, whatever the call declared ("a meshrin" — the owner's rule)
   let inline = body === 'swarm' ? 'the swarm' : (declaredOk ?? byRule);
   if (declaredOk) trace('inline declared:', `"${declaredOk}" — the call's own answer (${String(p.inline_kind).toLowerCase()}), built from the name${declaredOk !== byRule ? `; the rules would have said "${byRule}"` : ''}`);
   else if (String(p.inline ?? '').trim()) trace('inline by rule:', `"${byRule}" — the call answered "${String(p.inline).trim()}"${p.inline_kind ? ` (${String(p.inline_kind).toLowerCase()})` : ''}, which the name does not support`);
@@ -5436,6 +5433,45 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     void bareIn; // the determiner phrase only: a bare "vampire" is print's common noun ("rises as a Vampire Spawn", "its vampire form" — critic's regressions brief 2026-10-04); "this pit fiend's aura" stays print's
     return String(txt ?? '').replace(new RegExp(`\\bthe\\s+(?:${alts})('s)?\\b`, 'gi'), (m0, poss) => `${inline}${poss ?? ''}`);
   };
+  /**
+   * ONE PASTE FOR PRINT'S RIDER (Fable, gm40 faults 3 and 6, 2026-11-25).
+   *
+   * Print's rider was pasted onto an attack row in two places — the clone path, where a named part
+   * is cloned from print's row, and the rename path, where a chassis attack takes print's own name.
+   * They had drifted: the clone path went through `asInline` and the rename path pasted raw, so the
+   * Assassin's rider shipped "until the start of the assassin's next turn" on the whisper (s08) and
+   * the creeper (s26); and neither rescaled a second figure, so the Mimic's Bite shipped print's
+   * CR-2 "12 (2d8 + 3)" beside a rescaled "22 (4d8 + 4)" — the Grappled bite dealing less than the
+   * plain one — with a full stop welded in front of print's own dash. Fixing one copy left the
+   * other shipping. There is one copy now and both paths call it.
+   */
+  const pasteRider = (text, pr, bodyName = null) => {
+    let t = String(text ?? '');
+    const rider = String(pr?.rider ?? '');
+    if (!rider) return t;
+    // print's own split pays the name: "Piercing plus Radiant", the Wight's Necrotic Sword
+    if (/^plus \d+ \(/.test(rider)) {
+      if (/ plus \d+ \(/.test(t)) return t;
+      return t.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${asInline(rider, bodyName).replace(/\.$/, '')}`);
+    }
+    const dash = /^[\u2014\u2013]/.test(rider.trim()); // print CONTINUES its sentence with a dash; it does not start a new one
+    const firstNow = /(\d+) \(\d+d\d+(?: [+-] \d+)?\)/.exec(t);
+    const printFirst = /(\d+) \(/.exec(String(pr?.dmg ?? ''));
+    const step = firstNow && printFirst && Number(printFirst[1]) > 0 ? Number(firstNow[1]) / Number(printFirst[1]) : 1;
+    let rid = asInline(rider, bodyName);
+    if (step !== 1) rid = rid.replace(/(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/g, (m0, avg, n0, d0, sign, mod) => {
+      const flat = sign === '-' ? -Number(mod ?? 0) : Number(mod ?? 0);
+      const wanted = Math.max(2 + flat, Math.round(Number(avg) * step));
+      const r = attackDamageDiceFor(wanted, Math.min(flat, Math.max(0, wanted - 1)));
+      return `${r.avg} (${r.dice})`;
+    });
+    return dash
+      ? `${t.trim().replace(/\.$/, '')}${rid}`
+      : `${t.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(rider) ? ',' : '.'} ${rid}`;
+  };
+  /** A grapple's sentence and the sentence that refers to it go together, or neither does. */
+  const dropOrphanGrapple = (txt) => (/has the Grappled condition/i.test(String(txt)) ? String(txt) : String(txt).replace(/\s*[^.]*\bthis grapple\b[^.]*\.?/i, '').replace(/\s+$/, ''));
+
   // A KIT ROW'S OWN BLOCK NOUN, SUBSTITUTED ONCE `inline` EXISTS (fix 4, 2026-11-14).
   // The kit welds its rows long before the creature's rules-text name is resolved, so it
   // stamps `kitSrc` (its declared SRD block) and this does the work. Lord Vexmoor shipped
@@ -9325,47 +9361,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const clone = { ...base, name: pr.name, text: cloneText, print: true, weapon: weaponFor(pr.name) ?? null }; // print's row carries print's weapon, not the base row's stamp (the Ogre's Javelin read [greataxe], printplus 2026-10-18)
               if (!printOwnText) {
                 if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) clone.text = clone.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, clone.text, scaled.pb)); // an exact body at print's CR: the added row deals print's own dice, not the chassis's (the Pit Fiend's Devilish Claw read 21 or 26 by the donor's roll — sprint run 2026-10-12)
-                // THE "plus" RIDER GOES THROUGH asInline TOO (Fable, gm40 fault 6, 2026-11-25).
-                // The branch below it does; this one pasted print's rider verbatim, so the
-                // Assassin's Shortsword rider shipped "until the start of the assassin's next
-                // turn" on a creature called the whisper (s08) and the creeper (s26). Print's
-                // own noun is substituted for this sheet's name wherever print's text is pasted.
-                if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${asInline(pr.rider, pc?.name).replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
                 // the clone is print's row: the chassis's condition clause leaves before print's rider is applied (the Lich's Paralyzing Touch knocked Prone on the caster chassis — critic's regressions brief 2026-10-04)
                 { const declaredC = typeof clone.minorClause === 'string' ? clone.minorClause : null;
                   if (declaredC && clone.text.includes(declaredC)) clone.text = clone.text.split(declaredC).join('');
                   else { const mc = splitMinorClause(clone.text); if (mc.clause) clone.text = mc.body.split('{minor_clause}').join(''); }
                   delete clone.minorClause; }
                 clone.text = clone.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
-                // A GRAPPLE'S SENTENCE AND ITS REFERENCE GO TOGETHER (Fable, gm40 fault 3,
-                // 2026-11-25). The strip above removes print's condition sentence; the Mimic's
-                // Pseudopod then shipped "Ability checks made to escape this grapple have
-                // Disadvantage." with nothing on the row that grapples.
-                if (!/has the Grappled condition/i.test(clone.text)) clone.text = clone.text.replace(/\s*[^.]*\bthis grapple\b[^.]*\.?/i, '').replace(/\s+$/, '');
-                if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) {
-                  // PRINT'S ONE SENTENCE STAYS ONE SENTENCE, AND BOTH ITS FIGURES MOVE TOGETHER
-                  // (Fable, gm40 fault 3). The Mimic shipped "22 (4d8 + 4) Piercing damage. —or 12
-                  // (2d8 + 3) Piercing damage if the target is Grappled by the mimic—plus 4 (1d8)
-                  // Acid damage.": a rider that CONTINUES print's sentence with a dash was joined
-                  // as a new one, and its figure kept print's CR-2 number beside a rescaled first
-                  // figure — so the Grappled bite dealt less than the plain one. Print carries a
-                  // second figure on 12 rows (the Mimic and the Swarm of Venomous Snakes with
-                  // dashes, ten more with ", or"); the step is the one the first figure took.
-                  const dash = /^[—–]/.test(String(pr.rider).trim());
-                  const firstNow = /(\d+) \(\d+d\d+(?: [+-] \d+)?\)/.exec(clone.text);
-                  const printFirst = /(\d+) \(/.exec(String(pr.dmg ?? ''));
-                  const step = firstNow && printFirst && Number(printFirst[1]) > 0 ? Number(firstNow[1]) / Number(printFirst[1]) : 1;
-                  let rid = asInline(pr.rider, pc?.name);
-                  if (step !== 1) rid = rid.replace(/(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/g, (m0, avg, n0, d0, sign, mod) => {
-                    const flat = sign === '-' ? -Number(mod ?? 0) : Number(mod ?? 0);
-                    const wanted = Math.max(2 + flat, Math.round(Number(avg) * step));
-                    const r = attackDamageDiceFor(wanted, Math.min(flat, Math.max(0, wanted - 1)));
-                    return `${r.avg} (${r.dice})`;
-                  });
-                  clone.text = dash
-                    ? `${clone.text.trim().replace(/\.$/, '')}${rid}`
-                    : `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${rid}`;
-                }
+                clone.text = dropOrphanGrapple(clone.text);
+                clone.text = pasteRider(clone.text, pr, pc?.name);
               }
               if (printOwnText) {
                 const impP = imposedConditions({ name: pr.name, text: clone.text });
@@ -9641,8 +9644,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
           }
           e.text = e.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // TODO R3 next site: the PRECONDITION half is a payoff's `consumes`, a field the row already declares
-          if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)
-          else if (pr.rider) e.text = `${e.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
+          // THE RENAME PATH PASTES THROUGH THE SAME FUNCTION AS THE CLONE PATH (Fable, gm40
+          // faults 3 and 6, 2026-11-25). These two lines were the second copy: the first pasted
+          // print's rider raw and limited the damage type to the three physical ones, the second
+          // joined a dash continuation with a full stop and rescaled nothing. All three of the
+          // sheets that showed faults 3 and 6 come through here — the Mimic's "Door" -> "Bite",
+          // the Assassin's "Claw" -> "Shortsword" and "Thorned Tendril" -> "Shortsword".
+          e.text = dropOrphanGrapple(e.text);
+          e.text = pasteRider(e.text, pr, pc?.name);
           e.print = true; // print's row, whatever its name already was: the flag is provenance, not a rename receipt (classes-eight, 2026-10-19)
           if (from === to || meleeRows.some((o) => o !== e && String(o.name ?? '').replace(/ \(.*\)$/, '') === to)) return;
           const re = new RegExp(`(?<![A-Z][a-z]+ )\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b(?! [A-Z][\\w'-]+)`, 'g'); // nor as the HEAD of a two-word name: "Scepter" -> "Eldritch Burst" turned the hybrid "Scepter Blast" into "Eldritch Burst Blast" (sweep 2026-10-04) // not inside a two-word ranged name: "Hurled Knife" is the ranged row's to rename (the Bandit's Multiattack read "Hurled Scimitar", day-one 2026-09-30)
