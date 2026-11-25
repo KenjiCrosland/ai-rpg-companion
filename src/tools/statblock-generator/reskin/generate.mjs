@@ -7524,8 +7524,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         //
         // It never replaces a row that landed: the guard is `!fit.template`, and a landed seat has
         // already returned.
+        //
+        // R4 SEES THE WHOLE SHELF, NOT ONLY THE FIVE OFFERED (owner's "A", 2026-11-24).
+        //
+        // It chose among `offered` — the handful the fit call was shown — and the catalog's row for
+        // the typed ask can sit outside that handful. `self-invisibility` is a Bonus Action; when
+        // the idea call stamps "turn invisible" as an ACTION, the row is not among the five and sits
+        // in the shelf the trace prints after "+ shelf:", so R4 never saw it and the Kobold shipped
+        // with nothing that makes it invisible. Print puts Invisibility under Actions on the Imp,
+        // the Quasit and the Sprite and under Bonus Actions only on the Oni, so a model that stamps
+        // it as an action is following print.
+        //
+        // Every other condition is unchanged: the sheet declared an ask, the seat that carries it
+        // ended with no row, the template is in that mechanic's bucket, the fit call did not decline
+        // it as a word mismatch, and it renders on this sheet. R4 still never replaces a row that
+        // landed. A row off the shelf lands in ITS OWN section, which is how Vanish reaches Bonus
+        // Actions from an action-stamped idea.
+        const r4Pool = [...offered, ...pool.filter((t) => !offered.some((o) => o.id === t.id))];
         if (!fit.template && askedT) {
-          for (const t of templatesForDeclaredAsk(askedT, offered, wrongT)) {
+          for (const t of templatesForDeclaredAsk(askedT, r4Pool, wrongT)) {
             if (!renderTemplate(t, ctxT, bindFills(t))) continue;
             trace("the declared ask's own template lands:", `${seat} — the sheet's declared ask is "${askedT}", the seat that carries it ended with no row, and "${t.id}" answers that mechanic and was not declined as a word mismatch (owner's R4)`);
             fit = { ...fit, template: t, because: fit.because || String(idea.idea ?? '').slice(0, 160), declaredAsk: askedT };
