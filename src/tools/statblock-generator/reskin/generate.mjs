@@ -4440,9 +4440,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // THE WHOLE NAME IS A LEGAL RUN (owner's stage 1, 2026-10-16). The two-word
     // ceiling refused "the thing in the well" and "the unmoved stone" — a
     // contiguous run of the name's own words, which is the rule this validator
-    // exists to enforce. Print's own ceiling was two words for a KIND phrase
-    // built off a longer name; the whole name is a different case and print
-    // speaks it whole ("the goblin boss", "the dire wolf").
+    // exists to enforce. The whole name is a legal run, and that decision stands.
+    //
+    // THE REASON GIVEN FOR IT WAS WRONG, AND IS CORRECTED (Fable, gm40 fault 7, 2026-11-25).
+    // This said print "speaks it whole ('the goblin boss', 'the dire wolf')". Measured on
+    // src/data/srd52-monsters.json, print does neither: the Dire Wolf's own rows say "the wolf"
+    // twice and never "the dire wolf", and the Goblin Boss says "the goblin". Of print's
+    // multi-word names it refers to itself by the LAST word on 112, the FIRST on 37, the whole
+    // name on only 4, and otherwise on 9. What this validator decides is which phrases a name
+    // SUPPORTS; which one a printed monster actually uses is read off print's own rows by
+    // `printSelfReference`, and that is the single source for every printed name.
     const m = /^the ([a-z][a-z'-]*(?:[ -][a-z][a-z'-]*)*)$/.exec(String(phrase ?? '').trim());
     if (!m) return false;
     const whole = nameWords.join(' ');
