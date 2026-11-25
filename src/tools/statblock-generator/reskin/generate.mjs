@@ -712,7 +712,7 @@ const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]
  *
  * Extracted rather than left inline so it can be fed the collapsed roll's own input.
  */
-export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}) => {
+export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}, noteRemoval = () => {}) => {
   const esAct = sections.Actions ?? [];
   for (let i = esAct.length - 1; i >= 0; i -= 1) {
     const e = esAct[i];
@@ -733,6 +733,7 @@ export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}) => 
       traceFn('print canon: chassis row STAYS —', `Actions/"${e.name}" has no provenance, but it is the only attack roll on the sheet — a sheet is never left with nothing to roll`);
       continue;
     }
+    noteRemoval(e, 'the filler sweep (closedPathFillerLeaves)', 'Actions');
     traceFn('print canon: chassis row leaves —', `Actions/"${e.name}" — the ${pcName} prints no row for it and no path stage claimed it`);
     esAct.splice(i, 1);
     sweepDeadName(sections, e.name, null, traceFn);
@@ -1650,7 +1651,82 @@ export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = nu
  */
 export const exemptFromOneNova = (e) => e?.strike === true;
 
-export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
+/**
+ * THE LEDGER OF TYPED ASKS (Fable's round one, Part A, 2026-11-25).
+ *
+ * The check this replaces ran in the middle of the pipeline and took a call's word for it, so
+ * s17's Necrotic Breath was credited and then removed by print canon, and s28's two named spells
+ * were credited to a Spellcasting row that holds neither. This runs once, on the finished sheet,
+ * after the last pass that can add, remove or rename a row.
+ *
+ * It CHANGES NO ROW. The sheet is identical with it in or out; only `generation.ledger` is new.
+ *
+ * `boundBy` records how a row was tied to its clause, because the three ways are not equally
+ * trustworthy: a `receipt` (the row carries the GM's own keys), an `anchor` (the call named the ask
+ * it was answering) or `handed` (the engine gave the seat a clause to carry — the trace says of
+ * itself that this "buys no coverage credit"). The scoreboard counts receipts and anchors as
+ * answered and shows handed beside them.
+ */
+export function buildLedger({ sections = {}, clauses = [], removals = [], spellNames = null, trace = () => {} } = {}) {
+  const rows = Object.values(sections ?? {}).flat().filter(Boolean);
+  const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '');
+  const idsOf = (r) => [...(r.clauseId ? [String(r.clauseId)] : []), ...((r.clauseIds ?? []).map(String))];
+  const boundRow = (c) => rows.find((r) => r.clause === c.text) ?? rows.find((r) => idsOf(r).includes(String(c.id)));
+  // the SRD names the lint already holds; a named spell is answered by its own name and nothing else
+  const namedSpells = (text) => {
+    if (!spellNames) return [];
+    const t = String(text ?? '');
+    return [...spellNames].filter((sp) => new RegExp(`\\b${String(sp).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(t));
+  };
+  const spellsOnSheet = rows.filter((r) => /Spellcasting|casts? (?:the )?\*?[A-Z]/.test(String(r.text ?? '')) || /spell/i.test(String(r.name ?? ''))).map((r) => String(r.text ?? '')).join(' ');
+  const out = [];
+  for (const c of clauses) {
+    if (c.head) { out.push({ clause: c.text, status: 'header' }); continue; }
+    if (c.kind !== 'mechanical') continue;
+    const entry = { clause: c.text, status: 'open', asked: { when: c.askWhen ?? null, often: c.askOften ?? null, mechanic: c.askMechanic ?? null } };
+    const wanted = namedSpells(c.text);
+    const missingSpell = wanted.find((sp) => !new RegExp(`\\b${String(sp).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(spellsOnSheet));
+    const row = boundRow(c);
+    if (missingSpell) { entry.reason = 'spell-missing'; entry.detail = `no spellcasting row on the sheet lists ${missingSpell}`; out.push(entry); continue; }
+    if (row) {
+      entry.row = bare(row.name);
+      entry.boundBy = row.clauseBy ?? (row.clause === c.text ? 'anchor' : 'handed');
+      // a clause that NAMES a condition is answered only by a row that imposes it (Fable, on s26's
+      // "restrained while grappled" credited to a row that only grapples). Where neither the
+      // reader's stamps nor the row's own record carries the condition, say so rather than guess.
+      const askedCond = c.askCondition ?? c.condition ?? null;
+      const rowConds = Array.isArray(row.imposes) ? row.imposes : null;
+      if (askedCond && rowConds && !rowConds.some((x) => String(x).toLowerCase() === String(askedCond).toLowerCase())) {
+        entry.status = 'mismatch'; entry.detail = `asked the ${askedCond} condition; the row imposes ${rowConds.join(', ') || 'none'}`;
+        out.push(entry); continue;
+      }
+      if (askedCond && !rowConds) entry.conditionUnchecked = String(askedCond);
+      const bad = [];
+      if (c.askWhen && rowWhen(row) !== c.askWhen) bad.push(`trigger: asked ${c.askWhen}, row reads ${rowWhen(row)}`);
+      if (c.askOften && rowOften(row) !== c.askOften) bad.push(`limit: asked ${c.askOften}, row reads ${rowOften(row)}`);
+      entry.status = bad.length ? 'mismatch' : 'answered';
+      if (bad.length) entry.detail = bad.join('; ');
+      out.push(entry); continue;
+    }
+    const gone = removals.find((r) => r.clause === c.text || (r.clauseIds ?? []).includes(String(c.id)));
+    if (gone) { entry.reason = 'removed'; entry.row = gone.name; entry.pass = gone.pass; entry.boundBy = gone.boundBy ?? null; }
+    else if (rows.some((r) => String(r.claimedClause ?? '') === c.text)) { entry.reason = 'claimed'; }
+    else entry.reason = 'never-written';
+    out.push(entry);
+  }
+  const mech = out.filter((e) => e.status !== 'header');
+  const n = (f) => mech.filter(f).length;
+  const byReason = {};
+  for (const e of mech.filter((x) => x.status === 'open')) byReason[e.reason] = (byReason[e.reason] ?? 0) + 1;
+  trace('ledger:', `${mech.length} ask(s) — ${n((e) => e.status === 'answered')} answered (`
+    + `${n((e) => e.status === 'answered' && e.boundBy !== 'handed')} by receipt or anchor, `
+    + `${n((e) => e.status === 'answered' && e.boundBy === 'handed')} handed), `
+    + `${n((e) => e.status === 'mismatch')} mismatch, ${n((e) => e.status === 'open')} open`
+    + (Object.keys(byReason).length ? ` (${Object.entries(byReason).map(([k, v]) => `${v} ${k}`).join(', ')})` : ''));
+  return out;
+}
+
+export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, noteRemoval = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // LEGENDARY MACHINERY STARTS AT CR 10 (R10 · H3, 2026-11-03). Measured over the
   // corpus: Legendary Resistance appears on 32 blocks and legendary actions on 30, and
@@ -1969,6 +2045,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     // line — the free-row budget keeps one row and evicts the rest, and nothing
     // recorded it. That is exactly the silence the ledger exists to remove.
     noteDrop(e.template ?? e.seed, 'the free-row budget', sameCell ? `a free row already fills the cell ${cell}` : `only ${freeBudget} free row(s) allowed on this sheet`);
+    noteRemoval(e, 'the row budget', sec);
     trace('free row over budget:', `${sec}/"${bareName(e)}" leaves at ship — ${sameCell ? `a free row already fills the declared cell ${cell}` : `this sheet's free-row budget (${freeBudget}) is spent by a row that SHIPPED`}`);
     sweepDeadName(sections, bareName(e), null, trace);
   }
@@ -5548,6 +5625,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // drop site must look different from a pick that shipped.
   const dropLog = [];
   const noteDrop = (template, stage, why) => { if (template) dropLog.push({ template: String(template), stage, why: String(why ?? '').slice(0, 160) }); };
+  /**
+   * EVERY REMOVAL, AS DATA (Fable's round one, Part A, 2026-11-25).
+   *
+   * `noteDrop` records a TEMPLATE, so a seat-written row leaves no trace in data at all, and the
+   * ledger could only say "open" without saying who took the row. This records the row, the pass
+   * that removed it and the clause it was bound to, so an open entry can name its remover.
+   */
+  const removalLog = [];
+  const noteRemoval = (row, pass, sec = null) => {
+    if (!row) return;
+    removalLog.push({
+      name: String(row.name ?? '').replace(/ \(.*\)$/, ''), section: sec, pass,
+      clause: row.clause ?? null,
+      clauseIds: [...(row.clauseId ? [String(row.clauseId)] : []), ...((row.clauseIds ?? []).map(String))],
+      boundBy: row.clauseBy ?? (row.clause || row.clauseId ? 'anchor' : null),
+    });
+  };
   for (const es of Object.values(sections)) {
     for (const e of es) {
       // (?! Roll) — the de-flavored entry name "Melee Attack" is a
@@ -7158,7 +7252,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // cone pull beside a Bite that already grapples, on 13 of 13 saved sheets. Same helper,
             // same validation the repair uses — the call decides, the engine checks the row exists.
             const seatAnswered = creditAnsweredClauses(wrote?.answered, Object.values(sections).flat(), clauseRecord ?? [], {
-              onCredit: (cl, row) => trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" — the seat read the sheet and declined to write a second row for it`),
+              onCredit: (cl, row) => { row.claimedClause = cl.text; trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" — the seat read the sheet and declined to write a second row for it`); },
               onMiss: (a) => trace('seat answered, but:', `the call said "${a.clause}" is carried by "${a.row}", and no such row is on this sheet — the clause stays open`),
             });
             // the seat's OWN clause among them means it has nothing left to write (handled as the
@@ -8234,6 +8328,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const ix = esD.indexOf(row);
         if (ix === -1) continue;
         esD.splice(ix, 1);
+        noteRemoval(row, 'a name clash (the row was dropped after landing)', secD);
         sweepDeadName(sections, row.name, null, trace);
         trace('dropped row removed:', `${secD}/"${row.name}" had already landed when it was dropped — the row and any citation of it leave, so the sheet says what the trace says`);
       }
@@ -8760,6 +8855,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           onCredit: (cl, row) => {
             alreadyAnswered.add(cl.text);
             repairCredited.push(`${cl.text} -> ${String(row.name).replace(/ \(.*\)$/, '')}`);
+            row.claimedClause = cl.text;
             trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" in different words — the call read the sheet and declined to answer it twice`);
           },
           onMiss: (a) => trace('repair:', `the call said "${a.clause}" is already answered by "${a.row}", but no such row is on the sheet — the clause stays owed`),
@@ -9744,7 +9840,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // with no Multiattack where print makes two. The checker's rule reads the
         // same condition.
         for (const ex of extraRows) {
-          for (const [secX, esX] of Object.entries(monster.sections)) { const ix = esX.indexOf(ex); if (ix >= 0) { esX.splice(ix, 1); trace('print canon: chassis row leaves —', `${secX}/"${ex.name}" — the ${pc.name} prints no row for it (${pc.meleeRows.length} melee, ${pc.rangedRows.length} ranged)`); sweepDeadName(monster.sections, ex.name, null, trace); } }
+          for (const [secX, esX] of Object.entries(monster.sections)) { const ix = esX.indexOf(ex); if (ix >= 0) { noteRemoval(ex, 'print canon', secX); esX.splice(ix, 1); trace('print canon: chassis row leaves —', `${secX}/"${ex.name}" — the ${pc.name} prints no row for it (${pc.meleeRows.length} melee, ${pc.rangedRows.length} ranged)`); sweepDeadName(monster.sections, ex.name, null, trace); } }
         }
         if ((pc.exact || (pc.borrowOnly && nearPrintCr(cr, pc.cr))) && pc.multiattack) { // print's Multiattack, count and names, stands on a print body; the creature's phrase becomes the sheet's inline
           const ma = Object.values(monster.sections).flat().find((o) => /^Multiattack/.test(o.name ?? ''));
@@ -10445,6 +10541,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // rows were skipped above, and a row answering a typed clause was skipped just now. The
             // old wording called all of them "the seat's nova", which is what made six renamed
             // chassis novas read as six lost answers to the GM.
+            noteRemoval(row, 'print canon', 'Actions');
             trace('print canon: chassis row leaves —', `Actions/"${row.name}" is the chassis's own nova (the model renamed it), not the ${pc.name}'s`);
             const bareN = String(row.name).replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const deadName = row.name;
@@ -10511,7 +10608,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // Melee or Ranged) sat in neither rename loop — print's Hobgoblin Warrior has no hybrid — and rode
         // beside print's Longsword and Longbow. A row with no provenance (not print's, not a part, feature,
         // kit, seat, repair or the GM's weapon) is chassis filler and leaves; the Multiattack is swept.
-        if (closedPath) closedPathFillerLeaves(sections, pc.name, trace);
+        if (closedPath) closedPathFillerLeaves(sections, pc.name, trace, noteRemoval);
         for (const secC of printBody ? ['Bonus Actions', 'Reactions', ...(pc.addsSeat && scaled.style ? [] : ['Traits'])] : []) { // a named seat that stood down at the route is the plain chassis — its trait leaves too ("Winged Dive" on the Owlbear, third roll) // the seat's trait leaves with its bonus action ("Woodland Prowler" on the Owlbear, "Scuttle" on the kobold — critic form-ten 2026-10-01); a seat the user named keeps both
           if (!isClassNpc && (pc.rulesRows ?? []).some((r) => r.section === secC)) continue; // on a class body every section is read: print's own rows carry their flag
           const esC = sections[secC] ?? [];
@@ -11352,7 +11449,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     trace('nova capped:', `${sec}/${String(e.name)} — ${dm[1]} over the CR ${cr} ceiling ${cap}, dice to ${d.avg} (${d.dice})`);
   }
 
-  settleSheetBudgets({ sections, printExact, scaled, cr, generation: monster.generation, noteDrop, trace });
+  settleSheetBudgets({ sections, printExact, scaled, cr, generation: monster.generation, noteDrop, noteRemoval, trace });
 
   // EVERY NUMBER DERIVED FROM A CAPPED VALUE RE-DERIVES AFTER THE CAP (owner's
   // stage 1, 2026-10-16). The cap above moves a row's damage; a THRESHOLD in the
@@ -11491,7 +11588,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   for (const es of Object.values(sections)) for (const e of es) {
     if (e.clause || !Array.isArray(e.boundKeys) || !e.boundKeys.length) continue;
     const cl = clauseForKeys(e.boundKeys);
-    if (cl) { e.clause = cl; trace('row binds its clause:', `"${String(e.name).replace(/ \(.*\)$/, '')}" answers "${cl}" — the keys it matched came from that clause, so the coverage credit has a receipt`); }
+    if (cl) { e.clause = cl; e.clauseBy = 'receipt'; trace('row binds its clause:', `"${String(e.name).replace(/ \(.*\)$/, '')}" answers "${cl}" — the keys it matched came from that clause, so the coverage credit has a receipt`); }
   }
   // STAGE 3 ITEM 3, THE VALIDATION (owner's fix order, 2026-10-16). The call
   // extracted the trigger and the limit the GM's own words name; the engine now
@@ -13262,5 +13359,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (before.join('|') !== fresh.join('|')) trace('sheet lint re-read at ship:', `${before.length} finding(s) stored before the audit and the derivation, ${fresh.length} on the finished sheet`);
   } catch (e) { trace('sheet lint re-read skipped:', String(e?.message ?? e)); }
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
+  // THE LEDGER IS THE LAST THING MADE (Fable's round one, Part A). Every pass that can add, remove
+  // or rename a row has run by here, so an entry cannot be contradicted by a later pass — which is
+  // exactly what happened to the check this replaces.
+  monster.generation = monster.generation ?? {};
+  monster.generation.ledger = buildLedger({
+    sections: monster.sections ?? {},
+    clauses: (monster.generation.clauses ?? []),
+    removals: removalLog,
+    spellNames: KNOWN_SPELLS,
+    trace,
+  });
   return monster;
 }
