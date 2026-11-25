@@ -4668,16 +4668,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           reactionDamageHeld.push(String(r.name));   // stamped onto the record once `monster` exists
         }
         // a save with nothing left to do is not a row: the refusal below catches it
-        // A SEAT-WRITTEN REACTION PRINTS NO SUCCESS SENTENCE (Fable, 2026-11-24).
-        //
-        // A Reaction's save deals no damage by the owner's hold of 18 November, so its success can
-        // never be "half damage" — it can only restate the failure in the negative, which print
-        // does not write. The Bulwark's seat wrote "The creature is not knocked prone and is not
-        // pushed." and the sheet shipped a broken fragment of it.
-        //
-        // This is the REACTION path only. A seat-written save in Actions keeps its success, where
-        // it can carry a real rule — half damage, or an immunity after a save.
-        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', '), success: null, heldDamage: damageHeld };
+      // A REACTION'S SUCCESS SENTENCE IS PASSED THROUGH (Fable, 2026-11-25, narrowing 11-24).
+      // I suppressed this for a day on the reasoning that a Reaction's save deals no damage, so its
+      // success could only restate the failure in the negative. Two of the forty's six disprove it:
+      // the Pit Fiend's "The creature is immune to this effect for the next hour." and Vashka's
+      // "…though Vashka's own space still counts as difficult terrain while he stands." A row the
+      // model wrote is not silently dropped, and that covers a sentence of one. What the Bulwark
+      // actually needed was the pattern fix in format-2024; this line was never the problem.
+      return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', '), success: r.save.success ?? null, heldDamage: damageHeld };
       })() : null;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response), ...(svF ? { save: svF } : {}) }, '2024', { properNouns: ownNouns() });
       return { name: r.name, text, authored: true, clause: r.clause, ...(r.save?.condition ? { imposes: r.save.condition } : {}), ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };

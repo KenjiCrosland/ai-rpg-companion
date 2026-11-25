@@ -1975,6 +1975,29 @@ export const capsFix2024 = (t) => String(t ?? '')
 
 /** The rules whose fix is string surgery, never a judgement — the reskin applies these too (2026-10-19). */
 export const DETERMINISTIC_TEXT_RULES = () => DETERMINISTIC_TEXT_FIXES.map(([r]) => r);
+/**
+ * EVERY CLAUSE, OR THE SENTENCE STAYS (Fable, 2026-11-25).
+ *
+ * `success-no-effect` drops a success sentence that says nothing happened. "The X is not ..." opens
+ * one, but it does not finish it: a sentence can negate in its first clause and carry a real rule in
+ * its second, and dropping the whole thing loses the rule.
+ *
+ *   "The creature is not knocked prone and is not pushed."              -> dropped (both negate)
+ *   "The target is not Frightened but takes half damage."               -> kept   (half damage)
+ *   "The target is not Restrained, and it is immune to this for 24 hours." -> kept (immunity)
+ *
+ * So split the sentence at its clause joins and require EVERY clause to negate. This reads the
+ * sentence's grammar — the word "not", a contracted "n't", an opening "No" — and is not a list of
+ * meanings to match: nothing here decides what a clause is ABOUT, only whether it denies something.
+ */
+const clauseNegates = (clause) => /\bnot\b|n't\b|^no\b/i.test(String(clause).trim());
+const everyClauseNegates = (sentence) => {
+  const clauses = String(sentence ?? '')
+    .split(/,?\s+(?:and|but|or|though|while|yet)\s+|,\s*/i)
+    .map((c) => c.trim()).filter(Boolean);
+  return clauses.length > 0 && clauses.every(clauseNegates);
+};
+
 const DETERMINISTIC_TEXT_FIXES = [
   ['term-caps', (t) => t
     .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')
@@ -2052,7 +2075,10 @@ const DETERMINISTIC_TEXT_FIXES = [
   // "*Success:* The creature is not knocked" and left "Prone and is not pushed." on the card, in
   // both printings, since at least 24 November. Running to the sentence's own full stop means a
   // no-effect success either goes whole or is left alone.
-  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [^.]*)\./gi, '')],
+  ['success-no-effect', (t) => t.replace(
+    /\s*\*?Success:\*?\s*(?:(No effect|No damage|None)|(The \w+ is not [^.]*))\./gi,
+    (whole, plain, negated) => (plain || everyClauseNegates(negated) ? '' : whole),
+  )],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
