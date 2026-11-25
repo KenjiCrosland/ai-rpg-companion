@@ -3393,7 +3393,26 @@ export const citationsIn = (text) => {
 export const gateFromName = (e) => (/\((Recharge [\d–-]+|\d+\/Day)\)\s*$/.exec(String(e?.name ?? '')) ?? [])[1] ?? null;
 export const gateOf = (e) => e?.gate ?? gateFromName(e);
 
-export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null, forceUngated = false }) {
+/**
+ * THE DAMAGE TYPE OF THE ATTACK A ROW STANDS IN PLACE OF.
+ *
+ * Called at the SITE, and the answer handed to `valueCheck` as `hitType` — the ruling of
+ * 24 November says to pass it in rather than have the ladder read it back off the sheet's text.
+ * The first attack row's first damage type, which is what "where that attack deals two types, the
+ * first" means: the Bog Hound's Bite is "5 (1d8 + 1) Piercing damage plus …", so Piercing.
+ */
+export const attackDamageTypeOf = (sections) => {
+  for (const es of Object.values(sections ?? {})) {
+    for (const e of es ?? []) {
+      if (!/Attack Roll/i.test(e?.text ?? '')) continue;
+      const m = /\d+ \(\d+d\d+(?: [+-] \d+)?\) (\w+) damage/.exec(e.text ?? '');
+      if (m) return m[1];
+    }
+  }
+  return null;
+};
+
+export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null, forceUngated = false, hitType = null }) {
   const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
   const attackEV = P_HIT * perHit;
   const gated = !!gateOf(row); // one definition; the field first, the name as fallback
@@ -3558,6 +3577,9 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // a DAMAGE row still under the floor is priced AT the floor, its die stepped past the per-hit budget as far as the ceiling and the
   // nova cap allow; a seed drawn into the slot is lifted the same way (seed-lift). A row with no damage keeps its logged step.
   let priced = false;
+  // THE N4 MARK for a row this rung changed: a row that gained damage here is no longer the
+  // template's plain shape, so the rename must not hand it the template's name (2 November).
+  let liftedHere = false;
   if (v.ev < floor && v.hasDamage && !kill && !recurring && v.ev > 0) {
     const need = Math.ceil(v.avg * floor / v.ev); const limit = gated && cr != null ? Math.max(perHit, NOVA_CAP(cr)) : Math.floor(v.avg * ceiling / v.ev);
     const d = saveDamageDiceFor(Math.min(need, Math.max(limit, v.avg)));
@@ -3592,19 +3614,39 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // Print keeps "The target" singular in the failure clause, so only the target
   // clause is rewritten. A row that DEALS damage is untouched (the dice rungs own
   // it, and that is what excludes delayed-brand's branded tick).
-  if (v.ev < floor && !priced && !v.hasDamage && !area && !bonus && !gated && section !== 'Traits' && MINOR_EFFECT.test(text)) {
-    const span = cr != null && cr >= 5 ? 30 : 15;
+  //
+  // AND THE MEANS CHANGED ON 24 NOVEMBER: "one creature half a hit of damage over a cone".
+  //
+  // The intent above stands — a soft row is lifted rather than dropped — but widening was the wrong
+  // lift. All four rows it widened on the forty were written against ONE creature within 5 feet and
+  // all four shipped as cones, and their names were written for one target: the Bog Hound's
+  // Muck-Lunge, the Lurker's Scree Snare, the Bulwark's Iron Advance, the Swarm's "The Last Note Is
+  // For You". The owner marked the Bog Hound twice — "A lunge is not a pull", "not happy with lunge
+  // for the bog hound cone pull".
+  //
+  // So the row stays on the one creature it was written for and gains HALF A HIT of damage, on a
+  // failed save only, in front of the effect it already has, in the damage type of the attack it
+  // stands in place of. No Success clause. The cone rewrite is gone, not switched off.
+  //
+  // A REACTION IS EXCLUDED. The condition reached one — `section !== 'Traits'` let Reactions
+  // through — and the owner's ruling is that a Reaction's save deals no damage.
+  //
+  // Half a hit is the whole lift: every rung above has already run, so nothing prices this damage
+  // up to the floor and nothing gates the row. If it is still under, it stays as it is and the line
+  // below says so (the 23 November reading: the floor keeps what it cannot lift).
+  if (v.ev < floor && !priced && !v.hasDamage && !area && !bonus && !gated
+      && section !== 'Traits' && section !== 'Reactions' && !/^Reactions?$/i.test(String(section ?? ''))
+      && MINOR_EFFECT.test(text) && hitType) {
+    const half = saveDamageDiceFor(Math.max(1, Math.round(perHit / 2)));
     const was = text;
-    // NO "originating from" ON A CONE. Print writes "each creature in a 30-foot
-    // Cone." and nothing more — 55 cones in the corpus, NONE carry the clause,
-    // while 33 of its 34 Emanations do. It also fixed a defect the focused ten
-    // caught: `valueCheck` runs AFTER the inline rename, so the self-reference in
-    // the inserted text never became the creature's name and the row read "a
-    // 30-foot Cone originating from the creature … pushed away from the guardian".
-    text = text.replace(/one creature(?: that the creature can see| the creature can see)? within \d+ feet/i, `each creature in a ${span}-foot Cone`);
+    // in front of the effect the row already has, on the failure only
+    // print joins the two with a lower-case clause: "7 (2d6) Cold damage, and the target has the
+    // Prone condition." — so the effect's own first letter comes down with it.
+    text = text.replace(/(\*Failure:\*\s*)(\S)/i, (_m, lead, first) => `${lead}${half.avg} (${half.dice}) ${hitType} damage, and ${first.toLowerCase()}`);
     if (text !== was) {
-      area = true; v = value(text);
-      steps.push(`widened to a ${span}-foot Cone (print writes this row as an area: Repulsion Breath, Blinding Breath)`);
+      v = value(text);
+      liftedHere = true; // the N4 mark: one name should not carry two rules
+      steps.push(`half a hit added: ${half.avg} (${half.dice}) ${hitType} damage on a failed save — half of one ${perHit}-damage hit, the attack this row stands in place of`);
     }
   }
   if (v.ev < floor && !priced) steps.push(bonus ? 'a free row that does nothing (logged)' : 'still under — needs a condition from the worth-an-attack list (logged)');
@@ -3671,5 +3713,5 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // a 30-foot Cone on the Scaffold Ram and as "one creature within 5 feet" on the
   // Stone Golem: one name, two rules, which is worse for a GM than two names.
   // Declared here, at the site that did it, so the rename can read a field.
-  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen, ...(area && /each creature in a \d+-foot/.test(text) && !/each creature in a \d+-foot/.test(row.text ?? '') ? { widened: true } : {}) };
+  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen, ...((liftedHere || (area && /each creature in a \d+-foot/.test(text) && !/each creature in a \d+-foot/.test(row.text ?? ''))) ? { widened: true } : {}) };
 }

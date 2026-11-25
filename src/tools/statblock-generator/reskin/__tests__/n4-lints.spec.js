@@ -29,12 +29,16 @@ describe('a placeholder is not a name (Rivenhearted Glacier, S0)', () => {
 describe('one template, one mechanic (Sundering Shove on two sheets)', () => {
   const sheet = (cr, style, arch) => scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] });
   const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes two Slam attacks.' }, { name: 'Slam', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Bludgeoning damage.' }] };
-  test('the value ladder declares when it widened a row to an area', () => {
+  // ENCODED: the ladder declared when it WIDENED a row to an area, so the rename could not hand a
+  // changed row the template's name (N4, 2 November). The lift is half a hit now (24 November) and
+  // the mark is the same mark, for the same reason.
+  test('the value ladder declares when it changed the row\'s mechanic', () => {
     const row = { name: 'Battering Charge', text: '*Strength Saving Throw:* DC 16, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' };
-    const vc = valueCheck(row, { scaled: sheet(8, null, 'brute'), sections, cr: 8, section: 'Actions', template: 'push-prone' });
-    expect(vc.steps.join(' ')).toMatch(/widened to a \d+-foot Cone/);
+    const vc = valueCheck(row, { scaled: sheet(8, null, 'brute'), sections, cr: 8, section: 'Actions', template: 'push-prone', hitType: 'Bludgeoning' });
+    expect(vc.steps.join(' ')).toMatch(/half a hit added: \d+ \(\d+d\d+\) Bludgeoning damage/);
     expect(vc.widened).toBe(true);            // the field the rename reads
-    expect(vc.text).toMatch(/each creature in a \d+-foot Cone/);
+    expect(vc.text).toMatch(/one creature within 5 feet/);
+    expect(vc.text).not.toMatch(/Cone/);
   });
   test('a row it did NOT widen declares nothing', () => {
     const row = { name: 'Heavy Swing', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Bludgeoning damage.' };

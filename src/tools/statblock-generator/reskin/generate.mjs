@@ -12,7 +12,7 @@ import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords, citationsIn, mayCurseUnasked} from './templates.mjs';
+import { attackDamageTypeOf, clauseAsksACurse, declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName, significantWords, citationsIn, mayCurseUnasked} from './templates.mjs';
 import { drawLibraryRow, nameHash, curseEffectFor } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
@@ -2000,7 +2000,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       const beforeText = String(e.text ?? '');
       e.name = beforeName.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
       e.gate = undefined;
-      const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, forceUngated: true, template: e.template ?? e.seed ?? null });
+      const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, forceUngated: true, template: e.template ?? e.seed ?? null , hitType: attackDamageTypeOf(sections) });
       if (vc.steps.length) {
         e.text = vc.text; e.name = vc.name; if (vc.gate) e.gate = vc.gate; // the pricing's gate is recorded, not re-read off the name
         const DMG = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/;
@@ -8166,7 +8166,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // counted as the chassis nova nor stripped by one. A sheet may show two Recharges, the
       // nova and the strike, and that is accepted.
       if (hasChassisNova(sections) && !exemptFromOneNova(actionT.row) && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
-      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null });
+      const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null , hitType: attackDamageTypeOf(sections) });
       if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; if (vc.widened) actionT.row.widened = true; } // the rename reads `widened` (N4)
       const vcSection = actionT.section; const vcName = actionT.row.name; // what the floor judged, so a re-slot is recognisable below
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
@@ -8195,7 +8195,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         for (const s of slots) {
           if (s.section === actionT.section && !s.gate === !/ \((?:Recharge|\d\/Day)/.test(actionT.row.name)) continue; // the slot it already failed in
           const row2 = { name: `${bareA}${s.gate ? ` (${s.gate})` : ''}`, text: actionT.row.text };
-          const v2 = valueCheck(row2, { scaled, sections, cr, section: s.section, noGate: hasChassisNova(sections) });
+          const v2 = valueCheck(row2, { scaled, sections, cr, section: s.section, noGate: hasChassisNova(sections) , hitType: attackDamageTypeOf(sections) });
           if (v2.steps.some((st) => /still under|does nothing/.test(st))) continue;
           if (s.gate && hasChassisNova(sections)) continue; // one nova a sheet
           actionT = { ...actionT, section: s.section, row: { ...actionT.row, name: v2.steps.length ? v2.name : row2.name, text: v2.steps.length ? v2.text : row2.text } };
@@ -10666,7 +10666,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
           }
           // print's dice stand at print's CR, exact or borrowed (critic A5)
-          if (!printNumbersHere && /\d+ \(\d+d\d+/.test(rowP.text)) { const vcP = valueCheck(rowP, { scaled, sections, cr, section: r.section }); if (vcP.steps.some((st) => /dice \d+ → \d+/.test(st))) { rowP.text = vcP.text; trace('print canon row priced:', `${r.name} — ${vcP.steps.filter((st) => /dice/.test(st)).join('; ')}`); } } // print's dice stand on an exact body at print's CR
+          if (!printNumbersHere && /\d+ \(\d+d\d+/.test(rowP.text)) { const vcP = valueCheck(rowP, { scaled, sections, cr, section: r.section , hitType: attackDamageTypeOf(sections) }); if (vcP.steps.some((st) => /dice \d+ → \d+/.test(st))) { rowP.text = vcP.text; trace('print canon row priced:', `${r.name} — ${vcP.steps.filter((st) => /dice/.test(st)).join('; ')}`); } } // print's dice stand on an exact body at print's CR
           // PRINT'S ROW TAKES THE SLOT FROM A SEAT ROW OF THE SAME MECHANIC (owner's ruling
           // 2026-11-08, "print's attack list is locked on a print body"). Anchoring the name check
           // above lets print's `Reel` land — and the roper would then carry Reel AND the seat's
