@@ -10690,5 +10690,1131 @@
     "head": true
    }
   ]
+ },
+ "afa29507cd46": {
+  "concept": "Old Marta — innkeeper, retired adventurer, keeps a crossbow under the bar",
+  "clauses": [
+   {
+    "id": "cl_17lvk5d",
+    "text": "Old Marta — innkeeper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1eryjw9",
+    "text": "retired adventurer",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1j4tjef",
+    "text": "keeps a crossbow under the bar",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "keeps a crossbow under the bar",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "222a11f68768": {
+  "concept": "Sergeant Dunmore — town guard sergeant, halberd, by the book",
+  "clauses": [
+   {
+    "id": "cl_1t4u9hd",
+    "text": "Sergeant Dunmore — town guard sergeant",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_bfc6h4",
+    "text": "halberd",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "halberd",
+    "askOften": "at_will",
+    "askOftenWhy": "halberd",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_gu0yxt",
+    "text": "by the book",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "f2c31815e6fe": {
+  "concept": "Yx'theral — drow priestess of the spider goddess",
+  "clauses": [
+   {
+    "id": "cl_1iv2t1q",
+    "text": "Yx'theral — drow priestess of the spider goddess",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "586d73e0b68a": {
+  "concept": "Tobias Crane — bounty hunter, nets and a hand crossbow, takes people alive",
+  "clauses": [
+   {
+    "id": "cl_gtyo06",
+    "text": "Tobias Crane — bounty hunter",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1gqmmy1",
+    "text": "nets and a hand crossbow",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_xhsgcw",
+    "text": "takes people alive",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "2fdde0acae0d": {
+  "concept": "The Butcher of Karrow — cult enforcer with a meat cleaver, heals when he kills",
+  "clauses": [
+   {
+    "id": "cl_8a55w7",
+    "text": "The Butcher of Karrow — cult enforcer with a meat cleaver",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1xgy9tv",
+    "text": "heals when he kills",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "kills",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "heals when he kills"
+   }
+  ]
+ },
+ "210785339576": {
+  "concept": "Nib — pixie thief, steals one thing and runs",
+  "clauses": [
+   {
+    "id": "cl_i34sto",
+    "text": "Nib — pixie thief",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1wvbu61",
+    "text": "steals one thing and runs",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "relic",
+    "askMechanicWhy": "steals one thing"
+   }
+  ]
+ },
+ "66db7b906aad": {
+  "concept": "dwarf artificer",
+  "clauses": [
+   {
+    "id": "cl_1qt5q2x",
+    "text": "dwarf artificer",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "b40704e14322": {
+  "concept": "tabaxi assassin",
+  "clauses": [
+   {
+    "id": "cl_1vsnze0",
+    "text": "tabaxi assassin",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "tabaxi assassin",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "db1990a8a616": {
+  "concept": "bugbear barbarian chief",
+  "clauses": [
+   {
+    "id": "cl_1nqdwbn",
+    "text": "bugbear barbarian chief",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "a7b74cb710a0": {
+  "concept": "fallen aasimar paladin",
+  "clauses": [
+   {
+    "id": "cl_1xfuhnz",
+    "text": "fallen aasimar paladin",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "249774651dd5": {
+  "concept": "gnome illusionist",
+  "clauses": [
+   {
+    "id": "cl_f93221",
+    "text": "gnome illusionist",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "0dfa94f8521e": {
+  "concept": "Ogre — wearing full plate looted from a knight",
+  "clauses": [
+   {
+    "id": "cl_7fnm5i",
+    "text": "Ogre — wearing full plate looted from a knight",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "07dbfaf111c4": {
+  "concept": "giant spider that spits fire instead of webs",
+  "clauses": [
+   {
+    "id": "cl_1smjvs0",
+    "text": "giant spider",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_fk9pw5",
+    "text": "spits fire instead of webs",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "burst",
+    "askMechanicWhy": "spits fire"
+   }
+  ]
+ },
+ "a994f95dbdea": {
+  "concept": "Mimic — but it's a whole house",
+  "clauses": [
+   {
+    "id": "cl_194c5rz",
+    "text": "Mimic —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ad2rn3",
+    "text": "it's a whole house",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "dcc687992086": {
+  "concept": "wolf pack leader, smarter than the rest, calls the pack",
+  "clauses": [
+   {
+    "id": "cl_1spbk82",
+    "text": "wolf pack leader",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1rw8dp4",
+    "text": "smarter than the rest",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_kvtr9v",
+    "text": "calls the pack",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "1c43714c2deb": {
+  "concept": "Gelatinous Cube — full of the skeletons it ate and they fight for it",
+  "clauses": [
+   {
+    "id": "cl_17cuxdo",
+    "text": "Gelatinous Cube — full of the skeletons it ate",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_i2fyzu",
+    "text": "they fight for it",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "they fight for it",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "bf301562b449": {
+  "concept": "Young Black Dragon — undead, breath is necrotic",
+  "clauses": [
+   {
+    "id": "cl_14sxgbx",
+    "text": "Young Black Dragon — undead",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1v9vhy3",
+    "text": "breath is necrotic",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "breath is necrotic",
+    "askShape": "save_area",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breath is necrotic"
+   }
+  ]
+ },
+ "39f945c3aa8c": {
+  "concept": "a bandit captain but for level 1 players, should not kill them",
+  "clauses": [
+   {
+    "id": "cl_zjtww3",
+    "text": "a bandit captain",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "command",
+    "askMechanicWhy": "bandit captain",
+    "head": true
+   },
+   {
+    "id": "cl_1r000cw",
+    "text": "for level 1 players",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_19utrz8",
+    "text": "should not kill them",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "should not kill them",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "should not kill them",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "ba83c9d0f1da": {
+  "concept": "Warden Halvek — Runs the prison under the lighthouse. Used to be a paladin, broke his oath when he let a prisoner drown.",
+  "clauses": [
+   {
+    "id": "cl_s01kyf",
+    "text": "Warden Halvek — Runs the prison under the lighthouse",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_fvts3t",
+    "text": "Used to be a paladin",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1g568d2",
+    "text": "broke his oath when he let a prisoner drown",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1uf7uel",
+    "text": "Now he's bound to the place and can't leave",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "harden",
+    "askMechanicWhy": "can't leave"
+   },
+   {
+    "id": "cl_16cq4y1",
+    "text": "Fights with a ring of keys",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Fights with a ring of keys",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_2lresy",
+    "text": "a lantern that shows the truth",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "relic",
+    "askMechanicWhy": "a lantern that shows the truth"
+   },
+   {
+    "id": "cl_1gjyi51",
+    "text": "If the lantern goes out he gets weaker",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "relic",
+    "askMechanicWhy": "if the lantern goes out he gets weaker"
+   },
+   {
+    "id": "cl_12b6n1c",
+    "text": "The players need to get past him",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "relic",
+    "askMechanicWhy": "if the lantern goes out he gets weaker"
+   },
+   {
+    "id": "cl_1lpvcsr",
+    "text": "not necessarily kill him",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "31396afaa39e": {
+  "concept": "The Lady in the Reeds — River spirit that takes the shape of whoever the victim misses most. Lures people into the water",
+  "clauses": [
+   {
+    "id": "cl_ihao2b",
+    "text": "The Lady in the Reeds — River spirit",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1uk6wbf",
+    "text": "takes the shape of whoever the victim misses most",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "takes the shape of whoever the victim misses most"
+   },
+   {
+    "id": "cl_1mnf4i8",
+    "text": "Lures people into the water",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Lures people into the water",
+    "askShape": "condition",
+    "askMechanic": "charm",
+    "askMechanicWhy": "lures people into the water"
+   },
+   {
+    "id": "cl_1unjvrh",
+    "text": "Not evil exactly",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_nf8svv",
+    "text": "just lonely",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1nrihwx",
+    "text": "Can't leave the river",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "takes the shape of whoever the victim misses most",
+    "polarity": "lacks",
+    "takes": "flight",
+    "lackQuote": "Can't leave the river"
+   },
+   {
+    "id": "cl_17f7w7z",
+    "text": "Should be a social encounter first",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_9wamca",
+    "text": "a fight only if it goes wrong",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_12qp4n",
+    "text": "Charm",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "charm",
+    "askMechanicWhy": "charm"
+   },
+   {
+    "id": "cl_1rzwalm",
+    "text": "drowning",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "drowning"
+   },
+   {
+    "id": "cl_1xfi9l9",
+    "text": "turns to mist when hurt",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "when hurt",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "turns to mist when hurt"
+   }
+  ]
+ },
+ "7a227244509f": {
+  "concept": "Gorrak Splitjaw — Gnoll warlord for my level 6 party's boss fight. Has a pet hyena that fights next to him. Uses a flail",
+  "clauses": [
+   {
+    "id": "cl_qy24m3",
+    "text": "Gorrak Splitjaw — Gnoll warlord for my level 6 party's boss fight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ysi4a9",
+    "text": "Has a pet hyena that fights next to him",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when he's low on health",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "Has a pet hyena that fights next to him"
+   },
+   {
+    "id": "cl_t7fsh",
+    "text": "Uses a flail and a longbow",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Uses a flail and a longbow",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_rnlw0z",
+    "text": "Gets a free bite when he drops someone",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "when he drops someone",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_72c7zq",
+    "text": "I want him to feel scary when he's low on health",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when he's low on health",
+    "askShape": "condition",
+    "askMechanic": "fear",
+    "askMechanicWhy": "I want him to feel scary when he's low on health"
+   },
+   {
+    "id": "cl_1hd6ta3",
+    "text": "like he fights harder",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "f610ee495915": {
+  "concept": "My players are going into a wizard's abandoned tower and I need the thing that's been living in the library. It was the ",
+  "clauses": [
+   {
+    "id": "cl_121mqxr",
+    "text": "My players are going into a wizard's abandoned tower",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1jmqpf1",
+    "text": "I need the thing that's been living in the library",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_hmcv1v",
+    "text": "It was the wizard's familiar",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1hykyf",
+    "text": "a cat",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_10ojkzq",
+    "text": "but it's been eating spell scrolls for 50 years",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "burst",
+    "askMechanicWhy": "eating spell scrolls"
+   },
+   {
+    "id": "cl_om88au",
+    "text": "Now it's the size of a horse",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1gm8ik8",
+    "text": "casts random spells when it attacks",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "when it attacks",
+    "askShape": "save_single",
+    "askMechanic": "burst",
+    "askMechanicWhy": "casts random spells when it attacks"
+   },
+   {
+    "id": "cl_icrv8i",
+    "text": "Teleports short distances",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "teleports short distances"
+   },
+   {
+    "id": "cl_1ne90e5",
+    "text": "Hates being looked at",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "fear",
+    "askMechanicWhy": "hates being looked at"
+   }
+  ]
+ },
+ "3a8125c8efc0": {
+  "concept": "Captain Iress Vane — Airship captain, half-elf, ex-navy. Rapier and pistol. She's a duelist who uses the terrain, swings",
+  "clauses": [
+   {
+    "id": "cl_lgcxls",
+    "text": "Captain Iress Vane — Airship captain",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1y48ikl",
+    "text": "half-elf",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ccv8gg",
+    "text": "ex-navy",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_18pb5ij",
+    "text": "Rapier and pistol",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1otpb9",
+    "text": "She's a duelist who uses the terrain",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1c9gudn",
+    "text": "swings on ropes",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "swings on ropes"
+   },
+   {
+    "id": "cl_2zuica",
+    "text": "kicks barrels",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "shove",
+    "askMechanicWhy": "kicks barrels"
+   },
+   {
+    "id": "cl_9wh4dt",
+    "text": "kind of thing",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1lzhrty",
+    "text": "Has a crew",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_b4suq2",
+    "text": "I'll stat them separately",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_10y3ms",
+    "text": "AC 17",
+    "kind": "header"
+   },
+   {
+    "id": "cl_h7jkqz",
+    "text": "around 110 HP",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_147islj",
+    "text": "should get 3 attacks",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "ff476312f8f1": {
+  "concept": "ice elemental, cone of cold breath recharge 5-6, leaves difficult terrain, slows on hit",
+  "clauses": [
+   {
+    "id": "cl_1ic72q",
+    "text": "ice elemental",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_9o7mqd",
+    "text": "cone of cold breath recharge 5-6",
+    "kind": "mechanical",
+    "askOften": "recharge",
+    "askOftenWhy": "recharge",
+    "askShape": "save_area",
+    "askMechanic": "breath",
+    "askMechanicWhy": "cone of cold breath"
+   },
+   {
+    "id": "cl_k1r5sf",
+    "text": "leaves difficult terrain",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "leaves difficult terrain",
+    "askMechanic": "zone",
+    "askMechanicWhy": "leaves difficult terrain"
+   },
+   {
+    "id": "cl_axkxeo",
+    "text": "slows on hit",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "slows on hit",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "de3710d30944": {
+  "concept": "Grumm — troll shaman. 3/day he can heal another troll 2d8. totem that gives allies +2 to hit within 30 ft. spear.",
+  "clauses": [
+   {
+    "id": "cl_1w0xh33",
+    "text": "Grumm — troll shaman",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_bxbrcl",
+    "text": "3/day he can heal another troll 2d8",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_85ug80",
+    "text": "totem that gives allies +2 to hit within 30 ft. spear",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "totem that gives allies +2 to hit within 30 ft. spear",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "gives allies to hit"
+   }
+  ]
+ },
+ "b598992c4d76": {
+  "concept": "assassin vine that grapples on hit and pulls 10 ft, restrained while grappled, 2d6 poison at start of turn",
+  "clauses": [
+   {
+    "id": "cl_1xxde1x",
+    "text": "assassin vine",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_eyiv72",
+    "text": "grapples on hit",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "grapples on hit",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grapples on hit"
+   },
+   {
+    "id": "cl_aml09p",
+    "text": "pulls 10 ft",
+    "kind": "header"
+   },
+   {
+    "id": "cl_1g2bnlp",
+    "text": "restrained while grappled",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "restrained while grappled"
+   },
+   {
+    "id": "cl_5bgg1j",
+    "text": "2d6 poison at start of turn",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "at start of turn",
+    "askShape": "attack",
+    "askMechanic": "drain",
+    "askMechanicWhy": "d poison"
+   }
+  ]
+ },
+ "ba4a06c077cd": {
+  "concept": "ghost knight, resistant to nonmagical weapons, lance attack does extra 3d8 on a charge, reaction to parry, frightens wit",
+  "clauses": [
+   {
+    "id": "cl_11mmr7i",
+    "text": "ghost knight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_uxppc4",
+    "text": "resistant to nonmagical weapons",
+    "kind": "header"
+   },
+   {
+    "id": "cl_1n8ppef",
+    "text": "lance attack does extra 3d8 on a charge",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "on a charge"
+   },
+   {
+    "id": "cl_1o1q122",
+    "text": "reaction to parry",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "reaction",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_ijb6lo",
+    "text": "frightens with a look",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "fear",
+    "askMechanicWhy": "frightens with a look"
+   }
+  ]
+ },
+ "9599230d2357": {
+  "concept": "Madame Zolga — fortune teller. legendary actions: 3. can reroll one attack against her per round. casts hold person and ",
+  "clauses": [
+   {
+    "id": "cl_1bqoqq7",
+    "text": "Madame Zolga — fortune teller",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_jeunqt",
+    "text": "legendary actions: 3",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "legendary actions"
+   },
+   {
+    "id": "cl_10b6hlv",
+    "text": "can reroll one attack against her per round",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "one attack against her",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "per round",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_558kc9",
+    "text": "casts hold person and mirror image",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "casts",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_g6fgtr",
+    "text": "immune to charm",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "resist",
+    "askMechanicWhy": "immune to charm"
+   }
+  ]
+ },
+ "44665ae1368c": {
+  "concept": "golem that explodes when it dies, 30 ft radius, 6d6 fire, dex save half",
+  "clauses": [
+   {
+    "id": "cl_1mnz8s",
+    "text": "golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1qxtoy8",
+    "text": "explodes when it dies",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_11cca3l",
+    "text": "30 ft radius",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1v0k28e",
+    "text": "6d6 fire",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_13zqre5",
+    "text": "dex save half",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "630a85bd68e9": {
+  "concept": "wyvern rider knight, mounted, lance and shield, wyvern has the stinger",
+  "clauses": [
+   {
+    "id": "cl_16507xi",
+    "text": "wyvern rider knight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_kk0d4o",
+    "text": "mounted",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "wyvern rider knight mounted"
+   },
+   {
+    "id": "cl_s5bfbr",
+    "text": "lance and shield",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "lance"
+   },
+   {
+    "id": "cl_1fsjxty",
+    "text": "wyvern has the stinger",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "stinger"
+   }
+  ]
+ },
+ "1da5fa97ab38": {
+  "concept": "like the predator, invisible hunter with a shoulder cannon, collects trophies",
+  "clauses": [
+   {
+    "id": "cl_17v2qwf",
+    "text": "like the predator",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_5i6edt",
+    "text": "invisible hunter with a shoulder cannon",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "invisible hunter"
+   },
+   {
+    "id": "cl_skhg91",
+    "text": "collects trophies",
+    "kind": "mechanical",
+    "askWhen": "on_death",
+    "askWhenWhy": "collects trophies",
+    "askMechanic": "harvest",
+    "askMechanicWhy": "collects trophies"
+   }
+  ]
+ },
+ "b6c1920d2dbc": {
+  "concept": "jaws but its a lake and the shark is a ghost",
+  "clauses": [
+   {
+    "id": "cl_1xrgz",
+    "text": "jaws",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_m2kcx2",
+    "text": "its a lake",
+    "kind": "mechanical",
+    "askMechanic": "zone",
+    "askMechanicWhy": "lake"
+   },
+   {
+    "id": "cl_1bfgef8",
+    "text": "the shark is a ghost",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "ghost"
+   }
+  ]
+ },
+ "d2327900ab21": {
+  "concept": "weeping angel type statue, only moves when nobody is looking at it",
+  "clauses": [
+   {
+    "id": "cl_122lc5w",
+    "text": "weeping angel type statue",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1sbpf9q",
+    "text": "only moves when nobody is looking at it",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "nobody is looking at it"
+   }
+  ]
+ },
+ "8f484e11e81f": {
+  "concept": "skelton archer capt",
+  "clauses": [
+   {
+    "id": "cl_rpjqr",
+    "text": "skelton archer capt",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "e9499b060663": {
+  "concept": "need a quick mook for a cult, 5 of them, knife guys",
+  "clauses": [
+   {
+    "id": "cl_cfolrq",
+    "text": "need a quick mook for a cult",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_lotwii",
+    "text": "5 of them",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_cmep7n",
+    "text": "knife guys",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "f6a6fe28c215": {
+  "concept": "something for a desert",
+  "clauses": [
+   {
+    "id": "cl_1ti1mvl",
+    "text": "something for a desert",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "7e57d04eab8a": {
+  "concept": "can you make a flying monkey that steals hats lol",
+  "clauses": [
+   {
+    "id": "cl_ghzzb8",
+    "text": "can you make a flying monkey",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1ot0ge5",
+    "text": "steals hats lol",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "steals hats lol",
+    "askOften": "at_will",
+    "askOftenWhy": "steals hats lol",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "steals hats lol"
+   }
+  ]
+ },
+ "f7c59ab86ef7": {
+  "concept": "The Hollow King — final boss of a level 15 campaign, lich-like but not a lich, three phases",
+  "clauses": [
+   {
+    "id": "cl_16xaw8u",
+    "text": "The Hollow King — final boss of a level 15 campaign",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ml55gi",
+    "text": "lich-like",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "lich-like"
+   },
+   {
+    "id": "cl_161j5ri",
+    "text": "not a lich",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "resist",
+    "askMechanicWhy": "not a lich"
+   },
+   {
+    "id": "cl_181pije",
+    "text": "three phases",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "three phases",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "three phases"
+   }
+  ]
+ },
+ "50c1d32297fa": {
+  "concept": "solo boss for 4 level 3 players, a giant toad with a crown",
+  "clauses": [
+   {
+    "id": "cl_wrfv8",
+    "text": "solo boss for 4 level 3 players",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1wgcy2u",
+    "text": "a giant toad with a crown",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "fb288e4c16e1": {
+  "concept": "Mayor Fitch",
+  "clauses": [
+   {
+    "id": "cl_hz00ym",
+    "text": "Mayor Fitch",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
