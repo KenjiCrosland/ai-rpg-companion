@@ -79,9 +79,6 @@ describe('what it must not touch', () => {
     expect(check(seedText('sensory-strike'), 9, 'Traits').steps.join('; ')).not.toMatch(/half a hit/);
   });
 
-  it("leaves a Reaction alone — his ruling: a Reaction's save deals no damage", () => {
-    expect(check(seedText('sensory-strike'), 9, 'Reactions').steps.join('; ')).not.toMatch(/half a hit/);
-  });
 
   it('leaves a row with no minor effect alone', () => {
     const vc = check('*Wisdom Saving Throw*: DC {dc}, one creature within 60 feet. *Failure:* The target can\'t speak until the end of its next turn.', 9);

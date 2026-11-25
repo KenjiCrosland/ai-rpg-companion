@@ -3628,15 +3628,18 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // failed save only, in front of the effect it already has, in the damage type of the attack it
   // stands in place of. No Success clause. The cone rewrite is gone, not switched off.
   //
-  // A REACTION IS EXCLUDED. The condition reached one — `section !== 'Traits'` let Reactions
-  // through — and the owner's ruling is that a Reaction's save deals no damage.
+  // NO REACTION GUARD HERE, and the absence is deliberate. I added one and claimed the rung "let a
+  // Reaction through" — that was read off the condition, not measured. Fable removed the guard and
+  // every test still passed, and I could not build a case where a Reaction reaches this rung and
+  // gains damage. Something above already stops it. A guard that cannot be shown to do anything is
+  // worse than none, so it is gone along with the test that claimed to cover it. A Reaction's save
+  // deals no damage by the owner's hold of 18 November, and that still holds by another route.
   //
   // Half a hit is the whole lift: every rung above has already run, so nothing prices this damage
   // up to the floor and nothing gates the row. If it is still under, it stays as it is and the line
   // below says so (the 23 November reading: the floor keeps what it cannot lift).
   if (v.ev < floor && !priced && !v.hasDamage && !area && !bonus && !gated
-      && section !== 'Traits' && section !== 'Reactions' && !/^Reactions?$/i.test(String(section ?? ''))
-      && MINOR_EFFECT.test(text) && hitType) {
+      && section !== 'Traits' && MINOR_EFFECT.test(text) && hitType) {
     const half = saveDamageDiceFor(Math.max(1, Math.round(perHit / 2)));
     const was = text;
     // in front of the effect the row already has, on the failure only

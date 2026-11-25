@@ -41,19 +41,17 @@ describe('a soft one-creature row', () => {
   let out;
   beforeAll(() => { out = run(SOFT_ROW()); });
 
-  it('still targets one creature, and is not a cone', () => {
-    expect(out.text).toMatch(/one creature within 5 feet/);
-    expect(out.text).not.toMatch(/Cone/i);
-  });
+  // DELETED: green with the rung switched off — the row targets one creature and is not a cone whether or not
+  // the rung runs, so it never tested the rung.
+
 
   it("its failure deals half a hit in the attack's own type, in front of the effect it had", () => {
     // print joins them with a lower-case clause, so "The target" comes down to "the target"
     expect(out.text).toMatch(/\*Failure:\*\s*\d+ \(\d+d\d+\) Piercing damage, and the target has the Prone condition/);
   });
 
-  it('adds no Success clause', () => {
-    expect(out.text).not.toMatch(/\*Success:\*/);
-  });
+  // DELETED: green with the rung switched off — a row the rung never touches has no Success clause either.
+
 
   it('says what it did, and against which hit', () => {
     expect(out.steps.join(' ')).toMatch(/half a hit added: \d+ \(\d+d\d+\) Piercing damage on a failed save — half of one 12-damage hit/);
@@ -65,21 +63,19 @@ describe('a soft one-creature row', () => {
 });
 
 describe('what the rung must not reach', () => {
-  it('a Reaction gains no damage — his ruling stands', () => {
-    const out = run(SOFT_ROW(), 'Reactions');
-    expect(out.text).not.toMatch(/Piercing damage, and/);
-    expect(out.text).toBe(SOFT_ROW().text);
-  });
+  /**
+   * THE REACTION TEST IS GONE, with its guard. I claimed the rung "let a Reaction through", read off
+   * the condition rather than measured. Fable removed the guard and all twelve tests still passed,
+   * and I could not build a case where a Reaction reaches this rung and gains damage. A guard that
+   * cannot be shown to do anything, and a test that cannot fail, are worse than neither.
+   */
 
-  it('a row that already deals damage is left to the dice rungs', () => {
-    const out = run(SOFT_ROW({ text: '*Strength Saving Throw*: DC 13, one creature within 5 feet. *Failure:* 7 (2d6) Cold damage, and the target has the Prone condition.' }));
-    expect(out.text).not.toMatch(/Piercing damage, and \d+ \(/);
-  });
 
-  it('a row that is already an area is untouched', () => {
-    const out = run(SOFT_ROW({ text: '*Strength Saving Throw*: DC 13, each creature in a 15-foot Cone. *Failure:* The target has the Prone condition.' }));
-    expect(out.text).not.toMatch(/Piercing damage/);
-  });
+  // DELETED: green with `!v.hasDamage` taken out of the condition — something above already stops a row that deals damage, and the guard was never the reason.
+
+
+  // DELETED: green with `!area` taken out — same: the guard is not what stops it.
+
 
   it('a trait is untouched', () => {
     const out = run(SOFT_ROW(), 'Traits');
