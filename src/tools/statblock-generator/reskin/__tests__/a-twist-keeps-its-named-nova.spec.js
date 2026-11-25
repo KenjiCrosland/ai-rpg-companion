@@ -39,6 +39,9 @@ const AN_AREA_TEMPLATE = 'spew';
  */
 const build = async ({ concept, printBody, path = 'twist', cr = 15, seats = [NOTHING], renameNova = true, fit = null } = {}) => {
   let cached = null; let seatAsks = 0;
+  // the engine traces through the logger, which writes to console in tests
+  const lines = []; const realLog = console.log;
+  console.log = (...a) => { lines.push(a.join(' ')); };
   const monster = await generateReskin({
     mechanics: [], archetype: 'brute', concept, userConcept: concept, cr,
     path: { path, print_body: printBody, relation: 'is', class: null },
@@ -70,7 +73,8 @@ const build = async ({ concept, printBody, path = 'twist', cr = 15, seats = [NOT
     }
     return cached;
   });
-  return { monster };
+  console.log = realLog;
+  return { monster, trace: lines.join('\n') };
 };
 
 const actions = (m) => (m.sections?.Actions ?? []);
@@ -128,30 +132,21 @@ describe('and the four cases it must not reach', () => {
   });
 });
 
-describe('a row that leaves at print canon takes its references with it', () => {
-  /**
-   * The print-canon removal patched the Multiattack's citation and nothing else, while
-   * `closedPathFillerLeaves` four lines down calls `sweepDeadName`. On the Purple Worm's first
-   * probe roll "Gizzard of Ruin" named Shrapnel Spray after it had left.
-   *
-   * Driven by the case that makes the removal fire: a creature of the GM's own on a printed body,
-   * where the chassis nova goes and a trait names it.
-   */
-  it('no row on the sheet names a row that is not on it', async () => {
-    const { monster } = await build({ concept: 'a skeleton with a greatsword', printBody: 'Skeleton', cr: 5 });
-    const all = Object.values(monster.sections ?? {}).flat();
-    const names = all.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-    const gated = all.filter((e) => /\(Recharge [\d–-]+\)|\d\/Day/.test(e.name ?? ''));
-    // whatever the chassis nova was called, if it left, nothing still names it
-    for (const e of all) {
-      const text = String(e.text ?? '');
-      for (const m of text.matchAll(/\b([A-Z][a-z]+(?: [A-Z][a-z]+){1,3})\b/g)) {
-        const cited = m[1];
-        // only the names that look like OUR row names: skip print prose
-        if (!/^(Shrapnel|Grave-Line|Named Row)/.test(cited)) continue;
-        expect(names).toContain(cited);
-      }
-    }
-    expect(gated.length).toBeGreaterThanOrEqual(0); // the sheet arrived
-  });
-});
+/**
+ * THE REFERENCE-SWEEP TEST IS DELETED, AND THIS SAYS WHY.
+ *
+ * The fix is real and is in `generate.mjs`: the print-canon removal now calls `sweepDeadName`, as
+ * `closedPathFillerLeaves` four lines down always did. The TEST could not be built.
+ *
+ * My first version passed without the fix — Fable caught it: its pattern could not match what the
+ * stub produces (`Named Row0` ends in a digit, so a word boundary after "Row" never holds) and its
+ * last assertion was true of any array. My second version read the removed row's name out of the
+ * captured trace and named it from a seat-written trait. The trace captures fine (29 lines), but
+ * the Skeleton case produces NO "chassis row leaves" line at all: a CR 5 brute skeleton driven by
+ * this stub has no chassis nova for print canon to remove, so the removal never fires and there is
+ * nothing to leave a dangling reference behind.
+ *
+ * Per the order: a test that cannot fail should not stay. The fix's evidence is the probe roll that
+ * found it (the Purple Worm's "Gizzard of Ruin" naming Shrapnel Spray after it had left) and the
+ * one-line call itself.
+ */
