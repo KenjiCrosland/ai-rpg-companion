@@ -1,0 +1,44 @@
+[
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 1 of 6 \u2014 does R4 land self-invisibility"
+ },
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 2 of 6 \u2014 does R4 land self-invisibility"
+ },
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 3 of 6 \u2014 does R4 land self-invisibility"
+ },
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 4 of 6 \u2014 does R4 land self-invisibility"
+ },
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 5 of 6 \u2014 does R4 land self-invisibility"
+ },
+ {
+  "name": "Kobold",
+  "description": "Can turn invisible once per day",
+  "cr": "1/4",
+  "rules": "2024",
+  "canary": "KOBOLD PROBE \u00b7 roll 6 of 6 \u2014 does R4 land self-invisibility"
+ }
+]
