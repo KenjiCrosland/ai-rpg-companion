@@ -10348,8 +10348,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // chassis novas read as six lost answers to the GM.
             trace('print canon: chassis row leaves —', `Actions/"${row.name}" is the chassis's own nova (the model renamed it), not the ${pc.name}'s`);
             const bareN = String(row.name).replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const deadName = row.name;
             esA.splice(i, 1);
             for (const e2 of Object.values(sections).flat()) if (e2.name === 'Multiattack' && new RegExp(`\\b${bareN}\\b`).test(e2.text ?? '')) e2.text = e2.text.replace(new RegExp(`[^.!?]*\\b${bareN}\\b[^.!?]*[.!?]\\s*`), '').trim();
+            // A ROW THAT LEAVES HERE TAKES ITS REFERENCES WITH IT (owner's order, 2026-11-24).
+            //
+            // This patched the Multiattack's citation and nothing else, while
+            // `closedPathFillerLeaves` four lines down calls `sweepDeadName` for exactly this. On
+            // the Purple Worm's first probe roll "Gizzard of Ruin" named Shrapnel Spray after it
+            // had left, and nothing swept it. Same function, same call, same place in the pass.
+            sweepDeadName(sections, deadName, null, trace);
           }
         }
         // print's own LEGENDARY rows stand where the chassis's stood (the Adult Green has Mind Invasion, Noxious Miasma and Pounce — the critic's audit 2026-10-02); the melee row already carries print's name, so "makes one Rend attack" resolves

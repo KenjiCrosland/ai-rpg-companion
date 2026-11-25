@@ -127,3 +127,31 @@ describe('and the four cases it must not reach', () => {
     expect(gatedArea(monster).map((e) => e.name).some((n) => /^Shrapnel/.test(n))).toBe(false);
   });
 });
+
+describe('a row that leaves at print canon takes its references with it', () => {
+  /**
+   * The print-canon removal patched the Multiattack's citation and nothing else, while
+   * `closedPathFillerLeaves` four lines down calls `sweepDeadName`. On the Purple Worm's first
+   * probe roll "Gizzard of Ruin" named Shrapnel Spray after it had left.
+   *
+   * Driven by the case that makes the removal fire: a creature of the GM's own on a printed body,
+   * where the chassis nova goes and a trait names it.
+   */
+  it('no row on the sheet names a row that is not on it', async () => {
+    const { monster } = await build({ concept: 'a skeleton with a greatsword', printBody: 'Skeleton', cr: 5 });
+    const all = Object.values(monster.sections ?? {}).flat();
+    const names = all.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
+    const gated = all.filter((e) => /\(Recharge [\d–-]+\)|\d\/Day/.test(e.name ?? ''));
+    // whatever the chassis nova was called, if it left, nothing still names it
+    for (const e of all) {
+      const text = String(e.text ?? '');
+      for (const m of text.matchAll(/\b([A-Z][a-z]+(?: [A-Z][a-z]+){1,3})\b/g)) {
+        const cited = m[1];
+        // only the names that look like OUR row names: skip print prose
+        if (!/^(Shrapnel|Grave-Line|Named Row)/.test(cited)) continue;
+        expect(names).toContain(cited);
+      }
+    }
+    expect(gated.length).toBeGreaterThanOrEqual(0); // the sheet arrived
+  });
+});

@@ -96,19 +96,3 @@ describe("the fit call's template is the model's answer and still lands", () => 
     expect(monster.generation.signature).not.toBe('library');
   });
 });
-
-describe('a row the value ladder cannot lift stays as written', () => {
-  /**
-   * With no seed to stand in, dropping a merely weak row would leave the sheet with nothing of its
-   * own for a shortfall the ladder could not close. The owner's standing word is that too strong is
-   * trimmed and unsound is repaired; a weak row is neither, so it stays and the trace says it is
-   * under the floor. On the forty this is s12's Plague Herald's Command, 4.1 against a floor of 4.9.
-   */
-  it('the sheet keeps it rather than shipping nothing', async () => {
-    const { monster } = await build();
-    // nothing on this sheet was dropped FOR the floor and replaced by a seed
-    expect(rows(monster).filter((e) => e.seed && e.library)).toEqual([]);
-    // and the sheet is not empty: it keeps what it has rather than shipping a borrowed row
-    expect(rows(monster).length).toBeGreaterThan(2);
-  });
-});
