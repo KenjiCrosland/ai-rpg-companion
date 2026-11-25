@@ -4657,14 +4657,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const damageHeld = !!r.save.damage;
         const parts = [
           r.save.condition ? conditionClause(r.save.condition) : '',
-          r.save.movement ? `the target is ${r.save.movement} straight ${/pushed/.test(String(r.save.movement)) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '',
+          // `settledInline()`, not the guess: the guess exists for rows written BEFORE the name's
+          // form is decided, and a Reaction's text is assembled long after. The Bulwark shipped
+          // "straight away from Bulwark" where its own inline is "the bulwark" — the same fault the
+          // comment on `settledInline` records for the Rimebound Troll's "toward Troll".
+          r.save.movement ? `the target is ${r.save.movement} straight ${/pushed/.test(String(r.save.movement)) ? 'away from' : 'toward'} ${settledInline()}` : '',
         ].filter(Boolean);
         if (damageHeld) {
           trace('reaction damage set aside:', `"${r.name}" — the call set damage on this Reaction's save, and a Reaction's damage is not counted by the sheet's CR read, so the save keeps its ${r.save.condition ? `${r.save.condition} condition` : 'effect'} and deals none (owner's hold, 2026-11-18)`);
           reactionDamageHeld.push(String(r.name));   // stamped onto the record once `monster` exists
         }
         // a save with nothing left to do is not a row: the refusal below catches it
-        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', '), success: r.save.success ?? null, heldDamage: damageHeld };
+        // A SEAT-WRITTEN REACTION PRINTS NO SUCCESS SENTENCE (Fable, 2026-11-24).
+        //
+        // A Reaction's save deals no damage by the owner's hold of 18 November, so its success can
+        // never be "half damage" — it can only restate the failure in the negative, which print
+        // does not write. The Bulwark's seat wrote "The creature is not knocked prone and is not
+        // pushed." and the sheet shipped a broken fragment of it.
+        //
+        // This is the REACTION path only. A seat-written save in Actions keeps its success, where
+        // it can carry a real rule — half damage, or an immunity after a save.
+        return { stat: r.save.stat, dc: scaled.dc, target, failure: parts.join(', '), success: null, heldDamage: damageHeld };
       })() : null;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response), ...(svF ? { save: svF } : {}) }, '2024', { properNouns: ownNouns() });
       return { name: r.name, text, authored: true, clause: r.clause, ...(r.save?.condition ? { imposes: r.save.condition } : {}), ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };

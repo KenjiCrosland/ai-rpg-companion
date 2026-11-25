@@ -2044,7 +2044,15 @@ const DETERMINISTIC_TEXT_FIXES = [
     }
     return out;
   }],
-  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [A-Z]\w+)\.?/gi, '')],
+  // IT REMOVES THE WHOLE SENTENCE OR NOTHING (Fable, 2026-11-24).
+  //
+  // The arm was `The \w+ is not [A-Z]\w+` with the `i` flag on the whole rule, so `[A-Z]` matched
+  // any letter and the pattern matched a PREFIX of a longer sentence. The Oathbound Bulwark's
+  // Reaction carried "*Success:* The creature is not knocked Prone and is not pushed."; this cut
+  // "*Success:* The creature is not knocked" and left "Prone and is not pushed." on the card, in
+  // both printings, since at least 24 November. Running to the sentence's own full stop means a
+  // no-effect success either goes whole or is left alone.
+  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [^.]*)\./gi, '')],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
