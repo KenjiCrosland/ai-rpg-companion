@@ -1666,6 +1666,16 @@ export const exemptFromOneNova = (e) => e?.strike === true;
  * is reliable about whether the row exists because the GM asked for something, and that is all
  * protection needs.
  */
+/** The clause's own words, for a trace that must say what the GM typed and not the idea's prose. */
+export function typedClauseText(row, clauses = []) {
+  const mech = (clauses ?? []).filter((c) => c && c.kind === 'mechanical' && !c.head);
+  const ids = new Set([...(row?.clauseId ? [String(row.clauseId)] : []), ...((row?.clauseIds ?? []).map(String))]);
+  const byId = mech.find((c) => ids.has(String(c.id)));
+  if (byId) return String(byId.text).slice(0, 70);
+  const byText = mech.find((c) => String(c.text) === String(row?.clause));
+  return byText ? String(byText.text).slice(0, 70) : 'a mechanical ask';
+}
+
 export function isTypedAskRow(row, clauses = []) {
   if (!row) return false;
   const mech = (clauses ?? []).filter((c) => c && c.kind === 'mechanical' && !c.head);
@@ -2066,7 +2076,10 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     // THE TYPED ROW IS NEVER THE ONE THAT IS CUT (Part B, the owner's ruling of 25 November).
     if (protectedHere(e)) {
       keptFree.push(e); keptKinds.add(kindOf(sec)); if (cell) keptCells.add(cell);
-      trace('typed row kept over the budget:', `${sec}/"${bareName(e)}" stays — it was written for the typed clause "${String(e.clause ?? e.clauseId ?? 'a mechanical ask').slice(0, 60)}", and the budget limits only rows the engine invents`);
+      // THE CLAUSE'S OWN TEXT, LOOKED UP BY ITS ID (Fable, 2026-11-26). The line printed whichever
+      // of `clause` or `clauseId` the row carried — the idea's prose, or a bare "cl_ysi4a9". Neither
+      // is what the GM typed, and the trace exists to say what the GM typed.
+      trace('typed row kept over the budget:', `${sec}/"${bareName(e)}" stays — it was written for the typed clause "${typedClauseText(e, mechClauses)}", and the budget limits only rows the engine invents`);
       continue;
     }
     if ((keptFree.length < allowed || firstOfItsKind) && !sameCell) {
