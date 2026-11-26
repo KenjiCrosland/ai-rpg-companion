@@ -712,7 +712,7 @@ const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]
  *
  * Extracted rather than left inline so it can be fed the collapsed roll's own input.
  */
-export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}, noteRemoval = () => {}) => {
+export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}, noteRemoval = () => {}, clauses = []) => {
   const esAct = sections.Actions ?? [];
   for (let i = esAct.length - 1; i >= 0; i -= 1) {
     const e = esAct[i];
@@ -727,6 +727,9 @@ export const closedPathFillerLeaves = (sections, pcName, traceFn = () => {}, not
     // stage claimed. Without it the exception fired, the trace said the row stayed, and the row
     // left anyway four lines later.
     if (/^Multiattack/.test(e.name ?? '') || e.strike || e.print || e.part || e.feature || e.kit || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.rules || e.keptByTwist) continue;
+    // A ROW WRITTEN FOR A TYPED ASK STAYS (Part B). This sweep drops the rows no path stage
+    // claimed; a clause the GM typed is a claim.
+    if (isTypedAskRow(e, clauses)) { traceFn('typed row kept over the filler sweep:', `Actions/"${e.name}" stays — it was written for a typed clause`); continue; }
     if (!/Attack Roll|Saving Throw/.test(e.text ?? '')) continue;
     if (/Attack Roll/.test(e.text ?? '')
         && !Object.values(sections).flat().some((o) => o !== e && /Attack Roll/.test(o.text ?? ''))) {
@@ -1652,6 +1655,29 @@ export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = nu
 export const exemptFromOneNova = (e) => e?.strike === true;
 
 /**
+ * A ROW WRITTEN FOR A TYPED ASK (Fable's round one, Part B, 2026-11-25).
+ *
+ * The owner's ruling of 25 November: every mechanical thing the GM types gets its own row, and the
+ * row budget limits only rows the ENGINE invents. So a row bound to a clause the reader marked
+ * mechanical is protected — it may be renamed, reworded or have its numbers trimmed, but the
+ * tidying passes may not remove it.
+ *
+ * Any of the three bindings counts. Handing is unreliable about WHICH clause a row answers, but it
+ * is reliable about whether the row exists because the GM asked for something, and that is all
+ * protection needs.
+ */
+export function isTypedAskRow(row, clauses = []) {
+  if (!row) return false;
+  const mech = (clauses ?? []).filter((c) => c && c.kind === 'mechanical' && !c.head);
+  if (!mech.length) return false;
+  const texts = new Set(mech.map((c) => String(c.text)));
+  const ids = new Set(mech.map((c) => String(c.id)));
+  if (row.clause && texts.has(String(row.clause))) return true;
+  if (row.clauseId && ids.has(String(row.clauseId))) return true;
+  return (row.clauseIds ?? []).some((i) => ids.has(String(i)));
+}
+
+/**
  * THE LEDGER OF TYPED ASKS (Fable's round one, Part A, 2026-11-25).
  *
  * The check this replaces ran in the middle of the pipeline and took a call's word for it, so
@@ -1974,6 +2000,13 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // This is a TIE-BREAK INSIDE the owner's 10-29 ruling (GM quote, then element, then
   // decoration), not a change to it: `receiptRank` still decides first and always.
   const onTemplate = (e) => (e.template ? 0 : 1);
+  // NO PROTECTED-FIRST SORT HERE, and the absence is deliberate. I added one on the reasoning that
+  // a protected row must be considered first for the allowance to be "what is left" after it.
+  // Removing it turns no test red: the guard below keeps every typed row whatever order they come
+  // in, and a kept row counts toward `keptFree` either way, so the allowance is already what is
+  // left. An ordering that cannot be shown to do anything is worse than none.
+  const mechClauses = (generation?.clauses ?? []);
+  const protectedHere = (e) => isTypedAskRow(e, mechClauses);
   const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e) || onTemplate(a.e) - onTemplate(b.e));
   if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
     trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['clause', 'element', 'decoration', 'borrowed'][receiptRank(e)]}${e.template ? `, ${e.template}` : ', no template'}]`).join(' > ')} — a receipt row is never displaced by one without, and within a rank a templated row is never displaced by one without`);
@@ -2030,6 +2063,12 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     // The second way in: the first row of its kind, while print's card still has the room.
     const firstOfItsKind = !printExact && receiptRank(e) !== 3
       && !keptKinds.has(kindOf(sec)) && keptFree.length < cardRoom;
+    // THE TYPED ROW IS NEVER THE ONE THAT IS CUT (Part B, the owner's ruling of 25 November).
+    if (protectedHere(e)) {
+      keptFree.push(e); keptKinds.add(kindOf(sec)); if (cell) keptCells.add(cell);
+      trace('typed row kept over the budget:', `${sec}/"${bareName(e)}" stays — it was written for the typed clause "${String(e.clause ?? e.clauseId ?? 'a mechanical ask').slice(0, 60)}", and the budget limits only rows the engine invents`);
+      continue;
+    }
     if ((keptFree.length < allowed || firstOfItsKind) && !sameCell) {
       if (firstOfItsKind && keptFree.length >= allowed) {
         trace('free row kept as one of its kind:', `${sec}/"${bareName(e)}" stays — the first ${kindOf(sec) === 'trait' ? 'trait' : 'non-trait row'} kept, and print's card for CR ${cr} has room for ${cardRoom} (budget ${freeBudget}, ${keptFree.length} kept so far)`);
@@ -10608,7 +10647,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // Melee or Ranged) sat in neither rename loop — print's Hobgoblin Warrior has no hybrid — and rode
         // beside print's Longsword and Longbow. A row with no provenance (not print's, not a part, feature,
         // kit, seat, repair or the GM's weapon) is chassis filler and leaves; the Multiattack is swept.
-        if (closedPath) closedPathFillerLeaves(sections, pc.name, trace, noteRemoval);
+        if (closedPath) closedPathFillerLeaves(sections, pc.name, trace, noteRemoval, monster.generation?.clauses ?? []);
         for (const secC of printBody ? ['Bonus Actions', 'Reactions', ...(pc.addsSeat && scaled.style ? [] : ['Traits'])] : []) { // a named seat that stood down at the route is the plain chassis — its trait leaves too ("Winged Dive" on the Owlbear, third roll) // the seat's trait leaves with its bonus action ("Woodland Prowler" on the Owlbear, "Scuttle" on the kobold — critic form-ten 2026-10-01); a seat the user named keeps both
           if (!isClassNpc && (pc.rulesRows ?? []).some((r) => r.section === secC)) continue; // on a class body every section is read: print's own rows carry their flag
           const esC = sections[secC] ?? [];
