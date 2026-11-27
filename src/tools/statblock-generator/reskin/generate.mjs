@@ -1701,10 +1701,31 @@ export function factOnSheet(sheet, field) {
 export function typedFactsIn(text) {
   const t = String(text ?? '');
   const out = [];
+  /**
+   * A FACT, OR AN ABILITY THAT MENTIONS ONE (Fable, round two §10, fix 2).
+   *
+   * HP, a count of attacks and a defence are read wherever their words appear, so "regains 10 HP at
+   * the start of its turn" set the sheet's HP to 10, "makes 2 attacks when bloodied" left the asks
+   * with nothing written, and "allies within 10 feet are immune to fear" gave the creature an
+   * immunity. None of the 78 inputs trips it, which is why stop rule 4 passed; a GM trips it on the
+   * first day. So for those three the fact must be ALL the clause says, hedging words aside.
+   *
+   * AC, speed and size keep the rules they have, so the multi-fact clauses stand ("AC 20, Huge,
+   * speed 20 feet"). This is a stopgap in code: the facts call is the real answer to "is this
+   * clause a fact or an ability", and Part C hands it the question.
+   */
+  const factIsTheWholeClause = (...taken) => {
+    let rest = t;
+    for (const x of taken) if (x) rest = rest.replace(x, ' ');
+    return !rest
+      .replace(/\b(?:around|about|roughly|approximately|some|has|have|had|with|should|get|gets|is|are|was|be|it|its|the|a|an|and|or|of|to|from)\b/gi, ' ')
+      .replace(/[^A-Za-z0-9]+/g, '')
+      .trim();
+  };
   const ac = /\bAC\s*(\d+)\b|\barmor class (?:of )?(\d+)\b/i.exec(t);
   if (ac) out.push({ field: 'ac', value: Number(ac[1] ?? ac[2]) });
   const hp = /\bHP\s*(\d+)\b|\b(\d+)\s*(?:HP\b|hit points\b)/i.exec(t);
-  if (hp) out.push({ field: 'hp', value: Number(hp[1] ?? hp[2]) });
+  if (hp && factIsTheWholeClause(hp[0])) out.push({ field: 'hp', value: Number(hp[1] ?? hp[2]) });
   // A5: the distance must sit beside a word that says it is movement, before or after
   const sp = /(?:(?:speed|moves?|movement|walks?|walking)\s*(?:of\s*)?(\d+)\s*(?:feet|ft)\b)|(?:(\d+)\s*(?:feet|ft)\b\s*(?:of\s*)?(?:movement|speed|walk(?:ing)?))/i.exec(t);
   if (sp && !/\b(?:fly|flies|flying|swim|climb|burrow|reach|range|within|radius)\b/i.test(t)) out.push({ field: 'speed', value: Number(sp[1] ?? sp[2]) });
@@ -1724,10 +1745,28 @@ export function typedFactsIn(text) {
     const conds = [...new Set([...t.matchAll(new RegExp(COND_WORD.source, 'gi'))].map((m) => m[1]))];
     const bare = /\b(?:immune|immunity|resistant|resistance|vulnerable)\s+to\s+([a-z]+)/i.exec(t);
     const values = types.length ? types : conds.length ? conds : (bare ? [bare[1]] : []);
-    for (const v of values) out.push({ field: cue, value: String(v).charAt(0).toUpperCase() + String(v).slice(1).toLowerCase() });
+    const cueWord = (IMM_CUE.exec(t) ?? RES_CUE.exec(t) ?? VULN_CUE.exec(t) ?? [''])[0];
+    // the words the fact is MADE of, which the gate must consume: the cue, each value as it appears
+    // in the clause, and — where print writes the resistance as three types — the GM's own
+    // "nonmagical weapons", which names no type and so matches none of the values
+    const spent = [cueWord, ...(nonmagical ? [/\bnonmagical\b/i.exec(t)?.[0], /\bweapons?\b/i.exec(t)?.[0]] : []),
+      ...values.map((v) => new RegExp(`\\b${String(v)}\\w*`, 'i').exec(t)?.[0])];
+    if (factIsTheWholeClause(...spent)) {
+      // the GM writes the ROOT ("immune to charm"); the sheet carries the condition's own name.
+      // COND_WORD is the list of conditions the engine already keeps, so a root that opens one of
+      // them resolves to it: charm -> Charmed. A root that opens none is left as the GM wrote it.
+      const conditions = String(COND_WORD.source).match(/[a-z]{3,}/g) ?? [];
+      const canon = (v) => {
+        const low = String(v).toLowerCase();
+        const full = conditions.find((cw) => cw === low) ?? conditions.find((cw) => cw.startsWith(low));
+        const word = full ?? low;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      };
+      for (const v of values) out.push({ field: cue, value: canon(v) });
+    }
   }
   const atk = /\b(\d+)\s*attacks?\b/i.exec(t);
-  if (atk) out.push({ field: 'attacks', value: Number(atk[1]) });
+  if (atk && factIsTheWholeClause(atk[0])) out.push({ field: 'attacks', value: Number(atk[1]) });
   return out;
 }
 
@@ -12895,7 +12934,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // so they set nothing. No new word list: these are the same words the pattern already carried,
     // now required rather than optional, and allowed before the number as well as after.
     const SPEED_PHRASE = /(?:(?:speed|moves?|movement|walks?|walking)\s*(?:of\s*)?(\d+)\s*(?:feet|ft)\b)|(?:(\d+)\s*(?:feet|ft)\b\s*(?:of\s*)?(?:movement|speed|walk(?:ing)?))/i;
-    const sp = rec.map((c) => { const m = SPEED_PHRASE.exec(c.text); return m ? Object.assign([m[0], m[1] ?? m[2]], { input: c.text }) : null; }).find((x) => x && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(x.input));
+    // ONE READER, HERE TOO (Fable §10, fix 1). This carried its own copy of the speed pattern.
+    const sp = rec.map((c) => { const f = typedFactsIn(c.text).find((x) => x.field === 'speed'); return f ? [String(f.value), String(f.value)] : null; }).find(Boolean);
     if (sp && typeof monster.speed === 'string' && !new RegExp(`^${sp[1]} ft`).test(monster.speed)) { const was = monster.speed; monster.speed = monster.speed.replace(/^\d+ ft\./, `${sp[1]} ft.`); trace('header clause:', `speed ${was} -> ${monster.speed} — the user typed ${sp[1]} feet`); }
     // A SPEED WORD IS A HEADER AND THE CALL SAYS WHAT NUMBER IT MEANS (the critic's fifth GM forty,
     // 2026-11-09: "slow -> Speed 40", inverted on 2 of 3 rolls and never once 20). The extraction
@@ -12916,7 +12956,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
     }
-    const sz = rec.map((c) => (c.kind === 'header' && SIZE_HEADER.test(c.text) ? /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i.exec(c.text) : null)).find(Boolean); // "large teeth" is not the size
+    const sz = rec.map((c) => { const f = typedFactsIn(c.text).find((x) => x.field === 'size'); return f ? [f.value, f.value] : null; }).find(Boolean); // "large teeth" is not the size
     if (sz && String(monster.size ?? '').toLowerCase() !== sz[1].toLowerCase()) { trace('header clause:', `size ${monster.size} -> ${sz[1]} — the user typed it`); monster.size = sz[1].charAt(0).toUpperCase() + sz[1].slice(1).toLowerCase(); }
     // HEADER-VALUE CLAUSES ARE DIRECTIVES (the brief's §3; critic's step-5 read: the hag's "takes extra damage from fire" had no Vulnerabilities line)
     const cap1 = (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
@@ -12924,7 +12964,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     rec.forEach((c, i) => {
       if (c.kind !== 'header') return;
       const t = c.text; const prev = rec[i - 1]?.text ?? '';
-      const ty = DMG_TYPE_WORD.exec(t)?.[1] ?? (/\b(?:it|that|them)\b/i.test(t) ? DMG_TYPE_WORD.exec(prev)?.[1] : null); const cond = COND_WORD.exec(t)?.[1];
+      // ONE READER, HERE TOO (Fable §10, fix 1). This read COND_WORD directly, which holds
+      // "charmed" and not "charm", so s28's "immune to charm" merged nothing while the ledger
+      // called the fact a mismatch. The reader resolves the root to the condition's own name.
+      const readFacts = typedFactsIn(t).filter((f) => ['immune', 'resistant', 'vulnerable'].includes(f.field));
+      const ty = DMG_TYPE_WORD.exec(t)?.[1] ?? (/\b(?:it|that|them)\b/i.test(t) ? DMG_TYPE_WORD.exec(prev)?.[1] : null);
+      const cond = COND_WORD.exec(t)?.[1] ?? (readFacts.find((f) => !DMG_TYPE_WORD.test(f.value))?.value ?? null);
       if (VULN_CUE.test(t) && ty && merge('vulnerabilities', cap1(ty), false)) { trace('header clause:', `vulnerable to ${cap1(ty)} — "${t}"`); for (const fld of ['resistances', 'immunities']) { const cur = String(monster[fld] ?? ''); if (new RegExp(`\\b${cap1(ty)}\\b`).test(cur)) { monster[fld] = cur.replace(new RegExp(`\\b${cap1(ty)}\\b,?\\s*`), '').replace(/,\s*;/, ';').replace(/^\s*;\s*/, '').replace(/,\s*$/, '').trim(); trace('header clause:', `${fld} lose ${cap1(ty)} — the user's vulnerability outranks the borrowed line`); } } }
       else if (RES_CUE.test(t) && !IMM_CUE.test(t) && ty && merge('resistances', cap1(ty), false)) trace('header clause:', `resists ${cap1(ty)} — "${t}"`);
       else if (IMM_CUE.test(t) && /\badamantine\b/i.test(t) && !/adamantine/i.test(String(monster.immunities ?? ''))) { const cur = String(monster.immunities ?? '').trim(); const [d = '', cnd = ''] = cur.split(/\s*;\s*/); const dmgList = [...d.split(/,\s*/).filter(Boolean).filter((x) => !/^(?:Bludgeoning|Piercing|Slashing)$/.test(x)), 'Bludgeoning, Piercing, and Slashing from nonmagical attacks that aren\'t adamantine']; monster.immunities = [dmgList.join(', '), cnd].filter(Boolean).join('; '); trace('header clause:', `the Iron Golem's line — immune to nonmagical weapons that aren't adamantine — "${t}" (step 8)`); }
@@ -12934,11 +12979,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (/aren't adamantine/.test(String(monster.immunities ?? ''))) declared.immunities = 'adamantine'; // the user's immunity line drives the DMG read; the bands report it as user-set
     for (const c of rec) {
       if (c.kind !== 'header') continue;
-      const ac = /\bAC\s*(\d+)|armor class (?:of )?(\d+)/i.exec(c.text); if (ac) { declared.ac = Number(ac[1] ?? ac[2]); if (monster.ac !== declared.ac) { trace('user-set:', `AC ${monster.ac} -> ${declared.ac} — a declared field, not a derivation (Resolution 3)`); monster.ac = declared.ac; } }
+      const facts = typedFactsIn(c.text);
+      const ac = facts.find((f) => f.field === 'ac') ? [null, String(facts.find((f) => f.field === 'ac').value)] : null; if (ac) { declared.ac = Number(ac[1]); if (monster.ac !== declared.ac) { trace('user-set:', `AC ${monster.ac} -> ${declared.ac} — a declared field, not a derivation (Resolution 3)`); monster.ac = declared.ac; } }
       // TYPED HP IS APPLIED WHICHEVER WAY ROUND IT IS WRITTEN (A3, Fable, 2026-11-27). The pattern
       // took "HP 110" and "110 hit points" but not "110 HP", so s23's "around 110 HP" was filed
       // descriptive and the sheet shipped 157. "110 feet", "level 15" and "2d8" still set nothing.
-      const hp = /\bHP\s*(\d+)\b|\b(\d+)\s*(?:HP\b|hit points\b)/i.exec(c.text); if (hp) { declared.hp = Number(hp[1] ?? hp[2]); if (Number(monster.hp) !== declared.hp) { trace('user-set:', `HP ${monster.hp} -> ${declared.hp} — a declared field (Resolution 3)`); monster.hp = declared.hp; monster.hp_formula = hpFormulaForSize(declared.hp, monster.size ?? 'Medium', Math.floor((Number(monster.stats?.CON ?? 10) - 10) / 2)); } }
+      const hp = facts.find((f) => f.field === 'hp') ? [null, String(facts.find((f) => f.field === 'hp').value)] : null; if (hp) { declared.hp = Number(hp[1]); if (Number(monster.hp) !== declared.hp) { trace('user-set:', `HP ${monster.hp} -> ${declared.hp} — a declared field (Resolution 3)`); monster.hp = declared.hp; monster.hp_formula = hpFormulaForSize(declared.hp, monster.size ?? 'Medium', Math.floor((Number(monster.stats?.CON ?? 10) - 10) / 2)); } }
     }
     for (const c of rec) { // "bites for 50 damage": the row named for the part deals the user's number
       const dm = /\b([a-z]+?)(?:es|s)? for (\d+) damage\b/i.exec(c.text); if (!dm) continue;

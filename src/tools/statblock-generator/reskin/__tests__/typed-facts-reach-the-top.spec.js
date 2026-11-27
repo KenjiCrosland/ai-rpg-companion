@@ -118,3 +118,30 @@ describe('A5 — a distance the creature moves its target is not its walking spe
     expect(typedFactIn('speed 20 feet')).toEqual({ field: 'speed', value: 20 });
   });
 });
+
+describe('a fact, or an ability that mentions one (Fable §10, fix 2)', () => {
+  it.each([
+    'a troll that regains 10 HP at the start of its turn',
+    'a golem that explodes when it drops to 0 HP',
+    'a wolf that makes 2 attacks when bloodied',
+    'a knight whose allies within 10 feet are immune to fear',
+  ])('%s states no fact', (t) => {
+    expect(typedFactsIn(t)).toEqual([]);
+  });
+
+  it.each([
+    ['around 110 HP', 'hp'],
+    ['should get 3 attacks', 'attacks'],
+    ['immune to charm', 'immune'],
+  ])('%s still states its own', (t, field) => {
+    expect(typedFactsIn(t).map((f) => f.field)).toContain(field);
+  });
+
+  it('a root the GM typed resolves to the condition the sheet carries', () => {
+    expect(typedFactsIn('immune to charm')[0].value).toBe('Charmed');
+  });
+
+  it('a spider that pulls its prey 10 ft states no speed', () => {
+    expect(typedFactsIn('a spider that pulls its prey 10 ft').some((f) => f.field === 'speed')).toBe(false);
+  });
+});
