@@ -17,6 +17,27 @@ import { SHAPES } from '../src/tools/statblock-generator/reskin/shapes.mjs';
 // engine never reads this file.
 const FREEZE = path.join('scripts', 'frozen-clauses.json');
 const conceptHash = (t) => crypto.createHash('sha1').update(String(t ?? '').trim()).digest('hex').slice(0, 12);
+// THE LEDGER SCOREBOARD (Fable's round one, Part A, 2026-11-26). The owner reads one count each
+// round: how many typed asks reached the finished sheet. It is read off generation.ledger, which
+// the engine writes last, so it cannot be contradicted by a later pass.
+const LEDGERS = [];
+const ledgerScoreboard = () => {
+  const withL = LEDGERS.filter((x) => Array.isArray(x.ledger));
+  if (!withL.length) return '';
+  const all = withL.flatMap((x) => x.ledger.filter((e) => e.status !== 'header'));
+  const n = (f) => all.filter(f).length;
+  const reasons = {};
+  for (const e of all.filter((x) => x.status === 'open')) reasons[e.reason ?? 'unknown'] = (reasons[e.reason ?? 'unknown'] ?? 0) + 1;
+  const answered = all.filter((e) => e.status === 'answered');
+  const byReceiptOrAnchor = answered.filter((e) => e.boundBy !== 'handed').length;
+  return `\n## The ledger — typed asks that reached the sheet\n\n`
+    + `**${all.length} ask(s) across ${withL.length} sheet(s): ${answered.length} answered `
+    + `(${byReceiptOrAnchor} by receipt or anchor, ${answered.length - byReceiptOrAnchor} handed), `
+    + `${n((e) => e.status === 'mismatch')} mismatch, ${n((e) => e.status === 'open')} open.**\n\n`
+    + (Object.keys(reasons).length ? `Open by reason: ${Object.entries(reasons).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}.\n` : '')
+    + (all.filter((e) => e.conditionUnchecked).length ? `\n${all.filter((e) => e.conditionUnchecked).length} entr(ies) name a condition the engine could not check against the row.\n` : '');
+};
+
 const frozen = (() => { try { return JSON.parse(fs.readFileSync(FREEZE, 'utf8')); } catch { return {}; } })();
 const drift = [];
 const freezeFor = (block) => {
@@ -206,6 +227,7 @@ const dismissedReport = () => {
 const results = [];
 for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.json$/.test(x)).sort()) {
   const raw = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); const block = raw.monster ?? raw;
+  LEDGERS.push({ name: (raw.monster ?? raw)?.name ?? f, ledger: ((raw.monster ?? raw)?.generation?.ledger) ?? null });
   batchScan(block, f);
   dismissedScan(block, f);
   try { results.push({ file: f, ...checkBlock(block, { frozenClauses: freezeFor(block) ?? undefined }) }); } catch (e) { results.push({ file: f, name: f, cr: '?', edition: '?', donor: null, gates: Object.fromEntries(GATES.map((g) => [g, { status: 'soft', findings: [] }])), fails: [], softs: [], error: String(e?.message ?? e) }); }
@@ -217,7 +239,7 @@ for (const r of results) {
   md += `\n## ${r.name} (CR ${r.cr}${r.edition === '2014' ? ', 2014' : ''})\n${r.error ? `- checker error: ${r.error}\n` : ''}${lines.join('\n') || '- clean'}\n${floats.length ? `${floats.join('\n')}\n` : ''}`;
   if (r.read) md += `- read: def ${r.read.def} / off ${r.read.off} → ${r.read.read}; sustained ${r.read.sustained} (${r.read.attacks} × ${r.read.used?.name ?? '?'}${r.read.legendary?.avg ? ` + legendary ${r.read.legendary.name}` : ''}); nova ${r.read.nova ? `${r.read.nova.name} ${r.read.nova.avg}` : 'none'}; dmg ${r.read.dmg.toFixed(0)}\n`;
 }
-fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, `${md}\n${dismissedReport()}\n${batchReport()}\n`); console.log(`wrote ${out}`);
+fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, `${md}\n${ledgerScoreboard()}\n${dismissedReport()}\n${batchReport()}\n`); console.log(`wrote ${out}`);
 console.log(`${results.filter((r) => r.fails.length).length} block(s) with a FAIL of ${results.length}`);
 console.log(`${dismissed.length} audit finding(s) dismissed on print rows across ${sheetsWithRecord} sheet(s) carrying the record`);
 // persist any newly frozen concepts, and SAY SO when a run's extraction drifted
