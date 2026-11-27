@@ -1666,6 +1666,55 @@ export const exemptFromOneNova = (e) => e?.strike === true;
  * is reliable about whether the row exists because the GM asked for something, and that is all
  * protection needs.
  */
+/**
+ * WHAT THE GM TYPED ABOUT THE CREATURE ITSELF (A2, Fable, 2026-11-27).
+ *
+ * A clause that states a fact is not an ability and needs no row: "AC 17", "around 110 HP",
+ * "3 attacks", "immune to charm". The ledger counted them among the asks and called them open
+ * however plainly the top of the sheet carried them — s23's attacks and s28's charm immunity.
+ *
+ * These are the same readings the header already makes, in one place so the ledger and the header
+ * agree. Three were widened for the cases gm40 showed: a number before "HP", a condition named by
+ * its root word after "immune to", and a bare count of attacks.
+ */
+/** What the finished sheet says for a fact's field, or null where it says nothing. */
+export function factOnSheet(sheet, field) {
+  const s = sheet ?? {};
+  const rows = Object.values(s.sections ?? {}).flat().filter(Boolean);
+  if (field === 'ac') return s.ac ?? s.armor_class ?? null;
+  if (field === 'hp') return s.hp ?? s.hit_points ?? null;
+  if (field === 'size') return s.size ?? null;
+  if (field === 'speed') return /^(\d+)/.exec(String(s.speed ?? ''))?.[1] ?? null;
+  if (field === 'attacks') {
+    const ma = rows.find((r) => /^Multiattack/.test(String(r.name ?? '')));
+    const w = /makes (\w+)/i.exec(String(ma?.text ?? ''))?.[1]?.toLowerCase();
+    return ({ one: 1, two: 2, three: 3, four: 4, five: 5 }[w] ?? (w ? Number(w) || null : null));
+  }
+  if (field === 'immune' || field === 'resistant' || field === 'vulnerable') {
+    const k = { immune: ['immunities', 'condition_immunities', 'damage_immunities'], resistant: ['resistances', 'damage_resistances'], vulnerable: ['vulnerabilities', 'damage_vulnerabilities'] }[field];
+    const found = k.map((x) => s[x]).filter(Boolean).map((x) => (Array.isArray(x) ? x.join(', ') : String(x))).join(', ');
+    return found || null;
+  }
+  return null;
+}
+
+export function typedFactIn(text) {
+  const t = String(text ?? '');
+  const ac = /\bAC\s*(\d+)\b|\barmor class (?:of )?(\d+)\b/i.exec(t);
+  if (ac) return { field: 'ac', value: Number(ac[1] ?? ac[2]) };
+  const hp = /\bHP\s*(\d+)\b|\b(\d+)\s*(?:HP\b|hit points\b)/i.exec(t);
+  if (hp) return { field: 'hp', value: Number(hp[1] ?? hp[2]) };
+  const sp = /(?:(?:speed|moves?|movement|walks?|walking)\s*(?:of\s*)?(\d+)\s*(?:feet|ft)\b)|(?:(\d+)\s*(?:feet|ft)\b\s*(?:of\s*)?(?:movement|speed|walk(?:ing)?))/i.exec(t);
+  if (sp && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(t)) return { field: 'speed', value: Number(sp[1] ?? sp[2]) };
+  const sz = /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i.exec(t);
+  if (sz) return { field: 'size', value: sz[1].charAt(0).toUpperCase() + sz[1].slice(1).toLowerCase() };
+  const def = /\b(immune|immunity|resistant|resistance|vulnerable|vulnerability)\s+to\s+([a-z]+)/i.exec(t);
+  if (def) return { field: /^imm/i.test(def[1]) ? 'immune' : /^res/i.test(def[1]) ? 'resistant' : 'vulnerable', value: def[2].toLowerCase() };
+  const atk = /\b(\d+)\s*attacks?\b/i.exec(t);
+  if (atk) return { field: 'attacks', value: Number(atk[1]) };
+  return null;
+}
+
 /** The clause's own words, for a trace that must say what the GM typed and not the idea's prose. */
 export function typedClauseText(row, clauses = []) {
   const mech = (clauses ?? []).filter((c) => c && c.kind === 'mechanical' && !c.head);
@@ -1703,7 +1752,7 @@ export function isTypedAskRow(row, clauses = []) {
  * itself that this "buys no coverage credit"). The scoreboard counts receipts and anchors as
  * answered and shows handed beside them.
  */
-export function buildLedger({ sections = {}, clauses = [], removals = [], spellNames = null, trace = () => {} } = {}) {
+export function buildLedger({ sections = {}, clauses = [], removals = [], spellNames = null, sheet = null, trace = () => {} } = {}) {
   const rows = Object.values(sections ?? {}).flat().filter(Boolean);
   const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '');
   const idsOf = (r) => [...(r.clauseId ? [String(r.clauseId)] : []), ...((r.clauseIds ?? []).map(String))];
@@ -1719,11 +1768,36 @@ export function buildLedger({ sections = {}, clauses = [], removals = [], spellN
   for (const c of clauses) {
     if (c.head) { out.push({ clause: c.text, status: 'header' }); continue; }
     if (c.kind !== 'mechanical') continue;
+    // A TYPED FACT IS CHECKED AGAINST THE TOP OF THE SHEET, NOT AGAINST A ROW (A2). It is an entry
+    // of its own kind and is counted on its own line; it is not an ask and no row answers it.
+    const fact = typedFactIn(c.text);
+    if (fact && sheet) {
+      const got = factOnSheet(sheet, fact.field);
+      const agrees = got !== null && (typeof fact.value === 'number'
+        ? Number(got) === Number(fact.value)
+        : String(got).toLowerCase().includes(String(fact.value).toLowerCase()));
+      out.push({ clause: c.text, kind: 'fact', field: fact.field, typed: fact.value, onSheet: got,
+        status: agrees ? 'answered' : 'mismatch', ...(agrees ? {} : { detail: `typed ${fact.value}; the sheet reads ${got ?? 'nothing'}` }) });
+      continue;
+    }
     const entry = { clause: c.text, status: 'open', asked: { when: c.askWhen ?? null, often: c.askOften ?? null, mechanic: c.askMechanic ?? null } };
+    // THE BOUND ROW IS READ BEFORE THE SPELLS (A1, Fable, 2026-11-27). The spell rule fired first
+    // and closed the entry, so a clause whose words happen to hold a spell's NAME was called open
+    // however well the sheet answered it: s24's "cone of cold breath recharge 5-6" against its own
+    // Cone of Cold row, and s30's "lance and shield" against its Lance. Both are bound by id. A
+    // named spell is still answered by its own name and nothing else — but only where the answer
+    // would be a spell list.
     const wanted = namedSpells(c.text);
-    const missingSpell = wanted.find((sp) => !new RegExp(`\\b${String(sp).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(spellsOnSheet));
     const row = boundRow(c);
-    if (missingSpell) { entry.reason = 'spell-missing'; entry.detail = `no spellcasting row on the sheet lists ${missingSpell}`; out.push(entry); continue; }
+    const isSpellRow = (r) => /Spellcasting/i.test(String(r?.name ?? '')) || /casts one of the following spells/i.test(String(r?.text ?? ''));
+    const missingSpell = wanted.find((sp) => !new RegExp(`\\b${String(sp).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(spellsOnSheet));
+    const spellRowOnSheet = rows.some(isSpellRow);
+    // a bound row that is not a spell list answers the clause; a bound SPELL list must hold the
+    // spells the clause names; an unbound clause is spell-missing only when a list exists to lack it
+    if (missingSpell && (row ? isSpellRow(row) : spellRowOnSheet)) {
+      entry.reason = 'spell-missing'; entry.detail = `no spellcasting row on the sheet lists ${missingSpell}`;
+      out.push(entry); continue;
+    }
     if (row) {
       entry.row = bare(row.name);
       entry.boundBy = row.clauseBy ?? (row.clause === c.text ? 'anchor' : 'handed');
@@ -1750,7 +1824,8 @@ export function buildLedger({ sections = {}, clauses = [], removals = [], spellN
     else entry.reason = 'never-written';
     out.push(entry);
   }
-  const mech = out.filter((e) => e.status !== 'header');
+  const facts = out.filter((e) => e.kind === 'fact');
+  const mech = out.filter((e) => e.status !== 'header' && e.kind !== 'fact');
   const n = (f) => mech.filter(f).length;
   const byReason = {};
   for (const e of mech.filter((x) => x.status === 'open')) byReason[e.reason] = (byReason[e.reason] ?? 0) + 1;
@@ -1759,6 +1834,7 @@ export function buildLedger({ sections = {}, clauses = [], removals = [], spellN
     + `${n((e) => e.status === 'answered' && e.boundBy === 'handed')} handed), `
     + `${n((e) => e.status === 'mismatch')} mismatch, ${n((e) => e.status === 'open')} open`
     + (Object.keys(byReason).length ? ` (${Object.entries(byReason).map(([k, v]) => `${v} ${k}`).join(', ')})` : ''));
+  if (facts.length) trace('ledger facts:', `${facts.length} typed fact(s) — ${facts.filter((e) => e.status === 'answered').length} the sheet agrees with, ${facts.filter((e) => e.status === 'mismatch').length} it does not${facts.filter((e) => e.status === 'mismatch').map((e) => ` (${e.field}: ${e.detail})`).join('')}`);
   return out;
 }
 
@@ -3407,6 +3483,13 @@ export async function generateReskin(options, callLLM) {
       return { ...named, exact: pathD.path === 'exact' || !pathBody, borrowOnly: !(pathD.path === 'exact' || !pathBody), headIsPrint: true, nameIsPrint: true, npcHead: pathD.path === 'class_npc', addsSeat: false, remainder: pathD.path !== 'exact' && !!pathBody, fromPath: pathD.path };
     }
     if (!pathBody) return null;
+    // A4 IS NOT HERE, AND THE ATTEMPT IS RECORDED (2026-11-27). I put the containment check on
+    // this lookup — the corpus entry must hold every word the path call named — and it fires on
+    // nothing: `printCanonFor("Assassin Vine", cr)` is null at every CR, so this function already
+    // returns null for s26. The resolution to "Assassin" happens EARLIER, in path.mjs, which hands
+    // back `print_body: "Assassin"` for the words "assassin vine" (the trace reads
+    // `[path] twist — Assassin (is) — "assassin vine" (call)`). A4 belongs there, against the
+    // call's own answer, before anything downstream sees a resolved name.
     const rec = printCanonFor(pathBody, c); if (!rec) return null;
     const exact = pathD.path === 'exact';
     return { ...rec, exact, borrowOnly: !exact, headIsPrint: true, nameIsPrint: exact, npcHead: pathD.path === 'class_npc', addsSeat: false, remainder: !exact, fromPath: pathD.path };
@@ -3448,7 +3531,11 @@ export async function generateReskin(options, callLLM) {
     const wantEl = themeEl ?? BY_ENERGY[String(options.energy ?? '')] ?? null;
     return (wantEl && wantEl !== printEl) ? `the ${printEl} one and the concept reads ${wantEl}${themeEl ? ` (theme ${(options.themes ?? []).join('/')})` : ` (energy ${options.energy})`}` : false;
   };
-  { const why = typeOutranks(pcRoute0); if (why) trace('the concept outranks the alias:', `the ${pcRoute0.name} is ${why} — the words RESEMBLE it, they do not name it, so the print body stands down`); }
+  // THE LINE SAYS WHAT THE ENGINE DOES NEXT (Fable, 2026-11-27). It read "the print body stands
+  // down", which is untrue on s06, s22 and s26: print canon runs on each of them afterwards and
+  // turns the fly speed off, cuts the size Large -> Small, and turns the climb off. What stands
+  // down is the alias MATCH; print canon is a separate decision and is not affected here.
+  { const why = typeOutranks(pcRoute0); if (why) trace('the concept outranks the alias:', `the ${pcRoute0.name} is ${why} — the words RESEMBLE it, they do not name it, so the alias match stands down. Print canon is decided separately and may still run on this sheet`); }
   const pcRoute = pcRoutePath !== undefined ? pcRoutePath : ((speciesOutranks(pcRoute0) || typeOutranks(pcRoute0) || canonRejected(pcRoute0)) ? null : pcRoute0); // the vetoes are the matcher's; a path decision needs none (relation = is) // the routing read obeys the call's ✗ too — one definition with printCanonHere and pcPlain
   const printCanonHere = (text, c) => { const fromPath = canonFromPath(c); if (fromPath !== undefined) return fromPath; const pc = printCanonFor(text, c); return (speciesOutranks(pc) || typeOutranks(pc) || canonRejected(pc)) ? null : pc; }; // every later print-canon read goes through the species guard (the Mimic's Adhesive and Shape-Shift rode in behind the kenku's back)
   const shootsABow = !!pcRoute && pcRoute.ranged.some((n) => /\b(?:long|short)?bow\b|crossbow/i.test(n));
@@ -12775,7 +12862,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   }
   { // header clauses set directly (fidelity pipeline step 5, the brief's §3): "30 feet of movement" is the walking speed; a size word is the size
     const rec = Array.isArray(monster.generation?.clauses) ? monster.generation.clauses : [];
-    const sp = rec.map((c) => /(\d+)\s*(?:feet|ft)\b(?:\s*(?:of )?(?:movement|speed|walk(?:ing)?))?/i.exec(c.text)).find((x) => x && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(x.input));
+    // A DISTANCE THE CREATURE MOVES ITS TARGET IS NOT ITS WALKING SPEED (A5, Fable, 2026-11-27).
+    // The assassin vine's "pulls 10 ft" became Speed 10 ft. The old rule took ANY distance that was
+    // not fly/swim/climb/reach/range/within/radius, so every number in feet was a speed unless it
+    // was something else. The rule now is the other way round and NARROWER: the distance must sit
+    // beside a word that says it is movement — "30 feet of movement", "speed 20 ft", "moves 40 ft".
+    // "pulls 10 ft", "pushes 15 feet", "knocks back 20 ft" and "teleports 30 ft" have no such word,
+    // so they set nothing. No new word list: these are the same words the pattern already carried,
+    // now required rather than optional, and allowed before the number as well as after.
+    const SPEED_PHRASE = /(?:(?:speed|moves?|movement|walks?|walking)\s*(?:of\s*)?(\d+)\s*(?:feet|ft)\b)|(?:(\d+)\s*(?:feet|ft)\b\s*(?:of\s*)?(?:movement|speed|walk(?:ing)?))/i;
+    const sp = rec.map((c) => { const m = SPEED_PHRASE.exec(c.text); return m ? Object.assign([m[0], m[1] ?? m[2]], { input: c.text }) : null; }).find((x) => x && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(x.input));
     if (sp && typeof monster.speed === 'string' && !new RegExp(`^${sp[1]} ft`).test(monster.speed)) { const was = monster.speed; monster.speed = monster.speed.replace(/^\d+ ft\./, `${sp[1]} ft.`); trace('header clause:', `speed ${was} -> ${monster.speed} — the user typed ${sp[1]} feet`); }
     // A SPEED WORD IS A HEADER AND THE CALL SAYS WHAT NUMBER IT MEANS (the critic's fifth GM forty,
     // 2026-11-09: "slow -> Speed 40", inverted on 2 of 3 rolls and never once 20). The extraction
@@ -12815,7 +12911,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     for (const c of rec) {
       if (c.kind !== 'header') continue;
       const ac = /\bAC\s*(\d+)|armor class (?:of )?(\d+)/i.exec(c.text); if (ac) { declared.ac = Number(ac[1] ?? ac[2]); if (monster.ac !== declared.ac) { trace('user-set:', `AC ${monster.ac} -> ${declared.ac} — a declared field, not a derivation (Resolution 3)`); monster.ac = declared.ac; } }
-      const hp = /\bHP\s*(\d+)|(\d+) hit points/i.exec(c.text); if (hp) { declared.hp = Number(hp[1] ?? hp[2]); if (Number(monster.hp) !== declared.hp) { trace('user-set:', `HP ${monster.hp} -> ${declared.hp} — a declared field (Resolution 3)`); monster.hp = declared.hp; monster.hp_formula = hpFormulaForSize(declared.hp, monster.size ?? 'Medium', Math.floor((Number(monster.stats?.CON ?? 10) - 10) / 2)); } }
+      // TYPED HP IS APPLIED WHICHEVER WAY ROUND IT IS WRITTEN (A3, Fable, 2026-11-27). The pattern
+      // took "HP 110" and "110 hit points" but not "110 HP", so s23's "around 110 HP" was filed
+      // descriptive and the sheet shipped 157. "110 feet", "level 15" and "2d8" still set nothing.
+      const hp = /\bHP\s*(\d+)\b|\b(\d+)\s*(?:HP\b|hit points\b)/i.exec(c.text); if (hp) { declared.hp = Number(hp[1] ?? hp[2]); if (Number(monster.hp) !== declared.hp) { trace('user-set:', `HP ${monster.hp} -> ${declared.hp} — a declared field (Resolution 3)`); monster.hp = declared.hp; monster.hp_formula = hpFormulaForSize(declared.hp, monster.size ?? 'Medium', Math.floor((Number(monster.stats?.CON ?? 10) - 10) / 2)); } }
     }
     for (const c of rec) { // "bites for 50 damage": the row named for the part deals the user's number
       const dm = /\b([a-z]+?)(?:es|s)? for (\d+) damage\b/i.exec(c.text); if (!dm) continue;
@@ -13420,6 +13519,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     clauses: (monster.generation.clauses ?? []),
     removals: removalLog,
     spellNames: KNOWN_SPELLS,
+    sheet: monster,
     trace,
   });
   return monster;
