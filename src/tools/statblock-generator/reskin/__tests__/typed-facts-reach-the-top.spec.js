@@ -4,7 +4,7 @@
  * A3 typed HP either way round; A4 a print body is the monster the call named or there is none;
  * A5 a distance the creature moves its target is not its walking speed.
  */
-import { buildLedger, typedFactIn, factOnSheet, printCanonFor } from '../generate.mjs';
+import { buildLedger, typedFactIn, typedFactsIn, factOnSheet } from '../generate.mjs';
 
 describe('A1 — the bound row is read before the spells', () => {
   const SPELLS = new Set(['Cone of Cold', 'Shield', 'Hold Person']);
@@ -82,6 +82,26 @@ describe('A3 — typed HP, whichever way round', () => {
 // null for "Assassin Vine" at every CR, so the function I guarded already refuses it. The name is
 // resolved earlier, in path.mjs, which answers "Assassin" for the words "assassin vine". A test
 // here would pass with the change removed, so by the rule it is not written. Reported instead.
+
+describe('one reader — a clause can hold more than one fact, and a size word only where it is one', () => {
+  it('reads three facts out of one clause', () => {
+    const f = typedFactsIn('AC 20, Huge, speed 20 feet');
+    expect(f.map((x) => x.field).sort()).toEqual(['ac', 'size', 'speed']);
+  });
+
+  it('"Large or smaller" inside an ability is not a size fact', () => {
+    expect(typedFactsIn('If the target is Large or smaller, it has the Restrained condition').some((x) => x.field === 'size')).toBe(false);
+  });
+
+  it('"large teeth" is not a size fact', () => {
+    expect(typedFactsIn('a hound with large teeth').some((x) => x.field === 'size')).toBe(false);
+  });
+
+  it('a nonmagical resistance reads as the three physical types, as the header reads it', () => {
+    expect(typedFactsIn('resistant to nonmagical weapons').map((x) => x.value).sort())
+      .toEqual(['Bludgeoning', 'Piercing', 'Slashing']);
+  });
+});
 
 describe('A5 — a distance the creature moves its target is not its walking speed', () => {
   it.each(['pulls 10 ft', 'pushes 15 feet', 'knocks back 20 ft', 'teleports 30 ft'])('%s sets no speed', (t) => {

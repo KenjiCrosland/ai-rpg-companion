@@ -1698,22 +1698,41 @@ export function factOnSheet(sheet, field) {
   return null;
 }
 
-export function typedFactIn(text) {
+export function typedFactsIn(text) {
   const t = String(text ?? '');
+  const out = [];
   const ac = /\bAC\s*(\d+)\b|\barmor class (?:of )?(\d+)\b/i.exec(t);
-  if (ac) return { field: 'ac', value: Number(ac[1] ?? ac[2]) };
+  if (ac) out.push({ field: 'ac', value: Number(ac[1] ?? ac[2]) });
   const hp = /\bHP\s*(\d+)\b|\b(\d+)\s*(?:HP\b|hit points\b)/i.exec(t);
-  if (hp) return { field: 'hp', value: Number(hp[1] ?? hp[2]) };
+  if (hp) out.push({ field: 'hp', value: Number(hp[1] ?? hp[2]) });
+  // A5: the distance must sit beside a word that says it is movement, before or after
   const sp = /(?:(?:speed|moves?|movement|walks?|walking)\s*(?:of\s*)?(\d+)\s*(?:feet|ft)\b)|(?:(\d+)\s*(?:feet|ft)\b\s*(?:of\s*)?(?:movement|speed|walk(?:ing)?))/i.exec(t);
-  if (sp && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(t)) return { field: 'speed', value: Number(sp[1] ?? sp[2]) };
-  const sz = /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i.exec(t);
-  if (sz) return { field: 'size', value: sz[1].charAt(0).toUpperCase() + sz[1].slice(1).toLowerCase() };
-  const def = /\b(immune|immunity|resistant|resistance|vulnerable|vulnerability)\s+to\s+([a-z]+)/i.exec(t);
-  if (def) return { field: /^imm/i.test(def[1]) ? 'immune' : /^res/i.test(def[1]) ? 'resistant' : 'vulnerable', value: def[2].toLowerCase() };
+  if (sp && !/\b(?:fly|flies|flying|swim|climb|burrow|reach|range|within|radius)\b/i.test(t)) out.push({ field: 'speed', value: Number(sp[1] ?? sp[2]) });
+  // a size word is a fact only where the engine's own size test says so — SIZE_HEADER already
+  // refuses "large teeth", and "Large or smaller" inside an ability must not pull a clause out
+  // of the asks
+  if (SIZE_HEADER.test(t) && !/\bor (?:smaller|larger)\b/i.test(t)) {
+    const sz = /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i.exec(t);
+    if (sz) out.push({ field: 'size', value: sz[1].charAt(0).toUpperCase() + sz[1].slice(1).toLowerCase() });
+  }
+  // a defence is read the way the header reads one: its own cue, then a damage type or condition.
+  // "nonmagical" is not a damage type — print writes that resistance as the three physical ones.
+  const cue = IMM_CUE.test(t) ? 'immune' : RES_CUE.test(t) ? 'resistant' : VULN_CUE.test(t) ? 'vulnerable' : null;
+  if (cue) {
+    const nonmagical = /\bnonmagical\b/i.test(t);
+    const types = nonmagical ? ['Bludgeoning', 'Piercing', 'Slashing'] : [...new Set([...t.matchAll(new RegExp(DMG_TYPE_WORD.source, 'gi'))].map((m) => m[1]))];
+    const conds = [...new Set([...t.matchAll(new RegExp(COND_WORD.source, 'gi'))].map((m) => m[1]))];
+    const bare = /\b(?:immune|immunity|resistant|resistance|vulnerable)\s+to\s+([a-z]+)/i.exec(t);
+    const values = types.length ? types : conds.length ? conds : (bare ? [bare[1]] : []);
+    for (const v of values) out.push({ field: cue, value: String(v).charAt(0).toUpperCase() + String(v).slice(1).toLowerCase() });
+  }
   const atk = /\b(\d+)\s*attacks?\b/i.exec(t);
-  if (atk) return { field: 'attacks', value: Number(atk[1]) };
-  return null;
+  if (atk) out.push({ field: 'attacks', value: Number(atk[1]) });
+  return out;
 }
+
+/** Kept for the single-fact callers; the first fact a clause states, or null. */
+export function typedFactIn(text) { return typedFactsIn(text)[0] ?? null; }
 
 /** The clause's own words, for a trace that must say what the GM typed and not the idea's prose. */
 export function typedClauseText(row, clauses = []) {
@@ -1766,20 +1785,23 @@ export function buildLedger({ sections = {}, clauses = [], removals = [], spellN
   const spellsOnSheet = rows.filter((r) => /Spellcasting|casts? (?:the )?\*?[A-Z]/.test(String(r.text ?? '')) || /spell/i.test(String(r.name ?? ''))).map((r) => String(r.text ?? '')).join(' ');
   const out = [];
   for (const c of clauses) {
-    if (c.head) { out.push({ clause: c.text, status: 'header' }); continue; }
-    if (c.kind !== 'mechanical') continue;
-    // A TYPED FACT IS CHECKED AGAINST THE TOP OF THE SHEET, NOT AGAINST A ROW (A2). It is an entry
-    // of its own kind and is counted on its own line; it is not an ask and no row answers it.
-    const fact = typedFactIn(c.text);
-    if (fact && sheet) {
+    // A FACT IS READ FROM EVERY CLAUSE, WHATEVER KIND THE READER FILED IT UNDER, AND A CLAUSE CAN
+    // HOLD MORE THAN ONE (Fable, round two §9). "AC 20, Huge, speed 20 feet" is three facts, and
+    // the reader files it header — so a ledger that looked only at mechanical clauses saw none of
+    // them. Facts are entries of their own kind and are not asks.
+    const facts = sheet ? typedFactsIn(c.text) : [];
+    for (const fact of facts) {
       const got = factOnSheet(sheet, fact.field);
       const agrees = got !== null && (typeof fact.value === 'number'
         ? Number(got) === Number(fact.value)
         : String(got).toLowerCase().includes(String(fact.value).toLowerCase()));
       out.push({ clause: c.text, kind: 'fact', field: fact.field, typed: fact.value, onSheet: got,
         status: agrees ? 'answered' : 'mismatch', ...(agrees ? {} : { detail: `typed ${fact.value}; the sheet reads ${got ?? 'nothing'}` }) });
-      continue;
     }
+    if (c.head) { if (!facts.length) out.push({ clause: c.text, status: 'header' }); continue; }
+    if (c.kind !== 'mechanical') continue;
+    // a clause that states a fact has had its entries pushed above; it is not also an ask
+    if (facts.length) continue;
     const entry = { clause: c.text, status: 'open', asked: { when: c.askWhen ?? null, often: c.askOften ?? null, mechanic: c.askMechanic ?? null } };
     // THE BOUND ROW IS READ BEFORE THE SPELLS (A1, Fable, 2026-11-27). The spell rule fired first
     // and closed the entry, so a clause whose words happen to hold a spell's NAME was called open
@@ -2893,8 +2915,16 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
   // the whole sheet (the brief's continuum), while "wields a greatsword" and "a long tail" author rows
   const MECH = /\b(?:wield|wields|has|have|throw|throws|hurl|hurls|bite|bites|claw|claws|swipe|swipes|breathe|breathes|cast|casts|spit|spits|rake|rakes|charge|charges|smother|smothers|lure|lures|drag|drags|ride|rides|fires|fling|flings|strike|strikes|stomp|stomps|gore|gores|sting|stings|trained|fighting|attack|attacks|swallow|swallows|grapple|grapples|crush|crushes|slam|slams|choke|chokes|curse|curses|summon|summons|command|commands|flee|flees|warn|warns|alert|alerts)\b/i;
   const PART = /\b(?:sword|greatsword|axe|spear|lance|bow|crossbow|dagger|staff|mace|hammer|club|whip|net|tail|claws?|teeth|fangs?|jaws?|horns?|hooves|wings?|tentacles?|talons?|stinger|beak|breath|gaze|roar|song|lantern|shield)\b/i;
-  const isHeader = (p) => SIZE_HEADER.test(p) || (/\b\d+\s*(?:feet|ft)\b/i.test(p) && !/\b(?:within|reach|range|radius|tall|long|wide)\b/i.test(p)) || /\b(?:CR|AC|HP)\s*\d+|\d+ hit points|armor class/i.test(p)
-    || ((VULN_CUE.test(p) || IMM_CUE.test(p) || RES_CUE.test(p)) && (DMG_TYPE_WORD.test(p) || COND_WORD.test(p) || /\b(?:it|that|them|adamantine|silvered|magic\w*|weapons?)\b/i.test(p))) || SPEECH_CUE.test(p);
+  // ONE READER (Fable, round two §9). isHeader, the declared AC and HP loop, the speed header, the
+  // size header and the ledger all asked the same question with four sets of patterns, so "around
+  // 110 HP" was filed descriptive and never reached the loop that would have set it, and "pulls 10
+  // ft" was filed header and set the Speed. They now ask `typedFactsIn`, which is the one reader.
+  const isHeader = (p) => typedFactsIn(p).length > 0 || /\b(?:CR)\s*\d+/i.test(p)
+    // a DEFENCE the reader cannot put a value on is still a header, as it always was: "takes extra
+    // damage from it", "immune to that". `typedFactsIn` only returns a fact it can name a value
+    // for, so this arm stays rather than quietly reclassifying two pinned clauses.
+    || ((VULN_CUE.test(p) || IMM_CUE.test(p) || RES_CUE.test(p)) && (DMG_TYPE_WORD.test(p) || COND_WORD.test(p) || /\b(?:it|that|them|adamantine|silvered|magic\w*|weapons?)\b/i.test(p)))
+    || SPEECH_CUE.test(p);
   const kindOf = (p) => {
     if (isHeader(p)) return 'header';
     if (polarityOf(p) === 'lacks') return 'mechanical'; // a lacks clause asks for an absence on the sheet
@@ -3483,13 +3513,7 @@ export async function generateReskin(options, callLLM) {
       return { ...named, exact: pathD.path === 'exact' || !pathBody, borrowOnly: !(pathD.path === 'exact' || !pathBody), headIsPrint: true, nameIsPrint: true, npcHead: pathD.path === 'class_npc', addsSeat: false, remainder: pathD.path !== 'exact' && !!pathBody, fromPath: pathD.path };
     }
     if (!pathBody) return null;
-    // A4 IS NOT HERE, AND THE ATTEMPT IS RECORDED (2026-11-27). I put the containment check on
-    // this lookup — the corpus entry must hold every word the path call named — and it fires on
-    // nothing: `printCanonFor("Assassin Vine", cr)` is null at every CR, so this function already
-    // returns null for s26. The resolution to "Assassin" happens EARLIER, in path.mjs, which hands
-    // back `print_body: "Assassin"` for the words "assassin vine" (the trace reads
-    // `[path] twist — Assassin (is) — "assassin vine" (call)`). A4 belongs there, against the
-    // call's own answer, before anything downstream sees a resolved name.
+    // A4 is not here: `corpusEntry` in path.mjs resolves the call's named body by its variant rule long before this, and the check it needs is the creature's TYPE, which waits for Part C.
     const rec = printCanonFor(pathBody, c); if (!rec) return null;
     const exact = pathD.path === 'exact';
     return { ...rec, exact, borrowOnly: !exact, headIsPrint: true, nameIsPrint: exact, npcHead: pathD.path === 'class_npc', addsSeat: false, remainder: !exact, fromPath: pathD.path };
