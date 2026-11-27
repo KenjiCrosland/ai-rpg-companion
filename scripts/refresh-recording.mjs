@@ -42,9 +42,14 @@ for (const f of files) {
   const old = JSON.parse(fs.readFileSync(to, 'utf8'));
   const now = JSON.parse(fs.readFileSync(path.join(fresh, f), 'utf8'));
   for (const leaf of leaves(old.sheet, now.sheet)) {
-    const field = leaf.split('/').pop().replace(/\[\]$/, '');
+    const segs = leaf.split('/').filter(Boolean).map((x) => x.replace(/\[\]$/, ''));
+    // AN ALLOWED FIELD COVERS WHAT IS INSIDE IT. The walk reaches leaves, so a change anywhere
+    // under `generation.ledger` arrives as `/generation/ledger[]/status` — the ledger's own shape,
+    // not a fourth field on the sheet. The check is on the PATH: allowed if any segment is named.
+    const named = segs.find((x) => ALLOW.has(x));
+    const field = named ?? segs.at(-1);
     tally.set(field, (tally.get(field) ?? 0) + 1);
-    if (!ALLOW.has(field)) bad.push(`${f}: ${leaf} is not an allowed field`);
+    if (!named) bad.push(`${f}: ${leaf} is not an allowed field`);
   }
   plan.push([to, { ...old, sheet: now.sheet }]);
 }
