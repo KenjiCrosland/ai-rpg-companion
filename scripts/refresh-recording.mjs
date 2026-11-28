@@ -51,7 +51,10 @@ for (const f of files) {
     tally.set(field, (tally.get(field) ?? 0) + 1);
     if (!named) bad.push(`${f}: ${leaf} is not an allowed field`);
   }
-  plan.push([to, { ...old, sheet: now.sheet }]);
+  // A FILE WITH NO DIFFERENCE IS LEFT ALONE (Fable §11, note 1). The last refresh rewrote 67
+  // recordings whose sheets were identical once parsed — only the file's layout moved — so the
+  // commit buried the sheets that had actually changed.
+  if (JSON.stringify(old.sheet) !== JSON.stringify(now.sheet)) plan.push([to, { ...old, sheet: now.sheet }]);
 }
 console.log(`fields changed (leaf paths, indices collapsed): ${[...tally].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}`);
 if (bad.length) { console.error(`REFUSED — ${bad.length} problem(s):`); for (const b of bad.slice(0, 10)) console.error(`  ${b}`); process.exit(1); }
